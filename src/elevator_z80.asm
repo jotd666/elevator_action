@@ -38,7 +38,18 @@ character_state_04 = 0x4
 character_delta_x_05 = 0x5
 move_direction_0d = 0xd
 
+state_unknown_00 = 0
+state_title_01 = 1
+state_push_start_03 = 3
+state_game_starting_04 = 4
+state_ingame_05 = 5
+state_ground_floor_reached_06 = 6
+state_next_life_07 = 7
+state_game_over_08 = 8
+state_insert_coin_09 = 9
+
 0000: C3 8F 33    jp   bootup_338f
+
 0003: 21 49 86    ld   hl,$8649
 0006: 7E          ld   a,(hl)
 0007: C8          ret  z
@@ -76,8 +87,9 @@ move_direction_0d = 0xd
 0030: CD BD 77    call $77BD
 0033: C9          ret
 
+elevator_irq_0038:
+0038: C3 99 11    jp   elevator_irq_1199
 
-0038: C3 99 11    jp   $1199
 003B: DD 7E 09    ld   a,(ix+$09)
 003E: 3C          inc  a
 003F: C8          ret  z
@@ -1171,7 +1183,7 @@ handle_main_scrolling_017F:
 0846: D0          ret  nc
 0847: 06 04       ld   b,$04
 0849: C3 CD 07    jp   $07CD
-084C: 3A 40 82    ld   a,($8240)
+084C: 3A 40 82    ld   a,(lamp_shot_state_8240)
 084F: 3C          inc  a
 0850: C0          ret  nz
 0851: DD 7E 01    ld   a,(ix+character_x_right_01)
@@ -1358,13 +1370,14 @@ animate_enemy_08F8:
 099E: BB          cp   e
 099F: D0          ret  nc
 09A0: C3 32 09    jp   $0932
+
 09A3: AF          xor  a
 09A4: 32 AB 80    ld   ($80AB),a
 09A7: CD D8 0A    call $0AD8
 09AA: CD 4D 36    call $364D
 09AD: 3E C0       ld   a,$C0
 09AF: 32 0B D5    ld   ($D50B),a
-09B2: CD E5 45    call $45E5
+09B2: CD E5 45    call ground_floor_reached_45E5
 09B5: 21 2E 82    ld   hl,$822E
 09B8: 06 1E       ld   b,$1E
 09BA: 7E          ld   a,(hl)
@@ -1401,11 +1414,12 @@ animate_enemy_08F8:
 0A05: 20 CC       jr   nz,$09D3
 0A07: CD F9 56    call $56F9
 0A0A: 21 37 82    ld   hl,skill_level_8237
-0A0D: 34          inc  (hl)					; warp to next level
+0A0D: 34          inc  (hl)					; increase difficulty level
 0A0E: 3E 1E       ld   a,$1E
 0A10: 32 2C 80    ld   ($802C),a
 0A13: AF          xor  a
 0A14: C9          ret
+
 0A15: 21 2C 85    ld   hl,$852C
 0A18: 7E          ld   a,(hl)
 0A19: FE 1E       cp   $1E
@@ -1561,7 +1575,7 @@ animate_enemy_08F8:
 0B59: 3E 03       ld   a,$03
 0B5B: 32 A9 80    ld   ($80A9),a
 0B5E: 3D          dec  a
-0B5F: 32 AA 80    ld   ($80AA),a
+0B5F: 32 AA 80    ld   (timer_8bit_80AA),a
 0B62: 3E 00       ld   a,$00
 0B64: 32 AB 80    ld   ($80AB),a
 0B67: C9          ret
@@ -1991,16 +2005,8 @@ animate_enemy_08F8:
 0E63: E1          pop  hl
 0E64: 77          ld   (hl),a
 0E65: C9          ret
-0E66: E4 E6 E8    call po,$E8E6
-0E69: E8          ret  pe
-0E6A: E6 E4       and  $E4
-0E6C: E6 EA       and  $EA
-0E6E: EA E6 E4    jp   pe,$E4E6
-0E71: E6 E8       and  $E8
-0E73: E8          ret  pe
-0E74: E6 E4       and  $E4
-0E76: E6 EA       and  $EA
-0E78: EA E6 3A    jp   pe,$3AE6
+
+0E7A: 3A 33 80    ld   a,($8033)
 0E7B: 33          inc  sp
 0E7C: 80          add  a,b
 0E7D: B7          or   a
@@ -2193,7 +2199,7 @@ handle_elevators_0EBF:
 0FE6: ED 44       neg
 0FE8: 77          ld   (hl),a
 0FE9: C9          ret
-0FEA: 3A AC 80    ld   a,($80AC)
+0FEA: 3A AC 80    ld   a,(game_state_80AC)
 0FED: B7          or   a
 0FEE: C8          ret  z
 0FEF: CD 36 10    call $1036
@@ -2292,6 +2298,7 @@ handle_elevators_0EBF:
 10AB: 3C          inc  a
 10AC: 32 A2 80    ld   ($80A2),a
 10AF: C9          ret
+
 10B0: 3A 4E 82    ld   a,($824E)
 10B3: CB 57       bit  2,a
 10B5: 20 09       jr   nz,$10C0
@@ -2299,19 +2306,15 @@ handle_elevators_0EBF:
 10BA: C6 10       add  a,$10
 10BC: 32 BE C7    ld   ($C7BE),a
 10BF: C9          ret
-10C0: 21 CA 10    ld   hl,$10CA
+10C0: 21 CA 10    ld   hl,table_10CA
 10C3: 11 B7 C7    ld   de,$C7B7
-10C6: CD F9 29    call $29F9
+10C6: CD F9 29    call copy_bytes_to_screen_29F9
 10C9: C9          ret
-10CA: 27          daa
-10CB: 1F          rra
-10CC: 1E 1E       ld   e,$1E
-10CE: 33          inc  sp
-10CF: 1A          ld   a,(de)
-10D0: 1B          dec  de
-10D1: 1C          inc  e
-10D2: 1D          dec  e
-10D3: 1E FF       ld   e,$FF
+
+table_10CA:
+	dc.b  27 1F 1E 1E 33 1A 1B 1C 1D 1E FF
+
+; seems not reached
 10D5: DD 46 37    ld   b,(ix+$37)
 10D8: DD 66 39    ld   h,(ix+$39)
 10DB: DD 4E 38    ld   c,(ix+$38)
@@ -2406,6 +2409,8 @@ handle_elevators_0EBF:
 1194: 23          inc  hl
 1195: 22 3C 82    ld   ($823C),hl
 1198: C9          ret
+
+elevator_irq_1199:
 1199: F3          di
 119A: F5          push af
 119B: E5          push hl
@@ -2419,7 +2424,7 @@ handle_elevators_0EBF:
 11A3: C5          push bc
 11A4: DD E5       push ix
 11A6: FD E5       push iy
-11A8: 21 AA 80    ld   hl,$80AA
+11A8: 21 AA 80    ld   hl,timer_8bit_80AA
 11AB: 35          dec  (hl)
 11AC: F2 49 12    jp   p,$1249
 11AF: 3A AB 80    ld   a,($80AB)
@@ -2431,37 +2436,48 @@ handle_elevators_0EBF:
 11BB: 80          add  a,b
 11BC: F6 F0       or   $F0
 11BE: 32 00 D6    ld   ($D600),a
-11C1: 3A AC 80    ld   a,($80AC)
+11C1: 3A AC 80    ld   a,(game_state_80AC)
 11C4: 47          ld   b,a
 11C5: 80          add  a,b
-11C6: 80          add  a,b
+11C6: 80          add  a,b	; times 3 to adjust to jump table
 11C7: 5F          ld   e,a
 11C8: 16 00       ld   d,$00
 11CA: 21 CF 11    ld   hl,$11CF
 11CD: 19          add  hl,de
 11CE: E9          jp   (hl)
-11CF: C3 ED 11    jp   $11ED
-11D2: C3 F0 11    jp   $11F0
-11D5: C3 F6 11    jp   $11F6
-11D8: C3 F9 11    jp   $11F9
-11DB: C3 02 12    jp   $1202
-11DE: C3 11 12    jp   $1211
-11E1: C3 29 12    jp   $1229
-11E4: C3 2F 12    jp   $122F
-11E7: C3 35 12    jp   $1235
-11EA: C3 3B 12    jp   $123B
+
+11CF: C3 ED 11    jp   $11ED				            | 0 ???
+11D2: C3 F0 11    jp   title_sequence_11F0              | 1
+11D5: C3 F6 11    jp   $11F6                            | 2 ???
+11D8: C3 F9 11    jp   push_start_screen_11F9           | 3
+11DB: C3 02 12    jp   game_intro_1202                  | 4
+11DE: C3 11 12    jp   game_running_1211                | 5
+11E1: C3 29 12    jp   ground_floor_reached_1229        | 6
+11E4: C3 2F 12    jp   next_life_122F                   | 7
+11E7: C3 35 12    jp   game_over_1235                   | 8
+11EA: C3 3B 12    jp   insert_coint_screen_123B         | 9
+
 11ED: C3 3E 12    jp   $123E
+
+title_sequence_11F0:
 11F0: CD 30 74    call $7430
 11F3: C3 3E 12    jp   $123E
+
 11F6: C3 3E 12    jp   $123E
+
+push_start_screen_11F9:
 11F9: CD B6 2E    call $2EB6
 11FC: CD B0 10    call $10B0
 11FF: C3 3E 12    jp   $123E
+
+game_intro_1202:
 1202: CD 0B 50    call $500B
 1205: CD B0 10    call $10B0
 1208: CD C6 57    call $57C6
 120B: CD 01 58    call $5801
 120E: C3 3E 12    jp   $123E
+
+game_running_1211:
 1211: CD C3 03    call $03C3
 1214: CD 70 15    call $1570
 1217: CD 5C 61    call $615C
@@ -2470,16 +2486,25 @@ handle_elevators_0EBF:
 1220: CD B0 10    call $10B0
 1223: CD 01 58    call $5801
 1226: C3 3E 12    jp   $123E
+
+ground_floor_reached_1229:
 1229: CD 7A 0E    call $0E7A
-122C: C3 11 12    jp   $1211
+122C: C3 11 12    jp   game_running_1211
+
+next_life_122F:
 122F: CD CA 26    call $26CA
 1232: C3 3E 12    jp   $123E
+
+game_over_1235:
 1235: CD B0 10    call $10B0
 1238: C3 3E 12    jp   $123E
+
+insert_coint_screen_123B:
 123B: C3 3E 12    jp   $123E
+
 123E: 3A A9 80    ld   a,($80A9)
 1241: 3D          dec  a
-1242: 32 AA 80    ld   ($80AA),a
+1242: 32 AA 80    ld   (timer_8bit_80AA),a
 1245: AF          xor  a
 1246: 32 AB 80    ld   ($80AB),a
 1249: 3A EA 82    ld   a,($82EA)
@@ -5880,8 +5905,8 @@ handle_enemies_12A2:
 2687: 10 F9       djnz $2682
 2689: 0D          dec  c
 268A: C2 82 26    jp   nz,$2682
-268D: 3E 07       ld   a,$07
-268F: 32 AC 80    ld   ($80AC),a
+268D: 3E 07       ld   a,state_next_life_07
+268F: 32 AC 80    ld   (game_state_80AC),a
 2692: 3E 01       ld   a,$01
 2694: 32 A9 80    ld   ($80A9),a
 2697: CD C2 26    call $26C2
@@ -5911,7 +5936,7 @@ init_video_269E:
 
 26C2: 3A A9 80    ld   a,($80A9)
 26C5: 3D          dec  a
-26C6: 32 AA 80    ld   ($80AA),a
+26C6: 32 AA 80    ld   (timer_8bit_80AA),a
 26C9: C9          ret
 26CA: 3A D9 81    ld   a,($81D9)
 26CD: B7          or   a
@@ -6316,13 +6341,13 @@ init_video_269E:
 297C: CD 8E 29    call $298E
 297F: 21 2C 01    ld   hl,$012C
 2982: 22 2F 82    ld   ($822F),hl
-2985: 3E 09       ld   a,$09
-2987: 32 AC 80    ld   ($80AC),a
+2985: 3E 09       ld   a,state_insert_coin_09
+2987: 32 AC 80    ld   (game_state_80AC),a
 298A: CD C2 26    call $26C2
 298D: C9          ret
-298E: 21 02 2A    ld   hl,$2A02
+298E: 21 02 2A    ld   hl,table_2A02
 2991: 11 89 C5    ld   de,$C589
-2994: CD F9 29    call $29F9
+2994: CD F9 29    call copy_bytes_to_screen_29F9
 2997: 3A 50 82    ld   a,($8250)
 299A: CB 67       bit  4,a
 299C: C0          ret  nz
@@ -6330,13 +6355,13 @@ init_video_269E:
 299F: 20 25       jr   nz,$29C6
 29A1: 21 13 2A    ld   hl,$2A13
 29A4: 11 EA C5    ld   de,$C5EA
-29A7: CD F9 29    call $29F9
+29A7: CD F9 29    call copy_bytes_to_screen_29F9
 29AA: 2A A5 80    ld   hl,($80A5)
 29AD: 11 28 C6    ld   de,$C628
 29B0: CD D0 29    call $29D0
 29B3: 21 22 2A    ld   hl,$2A22
 29B6: 11 89 C6    ld   de,$C689
-29B9: CD F9 29    call $29F9
+29B9: CD F9 29    call copy_bytes_to_screen_29F9
 29BC: 2A A7 80    ld   hl,($80A7)
 29BF: 11 C8 C6    ld   de,$C6C8
 29C2: CD D0 29    call $29D0
@@ -6353,7 +6378,7 @@ init_video_269E:
 29D6: 13          inc  de
 29D7: 13          inc  de
 29D8: 21 32 2A    ld   hl,$2A32
-29DB: CD F9 29    call $29F9
+29DB: CD F9 29    call copy_bytes_to_screen_29F9
 29DE: 0D          dec  c
 29DF: 28 03       jr   z,$29E4
 29E1: 3E 2D       ld   a,$2D
@@ -6366,20 +6391,23 @@ init_video_269E:
 29EA: 12          ld   (de),a
 29EB: 13          inc  de
 29EC: 13          inc  de
-29ED: 21 37 2A    ld   hl,$2A37
-29F0: CD F9 29    call $29F9
+29ED: 21 37 2A    ld   hl,table_2A37
+29F0: CD F9 29    call copy_bytes_to_screen_29F9
 29F3: 05          dec  b
 29F4: C8          ret  z
 29F5: 3E 2D       ld   a,$2D
 29F7: 12          ld   (de),a
 29F8: C9          ret
+
+copy_bytes_to_screen_29F9:
 29F9: 7E          ld   a,(hl)
 29FA: FE FF       cp   $FF
 29FC: C8          ret  z
 29FD: 12          ld   (de),a
 29FE: 23          inc  hl
 29FF: 13          inc  de
-2A00: 18 F7       jr   $29F9
+2A00: 18 F7       jr   copy_bytes_to_screen_29F9
+
 2A02: 2C          inc  l
 2A03: 25          dec  h
 2A04: 2D          dec  l
@@ -6419,12 +6447,13 @@ init_video_269E:
 2A34: 2C          inc  l
 2A35: 25          dec  h
 2A36: FF          rst  $38
-2A37: 2E 1F       ld   l,$1F
-2A39: 1E 30       ld   e,$30
-2A3B: 2C          inc  l
-2A3C: 31 FF 21    ld   sp,$21FF
-2A3F: 00          nop
-2A40: 00          nop
+
+table_2A37:
+    dc.b  2E 1F
+    dc.b  1E 30
+    dc.b  2C   
+    dc.b  31 FF
+
 2A41: 22 31 82    ld   (timer_16bit_8231),hl
 2A44: 3E 04       ld   a,$04
 2A46: 32 33 82    ld   ($8233),a
@@ -6954,8 +6983,8 @@ init_video_269E:
 2E34: 3E 01       ld   a,$01
 2E36: 32 D9 81    ld   ($81D9),a
 2E39: CD 0C 26    call $260C
-2E3C: 3E 03       ld   a,$03
-2E3E: 32 AC 80    ld   ($80AC),a
+2E3C: 3E 03       ld   a,state_push_start_03
+2E3E: 32 AC 80    ld   (game_state_80AC),a
 2E41: 3E 01       ld   a,$01
 2E43: 32 A9 80    ld   ($80A9),a
 2E46: CD 39 58    call $5839
@@ -7007,7 +7036,7 @@ init_video_269E:
 2EB5: C9          ret
 2EB6: 21 E0 2E    ld   hl,$2EE0
 2EB9: 11 4E C5    ld   de,$C54E
-2EBC: CD F9 29    call $29F9
+2EBC: CD F9 29    call copy_bytes_to_screen_29F9
 2EBF: 3A 4E 82    ld   a,($824E)
 2EC2: CB 57       bit  2,a
 2EC4: 20 10       jr   nz,$2ED6
@@ -7016,11 +7045,11 @@ init_video_269E:
 2ECA: 20 0A       jr   nz,$2ED6
 2ECC: 21 E5 2E    ld   hl,$2EE5
 2ECF: 11 A4 C5    ld   de,$C5A4
-2ED2: CD F9 29    call $29F9
+2ED2: CD F9 29    call copy_bytes_to_screen_29F9
 2ED5: C9          ret
 2ED6: 21 FD 2E    ld   hl,$2EFD
 2ED9: 11 A4 C5    ld   de,$C5A4
-2EDC: CD F9 29    call $29F9
+2EDC: CD F9 29    call copy_bytes_to_screen_29F9
 2EDF: C9          ret
 2EE0: 1A          ld   a,(de)
 2EE1: 22 2D 2B    ld   ($2B2D),hl
@@ -7395,17 +7424,17 @@ handle_player_30CF:
 31A9: C2 65 32    jp   nz,$3265
 31AC: C9          ret
 31AD: 3E FF       ld   a,$FF
-31AF: 32 40 82    ld   ($8240),a
+31AF: 32 40 82    ld   (lamp_shot_state_8240),a
 31B2: 32 64 81    ld   ($8164),a
 31B5: AF          xor  a
 31B6: 32 42 82    ld   ($8242),a
 31B9: C9          ret
 
 shot_lamp_collision_31BA:
-31BA: 3A 40 82    ld   a,($8240)
+31BA: 3A 40 82    ld   a,(lamp_shot_state_8240)
 31BD: 3C          inc  a
 31BE: C8          ret  z
-31BF: 32 40 82    ld   ($8240),a
+31BF: 32 40 82    ld   (lamp_shot_state_8240),a
 31C2: 3D          dec  a
 31C3: CA E1 31    jp   z,$31E1
 31C6: FE 03       cp   $03
@@ -7466,7 +7495,7 @@ shot_lamp_collision_31BA:
 3236: D6 02       sub  $02
 3238: 77          ld   (hl),a
 3239: 23          inc  hl
-323A: 3A 40 82    ld   a,($8240)
+323A: 3A 40 82    ld   a,(lamp_shot_state_8240)
 323D: 1F          rra
 323E: E6 01       and  $01
 3240: C6 04       add  a,$04
@@ -7476,7 +7505,7 @@ shot_lamp_collision_31BA:
 3249: B7          or   a
 324A: C8          ret  z
 324B: 3E 15       ld   a,$15
-324D: 32 40 82    ld   ($8240),a
+324D: 32 40 82    ld   (lamp_shot_state_8240),a
 3250: C9          ret
 3251: 21 66 81    ld   hl,$8166
 3254: 3A 04 80    ld   a,($8004)
@@ -7485,7 +7514,7 @@ shot_lamp_collision_31BA:
 3259: 90          sub  b
 325A: 77          ld   (hl),a
 325B: 23          inc  hl
-325C: 3A 40 82    ld   a,($8240)
+325C: 3A 40 82    ld   a,(lamp_shot_state_8240)
 325F: E6 01       and  $01
 3261: C6 04       add  a,$04
 3263: 77          ld   (hl),a
@@ -7643,7 +7672,7 @@ bootup_338f:
 33AE: ED B0       ldir
 33B0: AF          xor  a
 33B1: 32 AB 80    ld   ($80AB),a
-33B4: 32 AC 80    ld   ($80AC),a
+33B4: 32 AC 80    ld   (game_state_80AC),a
 33B7: 3E FF       ld   a,$FF
 33B9: 32 80 80    ld   ($8080),a
 33BC: CD 9F 77    call $779F
@@ -9784,8 +9813,10 @@ is_jumping_43F5:
 45DD: CD CE 62    call $62CE
 45E0: FD 36 07 02 ld   (iy+$07),$02
 45E4: C9          ret
-45E5: 3E 06       ld   a,$06
-45E7: 32 AC 80    ld   ($80AC),a
+
+ground_floor_reached_45E5:
+45E5: 3E 06       ld   a,state_ground_floor_reached_06
+45E7: 32 AC 80    ld   (game_state_80AC),a
 45EA: 21 81 80    ld   hl,$8081
 45ED: 3A 2D 80    ld   a,($802D)
 45F0: 3C          inc  a
@@ -9798,8 +9829,7 @@ is_jumping_43F5:
 45FC: DD 36 0D 00 ld   (ix+move_direction_0d),$00
 4600: CD CE 62    call $62CE
 4603: C3 52 63    jp   $6352
-4606: 00          nop
-4607: 00          nop
+
 4608: CD 7F 01    call handle_main_scrolling_017F
 460B: CD BF 0E    call handle_elevators_0EBF
 460E: CD A2 12    call handle_enemies_12A2
@@ -10707,8 +10737,9 @@ is_jumping_43F5:
 4E0D: CD 3F 36    call $363F
 4E10: CD 14 4E    call $4E14
 4E13: C9          ret
-4E14: 3E 05       ld   a,$05
-4E16: 32 AC 80    ld   ($80AC),a
+
+4E14: 3E 05       ld   a,state_ingame_05
+4E16: 32 AC 80    ld   (game_state_80AC),a
 4E19: CD 3A 2F    call $2F3A
 4E1C: CD AD 31    call $31AD
 4E1F: CD 87 12    call $1287
@@ -10757,8 +10788,8 @@ is_jumping_43F5:
 4E85: AF          xor  a
 4E86: 32 D9 81    ld   ($81D9),a
 4E89: CD 0C 26    call $260C
-4E8C: 3E 04       ld   a,$04
-4E8E: 32 AC 80    ld   ($80AC),a
+4E8C: 3E 04       ld   a,state_game_starting_04
+4E8E: 32 AC 80    ld   (game_state_80AC),a
 4E91: CD 3E 2A    call $2A3E
 4E94: CD 2E 58    call $582E
 4E97: CD 00 27    call $2700
@@ -11992,7 +12023,7 @@ is_jumping_43F5:
 581C: C9          ret
 581D: 21 27 58    ld   hl,$5827
 5820: 11 A1 C7    ld   de,$C7A1
-5823: CD F9 29    call $29F9
+5823: CD F9 29    call copy_bytes_to_screen_29F9
 5826: C9          ret
 5827: 25          dec  h
 5828: 2F          cpl
@@ -14321,16 +14352,16 @@ is_jumping_43F5:
 690B: 32 74 87    ld   ($8774),a
 690E: FE 08       cp   $08
 6910: D2 31 6A    jp   nc,$6A31
-6913: DD 7E 00    ld   a,(ix+character_x_00)
+6913: DD 7E 00    ld   a,(ix+$00)
 6916: E6 70       and  $70
 6918: CA 31 6A    jp   z,$6A31
-691B: DD 4E 00    ld   c,(ix+character_x_00)
+691B: DD 4E 00    ld   c,(ix+$00)
 691E: CD 58 6A    call $6A58
 6921: DA 25 6A    jp   c,$6A25
 6924: CD EC 67    call $67EC
 6927: DD E5       push ix
 6929: DD 2A 75 87 ld   ix,($8775)
-692D: DD 7E 0D    ld   a,(ix+move_direction_0d)
+692D: DD 7E 0D    ld   a,(ix+$0d)
 6930: A3          and  e
 6931: C2 03 6A    jp   nz,$6A03
 6934: DD 7E 0E    ld   a,(ix+$0e)
@@ -14341,7 +14372,7 @@ is_jumping_43F5:
 6940: FD 7E 00    ld   a,(iy+$00)
 6943: E6 0F       and  $0F
 6945: C2 01 6A    jp   nz,$6A01
-6948: DD 7E 01    ld   a,(ix+character_x_right_01)
+6948: DD 7E 01    ld   a,(ix+$01)
 694B: E6 F0       and  $F0
 694D: CB 3F       srl  a
 694F: CB 3F       srl  a
@@ -14377,7 +14408,7 @@ is_jumping_43F5:
 6987: 18 4A       jr   $69D3
 6989: CD 8D 6A    call $6A8D
 698C: 30 18       jr   nc,$69A6
-698E: DD 7E 03    ld   a,(ix+character_y_offset_03)
+698E: DD 7E 03    ld   a,(ix+$03)
 6991: 2F          cpl
 6992: 6F          ld   l,a
 6993: 26 FF       ld   h,$FF
@@ -14406,7 +14437,7 @@ is_jumping_43F5:
 69CB: CD 51 6B    call $6B51
 69CE: 18 03       jr   $69D3
 69D0: CD 7E 6B    call $6B7E
-69D3: DD 4E 00    ld   c,(ix+character_x_00)
+69D3: DD 4E 00    ld   c,(ix+0x00)
 69D6: DD E5       push ix
 69D8: 79          ld   a,c
 69D9: E6 0F       and  $0F
@@ -14566,6 +14597,7 @@ is_jumping_43F5:
 6B0B: 37          scf
 6B0C: 3F          ccf
 6B0D: C9          ret
+
 6B0E: FD CB 00 76 bit  6,(iy+$00)
 6B12: 28 1F       jr   z,$6B33
 6B14: CD 8D 6A    call $6A8D
@@ -14592,6 +14624,7 @@ is_jumping_43F5:
 6B4B: FD CB 00 AE res  5,(iy+$00)
 6B4F: 19          add  hl,de
 6B50: C9          ret
+
 6B51: FD CB 00 76 bit  6,(iy+$00)
 6B55: 28 14       jr   z,$6B6B
 6B57: CD 8D 6A    call $6A8D
@@ -14608,6 +14641,7 @@ is_jumping_43F5:
 6B78: FD 36 01 00 ld   (iy+$01),$00
 6B7C: EB          ex   de,hl
 6B7D: C9          ret
+
 6B7E: DD 6E 02    ld   l,(ix+$02)
 6B81: DD 66 03    ld   h,(ix+character_y_offset_03)
 6B84: FD 4E 01    ld   c,(iy+$01)
@@ -14662,8 +14696,8 @@ is_jumping_43F5:
 70EE: 3E 01       ld   a,$01
 70F0: 32 EA 82    ld   ($82EA),a
 70F3: CD 3A 71    call $713A
-70F6: 3E 00       ld   a,$00
-70F8: 32 AC 80    ld   ($80AC),a
+70F6: 3E 00       ld   a,state_unknown_00
+70F8: 32 AC 80    ld   (game_state_80AC),a
 70FB: 3E 20       ld   a,$20
 70FD: 32 0E D5    ld   ($D50E),a
 7100: 32 4D 82    ld   ($824D),a
@@ -14672,7 +14706,7 @@ is_jumping_43F5:
 7108: CD 4D 36    call $364D
 710B: 21 5A 71    ld   hl,$715A
 710E: 11 EE C5    ld   de,$C5EE
-7111: CD F9 29    call $29F9
+7111: CD F9 29    call copy_bytes_to_screen_29F9
 7114: 3E 5A       ld   a,$5A
 7116: 32 C5 85    ld   ($85C5),a
 7119: CD C2 26    call $26C2
@@ -14743,8 +14777,8 @@ is_jumping_43F5:
 71A1: 3E 01       ld   a,$01
 71A3: 32 D9 81    ld   ($81D9),a
 71A6: CD 0C 26    call $260C
-71A9: 3E 01       ld   a,$01
-71AB: 32 AC 80    ld   ($80AC),a
+71A9: 3E 01       ld   a,state_title_01
+71AB: 32 AC 80    ld   (game_state_80AC),a
 71AE: 3E 01       ld   a,$01
 71B0: 32 A9 80    ld   ($80A9),a
 71B3: CD 39 58    call $5839
@@ -15393,8 +15427,8 @@ is_jumping_43F5:
 7690: CD CA 30    call $30CA
 7693: 3A 33 82    ld   a,($8233)
 7696: 32 A9 80    ld   ($80A9),a
-7699: 3E 05       ld   a,$05
-769B: 32 AC 80    ld   ($80AC),a
+7699: 3E 05       ld   a,state_ingame_05
+769B: 32 AC 80    ld   (game_state_80AC),a
 769E: CD C2 26    call $26C2
 76A1: C9          ret
 
@@ -15424,6 +15458,7 @@ is_jumping_43F5:
 76DA: 3E 01       ld   a,$01
 76DC: 32 45 86    ld   ($8645),a
 76DF: 18 00       jr   $76E1
+
 76E1: CD F6 76    call $76F6
 76E4: CD C2 26    call $26C2
 76E7: CD CF 73    call $73CF
@@ -15441,8 +15476,8 @@ is_jumping_43F5:
 76FD: 3E 01       ld   a,$01
 76FF: 32 D9 81    ld   ($81D9),a
 7702: CD 0C 26    call $260C
-7705: 3E 08       ld   a,$08
-7707: 32 AC 80    ld   ($80AC),a
+7705: 3E 08       ld   a,state_game_over_08
+7707: 32 AC 80    ld   (game_state_80AC),a
 770A: 3E 02       ld   a,$02
 770C: 32 A9 80    ld   ($80A9),a
 770F: CD 39 58    call $5839
@@ -15466,7 +15501,7 @@ is_jumping_43F5:
 7736: 20 15       jr   nz,$774D
 7738: 21 65 77    ld   hl,$7765
 773B: 11 AB C5    ld   de,$C5AB
-773E: CD F9 29    call $29F9
+773E: CD F9 29    call copy_bytes_to_screen_29F9
 7741: 3E CA       ld   a,$CA
 7743: 32 0B D5    ld   ($D50B),a
 7746: 21 78 00    ld   hl,$0078
@@ -15474,7 +15509,7 @@ is_jumping_43F5:
 774C: C9          ret
 774D: 21 6F 77    ld   hl,$776F
 7750: 11 27 C6    ld   de,$C627
-7753: CD F9 29    call $29F9
+7753: CD F9 29    call copy_bytes_to_screen_29F9
 7756: 3A 36 82    ld   a,($8236)
 7759: C6 11       add  a,$11
 775B: 32 2E C6    ld   ($C62E),a
@@ -15506,7 +15541,7 @@ is_jumping_43F5:
 7782: FF          rst  $38
 7783: 21 95 77    ld   hl,$7795
 7786: 11 CC C5    ld   de,$C5CC
-7789: CD F9 29    call $29F9
+7789: CD F9 29    call copy_bytes_to_screen_29F9
 778C: 3A 36 82    ld   a,($8236)
 778F: C6 11       add  a,$11
 7791: 32 D3 C5    ld   ($C5D3),a
