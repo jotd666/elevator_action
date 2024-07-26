@@ -23,9 +23,14 @@
 ;	map(0xd40d, 0xd40d).mirror(0x00f0).portr("IN4");
 ;	map(0xd40e, 0xd40f).mirror(0x00f0).w(m_ay[0], FUNC(ay8910_device::address_data_w));
 ;	map(0xd40f, 0xd40f).mirror(0x00f0).r(m_ay[0], FUNC(ay8910_device::data_r));   // DSW2 and DSW3
+; D500: horiz scroll of layer 1 (score)
+; D501: vertical scroll of layer 1 (score)
+; D502: horiz scroll of layer 2 (building)
+; D503: vertical scroll of layer 2 (building)
+; D502: horiz scroll of layer 3 (elevators)
 ;	map(0xd500, 0xd505).mirror(0x00f0).writeonly().share(m_scroll);
 ;	map(0xd506, 0xd507).mirror(0x00f0).writeonly().share(m_colorbank);
-;	map(0xd508, 0xd508).mirror(0x00f0).w(FUNC(taitosj_state::collision_reg_clear_w));
+;	map(0xd508, 0xd508).mirror(0x00f0).w(FUNC(taitosj_state::collision_reg_clear_w)); NOT USED!!
 ;	map(0xd509, 0xd50a).mirror(0x00f0).writeonly().share(m_gfxpointer);
 ;	map(0xd50b, 0xd50b).mirror(0x00f0).w(FUNC(taitosj_state::soundlatch_w));
 ;	map(0xd50c, 0xd50c).mirror(0x00f0).w(FUNC(taitosj_state::sound_semaphore2_w));
@@ -34,9 +39,20 @@
 ;	map(0xd50f, 0xd50f).mirror(0x00f0).nopw();
 ;	map(0xd600, 0xd600).mirror(0x00ff).writeonly().share(m_video_mode);
 
+; character struct offsets
+character_x_00 = 0x0
+character_x_right_01 = 0x1
+character_y_offset_03 = 0x3
 character_state_04 = 0x4
 character_delta_x_05 = 0x5
+current_floor_07 = 0x7
+associated_elevator_08 = 0x8
 move_direction_0d = 0xd
+
+; elevator structs offsets
+current_floor_01 = 0x1
+max_floor_02 = 0x2
+min_floor_03 = 0x3
 
 state_unknown_00 = 0
 state_title_01 = 1
@@ -295,10 +311,10 @@ handle_main_scrolling_017F:
 01DD: 0E 00       ld   c,$00
 01DF: 16 06       ld   d,$06
 01E1: C3 6C 1E    jp   $1E6C
-01E4: CD CE 62    call $62CE
+01E4: CD CE 62    call load_character_elevator_structure_62CE
 01E7: FD 46 01    ld   b,(iy+$01)
 01EA: C3 F4 01    jp   $01F4
-01ED: CD CE 62    call $62CE
+01ED: CD CE 62    call load_character_elevator_structure_62CE
 01F0: FD 46 01    ld   b,(iy+$01)
 01F3: 04          inc  b
 01F4: 0E 00       ld   c,$00
@@ -365,7 +381,7 @@ handle_main_scrolling_017F:
 0257: 21 80 5F    ld   hl,$5F80
 025A: 19          add  hl,de
 025B: D5          push de
-025C: 22 09 D5    ld   ($D509),hl
+025C: 22 09 D5    ld   (gfx_pointer_d509),hl
 025F: 11 08 80    ld   de,$8008
 0262: 21 04 D4    ld   hl,$D404
 0265: 06 20       ld   b,$20
@@ -1121,7 +1137,7 @@ C4 FF DD    call nz,$DDFF
 07C2: 87          add  a,a
 07C3: 5F          ld   e,a
 07C4: 16 00       ld   d,$00
-07C6: FD 21 7D 83 ld   iy,$837D
+07C6: FD 21 7D 83 ld   iy,elevator_array_837D
 07CA: FD 19       add  iy,de
 07CC: C9          ret
 07CD: 4F          ld   c,a
@@ -1336,7 +1352,7 @@ enemy_shot_collision_08F8:
 0956: D0          ret  nc
 0957: 06 01       ld   b,$01
 0959: C3 CD 07    jp   $07CD
-095C: 21 7D 83    ld   hl,$837D
+095C: 21 7D 83    ld   hl,elevator_array_837D
 095F: FD 7E 08    ld   a,(iy+$08)
 0962: E6 7F       and  $7F
 0964: 87          add  a,a
@@ -3953,7 +3969,7 @@ handle_enemies_12A2:
 1B6B: D2 20 1B    jp   nc,$1B20
 1B6E: CD 9E 1B    call $1B9E
 1B71: C3 1C 1B    jp   $1B1C
-1B74: CD CE 62    call $62CE
+1B74: CD CE 62    call load_character_elevator_structure_62CE
 1B77: CD AA 1B    call $1BAA
 1B7A: FD 7E 00    ld   a,(iy+$00)
 1B7D: FE 10       cp   $10
@@ -5877,24 +5893,25 @@ handle_enemies_12A2:
 2612: 32 00 D6    ld   (video_mode_d600),a
 2615: 32 AB 80    ld   ($80AB),a
 2618: CD 9E 26    call init_video_269E
+; write 0 in scroll registers
 261B: 32 01 D5    ld   ($D501),a
 261E: 32 03 D5    ld   ($D503),a
 2621: 32 05 D5    ld   ($D505),a
 2624: 3E 10       ld   a,$10
-2626: 32 06 D5    ld   ($D506),a
+2626: 32 06 D5    ld   (colorbank_D506),a
 2629: 3E 32       ld   a,$32
-262B: 32 07 D5    ld   ($D507),a
+262B: 32 07 D5    ld   (colorbank_D507),a
 262E: 3A D8 81    ld   a,($81D8)
 2631: B7          or   a
 2632: 20 10       jr   nz,$2644
 2634: 3E 0D       ld   a,$0D
-2636: 32 00 D5    ld   ($D500),a
+2636: 32 00 D5    ld   (scroll_d500),a
 2639: 3E 16       ld   a,$16
 263B: 32 02 D5    ld   ($D502),a
 263E: 32 04 D5    ld   ($D504),a
 2641: C3 51 26    jp   $2651
 2644: 3E FD       ld   a,$FD
-2646: 32 00 D5    ld   ($D500),a
+2646: 32 00 D5    ld   (scroll_d500),a
 2649: 3E F5       ld   a,$F5
 264B: 32 02 D5    ld   ($D502),a
 264E: 32 04 D5    ld   ($D504),a
@@ -5904,7 +5921,7 @@ handle_enemies_12A2:
 2658: 3D          dec  a
 2659: CA 76 26    jp   z,$2676
 265C: 21 00 00    ld   hl,$0000
-265F: 22 09 D5    ld   ($D509),hl
+265F: 22 09 D5    ld   (gfx_pointer_d509),hl
 2662: 11 00 90    ld   de,$9000
 2665: 01 30 00    ld   bc,$0030
 2668: 3A 04 D4    ld   a,($D404)
@@ -5916,7 +5933,7 @@ handle_enemies_12A2:
 2673: C3 8D 26    jp   $268D
 
 2676: 21 00 30    ld   hl,$3000
-2679: 22 09 D5    ld   ($D509),hl
+2679: 22 09 D5    ld   (gfx_pointer_d509),hl
 267C: 11 00 90    ld   de,$9000
 267F: 01 30 00    ld   bc,$0030
 2682: 3A 04 D4    ld   a,($D404)
@@ -6544,7 +6561,7 @@ credit_string_2A37:
 2AA3: CD 99 0F    call $0F99
 2AA6: CD 08 2C    call $2C08
 2AA9: C9          ret
-2AAA: DD 21 7D 83 ld   ix,$837D
+2AAA: DD 21 7D 83 ld   ix,elevator_array_837D
 2AAE: 11 D7 2A    ld   de,$2AD7
 2AB1: 06 00       ld   b,$00
 2AB3: 1A          ld   a,(de)
@@ -6603,7 +6620,7 @@ credit_string_2A37:
 2B0B: D1          pop  de
 2B0C: 11 71 71    ld   de,$7171
 2B0F: 71          ld   (hl),c
-2B10: 21 7D 83    ld   hl,$837D
+2B10: 21 7D 83    ld   hl,elevator_array_837D
 2B13: 06 0B       ld   b,$0B
 2B15: 11 08 00    ld   de,$0008
 2B18: 36 00       ld   (hl),$00
@@ -6868,7 +6885,7 @@ credit_string_2A37:
 2CDF: 10 B7       djnz $2C98
 2CE1: C9          ret
 2CE2: DD 21 D5 83 ld   ix,$83D5
-2CE6: FD 21 7D 83 ld   iy,$837D
+2CE6: FD 21 7D 83 ld   iy,elevator_array_837D
 2CEA: 06 0B       ld   b,$0B
 2CEC: FD 7E 06    ld   a,(iy+$06)
 2CEF: DD 77 0E    ld   (ix+$0e),a
@@ -6878,7 +6895,7 @@ credit_string_2A37:
 2CFA: FD 19       add  iy,de
 2CFC: 10 EE       djnz $2CEC
 2CFE: C9          ret
-2CFF: DD 21 7D 83 ld   ix,$837D
+2CFF: DD 21 7D 83 ld   ix,elevator_array_837D
 2D03: FD 21 D5 83 ld   iy,$83D5
 2D07: 06 0B       ld   b,$0B
 2D09: C5          push bc
@@ -6923,7 +6940,7 @@ credit_string_2A37:
 2D51: C9          ret
 
 2D52: DD 21 D5 83 ld   ix,$83D5
-2D56: FD 21 7D 83 ld   iy,$837D
+2D56: FD 21 7D 83 ld   iy,elevator_array_837D
 2D5A: 06 07       ld   b,$07
 2D5C: C5          push bc
 2D5D: CD 77 2D    call $2D77
@@ -7208,6 +7225,7 @@ one_or_two_players_button_string_2EFD:
 2F6E: 19          add  hl,de
 2F6F: 10 FA       djnz $2F6B
 2F71: C9          ret
+
 2F72: CD A9 46    call $46A9
 2F75: 06 0A       ld   b,$0A
 2F77: 36 FF       ld   (hl),$FF
@@ -7350,6 +7368,7 @@ initial_player_structure_2F9C
 307C: 3C          inc  a
 307D: CD 56 36    call $3656
 3080: C9          ret
+
 3081: DD 21 3A 85 ld   ix,enemy_1_853A
 3085: 3E 01       ld   a,$01
 3087: 32 BA 85    ld   ($85BA),a
@@ -7379,6 +7398,7 @@ initial_player_structure_2F9C
 30C4: FE 05       cp   $05
 30C6: C2 99 30    jp   nz,$3099
 30C9: C9          ret
+
 30CA: AF          xor  a
 30CB: 32 3A 82    ld   (shoot_gun_requested_823A),a
 30CE: C9          ret
@@ -7593,9 +7613,9 @@ shot_lamp_collision_31BA:
 3265: 3E FF       ld   a,$FF
 3267: 32 64 81    ld   ($8164),a
 326A: 3E 30       ld   a,$30
-326C: 32 06 D5    ld   ($D506),a
+326C: 32 06 D5    ld   (colorbank_D506),a
 326F: 3E 22       ld   a,$22
-3271: 32 07 D5    ld   ($D507),a
+3271: 32 07 D5    ld   (colorbank_D507),a
 3274: 3E 01       ld   a,$01
 3276: 32 42 82    ld   ($8242),a
 3279: 3A 3B 82    ld   a,($823B)
@@ -7612,9 +7632,9 @@ shot_lamp_collision_31BA:
 3291: C9          ret
 3292: CD AD 31    call $31AD
 3295: 3E 10       ld   a,$10
-3297: 32 06 D5    ld   ($D506),a
+3297: 32 06 D5    ld   (colorbank_D506),a
 329A: 3E 32       ld   a,$32
-329C: 32 07 D5    ld   ($D507),a
+329C: 32 07 D5    ld   (colorbank_D507),a
 329F: 3A 3B 82    ld   a,($823B)
 32A2: B7          or   a
 32A3: C0          ret  nz
@@ -7751,7 +7771,7 @@ bootup_338f:
 33C2: 01 0A 00    ld   bc,$000A
 33C5: FB          ei
 33C6: C2 C5 34    jp   nz,$34C5
-33C9: CD AC 34    call $34AC
+33C9: CD AC 34    call rom_checksum_34AC
 33CC: 32 80 80    ld   ($8080),a
 33CF: 32 C6 85    ld   ($85C6),a
 33D2: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
@@ -7829,10 +7849,10 @@ bootup_338f:
 3468: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
 346B: E6 03       and  $03
 346D: 3C          inc  a
-346E: 21 9D 34    ld   hl,$349D
+346E: 21 9D 34    ld   hl,table_34A0-3
 3471: 23          inc  hl
 3472: 23          inc  hl
-3473: 23          inc  hl
+3473: 23          inc  hl		; kind of hides table_34A0
 3474: 3D          dec  a
 3475: 20 FA       jr   nz,$3471
 3477: 11 70 83    ld   de,$8370
@@ -7857,18 +7877,22 @@ bootup_338f:
 349C: 23          inc  hl
 349D: 10 FC       djnz $349B
 349F: C9          ret
-34A0: 00          nop
-34A1: 00          nop
-34A2: 01 00 50    ld   bc,$5000
-34A5: 01 00 00    ld   bc,$0000
-34A8: 02          ld   (bc),a
-34A9: 00          nop
-34AA: 50          ld   d,b
-34AB: 02          ld   (bc),a
+
+table_34A0:
+	dc.b	00         
+	dc.b	00         
+	dc.b	01 00 50   
+	dc.b	01 00 00   
+	dc.b	02         
+	dc.b	00         
+	dc.b	50         
+	dc.b	02         
+
 34AC: 00          nop
 34AD: 06 00       ld   b,$00
 34AF: 60          ld   h,b
 34B0: 68          ld   l,b
+; checksum ROM 0-$8000
 34B1: 7E          ld   a,(hl)
 34B2: 80          add  a,b
 34B3: 47          ld   b,a
@@ -8079,9 +8103,9 @@ bootup_338f:
 3664: B7          or   a
 3665: C2 6B 36    jp   nz,$366B
 3668: C3 C5 46    jp   $46C5
-366B: CD CE 62    call $62CE
-366E: FD 46 01    ld   b,(iy+$01)
-3671: DD 7E 03    ld   a,(ix+character_y_offset_03)
+366B: CD CE 62    call load_character_elevator_structure_62CE
+366E: FD 46 01    ld   b,(iy+current_floor_01)        ; 83CE: elevator current floor
+3671: DD 7E 03    ld   a,(ix+$03)
 3674: FD 86 00    add  a,(iy+$00)
 3677: FE 30       cp   $30
 3679: 30 01       jr   nc,$367C
@@ -8094,14 +8118,14 @@ bootup_338f:
 3686: 28 02       jr   z,$368A
 3688: 05          dec  b
 3689: 05          dec  b
-368A: DD 70 07    ld   (ix+$07),b
+368A: DD 70 07    ld   (ix+$07),b		; set current floor for current elevator?
 368D: CD E9 37    call $37E9
 3690: DD 7E 09    ld   a,(ix+$09)
 3693: FE 05       cp   $05
 3695: C8          ret  z
-3696: DD 46 00    ld   b,(ix+character_x_00)
-3699: DD 4E 01    ld   c,(ix+character_x_right_01)
-369C: FD 56 04    ld   d,(iy+character_state_04)
+3696: DD 46 00    ld   b,(ix$00)
+3699: DD 4E 01    ld   c,(ix+$01)
+369C: FD 56 04    ld   d,(iy+$04)
 369F: FD 5E 05    ld   e,(iy+$05)
 36A2: 7B          ld   a,e
 36A3: 91          sub  c
@@ -8454,7 +8478,7 @@ bootup_338f:
 3957: DD 7E 08    ld   a,(ix+$08)
 395A: E6 80       and  $80
 395C: C0          ret  nz
-395D: CD CE 62    call $62CE
+395D: CD CE 62    call load_character_elevator_structure_62CE
 3960: FD 7E 02    ld   a,(iy+$02)
 3963: FD 96 01    sub  (iy+$01)
 3966: FE 02       cp   $02
@@ -8471,7 +8495,7 @@ bootup_338f:
 397F: DD 7E 08    ld   a,(ix+$08)
 3982: FE 0C       cp   $0C
 3984: C8          ret  z
-3985: CD CE 62    call $62CE
+3985: CD CE 62    call load_character_elevator_structure_62CE
 3988: FD 7E 06    ld   a,(iy+$06)
 398B: 87          add  a,a
 398C: DD 86 07    add  a,(ix+$07)
@@ -8535,7 +8559,7 @@ bootup_338f:
 3A02: C6 08       add  a,$08
 3A04: DD 77 01    ld   (ix+character_x_right_01),a
 3A07: C9          ret
-3A08: CD CE 62    call $62CE
+3A08: CD CE 62    call load_character_elevator_structure_62CE
 3A0B: FD 7E 03    ld   a,(iy+$03)
 3A0E: DD BE 07    cp   (ix+$07)
 3A11: C8          ret  z
@@ -8544,7 +8568,7 @@ bootup_338f:
 3A1A: DD 36 06 03 ld   (ix+$06),$03
 3A1E: C9          ret
 3A1F: DD 77 08    ld   (ix+$08),a
-3A22: CD CE 62    call $62CE
+3A22: CD CE 62    call load_character_elevator_structure_62CE
 3A25: DD 7E 07    ld   a,(ix+$07)
 3A28: FD BE 03    cp   (iy+$03)
 3A2B: 28 1E       jr   z,$3A4B
@@ -8607,7 +8631,7 @@ bootup_338f:
 3AB1: DD 77 01    ld   (ix+character_x_right_01),a
 3AB4: C9          ret
 3AB5: DD 36 05 00 ld   (ix+character_delta_x_05),$00
-3AB9: CD CE 62    call $62CE
+3AB9: CD CE 62    call load_character_elevator_structure_62CE
 3ABC: DD 7E 00    ld   a,(ix+character_x_00)
 3ABF: FD BE 04    cp   (iy+character_state_04)
 3AC2: DA D5 3A    jp   c,$3AD5
@@ -8667,7 +8691,7 @@ bootup_338f:
 3B2E: DD 34 0A    inc  (ix+$0a)
 3B31: CD A7 3B    call $3BA7
 3B34: CD BB 3B    call $3BBB
-3B37: CD CE 62    call $62CE
+3B37: CD CE 62    call load_character_elevator_structure_62CE
 3B3A: FD 7E 01    ld   a,(iy+$01)
 3B3D: DD 96 07    sub  (ix+$07)
 3B40: D2 62 3B    jp   nc,$3B62
@@ -9905,10 +9929,10 @@ is_jumping_43F5:
 45D0: 20 0B       jr   nz,$45DD
 45D2: CB 50       bit  2,b
 45D4: C8          ret  z
-45D5: CD CE 62    call $62CE
+45D5: CD CE 62    call load_character_elevator_structure_62CE
 45D8: FD 36 07 FE ld   (iy+$07),$FE
 45DC: C9          ret
-45DD: CD CE 62    call $62CE
+45DD: CD CE 62    call load_character_elevator_structure_62CE
 45E0: FD 36 07 02 ld   (iy+$07),$02
 45E4: C9          ret
 
@@ -9925,7 +9949,7 @@ ground_floor_reached_45E5:
 45F6: 36 FE       ld   (hl),$FE
 45F8: DD 21 1A 85 ld   ix,player_structure_851A
 45FC: DD 36 0D 00 ld   (ix+move_direction_0d),$00
-4600: CD CE 62    call $62CE
+4600: CD CE 62    call load_character_elevator_structure_62CE
 4603: C3 52 63    jp   $6352
 
 4608: CD 7F 01    call handle_main_scrolling_017F
@@ -10077,7 +10101,7 @@ ground_floor_reached_45E5:
 4739: F8          ret  m
 473A: 7C          ld   a,h
 473B: DD 77 08    ld   (ix+$08),a
-473E: CD CE 62    call $62CE
+473E: CD CE 62    call load_character_elevator_structure_62CE
 4741: DD 7E 07    ld   a,(ix+$07)
 4744: FD 96 01    sub  (iy+$01)
 4747: FE 03       cp   $03
@@ -10099,7 +10123,7 @@ ground_floor_reached_45E5:
 476F: F0          ret  p
 4770: 7A          ld   a,d
 4771: DD 77 08    ld   (ix+$08),a
-4774: CD CE 62    call $62CE
+4774: CD CE 62    call load_character_elevator_structure_62CE
 4777: DD 7E 07    ld   a,(ix+$07)
 477A: FD 96 01    sub  (iy+$01)
 477D: FE 03       cp   $03
@@ -10383,7 +10407,7 @@ ground_floor_reached_45E5:
 4A2A: CA DD 49    jp   z,$49DD
 4A2D: C3 D5 49    jp   $49D5
 4A30: DD 72 08    ld   (ix+$08),d
-4A33: CD CE 62    call $62CE
+4A33: CD CE 62    call load_character_elevator_structure_62CE
 4A36: CD 78 4A    call $4A78
 4A39: DD 7E 07    ld   a,(ix+$07)
 4A3C: FD BE 03    cp   (iy+$03)
@@ -11259,7 +11283,7 @@ ground_floor_reached_45E5:
 5114: CA 4C 51    jp   z,$514C
 5117: 3D          dec  a
 5118: CA 34 51    jp   z,$5134
-511B: CD CE 62    call $62CE
+511B: CD CE 62    call load_character_elevator_structure_62CE
 511E: DD 7E 08    ld   a,(ix+$08)
 5121: E6 80       and  $80
 5123: 07          rlca
@@ -11272,7 +11296,7 @@ ground_floor_reached_45E5:
 512F: FD 86 00    add  a,(iy+$00)
 5132: 4F          ld   c,a
 5133: C9          ret
-5134: CD CE 62    call $62CE
+5134: CD CE 62    call load_character_elevator_structure_62CE
 5137: DD 7E 08    ld   a,(ix+$08)
 513A: E6 80       and  $80
 513C: 07          rlca
@@ -11335,7 +11359,7 @@ ground_floor_reached_45E5:
 51A1: 2A 36 83    ld   hl,($8336)
 51A4: 36 FF       ld   (hl),$FF
 51A6: C9          ret
-51A7: CD CE 62    call $62CE
+51A7: CD CE 62    call load_character_elevator_structure_62CE
 51AA: AF          xor  a
 51AB: DD 77 1A    ld   (ix+$1a),a
 51AE: DD 77 17    ld   (ix+$17),a
@@ -11634,7 +11658,7 @@ ground_floor_reached_45E5:
 545B: C3 2E 54    jp   $542E
 545E: CD 64 54    call $5464
 5461: C3 2E 54    jp   $542E
-5464: CD CE 62    call $62CE
+5464: CD CE 62    call load_character_elevator_structure_62CE
 5467: DD 7E 11    ld   a,(ix+$11)
 546A: 3C          inc  a
 546B: FE 02       cp   $02
@@ -12819,7 +12843,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5D91: CD 29 5F    call $5F29
 5D94: C9          ret
 5D95: DD 21 D5 83 ld   ix,$83D5
-5D99: FD 21 7D 83 ld   iy,$837D
+5D99: FD 21 7D 83 ld   iy,elevator_array_837D
 5D9D: 21 81 80    ld   hl,$8081
 5DA0: 22 11 85    ld   ($8511),hl
 5DA3: AF          xor  a
@@ -13311,7 +13335,7 @@ player_hit_by_enemy_shots_test_5A0D:
 612B: 3F          ccf
 612C: 3F          ccf
 612D: 00          nop
-612E: 21 7D 83    ld   hl,$837D
+612E: 21 7D 83    ld   hl,elevator_array_837D
 6131: 11 E1 83    ld   de,$83E1
 6134: 06 0B       ld   b,$0B
 6136: C5          push bc
@@ -13449,10 +13473,10 @@ player_hit_by_enemy_shots_test_5A0D:
 621A: 0E 00       ld   c,$00
 621C: DD 56 03    ld   d,(ix+character_y_offset_03)
 621F: C3 6C 1E    jp   $1E6C
-6222: CD CE 62    call $62CE
+6222: CD CE 62    call load_character_elevator_structure_62CE
 6225: FD 46 01    ld   b,(iy+$01)
 6228: C3 32 62    jp   $6232
-622B: CD CE 62    call $62CE
+622B: CD CE 62    call load_character_elevator_structure_62CE
 622E: FD 46 01    ld   b,(iy+$01)
 6231: 04          inc  b
 6232: 0E 00       ld   c,$00
@@ -13544,18 +13568,23 @@ player_hit_by_enemy_shots_test_5A0D:
 62CA: C9          ret
 62CB: 36 7C       ld   (hl),$7C
 62CD: C9          ret
+
+; < ix: character structure
+; > iy: associated elevator
+load_character_elevator_structure_62CE:
 62CE: D9          exx
-62CF: DD 7E 08    ld   a,(ix+$08)
+62CF: DD 7E 08    ld   a,(ix+associated_elevator_08)	; elevator next to character?
 62D2: E6 7F       and  $7F
 62D4: 87          add  a,a
 62D5: 87          add  a,a
-62D6: 87          add  a,a
+62D6: 87          add  a,a		; times 8
 62D7: 16 00       ld   d,$00
 62D9: 5F          ld   e,a
-62DA: FD 21 7D 83 ld   iy,$837D
+62DA: FD 21 7D 83 ld   iy,elevator_array_837D
 62DE: FD 19       add  iy,de
 62E0: D9          exx
 62E1: C9          ret
+
 62E2: FB          ei
 62E3: 00          nop
 62E4: 00          nop
@@ -15451,7 +15480,7 @@ handle_music_6500:
 75CD: FE 02       cp   $02
 75CF: D2 A5 75    jp   nc,$75A5
 
-75DF: DD 7E 07    ld   a,(ix+$07)
+75DF: DD 7E 07    ld   a,(ix+current_floor_07)		; character current floor ix=851A
 75E2: B7          or   a
 75E3: 20 C0       jr   nz,$75A5
 75E5: C3 4E 76    jp   $764E
@@ -15510,6 +15539,7 @@ handle_music_6500:
 764A: 35          dec  (hl)
 764B: 3E 01       ld   a,$01
 764D: C9          ret
+
 764E: CD A3 09    call $09A3
 7651: F5          push af
 7652: 3E C0       ld   a,$C0
