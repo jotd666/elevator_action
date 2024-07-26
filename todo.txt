@@ -1,11 +1,12 @@
 - identify what does calls: 76A2
 - create a 64k table of 8x8 sprites pair, not all combinations are valid
-- 16 colors, systematic blit of elevator edges & stairs
+- AGA: 16+16 dual playfield
+- ECS: 16 colors, possible blit of elevator edges & stairs
 
 reverse stuff:
 
-- global scrolling index (which floor??)
-- elevator positions
+- up/down read
+- when "hurry up" is triggered (music changes, can't control elevators)
 - when color changes (light shot)
 - shot positions
 - colorbanks (D506/7)
