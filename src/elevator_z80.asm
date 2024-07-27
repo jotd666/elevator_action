@@ -1662,15 +1662,18 @@ enemy_shot_collision_08F8:
 0BB6: 83          add  a,e
 0BB7: 5F          ld   e,a
 0BB8: 16 00       ld   d,$00
-0BBA: 21 BF 0B    ld   hl,$0BBF
+0BBA: 21 BF 0B    ld   hl,jump_table_0BBF
 0BBD: 19          add  hl,de
 0BBE: E9          jp   (hl)
+
+jump_table_0BBF:
 0BBF: C3 F6 53    jp   $53F6
 0BC2: C3 A7 51    jp   $51A7
 0BC5: C3 4E 52    jp   $524E
 0BC8: C3 14 1C    jp   $1C14
 0BCB: C3 E3 1A    jp   $1AE3
 0BCE: C3 38 1B    jp   $1B38
+
 0BD1: AF          xor  a
 0BD2: DD 77 10    ld   (ix+$10),a
 0BD5: DD 77 1A    ld   (ix+$1a),a
@@ -4102,6 +4105,7 @@ table_1C04:
 1C3B: DD 36 0F 00 ld   (ix+$0f),$00
 1C3F: DD 36 10 00 ld   (ix+$10),$00
 1C43: C9          ret
+
 1C44: 2A BD 85    ld   hl,($85BD)
 1C47: 7E          ld   a,(hl)
 1C48: 3C          inc  a
@@ -4126,6 +4130,7 @@ table_1C04:
 1C73: 21 75 1D    ld   hl,table_1D75
 1C76: CD 7A 1C    call $1C7A
 1C79: C9          ret
+
 1C7A: DD 7E 13    ld   a,(ix+$13)
 1C7D: E6 FE       and  $FE
 1C7F: 87          add  a,a
@@ -4170,6 +4175,7 @@ table_1C04:
 1CC5: DD 77 0B    ld   (ix+$0b),a
 1CC8: CD CC 1C    call $1CCC
 1CCB: C9          ret
+
 1CCC: DD 7E 12    ld   a,(ix+$12)
 1CCF: FE 06       cp   $06
 1CD1: 28 29       jr   z,$1CFC

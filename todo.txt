@@ -10,3 +10,4 @@ reverse stuff:
 - when color changes (light shot)
 - shot positions
 - colorbanks (D506/7)
+jump_table_0BBF
