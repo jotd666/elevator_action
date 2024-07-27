@@ -1,0 +1,10 @@
+*.o
+*.zip
+*.png
+*.pyc
+c
+s
+snapshot
+src/datetime
+*.slave
+*.bak
