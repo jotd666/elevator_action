@@ -49,6 +49,7 @@ character_delta_x_05 = 0x5
 is_on_solid_ground_06 = 0x6
 current_floor_07 = 0x7
 associated_elevator_08 = 0x8
+enemy_state_09 = 0x9			; 0xFF: inactive, 0: active, 1: ??
 move_direction_0d = 0xd
 
 ; elevator structs offsets
@@ -7585,7 +7586,7 @@ shot_lamp_collision_31BA:
 31EC: 21 64 81    ld   hl,$8164
 31EF: 36 00       ld   (hl),$00
 31F1: 23          inc  hl
-31F2: 3A 41 82    ld   a,($8241)
+31F2: 3A 41 82    ld   a,(falling_lamp_x_8241)
 31F5: D6 04       sub  $04
 31F7: 77          ld   (hl),a
 31F8: 23          inc  hl
@@ -7630,7 +7631,7 @@ shot_lamp_collision_31BA:
 323E: E6 01       and  $01
 3240: C6 04       add  a,$04
 3242: 77          ld   (hl),a
-3243: CD CC 32    call $32CC
+3243: CD CC 32    call enemies_vs_lamp_collision_32CC
 3246: 3A 43 82    ld   a,($8243)
 3249: B7          or   a
 324A: C8          ret  z
@@ -7669,6 +7670,7 @@ shot_lamp_collision_31BA:
 328B: 3A D6 81    ld   a,($81D6)
 328E: 32 32 82    ld   (timer_16bit_msb_8232),a
 3291: C9          ret
+
 3292: CD AD 31    call $31AD
 3295: 3E 10       ld   a,$10
 3297: 32 06 D5    ld   (colorbank_D506),a
@@ -7693,20 +7695,24 @@ shot_lamp_collision_31BA:
 32C5: DD CB 0A D6 set  2,(ix+$0a)
 32C9: DD E1       pop  ix
 32CB: C9          ret
+
+enemies_vs_lamp_collision_32CC:
 32CC: AF          xor  a
 32CD: 32 43 82    ld   ($8243),a
 32D0: DD 21 3A 85 ld   ix,enemy_1_853A
-32D4: CD ED 32    call $32ED
+32D4: CD ED 32    call enemy_vs_lamp_collision_32ED
 32D7: DD 21 5A 85 ld   ix,enemy_2_855A
-32DB: CD ED 32    call $32ED
+32DB: CD ED 32    call enemy_vs_lamp_collision_32ED
 32DE: DD 21 7A 85 ld   ix,enemy_3_857A
-32E2: CD ED 32    call $32ED
+32E2: CD ED 32    call enemy_vs_lamp_collision_32ED
 32E5: DD 21 9A 85 ld   ix,enemy_4_859A
-32E9: CD ED 32    call $32ED
+32E9: CD ED 32    call enemy_vs_lamp_collision_32ED
 32EC: C9          ret
-32ED: DD 7E 09    ld   a,(ix+$09)
+
+enemy_vs_lamp_collision_32ED:
+32ED: DD 7E 09    ld   a,(ix+enemy_state_09)
 32F0: 3C          inc  a
-32F1: C8          ret  z
+32F1: C8          ret  z				; $FF: inactive
 32F2: DD 7E 06    ld   a,(ix+$06)
 32F5: B7          or   a
 32F6: C0          ret  nz
@@ -7716,7 +7722,7 @@ shot_lamp_collision_31BA:
 32FE: 3A 3F 82    ld   a,($823F)
 3301: DD BE 02    cp   (ix+$02)
 3304: D0          ret  nc
-3305: 3A 41 82    ld   a,($8241)
+3305: 3A 41 82    ld   a,(falling_lamp_x_8241)
 3308: DD BE 00    cp   (ix+character_x_00)
 330B: DA 15 33    jp   c,$3315
 330E: DD BE 01    cp   (ix+character_x_right_01)
@@ -7725,11 +7731,12 @@ shot_lamp_collision_31BA:
 3315: C6 08       add  a,$08
 3317: DD BE 00    cp   (ix+character_x_00)
 331A: D8          ret  c
+; enemy hit by falling lamp
 331B: 32 43 82    ld   ($8243),a
-331E: DD 7E 09    ld   a,(ix+$09)
+331E: DD 7E 09    ld   a,(ix+enemy_state_09)
 3321: FE 05       cp   $05
-3323: C8          ret  z
-3324: DD 36 09 05 ld   (ix+$09),$05
+3323: C8          ret  z		; already hit
+3324: DD 36 09 05 ld   (ix+enemy_state_09),$05
 3328: DD 36 0A 00 ld   (ix+$0a),$00
 332C: CD DE 56    call $56DE
 332F: 3E CB       ld   a,$CB
@@ -7738,13 +7745,14 @@ shot_lamp_collision_31BA:
 3335: 32 EC 82    ld   ($82EC),a
 3338: F1          pop  af
 3339: C9          ret
+
 333A: 3A 3E 82    ld   a,($823E)
 333D: D6 08       sub  $08
 333F: 5F          ld   e,a
 3340: 16 00       ld   d,$00
 3342: 21 DA 81    ld   hl,$81DA
 3345: 19          add  hl,de
-3346: 3A 41 82    ld   a,($8241)
+3346: 3A 41 82    ld   a,(falling_lamp_x_8241)
 3349: 06 02       ld   b,$02
 334B: FE 80       cp   $80
 334D: D2 51 33    jp   nc,$3351
@@ -7760,7 +7768,7 @@ shot_lamp_collision_31BA:
 335F: D0          ret  nc
 3360: CD 33 56    call $5633
 3363: 21 69 FF    ld   hl,$FF69
-3366: 3A 41 82    ld   a,($8241)
+3366: 3A 41 82    ld   a,(falling_lamp_x_8241)
 3369: FE 80       cp   $80
 336B: DA 71 33    jp   c,$3371
 336E: 21 75 FF    ld   hl,$FF75
@@ -7772,6 +7780,7 @@ shot_lamp_collision_31BA:
 3379: 19          add  hl,de
 337A: 36 97       ld   (hl),$97
 337C: C9          ret
+
 337D: E5          push hl
 337E: 3A 3F 82    ld   a,($823F)
 3381: 57          ld   d,a
