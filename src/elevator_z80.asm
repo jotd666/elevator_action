@@ -1611,6 +1611,7 @@ enemy_shot_collision_08F8:
 0B47: 78          ld   a,b
 0B48: 32 25 85    ld   ($8525),a
 0B4B: C9          ret
+
 0B4C: 3E FF       ld   a,$FF
 0B4E: 32 1E 85    ld   ($851E),a
 0B51: 32 23 85    ld   ($8523),a
@@ -1623,6 +1624,7 @@ enemy_shot_collision_08F8:
 0B62: 3E 00       ld   a,$00
 0B64: 32 AB 80    ld   ($80AB),a
 0B67: C9          ret
+
 0B68: CD EB 58    call $58EB
 0B6B: DD 21 3A 85 ld   ix,enemy_1_853A
 0B6F: 21 32 81    ld   hl,$8132
@@ -1642,6 +1644,8 @@ enemy_shot_collision_08F8:
 0B93: FE 05       cp   $05
 0B95: 20 E3       jr   nz,$0B7A
 0B97: C9          ret
+
+; < ix: enemy character structure
 0B98: DD 36 17 00 ld   (ix+$17),$00
 0B9C: DD 7E 09    ld   a,(ix+$09)
 0B9F: B7          or   a
@@ -1667,12 +1671,12 @@ enemy_shot_collision_08F8:
 0BBE: E9          jp   (hl)
 
 jump_table_0BBF:
-0BBF: C3 F6 53    jp   $53F6
+0BBF: C3 F6 53    jp   enemy_walk_state_53F6
 0BC2: C3 A7 51    jp   $51A7
-0BC5: C3 4E 52    jp   $524E
-0BC8: C3 14 1C    jp   $1C14
-0BCB: C3 E3 1A    jp   $1AE3
-0BCE: C3 38 1B    jp   $1B38
+0BC5: C3 4E 52    jp   enemy_above_elevator_524E
+0BC8: C3 14 1C    jp   enemy_shooting_state_1C14
+0BCB: C3 E3 1A    jp   enemy_in_elevator_1AE3
+0BCE: C3 38 1B    jp   $1B38  | ontop of elev too
 
 0BD1: AF          xor  a
 0BD2: DD 77 10    ld   (ix+$10),a
@@ -3950,6 +3954,7 @@ table_16E3
 	dc.b	D2 0B 0C
 	dc.b	71      
 
+enemy_in_elevator_1AE3:
 1AE3: AF          xor  a
 1AE4: DD 77 18    ld   (ix+$18),a
 1AE7: DD 77 1A    ld   (ix+$1a),a
@@ -4088,7 +4093,8 @@ table_1C04:
 	dc.b	FF       
 	dc.b	FF       
 	dc.b	FF       
-	
+
+enemy_shooting_state_1C14:
 1C14: DD 36 1B 00 ld   (ix+$1b),$00
 1C18: DD 36 18 00 ld   (ix+$18),$00
 1C1C: DD 36 0E 5A ld   (ix+$0e),$5A
@@ -11527,6 +11533,9 @@ table_50D8:
 5243: DD 36 12 03 ld   (ix+$12),$03
 5247: DD 36 10 0F ld   (ix+$10),$0F
 524B: C3 F4 51    jp   $51F4
+
+; called when enemy is on top of elevator cabin
+enemy_above_elevator_524E:
 524E: DD 36 1A 00 ld   (ix+$1a),$00
 5252: CD 68 05    call $0568
 5255: DA F8 51    jp   c,$51F8
@@ -11718,6 +11727,8 @@ table_50D8:
 53ED: DD 36 12 03 ld   (ix+$12),$03
 53F1: DD 36 10 1E ld   (ix+$10),$1E
 53F5: C9          ret
+
+enemy_walk_state_53F6:
 53F6: AF          xor  a
 53F7: DD 77 1B    ld   (ix+$1b),a
 53FA: DD 77 18    ld   (ix+$18),a

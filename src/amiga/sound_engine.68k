@@ -1,0 +1,247 @@
+		.global osd_sound_start
+		.global osd_sound_stop
+		.global music_tick
+		.global osd_read_high_scores
+		.global osd_write_high_scores
+		.global	load_highscores
+		.global	save_highscores
+		.global	lives_table
+* sound engine and also highscore management, common to all versions
+	
+.include "dos_lvos.i"
+
+
+SCORE_FILE_SIZE = 44
+
+	
+osd_read_high_scores:
+	movem.l	d0-d7/a0-a6,-(a7)
+	move.l	_resload,d0
+	beq.b	0f
+	move.l	d0,a2
+	move.l	a0,a3
+	bsr		get_hiscore_name
+ 	jsr		resload_GetFileSize(a2)		
+	tst.l	d0
+	beq.b	1f
+	bsr		get_hiscore_name
+	move.l	a3,a1
+	jsr		resload_LoadFile(a2)	
+	bra.b	1f
+0:
+	tst.b	highscore_loaded
+	beq.b	1f
+	* from DOS: just copy buffer
+	lea		high_score_buffer(pc),a1
+	* set highest score entry
+	move.w	#SCORE_FILE_SIZE-1,d0
+0:
+    move.b    (a1)+,(a4)+
+	dbf		d0,0b
+1:
+	movem.l	(a7)+,d0-d7/a0-a6
+	rts
+	
+osd_write_high_scores:
+	movem.l	d0-d7/a0-a6,-(a7)
+	tst.b	cheat_used		| don't save score if cheat on
+	bne.b	1f
+	move.l	_resload,d0
+	beq.b	0f
+	move.l	d0,a2
+	move.l	#SCORE_FILE_SIZE,d0
+	move.l	a0,a1
+	bsr		get_hiscore_name
+	jsr		resload_SaveFile(a2)
+	bra.b	1f
+0:
+	* from DOS: just copy buffer
+	lea		high_score_buffer(pc),a1
+	move.w	#SCORE_FILE_SIZE-1,d0
+0:
+	move.b	(a0)+,(a1)+
+	dbf		d0,0b
+
+	st.b	highscore_needs_saving
+1:
+	movem.l	(a7)+,d0-d7/a0-a6
+	rts
+
+
+get_hiscore_name:
+    lea normal_hiscorename,a0
+	rts
+	
+load_highscores:
+	bsr.b		get_hiscore_name
+    move.l  _resload,d0
+    bne.b   1f
+
+    move.l  _dosbase,a6
+    move.l  a0,d1
+    move.l  #1005,d2
+    jsr     (_LVOOpen,a6)
+    move.l  d0,d1
+    beq.b   1f
+    move.l  d1,d4
+    move.l  #SCORE_FILE_SIZE,d3
+    move.l  #high_score_buffer,d2
+    jsr (_LVORead,a6)
+    move.l  d4,d1
+    jsr (_LVOClose,a6)   
+	st.b	highscore_loaded
+1:
+    rts
+
+save_highscores:
+	tst.l	_resload
+	bne.b	1f
+    tst.b   highscore_needs_saving
+    beq.b   1f
+    move.l  _dosbase,a6
+	bsr.b		get_hiscore_name
+    move.l  a0,d1
+    move.l  #1006,d2
+    jsr     (_LVOOpen,a6)
+    move.l  d0,d1
+    beq.b   1f
+    move.l  d1,d4
+    move.l  #SCORE_FILE_SIZE,d3
+    move.l  #high_score_buffer,d2
+    jsr (_LVOWrite,a6)
+    move.l  d4,d1
+    jsr (_LVOClose,a6)   
+1:	
+    rts
+    
+	
+
+
+osd_sound_stop:
+	movem.l	d0/a0/a6,-(a7)
+	lea		_custom,a6
+	move.b	#-1,music_track_start_number
+    clr.w   music_tick   | not playing anymore
+	clr.b	music_playing
+	clr.b	looped_sound_enabled
+    jsr		_mt_end
+0:
+	movem.l	(a7)+,d0/a0/a6
+	rts
+	
+osd_sound_start:
+	movem.l	d0/d1/a0/a6,-(a7)
+	lea		_custom,a6
+	and.w	#0xFF,d0
+	jeq	7f		| should stop the sound
+	
+	
+	lsl.w	#3,d0
+	lea		sound_table,a0
+
+	move.w	(a0,d0.w),d1	| sound type
+	beq.b	1f		| no sound
+
+2:
+	cmp.w	#1,d1
+	bne.b	4f		| music module
+	move.w	(2,a0,d0.w),d1
+	move.l	(4,a0,d0.w),a0
+	lea		_custom,a6
+	tst.w	d1
+	beq.b	3f
+	tst.b	looped_sound_enabled
+	bne.b	3f			| else problem with space plant sound
+	* looped sound
+	st.b	looped_sound_enabled
+	jsr		_mt_loopfx
+	bra.b	1f
+3:
+	jsr		_mt_playfx
+1:
+	movem.l	(a7)+,d0/d1/a0/a6
+	rts
+
+	* music
+4:
+	
+	* don't play if already playing
+	* (music_tick value is not important for looped tunes
+	* as long as it's not zero)
+	tst.w	music_tick
+	bne.b	1b
+	* play the proper module pattern
+	* load up the countdown if loop
+	move.w	(2,a0,d0.w),d1	| pattern number in .mod file
+	* since it's not zero, next vbl tick will play the music
+	cmp.b	music_track_start_number(pc),d1
+	beq.b	1b		| same track, skip
+
+    movem.l d0-a6,-(a7)
+	bsr		osd_sound_stop
+    lea _custom,a6
+ 	movem.l	d0/a0,-(a7)
+    lea	mpatrol_tunes,a0
+	move.b	d1,music_track_start_number
+	move.w	d1,d0
+    sub.l   a1,a1		| samples are in the module
+    jsr _mt_init
+	movem.l	(a7)+,d0/a0
+
+    * set master volume a little less loud if needed
+	move.b	(6,a0,d0.w),music_volume
+	move.b	(7,a0,d0.w),music_loops
+	move.w	(2,a0,d0.w),music_pattern	| pattern number in .mod file
+	move.w	(4,a0,d0.w),d2
+
+	move.w	d2,music_duration
+	move.w	d2,music_tick
+
+    moveq	#0,d0
+	move.b	music_volume(pc),d0
+    jsr	_mt_mastervol
+	st.b	music_playing
+    jsr _mt_start
+    movem.l (a7)+,d0-a6
+	
+6:
+	jra	1b
+
+7:
+	move.w	#3,d0			| channel where loops play
+	clr.b	looped_sound_enabled
+	jbsr	_mt_stopfx
+	jra	1b
+	tst.b	music_playing
+	jeq	1b
+	bsr		osd_sound_stop
+	jra	1b
+
+music_playing:
+	.byte	0
+looped_sound_enabled:
+	.byte	0
+music_loops:
+	.byte	0
+music_volume:
+	.byte	0
+music_track_start_number:
+	.word	0
+music_pattern:
+	.word	0
+music_tick:
+	.word	0
+music_duration:
+	.word	0
+high_score_buffer:
+	.skip	SCORE_FILE_SIZE
+highscore_needs_saving:
+	.byte	0
+highscore_loaded:
+	.byte	0
+normal_hiscorename:
+	.asciz	"mpatrol.high"
+
+lives_table:
+	.byte	0,0xFC,0xFD,0xFE,0xFF,0xFF
+	.align	2
