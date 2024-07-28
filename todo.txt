@@ -11,3 +11,13 @@ reverse stuff:
 - shot positions
 - colorbanks (D506/7)
 jump_table_0BBF
+
+end of mainloop
+76B1: CD 68 0B    call $0B68
+76B4: CD E8 2F    call $2FE8
+76B7: CD 27 31    call $3127
+76BA: CD 81 30    call $3081
+76BD: CD BA 4B    call $4BBA
+76C0: CD E1 0B    call $0BE1
+76C3: CD A0 15    call $15A0
+

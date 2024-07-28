@@ -1477,7 +1477,7 @@ enemy_shot_collision_08F8:
 0A2C: 3A 2C 80    ld   a,($802C)
 0A2F: 32 21 85    ld   ($8521),a
 0A32: 3E 01       ld   a,$01
-0A34: 32 A9 80    ld   ($80A9),a
+0A34: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 0A37: CD 03 0B    call $0B03
 0A3A: 21 32 85    ld   hl,$8532
 0A3D: 3A 04 80    ld   a,(scroll_speed_8004)
@@ -1530,10 +1530,10 @@ enemy_shot_collision_08F8:
 0A9E: 36 7D       ld   (hl),$7D
 0AA0: C3 B5 0A    jp   $0AB5
 0AA3: 3E 10       ld   a,$10
-0AA5: 32 27 85    ld   (player_move_direction_8527),a
+0AA5: 32 27 85    ld   (player_move_direction_8527),a	; force fire??
 0AA8: C3 B5 0A    jp   $0AB5
 0AAB: 3E 00       ld   a,$00
-0AAD: 32 27 85    ld   (player_move_direction_8527),a
+0AAD: 32 27 85    ld   (player_move_direction_8527),a	; no move
 0AB0: 21 23 81    ld   hl,$8123
 0AB3: 36 FF       ld   (hl),$FF
 0AB5: CD 06 02    call $0206
@@ -1618,22 +1618,24 @@ enemy_shot_collision_08F8:
 0B54: 3E 01       ld   a,$01
 0B56: 32 33 80    ld   ($8033),a
 0B59: 3E 03       ld   a,$03
-0B5B: 32 A9 80    ld   ($80A9),a
+0B5B: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 0B5E: 3D          dec  a
 0B5F: 32 AA 80    ld   (timer_8bit_80AA),a
 0B62: 3E 00       ld   a,$00
 0B64: 32 AB 80    ld   ($80AB),a
 0B67: C9          ret
 
+handle_enemes_0B68:
 0B68: CD EB 58    call $58EB
 0B6B: DD 21 3A 85 ld   ix,enemy_1_853A
 0B6F: 21 32 81    ld   hl,$8132
 0B72: 22 BD 85    ld   ($85BD),hl
 0B75: 3E 01       ld   a,$01
 0B77: 32 BA 85    ld   ($85BA),a
+; loop
 0B7A: CD 98 0B    call $0B98
 0B7D: 11 20 00    ld   de,$0020
-0B80: DD 19       add  ix,de
+0B80: DD 19       add  ix,de		; next enemy
 0B82: 2A BD 85    ld   hl,($85BD)
 0B85: 11 05 00    ld   de,$0005
 0B88: 19          add  hl,de
@@ -1672,11 +1674,11 @@ enemy_shot_collision_08F8:
 
 jump_table_0BBF:
 0BBF: C3 F6 53    jp   enemy_walk_state_53F6
-0BC2: C3 A7 51    jp   $51A7
+0BC2: C3 A7 51    jp   enemy_unknown_state_51A7
 0BC5: C3 4E 52    jp   enemy_above_elevator_524E
 0BC8: C3 14 1C    jp   enemy_shooting_state_1C14
 0BCB: C3 E3 1A    jp   enemy_in_elevator_1AE3
-0BCE: C3 38 1B    jp   $1B38  | ontop of elev too
+0BCE: C3 38 1B    jp   enemy_jumping_above_elevator_1B38  | ontop of elev too
 
 0BD1: AF          xor  a
 0BD2: DD 77 10    ld   (ix+$10),a
@@ -2414,7 +2416,7 @@ table_10CA:
 111E: 00          nop
 111F: 00          nop
 1120: 3E 02       ld   a,$02
-1122: 32 3B 82    ld   ($823B),a
+1122: 32 3B 82    ld   (unknown_control_flag_823B),a
 1125: 3A 51 82    ld   a,($8251)
 1128: B7          or   a
 1129: CA 67 11    jp   z,$1167
@@ -2447,7 +2449,7 @@ table_10CA:
 116F: 32 2C 80    ld   ($802C),a
 1172: 18 C7       jr   $113B
 1174: C9          ret
-1175: 3A 3B 82    ld   a,($823B)
+1175: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 1178: 3D          dec  a
 1179: 28 0F       jr   z,$118A
 117B: 2A 3C 82    ld   hl,($823C)
@@ -2560,7 +2562,7 @@ insert_coin_screen_123B:
 123B: C3 3E 12    jp   finish_irq_123E
 
 finish_irq_123E:
-123E: 3A A9 80    ld   a,($80A9)
+123E: 3A A9 80    ld   a,(timer_8bit_reload_value_80A9)
 1241: 3D          dec  a
 1242: 32 AA 80    ld   (timer_8bit_80AA),a
 1245: AF          xor  a
@@ -3988,6 +3990,8 @@ enemy_in_elevator_1AE3:
 1B2F: D2 20 1B    jp   nc,$1B20
 1B32: CD 44 1C    call $1C44
 1B35: C3 1C 1B    jp   $1B1C
+
+enemy_jumping_above_elevator_1B38:
 1B38: AF          xor  a
 1B39: DD 77 18    ld   (ix+$18),a
 1B3C: DD 77 1A    ld   (ix+$1a),a
@@ -6005,8 +6009,8 @@ pseudo_random_1E06:
 268D: 3E 07       ld   a,state_next_life_07
 268F: 32 AC 80    ld   (game_state_80AC),a
 2692: 3E 01       ld   a,$01
-2694: 32 A9 80    ld   ($80A9),a
-2697: CD C2 26    call $26C2
+2694: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
+2697: CD C2 26    call reload_8bit_tiimer_26C2
 269A: CD CF 73    call $73CF
 269D: C9          ret
 
@@ -6031,7 +6035,8 @@ init_video_269E:
 26BF: 10 FB       djnz $26BC
 26C1: C9          ret
 
-26C2: 3A A9 80    ld   a,($80A9)
+reload_8bit_tiimer_26C2:
+26C2: 3A A9 80    ld   a,(timer_8bit_reload_value_80A9)
 26C5: 3D          dec  a
 26C6: 32 AA 80    ld   (timer_8bit_80AA),a
 26C9: C9          ret
@@ -6042,7 +6047,7 @@ init_video_269E:
 26D0: 3D          dec  a
 26D1: 28 28       jr   z,$26FB
 26D3: 21 E3 77    ld   hl,$77E3
-26D6: 3A 3B 82    ld   a,($823B)
+26D6: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 26D9: B7          or   a
 26DA: 20 12       jr   nz,$26EE
 26DC: 3A 50 82    ld   a,(copy_of_dip_switches_3_8250)
@@ -6453,7 +6458,7 @@ table_280E:
 2982: 22 2F 82    ld   ($822F),hl
 2985: 3E 09       ld   a,state_insert_coin_09
 2987: 32 AC 80    ld   (game_state_80AC),a
-298A: CD C2 26    call $26C2
+298A: CD C2 26    call reload_8bit_tiimer_26C2
 298D: C9          ret
 
 298E: 21 02 2A    ld   hl,insert_coin_string_2A02
@@ -7089,7 +7094,7 @@ return_a_times_48_in_hl_2D84:
 2DED: C9          ret
 
 2DEE: CD 2A 2E    call $2E2A
-2DF1: CD C2 26    call $26C2
+2DF1: CD C2 26    call reload_8bit_tiimer_26C2
 2DF4: CD CF 73    call $73CF
 2DF7: 3A 0B D4    ld   a,($D40B)
 2DFA: E6 C0       and  $C0
@@ -7125,7 +7130,7 @@ return_a_times_48_in_hl_2D84:
 2E3C: 3E 03       ld   a,state_push_start_03
 2E3E: 32 AC 80    ld   (game_state_80AC),a
 2E41: 3E 01       ld   a,$01
-2E43: 32 A9 80    ld   ($80A9),a
+2E43: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 2E46: CD 39 58    call $5839
 2E49: CD C6 57    call update_upper_status_bar_57C6
 2E4C: CD B0 10    call $10B0
@@ -7478,7 +7483,7 @@ initial_player_structure_2F9C
 30CE: C9          ret
 
 handle_player_controls_30CF:
-30CF: 3A 3B 82    ld   a,($823B)
+30CF: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 30D2: B7          or   a
 30D3: C2 0C 31    jp   nz,$310C
 30D6: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
@@ -7493,10 +7498,12 @@ handle_player_controls_30CF:
 30E7: 18 03       jr   $30EC
 ; probably cocktail mode: read input 2
 30E9: 3A 09 D4    ld   a,($D409)
+
+; up: 8, down/crouch: 4, fire: $10, jump: $20, left: 1, right: 2, else 0
 30EC: 2F          cpl
 30ED: 47          ld   b,a
 30EE: E6 0F       and  $0F
-30F0: 4F          ld   c,a
+30F0: 4F          ld   c,a		; keep only directions in c
 30F1: 78          ld   a,b
 30F2: E6 20       and  $20
 30F4: 0F          rrca
@@ -7511,12 +7518,13 @@ handle_player_controls_30CF:
 3100: A0          and  b
 3101: E6 30       and  $30
 3103: B1          or   c
-* $10: jump, 1 move left, 2 move right
+* $10: jump, 1 move left, 2 move right... see above
 3104: 32 27 85    ld   (player_move_direction_8527),a
 3107: 78          ld   a,b
 3108: 32 3A 82    ld   (shoot_gun_requested_823A),a
 310B: C9          ret
 
+; when does that happen??
 310C: 2A 3C 82    ld   hl,($823C)
 310F: 3D          dec  a
 3110: 28 0A       jr   z,$311C
@@ -7578,7 +7586,7 @@ handle_player_controls_30CF:
 3191: CD 56 36    call $3656
 3194: AF          xor  a
 3195: 32 EC 82    ld   ($82EC),a
-3198: 3A 3B 82    ld   a,($823B)
+3198: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 319B: B7          or   a
 319C: C0          ret  nz
 319D: E5          push hl
@@ -7695,7 +7703,7 @@ shot_lamp_collision_31BA:
 3271: 32 07 D5    ld   (colorbank_D507),a
 3274: 3E 01       ld   a,$01
 3276: 32 42 82    ld   ($8242),a
-3279: 3A 3B 82    ld   a,($823B)
+3279: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 327C: B7          or   a
 327D: C0          ret  nz
 327E: DD E5       push ix
@@ -7713,7 +7721,7 @@ shot_lamp_collision_31BA:
 3297: 32 06 D5    ld   (colorbank_D506),a
 329A: 3E 32       ld   a,$32
 329C: 32 07 D5    ld   (colorbank_D507),a
-329F: 3A 3B 82    ld   a,($823B)
+329F: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 32A2: B7          or   a
 32A3: C0          ret  nz
 32A4: FD E5       push iy
@@ -8048,7 +8056,7 @@ table_34A0:
 
 3529: CD EE 2D    call $2DEE
 352C: 3E 00       ld   a,$00
-352E: 32 3B 82    ld   ($823B),a
+352E: 32 3B 82    ld   (unknown_control_flag_823B),a
 3531: 3A 4A 82    ld   a,($824A)
 3534: B7          or   a
 3535: 20 10       jr   nz,$3547
@@ -8165,7 +8173,7 @@ table_34A0:
 363C: 10 F3       djnz $3631
 363E: C9          ret
 
-363F: 3A 3B 82    ld   a,($823B)
+363F: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 3642: B7          or   a
 3643: C0          ret  nz
 3644: CD B7 46    call $46B7
@@ -8180,7 +8188,7 @@ table_34A0:
 3655: C9          ret
 
 3656: 47          ld   b,a
-3657: 3A 3B 82    ld   a,($823B)
+3657: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 365A: B7          or   a
 365B: C0          ret  nz
 365C: 78          ld   a,b
@@ -9717,7 +9725,7 @@ table_42E2:
 4359: DD 7E 09    ld   a,(ix+$09)
 435C: FE 01       cp   $01
 435E: CA 8C 43    jp   z,$438C
-4361: DA 2A 44    jp   c,$442A
+4361: DA 2A 44    jp   c,handle_character_ground_controls_442A
 4364: FE 03       cp   $03
 4366: CA 6E 44    jp   z,$446E
 4369: DA 10 45    jp   c,$4510
@@ -9804,32 +9812,42 @@ is_jumping_43F5:
 4425: CD 56 36    call $3656
 4428: F1          pop  af
 4429: C9          ret
+
+; not in elevator: only left, right, jump, crouch
+handle_character_ground_controls_442A:
 442A: CD B4 45    call $45B4
-442D: DD 7E 0D    ld   a,(ix+move_direction_0d)		; read character direction
+442D: DD 7E 0D    ld   a,(ix+move_direction_0d)		; read character direction (player: player_move_direction_8527)
 4430: CB 67       bit  4,a
 4432: C2 F5 43    jp   nz,is_jumping_43F5
 4435: 0F          rrca
-4436: DA 50 44    jp   c,$4450
+4436: DA 50 44    jp   c,move_character_left_4450
 4439: 0F          rrca
-443A: DA 5F 44    jp   c,$445F
+443A: DA 5F 44    jp   c,move_character_right_445F
 443D: 0F          rrca
 443E: D0          ret  nc
+; character crouches
 443F: DD 36 02 14 ld   (ix+$02),$14
 4443: DD 36 03 06 ld   (ix+character_y_offset_03),$06
 4447: DD 36 09 02 ld   (ix+$09),$02
 444B: DD 36 0C 02 ld   (ix+$0c),$02
 444F: C9          ret
+
+move_character_left_4450:
 4450: DD 36 05 FE ld   (ix+character_delta_x_05),$FE
 4454: DD 36 09 01 ld   (ix+$09),$01
 4458: DD 36 0A 00 ld   (ix+$0a),$00
 445C: C3 B2 43    jp   $43B2
+
+move_character_right_445F:
 445F: DD 36 05 02 ld   (ix+character_delta_x_05),$02
 4463: DD 36 09 01 ld   (ix+$09),$01
 4467: DD 36 0A 00 ld   (ix+$0a),$00
 446B: C3 E7 43    jp   $43E7
+
 446E: DD 7E 0D    ld   a,(ix+move_direction_0d)
 4471: E6 03       and  $03
 4473: CA 82 44    jp   z,$4482
+; left or right: jumps out of elevator (game forces jump)
 4476: DD 36 0B 00 ld   (ix+$0b),$00
 447A: 1F          rra
 447B: DA 82 44    jp   c,$4482
@@ -10050,6 +10068,7 @@ ground_floor_reached_45E5:
 4617: CD A0 15    call $15A0
 461A: CD CF 73    call $73CF
 461D: C3 EA 45    jp   $45EA
+
 4620: 32 74 83    ld   ($8374),a
 4623: AF          xor  a
 4624: 32 F0 82    ld   ($82F0),a
@@ -10968,11 +10987,11 @@ ground_floor_reached_45E5:
 4E34: 34          inc  (hl)
 4E35: FE 08       cp   $08
 4E37: 30 07       jr   nc,$4E40
-4E39: 3E 02       ld   a,$02
+4E39: 3E 02       ld   a,$02			; force move right
 4E3B: 32 27 85    ld   (player_move_direction_8527),a
 4E3E: 18 17       jr   $4E57
 4E40: AF          xor  a
-4E41: 32 27 85    ld   (player_move_direction_8527),a
+4E41: 32 27 85    ld   (player_move_direction_8527),a	; no move
 4E44: 3A CE 83    ld   a,($83CE)
 4E47: FE 1E       cp   $1E
 4E49: 20 07       jr   nz,$4E52
@@ -11011,8 +11030,8 @@ ground_floor_reached_45E5:
 4E9D: CD 01 58    call $5801
 4EA0: CD C6 57    call update_upper_status_bar_57C6
 4EA3: 3E 05       ld   a,$05
-4EA5: 32 A9 80    ld   ($80A9),a
-4EA8: CD C2 26    call $26C2
+4EA5: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
+4EA8: CD C2 26    call reload_8bit_tiimer_26C2
 4EAB: C9          ret
 
 4EAC: 3A 3C 83    ld   a,($833C)
@@ -11232,7 +11251,7 @@ table_4FEB:
 	dc.b	01 4E 
 	
 500B: 21 3E 83    ld   hl,$833E                                       
-500C: 3E 83       ld   a,$83
+500C: 3E 83       ld   a,$83			; why??
 500E: 11 00 D1    ld   de,sprite_ram_d100
 5011: 01 08 00    ld   bc,$0008
 5014: ED B0       ldir
@@ -11300,6 +11319,7 @@ table_4FEB:
 5099: DD 70 03    ld   (ix+character_y_offset_03),b
 509C: CD 53 51    call $5153
 509F: C9          ret
+
 50A0: DD E1       pop  ix
 50A2: DD 36 02 FF ld   (ix+$02),$FF
 50A6: 2A 36 83    ld   hl,($8336)
@@ -11390,6 +11410,7 @@ table_50D8:
 5114: CA 4C 51    jp   z,$514C
 5117: 3D          dec  a
 5118: CA 34 51    jp   z,$5134
+
 511B: CD CE 62    call load_character_elevator_structure_62CE
 511E: DD 7E 08    ld   a,(ix+$08)
 5121: E6 80       and  $80
@@ -11403,6 +11424,7 @@ table_50D8:
 512F: FD 86 00    add  a,(iy+$00)
 5132: 4F          ld   c,a
 5133: C9          ret
+
 5134: CD CE 62    call load_character_elevator_structure_62CE
 5137: DD 7E 08    ld   a,(ix+$08)
 513A: E6 80       and  $80
@@ -11418,6 +11440,7 @@ table_50D8:
 514C: DD 46 07    ld   b,(ix+$07)
 514F: DD 4E 03    ld   c,(ix+character_y_offset_03)
 5152: C9          ret
+
 5153: 4C          ld   c,h
 5154: 2A 36 83    ld   hl,($8336)
 5157: 11 04 00    ld   de,$0004
@@ -11462,10 +11485,13 @@ table_50D8:
 519A: E1          pop  hl
 519B: 77          ld   (hl),a
 519C: C9          ret
+
 519D: DD 36 02 FF ld   (ix+$02),$FF
 51A1: 2A 36 83    ld   hl,($8336)
 51A4: 36 FF       ld   (hl),$FF
 51A6: C9          ret
+
+enemy_unknown_state_51A7:
 51A7: CD CE 62    call load_character_elevator_structure_62CE
 51AA: AF          xor  a
 51AB: DD 77 1A    ld   (ix+$1a),a
@@ -12102,7 +12128,7 @@ award_end_of_level_bonus_56F9:
 56FB: E5          push hl
 56FC: 21 6D 83    ld   hl,points_awarded_on_level_end_836D
 56FF: C3 02 57    jp   $5702	; useless!
-5702: 3A 3B 82    ld   a,($823B)
+5702: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 5705: B7          or   a
 5706: 20 0E       jr   nz,$5716
 5708: 11 4D 83    ld   de,$834D
@@ -12411,6 +12437,7 @@ update_upper_status_bar_57C6:
 5928: CD 4D 59    call $594D
 592B: CD FC 5A    call $5AFC
 592E: C9          ret
+
 592F: 3A 32 82    ld   a,(timer_16bit_msb_8232)
 5932: FE 10       cp   $10
 5934: 30 13       jr   nc,$5949
@@ -12443,6 +12470,7 @@ update_upper_status_bar_57C6:
 5967: 87          add  a,a
 5968: 32 7C 83    ld   ($837C),a
 596B: C9          ret
+
 596C: 21 77 83    ld   hl,$8377
 596F: AF          xor  a
 5970: 77          ld   (hl),a
@@ -14979,7 +15007,7 @@ handle_music_6500:
 7111: CD F9 29    call copy_string_to_screen_29F9
 7114: 3E 5A       ld   a,$5A
 7116: 32 C5 85    ld   ($85C5),a
-7119: CD C2 26    call $26C2
+7119: CD C2 26    call reload_8bit_tiimer_26C2
 711C: CD CF 73    call $73CF
 711F: 3A 0C D4    ld   a,($D40C)
 7122: CB 6F       bit  5,a
@@ -15006,7 +15034,7 @@ handle_music_6500:
 714E: 32 D9 81    ld   ($81D9),a
 7151: CD 0C 26    call $260C
 7154: 3E 02       ld   a,$02
-7156: 32 A9 80    ld   ($80A9),a
+7156: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 7159: C9          ret
 715A: 31 2C 1B    ld   sp,$1B2C
 715D: 31 FF CD    ld   sp,$CDFF
@@ -15018,7 +15046,7 @@ handle_music_6500:
 7169: 23          inc  hl
 716A: B6          or   (hl)
 716B: C2 40 29    jp   nz,$2940
-716E: CD C2 26    call $26C2
+716E: CD C2 26    call reload_8bit_tiimer_26C2
 7171: CD 61 72    call $7261
 7174: CD 00 74    call $7400
 7177: 3A A2 80    ld   a,(nb_credits_80A2)
@@ -15050,7 +15078,7 @@ handle_music_6500:
 71A9: 3E 01       ld   a,state_title_01
 71AB: 32 AC 80    ld   (game_state_80AC),a
 71AE: 3E 01       ld   a,$01
-71B0: 32 A9 80    ld   ($80A9),a
+71B0: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 71B3: CD 39 58    call $5839
 71B6: CD C6 57    call update_upper_status_bar_57C6
 71B9: CD B0 10    call $10B0
@@ -15600,9 +15628,10 @@ table_7498:
 75A1: AF          xor  a
 75A2: 32 41 86    ld   ($8641),a
 
-75A5: CD A2 76    call $76A2
+mainloop_75A5:
+75A5: CD A2 76    call perform_all_in_game_tasks_76A2
 75A8: CD CF 73    call $73CF
-75AB: 3A 3B 82    ld   a,($823B)
+75AB: 3A 3B 82    ld   a,(unknown_control_flag_823B)
 75AE: B7          or   a
 75AF: 28 05       jr   z,$75B6
 75B1: 3A A2 80    ld   a,(nb_credits_80A2)
@@ -15614,14 +15643,13 @@ table_7498:
 75C0: FE FF       cp   $FF
 75C2: CA FE 75    jp   z,$75FE
 75C5: FE 05       cp   $05
-75C7: D2 A5 75    jp   nc,$75A5
+75C7: D2 A5 75    jp   nc,mainloop_75A5
 75CA: DD 7E 06    ld   a,(ix+$06)
 75CD: FE 02       cp   $02
-75CF: D2 A5 75    jp   nc,$75A5
-
+75CF: D2 A5 75    jp   nc,mainloop_75A5
 75DF: DD 7E 07    ld   a,(ix+current_floor_07)		; character current floor ix=851A
 75E2: B7          or   a
-75E3: 20 C0       jr   nz,$75A5
+75E3: 20 C0       jr   nz,mainloop_75A5
 75E5: C3 4E 76    jp   ground_floor_reached_764E	; ground, now check documents
 
 75E8: DD 7E 09    ld   a,(ix+$09)
@@ -15712,18 +15740,19 @@ ground_floor_reached_764E:
 768D: CD 93 57    call compute_end_level_points_5793
 7690: CD CA 30    call $30CA
 7693: 3A 33 82    ld   a,($8233)
-7696: 32 A9 80    ld   ($80A9),a
+7696: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 7699: 3E 05       ld   a,state_ingame_05
 769B: 32 AC 80    ld   (game_state_80AC),a
-769E: CD C2 26    call $26C2
+769E: CD C2 26    call reload_8bit_tiimer_26C2
 76A1: C9          ret
 
+perform_all_in_game_tasks_76A2:
 76A2: CD CF 30    call handle_player_controls_30CF
 76A5: CD 7F 01    call handle_main_scrolling_017F
 76A8: CD BF 0E    call handle_elevators_0EBF
 76AB: CD A2 12    call handle_enemies_12A2
 76AE: CD BA 31    call shot_lamp_collision_31BA
-76B1: CD 68 0B    call $0B68
+76B1: CD 68 0B    call handle_enemes_0B68		; if skipped, enemy lies down and stays there, then no enemies appear
 76B4: CD E8 2F    call $2FE8
 76B7: CD 27 31    call $3127
 76BA: CD 81 30    call $3081
@@ -15746,7 +15775,7 @@ ground_floor_reached_764E:
 76DF: 18 00       jr   $76E1
 
 76E1: CD F6 76    call $76F6
-76E4: CD C2 26    call $26C2
+76E4: CD C2 26    call reload_8bit_tiimer_26C2
 76E7: CD CF 73    call $73CF
 76EA: 2A 43 86    ld   hl,($8643)
 76ED: 2B          dec  hl
@@ -15765,7 +15794,7 @@ ground_floor_reached_764E:
 7705: 3E 08       ld   a,state_game_over_08
 7707: 32 AC 80    ld   (game_state_80AC),a
 770A: 3E 02       ld   a,$02
-770C: 32 A9 80    ld   ($80A9),a
+770C: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 770F: CD 39 58    call $5839
 7712: CD C6 57    call update_upper_status_bar_57C6
 7715: CD B0 10    call $10B0
