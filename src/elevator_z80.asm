@@ -10069,17 +10069,17 @@ ground_floor_reached_45E5:
 461A: CD CF 73    call $73CF
 461D: C3 EA 45    jp   $45EA
 
-4620: 32 74 83    ld   ($8374),a
+4620: 32 74 83    ld   (instant_difficulty_level_8374),a
 4623: AF          xor  a
 4624: 32 F0 82    ld   ($82F0),a
 4627: 3A 32 82    ld   a,(timer_16bit_msb_8232)
 462A: D6 10       sub  $10
 462C: D8          ret  c
-462D: 3C          inc  a
-462E: 87          add  a,a
+462D: 3C          inc  a		; instant difficulty level - $10 + 1
+462E: 87          add  a,a		; times 2
 462F: FE 0C       cp   $0C
 4631: 38 02       jr   c,$4635
-4633: 3E 0C       ld   a,$0C
+4633: 3E 0C       ld   a,$0C		; maxed out
 4635: 32 F0 82    ld   ($82F0),a
 4638: E6 04       and  $04
 463A: C2 49 46    jp   nz,$4649
@@ -10095,7 +10095,7 @@ ground_floor_reached_45E5:
 4652: B7          or   a
 4653: CA 65 46    jp   z,$4665
 4656: 3D          dec  a
-4657: CA 6E 46    jp   z,$466E
+4657: CA 6E 46    jp   z,switch_to_hurry_up_music_466E
 465A: 3D          dec  a
 465B: C0          ret  nz
 465C: 3E 82       ld   a,$82
@@ -10106,9 +10106,12 @@ ground_floor_reached_45E5:
 4667: 32 79 87    ld   ($8779),a
 466A: CD D2 64    call $64D2
 466D: C9          ret
+
+switch_to_hurry_up_music_466E:
 466E: 3E 3E       ld   a,$3E
 4670: 32 0B D5    ld   (sound_latch_D50B),a
 4673: C9          ret
+
 4674: B7          or   a
 4675: C2 BF 45    jp   nz,$45BF
 4678: DD 7E 0D    ld   a,(ix+move_direction_0d)
@@ -12413,7 +12416,7 @@ update_upper_status_bar_57C6:
 58FB: 2A 31 82    ld   hl,(timer_16bit_8231)
 58FE: 23          inc  hl
 58FF: 22 31 82    ld   (timer_16bit_8231),hl
-5902: CD 2F 59    call $592F
+5902: CD 2F 59    call compute_difficulty_592F
 5905: 06 01       ld   b,$01
 5907: 3A 32 82    ld   a,(timer_16bit_msb_8232)
 590A: FE 03       cp   $03
@@ -12424,7 +12427,7 @@ update_upper_status_bar_57C6:
 5913: 04          inc  b
 5914: 78          ld   a,b
 5915: 32 7A 83    ld   ($837A),a
-5918: 3A 74 83    ld   a,($8374)
+5918: 3A 74 83    ld   a,(instant_difficulty_level_8374)
 591B: 87          add  a,a
 591C: 47          ld   b,a
 591D: 3E 50       ld   a,$50
@@ -12438,6 +12441,9 @@ update_upper_status_bar_57C6:
 592B: CD FC 5A    call $5AFC
 592E: C9          ret
 
+; real-time difficulty computation from skill level
+; and current time elapsed in the level
+compute_difficulty_592F:
 592F: 3A 32 82    ld   a,(timer_16bit_msb_8232)
 5932: FE 10       cp   $10
 5934: 30 13       jr   nc,$5949
@@ -12445,14 +12451,17 @@ update_upper_status_bar_57C6:
 5938: CB 3F       srl  a
 593A: 47          ld   b,a
 593B: 3A 37 82    ld   a,(skill_level_8237)
-593E: 80          add  a,b
+593E: 80          add  a,b	; add skill level with time spent in level
 593F: FE 10       cp   $10
 5941: 38 02       jr   c,$5945
-5943: 3E 0F       ld   a,$0F
+5943: 3E 0F       ld   a,$0F	; maxed out at $F
 5945: CD 20 46    call $4620
 5948: C9          ret
+; player has overstayed his welcome as
+; timer MSB 8232 just reached $10: max out difficulty
 5949: D6 0C       sub  $0C
 594B: 18 ED       jr   $593A
+
 594D: 06 03       ld   b,$03
 594F: 3A 37 82    ld   a,(skill_level_8237)
 5952: 87          add  a,a
@@ -12465,7 +12474,7 @@ update_upper_status_bar_57C6:
 595D: 06 04       ld   b,$04
 595F: 78          ld   a,b
 5960: 32 7B 83    ld   ($837B),a
-5963: 3A 74 83    ld   a,($8374)
+5963: 3A 74 83    ld   a,(instant_difficulty_level_8374)
 5966: 87          add  a,a
 5967: 87          add  a,a
 5968: 32 7C 83    ld   ($837C),a
@@ -12514,12 +12523,13 @@ update_upper_status_bar_57C6:
 59B6: DD 19       add  ix,de
 59B8: 10 C9       djnz $5983
 59BA: C9          ret
+
 59BB: 21 76 83    ld   hl,$8376
 59BE: 7E          ld   a,(hl)
 59BF: B7          or   a
 59C0: 28 01       jr   z,$59C3
 59C2: 35          dec  (hl)
-59C3: 3A 74 83    ld   a,($8374)
+59C3: 3A 74 83    ld   a,(instant_difficulty_level_8374)
 59C6: B7          or   a
 59C7: C8          ret  z
 59C8: 21 23 81    ld   hl,$8123
@@ -12631,9 +12641,10 @@ player_hit_by_enemy_shots_test_5A0D:
 5A9B: DD 36 04 FF ld   (ix+$04),$FF
 5A9F: DD 36 0A E0 ld   (ix+$0a),$E0
 5AA3: 34          inc  (hl)
-5AA4: 3A 74 83    ld   a,($8374)
+5AA4: 3A 74 83    ld   a,(instant_difficulty_level_8374)
 5AA7: DD 77 13    ld   (ix+$13),a
 5AAA: C9          ret
+
 5AAB: C5          push bc
 5AAC: DD 7E 07    ld   a,(ix+$07)
 5AAF: B7          or   a
@@ -13620,6 +13631,7 @@ feed_elevator_columns_6177:
 6209: 13          inc  de
 620A: 23          inc  hl
 620B: C9          ret
+
 620C: DD 7E 06    ld   a,(ix+$06)
 620F: 3D          dec  a
 6210: CA 22 62    jp   z,$6222
@@ -13688,6 +13700,7 @@ feed_elevator_columns_6177:
 628B: D8          ret  c
 628C: 0E 04       ld   c,$04
 628E: C9          ret
+
 628F: DD 7E 00    ld   a,(ix+character_x_00)
 6292: DD 77 01    ld   (ix+character_x_right_01),a
 6295: DD 7E 03    ld   a,(ix+character_y_offset_03)
@@ -13741,375 +13754,382 @@ load_character_elevator_structure_62CE:
 62E0: D9          exx
 62E1: C9          ret
 
-62E2: FB          ei
-62E3: 00          nop
-62E4: 00          nop
-62E5: 40          ld   b,b
-62E6: FB          ei
-62E7: 10 00       djnz $62E9
-62E9: 4E          ld   c,(hl)
-62EA: FB          ei
-62EB: 00          nop
-62EC: 00          nop
-62ED: 41          ld   b,c
-62EE: FA 10 00    jp   m,$0010
-62F1: 4E          ld   c,(hl)
-62F2: FA 00 00    jp   m,$0000
-62F5: 42          ld   b,d
-62F6: 00          nop
-62F7: 00          nop
-62F8: 00          nop
-62F9: 00          nop
-62FA: FB          ei
-62FB: FE 00       cp   $00
-62FD: 43          ld   b,e
-62FE: FB          ei
-62FF: 0E 00       ld   c,$00
-6301: 4E          ld   c,(hl)
-6302: FB          ei
-6303: 00          nop
-6304: 00          nop
-6305: 49          ld   c,c
-6306: FB          ei
-6307: 10 00       djnz $6309
-6309: 4F          ld   c,a
-630A: FC 00 00    call m,$0000
-630D: 44          ld   b,h
-630E: 00          nop
-630F: 00          nop
-6310: 00          nop
-6311: 00          nop
-6312: FD          db   $fd
-6313: 00          nop
-6314: 03          inc  bc
-6315: 44          ld   b,h
-6316: 00          nop
-6317: 00          nop
-6318: 00          nop
-6319: 00          nop
-631A: FB          ei
-631B: 08          ex   af,af'
-631C: 00          nop
-631D: 45          ld   b,l
-631E: 00          nop
-631F: 00          nop
-6320: 00          nop
-6321: 00          nop
-6322: FB          ei
-6323: 08          ex   af,af'
-6324: 00          nop
-6325: 46          ld   b,(hl)
-6326: 00          nop
-6327: 00          nop
-6328: 00          nop
-6329: 00          nop
-632A: 00          nop
-632B: 00          nop
-632C: 00          nop
-632D: 00          nop
-632E: 00          nop
-632F: 00          nop
-6330: 00          nop
-6331: 00          nop
-6332: FD          db   $fd
-6333: 00          nop
-6334: 00          nop
-6335: 4A          ld   c,d
-6336: 00          nop
-6337: 00          nop
-6338: 00          nop
-6339: 00          nop
-633A: FC 00 00    call m,$0000
-633D: 47          ld   b,a
-633E: 00          nop
-633F: 00          nop
-6340: 00          nop
-6341: 00          nop
-6342: FC 00 00    call m,$0000
-6345: 48          ld   c,b
-6346: 00          nop
-6347: 00          nop
-6348: 00          nop
-6349: 00          nop
-634A: FD          db   $fd
-634B: 00          nop
-634C: 00          nop
-634D: 4B          ld   c,e
-634E: 00          nop
-634F: 00          nop
-6350: 00          nop
-6351: 00          nop
+table_62E2:
+	dc.b	FB      
+	dc.b	00      
+	dc.b	00      
+	dc.b	40      
+	dc.b	FB      
+	dc.b	10 00   
+	dc.b	4E      
+	dc.b	FB      
+	dc.b	00      
+	dc.b	00      
+	dc.b	41      
+	dc.b	FA 10 00
+	dc.b	4E      
+	dc.b	FA 00 00
+	dc.b	42      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FB      
+	dc.b	FE 00   
+	dc.b	43      
+	dc.b	FB      
+	dc.b	0E 00   
+	dc.b	4E      
+	dc.b	FB      
+	dc.b	00      
+	dc.b	00      
+	dc.b	49      
+	dc.b	FB      
+	dc.b	10 00   
+	dc.b	4F      
+	dc.b	FC 00 00
+	dc.b	44      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	03      
+	dc.b	44      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FB      
+	dc.b	08      
+	dc.b	00      
+	dc.b	45      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FB      
+	dc.b	08      
+	dc.b	00      
+	dc.b	46      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	00      
+	dc.b	4A      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 00
+	dc.b	47      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 00
+	dc.b	48      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	00      
+	dc.b	4B      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+
 6352: FD 7E 00    ld   a,(iy+$00)
 6355: B7          or   a
 6356: C8          ret  z
 6357: DD 7E 06    ld   a,(ix+$06)
 635A: B7          or   a
 635B: C3 D2 63    jp   $63D2
+
 635E: FD 7E 00    ld   a,(iy+$00)
 6361: C9          ret
-6362: FE 00       cp   $00
-6364: 01 40 FE    ld   bc,$FE40
-6367: 10 01       djnz $636A
-6369: 4E          ld   c,(hl)
-636A: FE 00       cp   $00
-636C: 01 41 FF    ld   bc,$FF41
-636F: 10 01       djnz $6372
-6371: 4E          ld   c,(hl)
-6372: FF          rst  $38
-6373: 00          nop
-6374: 01 42 00    ld   bc,$0042
-6377: 00          nop
-6378: 00          nop
-6379: 00          nop
-637A: FE FE       cp   $FE
-637C: 01 43 FE    ld   bc,$FE43
-637F: 0E 01       ld   c,$01
-6381: 4E          ld   c,(hl)
-6382: FE 00       cp   $00
-6384: 01 49 FE    ld   bc,$FE49
-6387: 10 01       djnz $638A
-6389: 4F          ld   c,a
-638A: FD          db   $fd
-638B: 00          nop
-638C: 01 44 00    ld   bc,$0044
-638F: 00          nop
-6390: 00          nop
-6391: 00          nop
-6392: FC 00 02    call m,$0200
-6395: 44          ld   b,h
-6396: 00          nop
-6397: 00          nop
-6398: 00          nop
-6399: 00          nop
-639A: FE 08       cp   $08
-639C: 01 45 00    ld   bc,$0045
-639F: 00          nop
-63A0: 00          nop
-63A1: 00          nop
-63A2: FE 08       cp   $08
-63A4: 01 46 00    ld   bc,$0046
-63A7: 00          nop
-63A8: 00          nop
-63A9: 00          nop
-63AA: 00          nop
-63AB: 00          nop
-63AC: 00          nop
-63AD: 00          nop
-63AE: 00          nop
-63AF: 00          nop
-63B0: 00          nop
-63B1: 00          nop
-63B2: FC 00 01    call m,$0100
-63B5: 4A          ld   c,d
-63B6: 00          nop
-63B7: 00          nop
-63B8: 00          nop
-63B9: 00          nop
-63BA: FD          db   $fd
-63BB: 00          nop
-63BC: 01 47 00    ld   bc,$0047
-63BF: 00          nop
-63C0: 00          nop
-63C1: 00          nop
-63C2: FD          db   $fd
-63C3: 00          nop
-63C4: 01 48 00    ld   bc,$0048
-63C7: 00          nop
-63C8: 00          nop
-63C9: 00          nop
-63CA: FC 00 01    call m,$0100
-63CD: 4B          ld   c,e
-63CE: 00          nop
-63CF: 00          nop
-63D0: 00          nop
-63D1: 00          nop
+
+unused_6362:
+	dc.b	FE 00   
+	dc.b	01 40 FE
+	dc.b	10 01   
+	dc.b	4E      
+	dc.b	FE 00   
+	dc.b	01 41 FF
+	dc.b	10 01   
+	dc.b	4E      
+	dc.b	FF      
+	dc.b	00      
+	dc.b	01 42 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FE FE   
+	dc.b	01 43 FE
+	dc.b	0E 01   
+	dc.b	4E      
+	dc.b	FE 00   
+	dc.b	01 49 FE
+	dc.b	10 01   
+	dc.b	4F      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 44 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 02
+	dc.b	44      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FE 08   
+	dc.b	01 45 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FE 08   
+	dc.b	01 46 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 01
+	dc.b	4A      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 47 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 48 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 01
+	dc.b	4B      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+
 63D2: C2 08 46    jp   nz,$4608
 63D5: DD 7E 03    ld   a,(ix+character_y_offset_03)
 63D8: FE 07       cp   $07
 63DA: D8          ret  c
 63DB: C3 08 46    jp   $4608
-63DE: DD 7E 03    ld   a,(ix+character_y_offset_03)
-63E1: D8          ret  c
-63E2: FB          ei
-63E3: 00          nop
-63E4: 00          nop
-63E5: 50          ld   d,b
-63E6: FB          ei
-63E7: 10 00       djnz $63E9
-63E9: 5E          ld   e,(hl)
-63EA: FB          ei
-63EB: 00          nop
-63EC: 00          nop
-63ED: 51          ld   d,c
-63EE: FA 10 00    jp   m,$0010
-63F1: 5E          ld   e,(hl)
-63F2: FA 00 00    jp   m,$0000
-63F5: 52          ld   d,d
-63F6: 00          nop
-63F7: 00          nop
-63F8: 00          nop
-63F9: 00          nop
-63FA: FB          ei
-63FB: FE 00       cp   $00
-63FD: 53          ld   d,e
-63FE: FB          ei
-63FF: 0E 00       ld   c,$00
-6401: 5E          ld   e,(hl)
-6402: FB          ei
-6403: 00          nop
-6404: 00          nop
-6405: 59          ld   e,c
-6406: FB          ei
-6407: 10 00       djnz $6409
-6409: 5F          ld   e,a
-640A: FC 00 00    call m,$0000
-640D: 54          ld   d,h
-640E: 00          nop
-640F: 00          nop
-6410: 00          nop
-6411: 00          nop
-6412: FD          db   $fd
-6413: 00          nop
-6414: 03          inc  bc
-6415: 54          ld   d,h
-6416: 00          nop
-6417: 00          nop
-6418: 00          nop
-6419: 00          nop
-641A: FB          ei
-641B: 08          ex   af,af'
-641C: 00          nop
-641D: 55          ld   d,l
-641E: 00          nop
-641F: 00          nop
-6420: 00          nop
-6421: 00          nop
-6422: FB          ei
-6423: 08          ex   af,af'
-6424: 00          nop
-6425: 56          ld   d,(hl)
-6426: 00          nop
-6427: 00          nop
-6428: 00          nop
-6429: 00          nop
-642A: F6 00       or   $00
-642C: 00          nop
-642D: 5D          ld   e,l
-642E: 06 00       ld   b,$00
-6430: 00          nop
-6431: 5C          ld   e,h
-6432: FD          db   $fd
-6433: 00          nop
-6434: 00          nop
-6435: 5A          ld   e,d
-6436: 00          nop
-6437: 00          nop
-6438: 00          nop
-6439: 00          nop
-643A: FC 00 00    call m,$0000
-643D: 57          ld   d,a
-643E: 00          nop
-643F: 00          nop
-6440: 00          nop
-6441: 00          nop
-6442: FC 00 00    call m,$0000
-6445: 58          ld   e,b
-6446: 00          nop
-6447: 00          nop
-6448: 00          nop
-6449: 00          nop
-644A: FD          db   $fd
-644B: 00          nop
-644C: 00          nop
-644D: 5B          ld   e,e
-644E: 00          nop
-644F: 00          nop
-6450: 00          nop
-6451: 00          nop
-6452: FA 01 FF    jp   m,$FF01
-6455: 00          nop
-6456: 19          add  hl,de
-6457: 00          nop
-6458: 00          nop
-6459: 01 6D 00    ld   bc,$006D
-645C: A7          and  a
-645D: 00          nop
-645E: 53          ld   d,e
-645F: 00          nop
-6460: 0A          ld   a,(bc)
-6461: 00          nop
-6462: FE 00       cp   $00
-6464: 01 50 FE    ld   bc,$FE50
-6467: 10 01       djnz $646A
-6469: 5E          ld   e,(hl)
-646A: FE 00       cp   $00
-646C: 01 51 FF    ld   bc,$FF51
-646F: 10 01       djnz $6472
-6471: 5E          ld   e,(hl)
-6472: FF          rst  $38
-6473: 00          nop
-6474: 01 52 00    ld   bc,$0052
-6477: 00          nop
-6478: 00          nop
-6479: 00          nop
-647A: FE FE       cp   $FE
-647C: 01 53 FE    ld   bc,$FE53
-647F: 0E 01       ld   c,$01
-6481: 5E          ld   e,(hl)
-6482: FE 00       cp   $00
-6484: 01 59 FE    ld   bc,$FE59
-6487: 10 01       djnz $648A
-6489: 5F          ld   e,a
-648A: FD          db   $fd
-648B: 00          nop
-648C: 01 54 00    ld   bc,$0054
-648F: 00          nop
-6490: 00          nop
-6491: 00          nop
-6492: FC 00 02    call m,$0200
-6495: 54          ld   d,h
-6496: 00          nop
-6497: 00          nop
-6498: 00          nop
-6499: 00          nop
-649A: FE 08       cp   $08
-649C: 01 55 00    ld   bc,$0055
-649F: 00          nop
-64A0: 00          nop
-64A1: 00          nop
-64A2: FE 08       cp   $08
-64A4: 01 56 00    ld   bc,$0056
-64A7: 00          nop
-64A8: 00          nop
-64A9: 00          nop
-64AA: FD          db   $fd
-64AB: 00          nop
-64AC: 01 5C 0D    ld   bc,$0D5C
-64AF: 00          nop
-64B0: 01 5D FC    ld   bc,$FC5D
-64B3: 00          nop
-64B4: 01 5A 00    ld   bc,$005A
-64B7: 00          nop
-64B8: 00          nop
-64B9: 00          nop
-64BA: FD          db   $fd
-64BB: 00          nop
-64BC: 01 57 00    ld   bc,$0057
-64BF: 00          nop
-64C0: 00          nop
-64C1: 00          nop
-64C2: FD          db   $fd
-64C3: 00          nop
-64C4: 01 58 00    ld   bc,$0058
-64C7: 00          nop
-64C8: 00          nop
-64C9: 00          nop
-64CA: FC 00 01    call m,$0100
-64CD: 5B          ld   e,e
-64CE: 00          nop
-64CF: 00          nop
-64D0: 00          nop
-64D1: 00          nop
+; this is unreached & unused
+	dc.b	DD 7E 03
+	dc.b	D8      
+	dc.b	FB      
+	dc.b	00      
+	dc.b	00      
+	dc.b	50      
+	dc.b	FB      
+	dc.b	10 00   
+	dc.b	5E      
+	dc.b	FB      
+	dc.b	00      
+	dc.b	00      
+	dc.b	51      
+	dc.b	FA 10 00
+	dc.b	5E      
+	dc.b	FA 00 00
+	dc.b	52      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FB      
+	dc.b	FE 00   
+	dc.b	53      
+	dc.b	FB      
+	dc.b	0E 00   
+	dc.b	5E      
+	dc.b	FB      
+	dc.b	00      
+	dc.b	00      
+	dc.b	59      
+	dc.b	FB      
+	dc.b	10 00   
+	dc.b	5F      
+	dc.b	FC 00 00
+	dc.b	54      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	03      
+	dc.b	54      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FB      
+	dc.b	08      
+	dc.b	00      
+	dc.b	55      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FB      
+	dc.b	08      
+	dc.b	00      
+	dc.b	56      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	F6 00   
+	dc.b	00      
+	dc.b	5D      
+	dc.b	06 00   
+	dc.b	00      
+	dc.b	5C      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	00      
+	dc.b	5A      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 00
+	dc.b	57      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 00
+	dc.b	58      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	00      
+	dc.b	5B      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FA 01 FF
+	dc.b	00      
+	dc.b	19      
+	dc.b	00      
+	dc.b	00      
+	dc.b	01 6D 00
+	dc.b	A7      
+	dc.b	00      
+	dc.b	53      
+	dc.b	00      
+	dc.b	0A      
+	dc.b	00      
+	dc.b	FE 00   
+	dc.b	01 50 FE
+	dc.b	10 01   
+	dc.b	5E      
+	dc.b	FE 00   
+	dc.b	01 51 FF
+	dc.b	10 01   
+	dc.b	5E      
+	dc.b	FF      
+	dc.b	00      
+	dc.b	01 52 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FE FE   
+	dc.b	01 53 FE
+	dc.b	0E 01   
+	dc.b	5E      
+	dc.b	FE 00   
+	dc.b	01 59 FE
+	dc.b	10 01   
+	dc.b	5F      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 54 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 02
+	dc.b	54      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FE 08   
+	dc.b	01 55 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FE 08   
+	dc.b	01 56 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 5C 0D
+	dc.b	00      
+	dc.b	01 5D FC
+	dc.b	00      
+	dc.b	01 5A 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 57 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FD      
+	dc.b	00      
+	dc.b	01 58 00
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	FC 00 01
+	dc.b	5B      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
+	dc.b	00      
 
 64D2: 3A 79 87    ld   a,($8779)
 64D5: FE FF       cp   $FF
@@ -14256,6 +14276,7 @@ handle_music_6500:
 65D8: DD 71 01    ld   (ix+character_x_right_01),c
 65DB: DD 70 02    ld   (ix+$02),b
 65DE: C9          ret
+
 65DF: DD 21 00 87 ld   ix,$8700
 65E3: 3E 01       ld   a,$01
 65E5: 32 72 87    ld   ($8772),a
