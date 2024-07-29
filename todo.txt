@@ -1,15 +1,19 @@
-- identify what does calls: 76A2
-- create a 64k table of 8x8 sprites pair, not all combinations are valid
+
 - AGA: 16+16 dual playfield
 - ECS: 16 colors, possible blit of elevator edges & stairs
 
 reverse stuff:
 
-- up/down read
+- up/down read / elevator control by player
 - when "hurry up" is triggered (music changes, can't control elevators)
+  => when timer at 8232 reaches $10: elevators not controllable, if timer
+     set lowers, elevators are controllable again
 - when color changes (light shot)
 - shot positions
 - colorbanks (D506/7)
+
+enemy A.I when is 51A7 calles?
+
 jump_table_0BBF
 
 end of mainloop
