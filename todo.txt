@@ -25,3 +25,5 @@ end of mainloop
 76C0: CD E1 0B    call $0BE1
 76C3: CD A0 15    call $15A0
 
+finish replacing aggressivity field
+identify all counds

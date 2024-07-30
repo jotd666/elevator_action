@@ -40,13 +40,21 @@
 ;	map(0xd50f, 0xd50f).mirror(0x00f0).nopw();
 ;	map(0xd600, 0xd600).mirror(0x00ff).writeonly().share(m_video_mode);
 
+; character situations
+CS_ON_GROUND_00 = 0
+CS_IN_ELEVATOR_01 = 1
+CS_ABOVE_ELEVATOR_02 = 2
+CS_FALLING_03 = 3
+CS_IN_STAIRS_04 = 4
+CS_IN_ROOM_05 = 5
+
 ; character struct offsets
 character_x_00 = 0x0
 character_x_right_01 = 0x1
 character_y_offset_03 = 0x3
 character_state_04 = 0x4
 character_delta_x_05 = 0x5
-is_on_solid_ground_06 = 0x6
+character_situation_06 = 0x6  ; 0: ground, 1: in elevator, 2: on elevator, 3: ??, 4: in stairs, 5: ??
 current_floor_07 = 0x7
 associated_elevator_08 = 0x8
 enemy_state_09 = 0x9			; 0xFF: inactive, 0: active, 1: ??
@@ -112,9 +120,10 @@ elevator_irq_0038:
 003B: DD 7E 09    ld   a,(ix+$09)
 003E: 3C          inc  a
 003F: C8          ret  z
-0040: DD 7E 06    ld   a,(ix+$06)
-0043: FE 03       cp   $03
+0040: DD 7E 06    ld   a,(ix+character_situation_06)
+0043: FE 03       cp   CS_FALLING_03
 0045: D0          ret  nc
+; either on ground, in or above elevator
 0046: DD 7E 10    ld   a,(ix+$10)
 0049: B7          or   a
 004A: C8          ret  z
@@ -123,7 +132,7 @@ elevator_irq_0038:
 0050: 5F          ld   e,a
 0051: FE 04       cp   $04
 0053: 38 10       jr   c,$0065
-0055: DD 7E 13    ld   a,(ix+$13)
+0055: DD 7E 13    ld   a,(ix+enemy_aggressivity_13)
 0058: 87          add  a,a
 0059: 87          add  a,a
 005A: 87          add  a,a
@@ -300,14 +309,14 @@ handle_main_scrolling_017F:
 ; if disabled, game scrolls down and restarts, seems to make up that scrolling down!
 stabilize_view_handle_falls_01BA:
 01BA: DD 21 1A 85 ld   ix,player_structure_851A
-01BE: DD 7E 06    ld   a,(ix+is_on_solid_ground_06)
+01BE: DD 7E 06    ld   a,(ix+character_situation_06)
 01C1: B7          or   a
-01C2: 28 16       jr   z,$01DA
+01C2: 28 16       jr   z,player_falling_01DA
 01C4: 3D          dec  a
-01C5: 28 1D       jr   z,$01E4
+01C5: 28 1D       jr   z,player_inside_elevator_01E4
 01C7: 3D          dec  a
-01C8: 28 23       jr   z,$01ED
-01CA: FE 03       cp   $03
+01C8: 28 23       jr   z,player_above_elevator_01ED
+01CA: FE 03       cp   CS_IN_ROOM_05-2
 01CC: CA DA 01    jp   z,$01DA
 01CF: DD 46 07    ld   b,(ix+$07)
 01D2: 0E 00       ld   c,$00
@@ -315,16 +324,22 @@ stabilize_view_handle_falls_01BA:
 01D7: C3 6C 1E    jp   $1E6C
 
 ; player falls
+player_falling_01DA:
 01DA: DD 46 07    ld   b,(ix+$07)
 01DD: 0E 00       ld   c,$00
 01DF: 16 06       ld   d,$06
 01E1: C3 6C 1E    jp   $1E6C
+
+player_inside_elevator_01E4:
 01E4: CD CE 62    call load_character_elevator_structure_62CE
 01E7: FD 46 01    ld   b,(iy+$01)
-01EA: C3 F4 01    jp   $01F4
+01EA: C3 F4 01    jp   player_in_or_on_elevator_01F4
+
+player_above_elevator_01ED:
 01ED: CD CE 62    call load_character_elevator_structure_62CE
 01F0: FD 46 01    ld   b,(iy+$01)
 01F3: 04          inc  b
+player_in_or_on_elevator_01F4:
 01F4: 0E 00       ld   c,$00
 01F6: FD 7E 00    ld   a,(iy+$00)
 01F9: 57          ld   d,a
@@ -688,9 +703,10 @@ update_main_scrolling_03C3:
 044B: DD 7E 1C    ld   a,(ix+$1c)
 044E: FE 0C       cp   $0C
 0450: 28 16       jr   z,$0468
-0452: DD 7E 06    ld   a,(ix+$06)
+0452: DD 7E 06    ld   a,(ix+character_situation_06)
 0455: B7          or   a
 0456: 20 10       jr   nz,$0468
+; enemy on ground (not in elevator)
 0458: DD 7E 07    ld   a,(ix+$07)
 045B: B9          cp   c
 045C: 28 14       jr   z,$0472
@@ -809,7 +825,7 @@ update_main_scrolling_03C3:
 052F: B7          or   a
 0530: 28 03       jr   z,$0535
 0532: 21 58 05    ld   hl,$0558
-0535: DD 5E 13    ld   e,(ix+$13)
+0535: DD 5E 13    ld   e,(ix+enemy_aggressivity_13)
 0538: 16 00       ld   d,$00
 053A: 19          add  hl,de
 053B: CD F5 1D    call pseudo_random_1DF5
@@ -918,7 +934,7 @@ update_main_scrolling_03C3:
 05F4: C9          ret
 05F5: CD F5 1D    call pseudo_random_1DF5
 05F8: 21 59 06    ld   hl,$0659
-05FB: DD 5E 13    ld   e,(ix+$13)
+05FB: DD 5E 13    ld   e,(ix+enemy_aggressivity_13)
 05FE: 16 00       ld   d,$00
 0600: 19          add  hl,de
 0601: BE          cp   (hl)
@@ -1631,7 +1647,7 @@ handle_enemes_0B68:
 0B6F: 21 32 81    ld   hl,$8132
 0B72: 22 BD 85    ld   ($85BD),hl
 0B75: 3E 01       ld   a,$01
-0B77: 32 BA 85    ld   ($85BA),a
+0B77: 32 BA 85    ld   (current_enemy_index_85BA),a
 ; loop
 0B7A: CD 98 0B    call $0B98
 0B7D: 11 20 00    ld   de,$0020
@@ -1640,9 +1656,9 @@ handle_enemes_0B68:
 0B85: 11 05 00    ld   de,$0005
 0B88: 19          add  hl,de
 0B89: 22 BD 85    ld   ($85BD),hl
-0B8C: 3A BA 85    ld   a,($85BA)
+0B8C: 3A BA 85    ld   a,(current_enemy_index_85BA)
 0B8F: 3C          inc  a
-0B90: 32 BA 85    ld   ($85BA),a
+0B90: 32 BA 85    ld   (current_enemy_index_85BA),a
 0B93: FE 05       cp   $05
 0B95: 20 E3       jr   nz,$0B7A
 0B97: C9          ret
@@ -1654,10 +1670,11 @@ handle_enemes_0B68:
 0BA0: F8          ret  m
 0BA1: FE 05       cp   $05
 0BA3: D0          ret  nc
-0BA4: DD 7E 06    ld   a,(ix+$06)
+0BA4: DD 7E 06    ld   a,(ix+character_situation_06)
 0BA7: 4F          ld   c,a
-0BA8: FE 03       cp   $03
+0BA8: FE 03       cp   CS_FALLING_03
 0BAA: D2 D1 0B    jp   nc,$0BD1
+; ground, in/on elevator or unknown 3
 0BAD: DD 7E 0F    ld   a,(ix+$0f)
 0BB0: 47          ld   b,a
 0BB1: 80          add  a,b
@@ -2755,7 +2772,7 @@ handle_enemies_12A2:
 13B4: 70          ld   (hl),b
 13B5: C9          ret
 13B6: CD 81 15    call $1581
-13B9: DD 7E 06    ld   a,(ix+$06)
+13B9: DD 7E 06    ld   a,(ix+character_situation_06)
 13BC: E6 01       and  $01
 13BE: DD 46 03    ld   b,(ix+character_y_offset_03)
 13C1: 80          add  a,b
@@ -2779,8 +2796,8 @@ handle_enemies_12A2:
 13DE: 21 16 14    ld   hl,$1416
 13E1: 09          add  hl,bc
 13E2: CD C3 14    call $14C3
-13E5: DD 7E 06    ld   a,(ix+$06)
-13E8: FE 02       cp   $02
+13E5: DD 7E 06    ld   a,(ix+character_situation_06)
+13E8: FE 02       cp   CS_ABOVE_ELEVATOR_02
 13EA: 30 12       jr   nc,$13FE
 13EC: 3E FF       ld   a,$FF
 13EE: DD 77 05    ld   (ix+character_delta_x_05),a
@@ -4050,20 +4067,20 @@ enemy_jumping_above_elevator_1B38:
 1BBF: 3D          dec  a
 1BC0: 28 13       jr   z,$1BD5
 1BC2: 21 04 1C    ld   hl,table_1C04
-1BC5: DD 5E 13    ld   e,(ix+$13)
+1BC5: DD 5E 13    ld   e,(ix+enemy_aggressivity_13)
 1BC8: 16 00       ld   d,$00
 1BCA: 19          add  hl,de
 1BCB: CD F5 1D    call pseudo_random_1DF5
 1BCE: BE          cp   (hl)
 1BCF: 30 04       jr   nc,$1BD5
 1BD1: DD 36 12 04 ld   (ix+$12),$04
-1BD5: 3A BA 85    ld   a,($85BA)
+1BD5: 3A BA 85    ld   a,(current_enemy_index_85BA)
 1BD8: 5F          ld   e,a
 1BD9: 16 00       ld   d,$00
 1BDB: 21 F8 82    ld   hl,$82F8
 1BDE: 19          add  hl,de
 1BDF: 3E 0A       ld   a,$0A
-1BE1: DD 96 13    sub  (ix+$13)
+1BE1: DD 96 13    sub  (ix+enemy_aggressivity_13)
 1BE4: 30 01       jr   nc,$1BE7
 1BE6: AF          xor  a
 1BE7: 77          ld   (hl),a
@@ -4121,7 +4138,7 @@ enemy_shooting_state_1C14:
 1C48: 3C          inc  a
 1C49: DD B6 19    or   (ix+$19)
 1C4C: 28 11       jr   z,$1C5F
-1C4E: 3A BA 85    ld   a,($85BA)
+1C4E: 3A BA 85    ld   a,(current_enemy_index_85BA)
 1C51: FE 03       cp   $03
 1C53: 21 D5 1D    ld   hl,$1DD5
 1C56: 30 03       jr   nc,$1C5B
@@ -4133,7 +4150,7 @@ enemy_shooting_state_1C14:
 1C64: 28 E8       jr   z,$1C4E
 1C66: 3D          dec  a
 1C67: 28 E5       jr   z,$1C4E
-1C69: 3A BA 85    ld   a,($85BA)
+1C69: 3A BA 85    ld   a,(current_enemy_index_85BA)
 1C6C: FE 03       cp   $03
 1C6E: 21 95 1D    ld   hl,$1D95
 1C71: 30 03       jr   nc,$1C76
@@ -4141,7 +4158,7 @@ enemy_shooting_state_1C14:
 1C76: CD 7A 1C    call $1C7A
 1C79: C9          ret
 
-1C7A: DD 7E 13    ld   a,(ix+$13)
+1C7A: DD 7E 13    ld   a,(ix+enemy_aggressivity_13)
 1C7D: E6 FE       and  $FE
 1C7F: 87          add  a,a
 1C80: 5F          ld   e,a
@@ -4161,13 +4178,13 @@ enemy_shooting_state_1C14:
 1C94: 38 01       jr   c,$1C97
 1C96: 04          inc  b
 1C97: DD 70 12    ld   (ix+$12),b
-1C9A: 3A BA 85    ld   a,($85BA)
+1C9A: 3A BA 85    ld   a,(current_enemy_index_85BA)
 1C9D: 5F          ld   e,a
 1C9E: 16 00       ld   d,$00
 1CA0: 21 F8 82    ld   hl,$82F8
 1CA3: 19          add  hl,de
 1CA4: 3E 0A       ld   a,$0A
-1CA6: DD 96 13    sub  (ix+$13)
+1CA6: DD 96 13    sub  (ix+enemy_aggressivity_13)
 1CA9: 30 01       jr   nc,$1CAC
 1CAB: AF          xor  a
 1CAC: 77          ld   (hl),a
@@ -4189,7 +4206,7 @@ enemy_shooting_state_1C14:
 1CCC: DD 7E 12    ld   a,(ix+$12)
 1CCF: FE 06       cp   $06
 1CD1: 28 29       jr   z,$1CFC
-1CD3: DD 7E 13    ld   a,(ix+$13)
+1CD3: DD 7E 13    ld   a,(ix+enemy_aggressivity_13)
 1CD6: B7          or   a
 1CD7: C8          ret  z
 1CD8: 3A 30 85    ld   a,($8530)
@@ -4239,7 +4256,7 @@ enemy_shooting_state_1C14:
 1D38: 30 99       jr   nc,$1CD3
 1D3A: DD 36 12 05 ld   (ix+$12),$05
 1D3E: C9          ret
-1D3F: DD 7E 13    ld   a,(ix+$13)
+1D3F: DD 7E 13    ld   a,(ix+enemy_aggressivity_13)
 1D42: E6 FE       and  $FE
 1D44: 87          add  a,a
 1D45: 5F          ld   e,a
@@ -7376,7 +7393,7 @@ initial_player_structure_2F9C
 
 2FE8: DD 21 1A 85 ld   ix,player_structure_851A
 2FEC: 3E 00       ld   a,$00
-2FEE: 32 BA 85    ld   ($85BA),a
+2FEE: 32 BA 85    ld   (current_enemy_index_85BA),a
 2FF1: 21 F1 80    ld   hl,$80F1
 2FF4: 22 BF 85    ld   ($85BF),hl
 2FF7: 21 64 81    ld   hl,$8164
@@ -7450,9 +7467,10 @@ handle_elevator_sound_3046:
 307D: CD 56 36    call play_sound_3656
 3080: C9          ret
 
+update_enemies_3081:
 3081: DD 21 3A 85 ld   ix,enemy_1_853A
 3085: 3E 01       ld   a,$01
-3087: 32 BA 85    ld   ($85BA),a
+3087: 32 BA 85    ld   (current_enemy_index_85BA),a
 308A: 21 FB 80    ld   hl,$80FB
 308D: 22 BF 85    ld   ($85BF),hl
 3090: 21 32 81    ld   hl,$8132
@@ -7473,9 +7491,9 @@ handle_elevator_sound_3046:
 30B6: 2A BB 85    ld   hl,($85BB)
 30B9: 19          add  hl,de
 30BA: 22 BB 85    ld   ($85BB),hl
-30BD: 3A BA 85    ld   a,($85BA)
+30BD: 3A BA 85    ld   a,(current_enemy_index_85BA)
 30C0: 3C          inc  a
-30C1: 32 BA 85    ld   ($85BA),a
+30C1: 32 BA 85    ld   (current_enemy_index_85BA),a
 30C4: FE 05       cp   $05
 30C6: C2 99 30    jp   nz,$3099
 30C9: C9          ret
@@ -7568,8 +7586,8 @@ unknown_enemy_handling_3164:
 3164: DD 7E 09    ld   a,(ix+$09)
 3167: FE 05       cp   $05
 3169: D0          ret  nc
-316A: DD 7E 06    ld   a,(ix+$06)
-316D: FE 03       cp   $03
+316A: DD 7E 06    ld   a,(ix+character_situation_06)
+316D: FE 03       cp   CS_FALLING_03
 316F: D0          ret  nc
 3170: DD 7E 15    ld   a,(ix+$15)
 3173: BD          cp   l
@@ -7763,9 +7781,10 @@ enemy_vs_lamp_collision_32ED:
 32ED: DD 7E 09    ld   a,(ix+enemy_state_09)
 32F0: 3C          inc  a
 32F1: C8          ret  z				; $FF: inactive
-32F2: DD 7E 06    ld   a,(ix+$06)
+32F2: DD 7E 06    ld   a,(ix+character_situation_06)
 32F5: B7          or   a
 32F6: C0          ret  nz
+; character is on ground
 32F7: 3A 3E 82    ld   a,($823E)
 32FA: DD BE 07    cp   (ix+$07)
 32FD: C0          ret  nz
@@ -8202,9 +8221,10 @@ play_sound_3656:
 365D: 32 0B D5    ld   (sound_latch_D50B),a
 3660: C9          ret
 
-3661: DD 7E 06    ld   a,(ix+$06)
+3661: DD 7E 06    ld   a,(ix+character_situation_06)
 3664: B7          or   a
 3665: C2 6B 36    jp   nz,$366B
+; character on ground
 3668: C3 C5 46    jp   $46C5
 366B: CD CE 62    call load_character_elevator_structure_62CE
 366E: FD 46 01    ld   b,(iy+current_floor_01)        ; 83CE: elevator current floor
@@ -8393,6 +8413,7 @@ play_sound_3656:
 37E2: DD 77 02    ld   (ix+$02),a
 37E5: DD 71 03    ld   (ix+character_y_offset_03),c
 37E8: C9          ret
+
 37E9: DD 7E 06    ld   a,(ix+$06)
 37EC: 3D          dec  a
 37ED: C8          ret  z
@@ -8409,7 +8430,7 @@ play_sound_3656:
 3805: D8          ret  c
 3806: DD 36 09 06 ld   (ix+$09),$06
 380A: DD 36 0A 00 ld   (ix+$0a),$00
-380E: 3A BA 85    ld   a,($85BA)
+380E: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3811: B7          or   a
 3812: 28 16       jr   z,$382A
 3814: 3E 02       ld   a,$02
@@ -8422,6 +8443,7 @@ play_sound_3656:
 3824: E6 7F       and  $7F
 3826: CC E7 56    call z,$56E7
 3829: C9          ret
+
 382A: 3E 02       ld   a,$02
 382C: 32 EB 82    ld   ($82EB),a
 382F: C9          ret
@@ -8433,7 +8455,7 @@ play_sound_3656:
 383C: DD 34 0A    inc  (ix+$0a)
 383F: 47          ld   b,a
 3840: 0E 11       ld   c,$11
-3842: 3A BA 85    ld   a,($85BA)
+3842: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3845: B7          or   a
 3846: C2 4B 38    jp   nz,$384B
 3849: 0E 28       ld   c,$28
@@ -8441,7 +8463,7 @@ play_sound_3656:
 384C: B9          cp   c
 384D: DA 84 38    jp   c,$3884
 3850: 47          ld   b,a
-3851: 3A BA 85    ld   a,($85BA)
+3851: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3854: B7          or   a
 3855: C2 5E 38    jp   nz,$385E
 3858: 78          ld   a,b
@@ -8478,11 +8500,13 @@ play_sound_3656:
 38A1: C3 AC 38    jp   $38AC
 38A4: DD 36 02 15 ld   (ix+$02),$15
 38A8: DD 36 03 06 ld   (ix+character_y_offset_03),$06
-38AC: DD 7E 06    ld   a,(ix+$06)
+38AC: DD 7E 06    ld   a,(ix+character_situation_06)
 38AF: B7          or   a
 38B0: C2 B7 38    jp   nz,$38B7
+; character on ground
 38B3: CD B4 39    call $39B4
 38B6: C9          ret
+; not on ground (elevator, stairs ...)
 38B7: CD B5 3A    call $3AB5
 38BA: C9          ret
 38BB: 3E 0B       ld   a,$0B
@@ -8515,7 +8539,7 @@ play_sound_3656:
 38FA: C9          ret
 38FB: DD 36 04 FF ld   (ix+$04),$FF
 38FF: C9          ret
-3900: 3A BA 85    ld   a,($85BA)
+3900: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3903: B7          or   a
 3904: 20 0D       jr   nz,$3913
 3906: 11 20 39    ld   de,$3920
@@ -8573,11 +8597,12 @@ play_sound_3656:
 3948: DD 7E 04    ld   a,(ix+$04)
 394B: 3C          inc  a
 394C: C8          ret  z
-394D: DD 7E 06    ld   a,(ix+$06)
+394D: DD 7E 06    ld   a,(ix+character_situation_06)
 3950: B7          or   a
-3951: CA 7F 39    jp   z,$397F
-3954: FE 02       cp   $02
+3951: CA 7F 39    jp   z,character_on_ground_397F
+3954: FE 02       cp   CS_ABOVE_ELEVATOR_02
 3956: C0          ret  nz
+; character above elevator
 3957: DD 7E 08    ld   a,(ix+$08)
 395A: E6 80       and  $80
 395C: C0          ret  nz
@@ -8595,6 +8620,8 @@ play_sound_3656:
 3977: DD 36 09 06 ld   (ix+$09),$06
 397B: CD 07 3B    call $3B07
 397E: C9          ret
+
+character_on_ground_397F:
 397F: DD 7E 08    ld   a,(ix+$08)
 3982: FE 0C       cp   $0C
 3984: C8          ret  z
@@ -8668,7 +8695,7 @@ play_sound_3656:
 3A11: C8          ret  z
 3A12: DD 36 09 00 ld   (ix+$09),$00
 3A16: DD 36 0A 00 ld   (ix+$0a),$00
-3A1A: DD 36 06 03 ld   (ix+$06),$03
+3A1A: DD 36 06 03 ld   (ix+character_situation_06),CS_FALLING_03
 3A1E: C9          ret
 3A1F: DD 77 08    ld   (ix+$08),a
 3A22: CD CE 62    call load_character_elevator_structure_62CE
@@ -8713,7 +8740,7 @@ play_sound_3656:
 3A7C: C9          ret
 3A7D: DD 36 09 00 ld   (ix+$09),$00
 3A81: DD 36 0A 00 ld   (ix+$0a),$00
-3A85: DD 36 06 03 ld   (ix+$06),$03
+3A85: DD 36 06 03 ld   (ix+character_situation_06),CS_FALLING_03
 3A89: DD 7E 00    ld   a,(ix+character_x_00)
 3A8C: DD 86 01    add  a,(ix+character_x_right_01)
 3A8F: CB 1F       rr   a
@@ -8750,7 +8777,7 @@ play_sound_3656:
 3ADB: C6 08       add  a,$08
 3ADD: DD 77 01    ld   (ix+character_x_right_01),a
 3AE0: C9          ret
-3AE1: 3A BA 85    ld   a,($85BA)
+3AE1: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3AE4: B7          or   a
 3AE5: 28 10       jr   z,$3AF7
 3AE7: 3A EC 82    ld   a,($82EC)
@@ -8771,7 +8798,8 @@ play_sound_3656:
 3B01: 3E C5       ld   a,$C5
 3B03: CD 56 36    call play_sound_3656
 3B06: C9          ret
-3B07: 3A BA 85    ld   a,($85BA)
+
+3B07: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3B0A: B7          or   a
 3B0B: 28 0F       jr   z,$3B1C
 3B0D: 3A EC 82    ld   a,($82EC)
@@ -8811,7 +8839,7 @@ play_sound_3656:
 3B56: FD 96 00    sub  (iy+$00)
 3B59: D6 06       sub  $06
 3B5B: F0          ret  p
-3B5C: DD 36 06 02 ld   (ix+$06),$02
+3B5C: DD 36 06 02 ld   (ix+character_situation_06),CS_ABOVE_ELEVATOR_02
 3B60: 18 11       jr   $3B73
 3B62: DD 7E 07    ld   a,(ix+$07)
 3B65: FD BE 03    cp   (iy+$03)
@@ -8819,12 +8847,12 @@ play_sound_3656:
 3B69: DD 7E 03    ld   a,(ix+character_y_offset_03)
 3B6C: FE 06       cp   $06
 3B6E: D0          ret  nc
-3B6F: DD 36 06 00 ld   (ix+$06),$00
+3B6F: DD 36 06 00 ld   (ix+character_situation_06),CS_ON_GROUND_00
 3B73: DD 36 03 06 ld   (ix+character_y_offset_03),$06
 3B77: DD 36 02 15 ld   (ix+$02),$15
 3B7B: DD 36 09 05 ld   (ix+$09),$05
 3B7F: DD 36 0A 00 ld   (ix+$0a),$00
-3B83: 3A BA 85    ld   a,($85BA)
+3B83: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3B86: B7          or   a
 3B87: 28 06       jr   z,$3B8F
 3B89: 3E 01       ld   a,$01
@@ -8835,7 +8863,7 @@ play_sound_3656:
 3B94: 3E C4       ld   a,$C4
 3B96: CD 56 36    call play_sound_3656
 3B99: C9          ret
-3B9A: 3A BA 85    ld   a,($85BA)
+3B9A: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3B9D: DD B6 0A    or   (ix+$0a)
 3BA0: C0          ret  nz
 3BA1: 3E C3       ld   a,$C3
@@ -8868,7 +8896,7 @@ play_sound_3656:
 3BDA: DD 7E 09    ld   a,(ix+$09)
 3BDD: B7          or   a
 3BDE: C2 26 3C    jp   nz,$3C26
-3BE1: 3A BA 85    ld   a,($85BA)
+3BE1: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3BE4: B7          or   a
 3BE5: C2 26 3C    jp   nz,$3C26
 3BE8: CD 2A 3C    call $3C2A
@@ -8895,7 +8923,7 @@ play_sound_3656:
 3C11: DA 26 3C    jp   c,$3C26
 3C14: B9          cp   c
 3C15: D2 26 3C    jp   nc,$3C26
-3C18: DD 36 06 05 ld   (ix+$06),$05
+3C18: DD 36 06 05 ld   (ix+character_situation_06),CS_IN_ROOM_05
 3C1C: AF          xor  a
 3C1D: DD 36 0A 00 ld   (ix+$0a),$00
 3C21: DD 36 04 00 ld   (ix+$04),$00
@@ -8939,7 +8967,7 @@ play_sound_3656:
 3C6E: C3 A3 3C    jp   $3CA3
 3C71: DD 36 04 00 ld   (ix+$04),$00
 3C75: 06 12       ld   b,$12
-3C77: 3A BA 85    ld   a,($85BA)
+3C77: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3C7A: B7          or   a
 3C7B: 28 09       jr   z,$3C86
 3C7D: 3A 37 82    ld   a,(skill_level_8237)
@@ -8951,7 +8979,7 @@ play_sound_3656:
 3C8A: DD 77 0A    ld   (ix+$0a),a
 3C8D: C9          ret
 3C8E: DD 36 04 FF ld   (ix+$04),$FF
-3C92: 3A BA 85    ld   a,($85BA)
+3C92: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3C95: B7          or   a
 3C96: C8          ret  z
 3C97: DD 36 09 FF ld   (ix+$09),$FF
@@ -8961,13 +8989,13 @@ play_sound_3656:
 3CA2: C9          ret
 
 3CA3: DD 36 04 02 ld   (ix+$04),$02
-3CA7: DD 36 06 00 ld   (ix+$06),$00
+3CA7: DD 36 06 00 ld   (ix+character_situation_06),CS_ON_GROUND_00
 3CAB: DD 36 02 1D ld   (ix+$02),$1D
 3CAF: DD 36 03 06 ld   (ix+character_y_offset_03),$06
 3CB3: DD 36 09 00 ld   (ix+$09),$00
 3CB7: DD 36 0C 00 ld   (ix+$0c),$00
 3CBB: DD 36 05 00 ld   (ix+character_delta_x_05),$00
-3CBF: 3A BA 85    ld   a,($85BA)
+3CBF: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3CC2: B7          or   a
 3CC3: C0          ret  nz
 3CC4: DD 5E 07    ld   e,(ix+$07)
@@ -9008,7 +9036,7 @@ play_sound_3656:
 3D10: C4 F1 3D    call nz,$3DF1
 3D13: C9          ret
 3D14: CD 6A 3D    call $3D6A
-3D17: C2 65 3D    jp   nz,$3D65
+3D17: C2 65 3D    jp   nz,set_character_on_ground_3D65
 3D1A: CD BB 3D    call $3DBB
 3D1D: 79          ld   a,c
 3D1E: B7          or   a
@@ -9032,13 +9060,15 @@ play_sound_3656:
 3D4F: DD 36 0A 01 ld   (ix+$0a),$01
 3D53: DD 36 0C 01 ld   (ix+$0c),$01
 3D57: FD 71 03    ld   (iy+$03),c
-3D5A: 3A BA 85    ld   a,($85BA)
+3D5A: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3D5D: B7          or   a
 3D5E: C0          ret  nz
 3D5F: 3E 37       ld   a,$37
 3D61: CD 56 36    call play_sound_3656
 3D64: C9          ret
-3D65: DD 36 06 00 ld   (ix+$06),$00
+
+set_character_on_ground_3D65:
+3D65: DD 36 06 00 ld   (ix+character_situation_06),CS_ON_GROUND_00
 3D69: C9          ret
 3D6A: FD 21 AD 80 ld   iy,$80AD
 3D6E: CD AD 3D    call $3DAD
@@ -9105,12 +9135,13 @@ play_sound_3656:
 3DF0: C9          ret
 3DF1: CD 6A 3D    call $3D6A
 3DF4: C2 5B 3E    jp   nz,$3E5B
-3DF7: 3A BA 85    ld   a,($85BA)
+3DF7: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3DFA: B7          or   a
 3DFB: 20 0A       jr   nz,$3E07
 3DFD: FD 36 06 02 ld   (iy+$06),$02
-3E01: DD 36 13 30 ld   (ix+$13),$30
+3E01: DD 36 13 30 ld   (ix+enemy_aggressivity_13),$30
 3E05: 18 0B       jr   $3E12
+
 3E07: 3A 37 82    ld   a,(skill_level_8237)
 3E0A: FE 02       cp   $02
 3E0C: 30 04       jr   nc,$3E12
@@ -9142,7 +9173,7 @@ play_sound_3656:
 3E57: FD 71 03    ld   (iy+$03),c
 3E5A: C9          ret
 3E5B: DD 36 0A E0 ld   (ix+$0a),$E0
-3E5F: DD 36 06 05 ld   (ix+$06),$05
+3E5F: DD 36 06 05 ld   (ix+character_situation_06),CS_IN_ROOM_05
 3E63: C9          ret
 3E64: DD 7E 05    ld   a,(ix+character_delta_x_05)
 3E67: B7          or   a
@@ -9222,7 +9253,7 @@ play_sound_3656:
 3F19: 36 05       ld   (hl),$05
 3F1B: 23          inc  hl
 3F1C: 36 68       ld   (hl),$68
-3F1E: 3A BA 85    ld   a,($85BA)
+3F1E: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3F21: B7          or   a
 3F22: C0          ret  nz
 3F23: DD 7E 0A    ld   a,(ix+$0a)
@@ -9373,8 +9404,8 @@ play_sound_3656:
 405B: 36 FF       ld   (hl),$FF
 405D: DD 36 02 1D ld   (ix+$02),$1D
 4061: DD 36 03 06 ld   (ix+character_y_offset_03),$06
-4065: DD 36 06 00 ld   (ix+$06),$00
-4069: 3A BA 85    ld   a,($85BA)
+4065: DD 36 06 00 ld   (ix+character_situation_06),CS_ON_GROUND_00
+4069: 3A BA 85    ld   a,(current_enemy_index_85BA)
 406C: B7          or   a
 406D: 28 0E       jr   z,$407D
 406F: AF          xor  a
@@ -9467,7 +9498,7 @@ play_sound_3656:
 4140: 36 05       ld   (hl),$05
 4142: 23          inc  hl
 4143: 36 69       ld   (hl),$69
-4145: 3A BA 85    ld   a,($85BA)
+4145: 3A BA 85    ld   a,(current_enemy_index_85BA)
 4148: B7          or   a
 4149: C0          ret  nz
 414A: 3E 63       ld   a,$63
@@ -9718,8 +9749,8 @@ table_42E2:
 4334: FE 07       cp   $07
 4336: DA 30 38    jp   c,$3830
 4339: C3 51 42    jp   $4251
-433C: DD 7E 06    ld   a,(ix+$06)
-433F: FE 03       cp   $03
+433C: DD 7E 06    ld   a,(ix+character_situation_06)
+433F: FE 03       cp   CS_FALLING_03
 4341: DA 4F 43    jp   c,$434F
 4344: CA 2B 3B    jp   z,$3B2B
 4347: FE 05       cp   $05
@@ -9796,7 +9827,7 @@ character_walks_438C:
 
 ; ix:851A for player
 is_jumping_43F5:
-43F5: 3A BA 85    ld   a,($85BA)
+43F5: 3A BA 85    ld   a,(current_enemy_index_85BA)
 43F8: AF          xor  a
 43F9: C0          ret  nz
 43FA: DD 7E 0D    ld   a,(ix+move_direction_0d)
@@ -9815,7 +9846,7 @@ is_jumping_43F5:
 4418: CD 56 36    call play_sound_3656
 441B: C9          ret
 441C: F5          push af
-441D: 3A BA 85    ld   a,($85BA)
+441D: 3A BA 85    ld   a,(current_enemy_index_85BA)
 4420: B7          or   a
 4421: 20 05       jr   nz,$4428
 4423: 3E 66       ld   a,$66
@@ -9958,10 +9989,10 @@ handle_character_entering_elevator_446E:
 452D: C9          ret
 452E: DD 36 0B 01 ld   (ix+$0b),$01
 4532: C9          ret
-4533: DD 7E 06    ld   a,(ix+$06)
-4536: FE 02       cp   $02
+4533: DD 7E 06    ld   a,(ix+character_situation_06)
+4536: FE 02       cp   CS_ABOVE_ELEVATOR_02
 4538: C8          ret  z
-4539: 3A BA 85    ld   a,($85BA)
+4539: 3A BA 85    ld   a,(current_enemy_index_85BA)
 453C: B7          or   a
 453D: C8          ret  z
 453E: DD 7E 00    ld   a,(ix+character_x_00)
@@ -9973,27 +10004,30 @@ handle_character_entering_elevator_446E:
 454F: DD 36 09 04 ld   (ix+$09),$04
 4553: DD 36 0C 09 ld   (ix+$0c),$09
 4557: C9          ret
+
 4558: DD 7E 0D    ld   a,(ix+move_direction_0d)
 455B: CB 6F       bit  5,a
 455D: C8          ret  z
+; character is shooting
 455E: 06 02       ld   b,$02
-4560: 3A BA 85    ld   a,($85BA)
+4560: 3A BA 85    ld   a,(current_enemy_index_85BA)
 4563: B7          or   a
 4564: 28 37       jr   z,$459D
 4566: 2A BD 85    ld   hl,($85BD)
 4569: 7E          ld   a,(hl)
 456A: 3C          inc  a
 456B: C0          ret  nz
-456C: DD 7E 06    ld   a,(ix+$06)
-456F: FE 03       cp   $03
+456C: DD 7E 06    ld   a,(ix+character_situation_06)
+456F: FE 03       cp   CS_FALLING_03
 4571: D0          ret  nc
+; ground or in elevator or falling
 4572: DD 7E 09    ld   a,(ix+$09)
 4575: FE 07       cp   $07
 4577: 28 03       jr   z,$457C
 4579: FE 05       cp   $05
 457B: D0          ret  nc
 457C: 21 FF 82    ld   hl,$82FF
-457F: 3A BA 85    ld   a,($85BA)
+457F: 3A BA 85    ld   a,(current_enemy_index_85BA)
 4582: 80          add  a,b
 4583: 87          add  a,a
 4584: 87          add  a,a
@@ -10013,7 +10047,7 @@ handle_character_entering_elevator_446E:
 4595: 23          inc  hl
 4596: 72          ld   (hl),d
 4597: 23          inc  hl
-4598: 3A BA 85    ld   a,($85BA)
+4598: 3A BA 85    ld   a,(current_enemy_index_85BA)
 459B: 77          ld   (hl),a
 459C: C9          ret
 459D: 2A BD 85    ld   hl,($85BD)
@@ -10032,10 +10066,12 @@ handle_character_entering_elevator_446E:
 45B0: 3C          inc  a
 45B1: 28 B9       jr   z,$456C
 45B3: C9          ret
-45B4: DD 7E 06    ld   a,(ix+$06)
+
+45B4: DD 7E 06    ld   a,(ix+character_situation_06)
 45B7: 3D          dec  a
 45B8: C0          ret  nz
-45B9: 3A BA 85    ld   a,($85BA)
+; in elevator
+45B9: 3A BA 85    ld   a,(current_enemy_index_85BA)
 45BC: C3 74 46    jp   $4674
 45BF: 3A 21 85    ld   a,($8521)
 45C2: FE 07       cp   $07
@@ -10280,7 +10316,7 @@ switch_to_hurry_up_music_466E:
 47BB: 4D          ld   c,l
 47BC: CD 9D 37    call $379D
 47BF: DD 36 05 02 ld   (ix+character_delta_x_05),$02
-47C3: DD 36 06 02 ld   (ix+$06),$02
+47C3: DD 36 06 02 ld   (ix+character_situation_06),CS_ABOVE_ELEVATOR_02
 47C7: C9          ret
 47C8: DD 36 11 02 ld   (ix+$11),$02
 47CC: C3 13 47    jp   $4713
@@ -10298,7 +10334,7 @@ switch_to_hurry_up_music_466E:
 47E9: 4D          ld   c,l
 47EA: CD 9D 37    call $379D
 47ED: DD 36 05 FE ld   (ix+character_delta_x_05),$FE
-47F1: DD 36 06 02 ld   (ix+$06),$02
+47F1: DD 36 06 02 ld   (ix+character_situation_06),CS_ABOVE_ELEVATOR_02
 47F5: C9          ret
 47F6: DD 36 11 02 ld   (ix+$11),$02
 47FA: C3 22 47    jp   $4722
@@ -10319,7 +10355,7 @@ switch_to_hurry_up_music_466E:
 4821: 4D          ld   c,l
 4822: CD 9D 37    call $379D
 4825: DD 36 05 02 ld   (ix+character_delta_x_05),$02
-4829: DD 36 06 01 ld   (ix+$06),$01
+4829: DD 36 06 01 ld   (ix+character_situation_06),CS_IN_ELEVATOR_01
 482D: C9          ret
 482E: DD 7E 05    ld   a,(ix+character_delta_x_05)
 4831: B7          or   a
@@ -10338,7 +10374,7 @@ switch_to_hurry_up_music_466E:
 4852: 4D          ld   c,l
 4853: CD 9D 37    call $379D
 4856: DD 36 05 FE ld   (ix+character_delta_x_05),$FE
-485A: DD 36 06 01 ld   (ix+$06),$01
+485A: DD 36 06 01 ld   (ix+character_situation_06),CS_IN_ELEVATOR_01
 485E: C9          ret
 485F: FD 7E 06    ld   a,(iy+$06)
 4862: B7          or   a
@@ -10460,7 +10496,7 @@ switch_to_hurry_up_music_466E:
 497F: D6 08       sub  $08
 4981: DD 77 00    ld   (ix+character_x_00),a
 4984: DD 36 0A 00 ld   (ix+$0a),$00
-4988: DD 36 06 03 ld   (ix+$06),$03
+4988: DD 36 06 03 ld   (ix+character_situation_06),CS_FALLING_03
 498C: DD 36 05 00 ld   (ix+character_delta_x_05),$00
 4990: DD 7E 08    ld   a,(ix+$08)
 4993: E6 7F       and  $7F
@@ -10478,7 +10514,7 @@ switch_to_hurry_up_music_466E:
 49AD: C6 08       add  a,$08
 49AF: DD 77 01    ld   (ix+character_x_right_01),a
 49B2: C3 84 49    jp   $4984
-49B5: 3A BA 85    ld   a,($85BA)
+49B5: 3A BA 85    ld   a,(current_enemy_index_85BA)
 49B8: B7          or   a
 49B9: 28 22       jr   z,$49DD
 49BB: DD 7E 0F    ld   a,(ix+$0f)
@@ -10500,7 +10536,7 @@ switch_to_hurry_up_music_466E:
 49DB: 28 F8       jr   z,$49D5
 49DD: 37          scf
 49DE: C9          ret
-49DF: 3A BA 85    ld   a,($85BA)
+49DF: 3A BA 85    ld   a,(current_enemy_index_85BA)
 49E2: B7          or   a
 49E3: CA DD 49    jp   z,$49DD
 49E6: DD 7E 0F    ld   a,(ix+$0f)
@@ -10553,7 +10589,7 @@ switch_to_hurry_up_music_466E:
 4A5D: D8          ret  c
 4A5E: DD 36 09 05 ld   (ix+$09),$05
 4A62: DD 36 0A 00 ld   (ix+$0a),$00
-4A66: 3A BA 85    ld   a,($85BA)
+4A66: 3A BA 85    ld   a,(current_enemy_index_85BA)
 4A69: B7          or   a
 4A6A: 28 06       jr   z,$4A72
 4A6C: 3E 02       ld   a,$02
@@ -10573,7 +10609,7 @@ switch_to_hurry_up_music_466E:
 4A8C: DD 36 09 05 ld   (ix+$09),$05
 4A90: DD 36 0A 00 ld   (ix+$0a),$00
 4A94: CD 66 4A    call $4A66
-4A97: 3A BA 85    ld   a,($85BA)
+4A97: 3A BA 85    ld   a,(current_enemy_index_85BA)
 4A9A: B7          or   a
 4A9B: C8          ret  z
 4A9C: 3A 20 85    ld   a,($8520)
@@ -10648,7 +10684,7 @@ switch_to_hurry_up_music_466E:
 4B20: D2 37 4B    jp   nc,$4B37
 4B23: DD 36 0B 01 ld   (ix+$0b),$01
 4B27: DD 36 05 01 ld   (ix+character_delta_x_05),$01
-4B2B: DD 36 06 04 ld   (ix+$06),$04
+4B2B: DD 36 06 04 ld   (ix+character_situation_06),CS_IN_STAIRS_04
 4B2F: AF          xor  a
 4B30: DD 77 04    ld   (ix+$04),a
 4B33: DD 77 0A    ld   (ix+$0a),a
@@ -11302,17 +11338,17 @@ table_4FEB:
 
 5054: DD E5       push ix
 5056: DD 5E 05    ld   e,(ix+character_delta_x_05)
-5059: DD 56 06    ld   d,(ix+$06)
+5059: DD 56 06    ld   d,(ix+character_situation_06)
 505C: D5          push de
 505D: DD E1       pop  ix
 505F: DD 7E 09    ld   a,(ix+$09)
 5062: FE 07       cp   $07
 5064: 28 05       jr   z,$506B
 5066: FE 05       cp   $05
-5068: D2 A0 50    jp   nc,$50A0
-506B: DD 7E 06    ld   a,(ix+$06)
-506E: FE 03       cp   $03
-5070: CA A0 50    jp   z,$50A0
+5068: D2 A0 50    jp   nc,character_falling_50A0
+506B: DD 7E 06    ld   a,(ix+character_situation_06)
+506E: FE 03       cp   CS_FALLING_03
+5070: CA A0 50    jp   z,character_falling_50A0
 5073: CD 10 51    call $5110
 5076: CD AC 50    call $50AC
 5079: DD E1       pop  ix
@@ -11335,6 +11371,7 @@ table_4FEB:
 509C: CD 53 51    call $5153
 509F: C9          ret
 
+character_falling_50A0:
 50A0: DD E1       pop  ix
 50A2: DD 36 02 FF ld   (ix+$02),$FF
 50A6: 2A 36 83    ld   hl,($8336)
@@ -11420,11 +11457,11 @@ table_50D8:
 	dc.b	08          
 	dc.b	76          
 
-5110: DD 7E 06    ld   a,(ix+$06)
+5110: DD 7E 06    ld   a,(ix+character_situation_06)
 5113: B7          or   a
-5114: CA 4C 51    jp   z,$514C
+5114: CA 4C 51    jp   z,character_on_ground_514C
 5117: 3D          dec  a
-5118: CA 34 51    jp   z,$5134
+5118: CA 34 51    jp   z,character_in_elevator_5134
 
 511B: CD CE 62    call load_character_elevator_structure_62CE
 511E: DD 7E 08    ld   a,(ix+$08)
@@ -11440,6 +11477,7 @@ table_50D8:
 5132: 4F          ld   c,a
 5133: C9          ret
 
+character_in_elevator_5134:
 5134: CD CE 62    call load_character_elevator_structure_62CE
 5137: DD 7E 08    ld   a,(ix+$08)
 513A: E6 80       and  $80
@@ -11452,6 +11490,8 @@ table_50D8:
 5147: FD 86 00    add  a,(iy+$00)
 514A: 4F          ld   c,a
 514B: C9          ret
+
+character_on_ground_514C:
 514C: DD 46 07    ld   b,(ix+$07)
 514F: DD 4E 03    ld   c,(ix+character_y_offset_03)
 5152: C9          ret
@@ -11618,7 +11658,7 @@ enemy_above_elevator_524E:
 52A4: F0          ret  p
 52A5: 06 01       ld   b,$01
 52A7: C9          ret
-52A8: 3A BA 85    ld   a,($85BA)
+52A8: 3A BA 85    ld   a,(current_enemy_index_85BA)
 52AB: C6 03       add  a,$03
 52AD: DD 77 10    ld   (ix+$10),a
 52B0: CD B4 52    call $52B4
@@ -11685,7 +11725,7 @@ enemy_above_elevator_524E:
 5324: DD 7E 18    ld   a,(ix+$18)
 5327: B7          or   a
 5328: C0          ret  nz
-5329: 3A BA 85    ld   a,($85BA)
+5329: 3A BA 85    ld   a,(current_enemy_index_85BA)
 532C: C6 03       add  a,$03
 532E: DD 77 10    ld   (ix+$10),a
 5331: DD 7E 09    ld   a,(ix+$09)
@@ -11698,7 +11738,7 @@ enemy_above_elevator_524E:
 5340: 28 17       jr   z,$5359
 5342: FE 11       cp   $11
 5344: 28 27       jr   z,$536D
-5346: 3A BA 85    ld   a,($85BA)
+5346: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5349: E6 01       and  $01
 534B: 20 06       jr   nz,$5353
 534D: CD 8B 53    call $538B
@@ -11960,7 +12000,7 @@ enemy_walk_state_53F6:
 55B5: 30 13       jr   nc,$55CA
 55B7: DD 36 0A 00 ld   (ix+$0a),$00
 55BB: DD 36 04 00 ld   (ix+$04),$00
-55BF: DD 36 06 05 ld   (ix+$06),$05
+55BF: DD 36 06 05 ld   (ix+character_situation_06),CS_IN_ROOM_05
 55C3: DD 7E 1D    ld   a,(ix+$1d)
 55C6: DD 77 08    ld   (ix+$08),a
 55C9: C9          ret
@@ -12124,9 +12164,10 @@ table_563F:
 56BF: 3A 42 82    ld   a,($8242)
 56C2: B7          or   a
 56C3: C2 02 57    jp   nz,$5702
-56C6: DD 7E 06    ld   a,(ix+$06)
+56C6: DD 7E 06    ld   a,(ix+character_situation_06)
 56C9: B7          or   a
 56CA: 20 0C       jr   nz,$56D8
+; on ground
 56CC: DD 7E 07    ld   a,(ix+$07)
 56CF: FE 0B       cp   $0B
 56D1: 38 05       jr   c,$56D8
@@ -12522,15 +12563,18 @@ compute_difficulty_592F:
 5983: DD 7E 09    ld   a,(ix+$09)
 5986: 3C          inc  a
 5987: CA B6 59    jp   z,$59B6
-598A: DD 7E 06    ld   a,(ix+$06)
-598D: FE 05       cp   $05
-598F: 28 0C       jr   z,$599D
+598A: DD 7E 06    ld   a,(ix+character_situation_06)
+598D: FE 05       cp   CS_IN_ROOM_05
+598F: 28 0C       jr   z,enemy_exiting_room_599D
 5991: B7          or   a
 5992: 20 22       jr   nz,$59B6
 5994: DD 7E 1C    ld   a,(ix+$1c)
 5997: FE 0C       cp   $0C
 5999: 28 1B       jr   z,$59B6
 599B: 18 07       jr   $59A4
+
+; starting point for enemies
+enemy_exiting_room_599D:
 599D: DD 7E 0A    ld   a,(ix+$0a)
 59A0: B7          or   a
 59A1: F2 B6 59    jp   p,$59B6
@@ -12629,8 +12673,8 @@ player_hit_by_enemy_shots_test_5A0D:
 5A4C: DD 7E 09    ld   a,(ix+$09)
 5A4F: 3C          inc  a
 5A50: 28 0C       jr   z,$5A5E
-5A52: DD 7E 06    ld   a,(ix+$06)
-5A55: FE 05       cp   $05
+5A52: DD 7E 06    ld   a,(ix+character_situation_06)
+5A55: FE 05       cp   CS_IN_ROOM_05
 5A57: C0          ret  nz
 5A58: DD 7E 0A    ld   a,(ix+$0a)
 5A5B: FE E0       cp   $E0
@@ -12656,18 +12700,20 @@ player_hit_by_enemy_shots_test_5A0D:
 5A80: E1          pop  hl
 5A81: DD 36 09 FF ld   (ix+$09),$FF
 5A85: C8          ret  z
+; spawn a new enemy, located in a room
+spawn_enemy_5A86:
 5A86: 3E 00       ld   a,$00
 5A88: DD 77 0D    ld   (ix+move_direction_0d),a
 5A8B: DD 77 19    ld   (ix+$19),a
 5A8E: DD 77 09    ld   (ix+$09),a
 5A91: DD 77 0F    ld   (ix+$0f),a
 5A94: DD 77 10    ld   (ix+$10),a
-5A97: DD 36 06 05 ld   (ix+$06),$05
+5A97: DD 36 06 05 ld   (ix+character_situation_06),CS_IN_ROOM_05
 5A9B: DD 36 04 FF ld   (ix+$04),$FF
 5A9F: DD 36 0A E0 ld   (ix+$0a),$E0
 5AA3: 34          inc  (hl)
 5AA4: 3A 74 83    ld   a,(instant_difficulty_level_8374)
-5AA7: DD 77 13    ld   (ix+$13),a
+5AA7: DD 77 13    ld   (ix+enemy_aggressivity_13),a
 5AAA: C9          ret
 
 5AAB: C5          push bc
@@ -12767,7 +12813,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5B75: CA 35 5C    jp   z,$5C35
 5B78: 87          add  a,a
 5B79: 5F          ld   e,a
-5B7A: 3A BA 85    ld   a,($85BA)
+5B7A: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5B7D: E6 01       and  $01
 5B7F: 83          add  a,e
 5B80: 5F          ld   e,a
@@ -12825,7 +12871,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5BDC: C9          ret
 5BDD: DD 36 1A 2F ld   (ix+$1a),$2F
 5BE1: DD 36 1C 0B ld   (ix+$1c),$0B
-5BE5: 3A BA 85    ld   a,($85BA)
+5BE5: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5BE8: E6 01       and  $01
 5BEA: C8          ret  z
 5BEB: DD 36 1A C2 ld   (ix+$1a),$C2
@@ -12849,7 +12895,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5C1D: C9          ret
 5C1E: DD 36 1A 2F ld   (ix+$1a),$2F
 5C22: DD 36 1C 0B ld   (ix+$1c),$0B
-5C26: 3A BA 85    ld   a,($85BA)
+5C26: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5C29: E6 01       and  $01
 5C2B: C8          ret  z
 5C2C: DD 36 1A C2 ld   (ix+$1a),$C2
@@ -12884,7 +12930,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5C6F: CA 44 5C    jp   z,$5C44
 5C72: 87          add  a,a
 5C73: 5F          ld   e,a
-5C74: 3A BA 85    ld   a,($85BA)
+5C74: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5C77: E6 01       and  $01
 5C79: 83          add  a,e
 5C7A: 5F          ld   e,a
@@ -12930,7 +12976,7 @@ table_5C8D:
 5CAF: DD 7E 00    ld   a,(ix+character_x_00)
 5CB2: FE AC       cp   $AC
 5CB4: 30 13       jr   nc,$5CC9
-5CB6: 3A BA 85    ld   a,($85BA)
+5CB6: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5CB9: DD 36 1A 78 ld   (ix+$1a),$78
 5CBD: E6 01       and  $01
 5CBF: C0          ret  nz
@@ -12951,7 +12997,7 @@ table_5C8D:
 5CE8: C9          ret
 5CE9: DD 36 1A 09 ld   (ix+$1a),$09
 5CED: DD 36 1C 0B ld   (ix+$1c),$0B
-5CF1: 3A BA 85    ld   a,($85BA)
+5CF1: 3A BA 85    ld   a,(current_enemy_index_85BA)
 5CF4: E6 01       and  $01
 5CF6: C8          ret  z
 5CF7: DD 36 1A E7 ld   (ix+$1a),$E7
@@ -13310,7 +13356,7 @@ table_5C8D:
 5FE2: 44          ld   b,h
 5FE3: 4D          ld   c,l
 5FE4: DD 56 07    ld   d,(ix+$07)
-5FE7: DD 5E 06    ld   e,(ix+$06)
+5FE7: DD 5E 06    ld   e,(ix+character_situation_06)
 5FEA: AF          xor  a
 5FEB: ED 52       sbc  hl,de
 5FED: DA F2 5F    jp   c,$5FF2
@@ -13619,7 +13665,7 @@ feed_elevator_columns_6177:
 61CE: DD 77 04    ld   (ix+$04),a
 61D1: DD 77 09    ld   (ix+$09),a
 61D4: DD 36 10 00 ld   (ix+$10),$00
-61D8: DD 7E 06    ld   a,(ix+$06)
+61D8: DD 7E 06    ld   a,(ix+character_situation_06)
 61DB: FE 04       cp   $04
 61DD: C0          ret  nz
 61DE: 2A BB 85    ld   hl,($85BB)
@@ -13657,7 +13703,7 @@ feed_elevator_columns_6177:
 620A: 23          inc  hl
 620B: C9          ret
 
-620C: DD 7E 06    ld   a,(ix+$06)
+620C: DD 7E 06    ld   a,(ix+character_situation_06)
 620F: 3D          dec  a
 6210: CA 22 62    jp   z,$6222
 6213: 3D          dec  a
@@ -13682,7 +13728,7 @@ feed_elevator_columns_6177:
 6242: 05          dec  b
 6243: 05          dec  b
 6244: C3 6C 1E    jp   $1E6C
-6247: 3A BA 85    ld   a,($85BA)
+6247: 3A BA 85    ld   a,(current_enemy_index_85BA)
 624A: 47          ld   b,a
 624B: AF          xor  a
 624C: 90          sub  b
@@ -13704,13 +13750,13 @@ feed_elevator_columns_6177:
 6264: 19          add  hl,de
 6265: EB          ex   de,hl
 6266: 0E 00       ld   c,$00
-6268: 3A BA 85    ld   a,($85BA)
+6268: 3A BA 85    ld   a,(current_enemy_index_85BA)
 626B: B7          or   a
 626C: C8          ret  z
 626D: DD 7E 0C    ld   a,(ix+$0c)
 6270: FE 0D       cp   $0D
 6272: 28 1B       jr   z,$628F
-6274: DD 7E 06    ld   a,(ix+$06)
+6274: DD 7E 06    ld   a,(ix+character_situation_06)
 6277: B7          or   a
 6278: 28 03       jr   z,$627D
 627A: FE 04       cp   $04
@@ -13731,7 +13777,7 @@ feed_elevator_columns_6177:
 6295: DD 7E 03    ld   a,(ix+character_y_offset_03)
 6298: DD 77 02    ld   (ix+$02),a
 629B: C9          ret
-629C: 3A BA 85    ld   a,($85BA)
+629C: 3A BA 85    ld   a,(current_enemy_index_85BA)
 629F: B7          or   a
 62A0: C0          ret  nz
 62A1: DD 7E 13    ld   a,(ix+$13)
@@ -14341,7 +14387,7 @@ handle_music_6500:
 663C: C9          ret
 663D: DD 35 0B    dec  (ix+$0b)
 6640: C2 7E 67    jp   nz,$677E
-6643: DD 6E 06    ld   l,(ix+$06)
+6643: DD 6E 06    ld   l,(ix+character_situation_06)
 6646: DD 66 07    ld   h,(ix+$07)
 6649: 7E          ld   a,(hl)
 664A: FE 80       cp   $80
@@ -15700,7 +15746,7 @@ mainloop_75A5:
 75C2: CA FE 75    jp   z,$75FE
 75C5: FE 05       cp   $05
 75C7: D2 A5 75    jp   nc,mainloop_75A5
-75CA: DD 7E 06    ld   a,(ix+$06)
+75CA: DD 7E 06    ld   a,(ix+character_situation_06)
 75CD: FE 02       cp   $02
 75CF: D2 A5 75    jp   nc,mainloop_75A5
 75DF: DD 7E 07    ld   a,(ix+current_floor_07)		; character current floor ix=851A
@@ -15811,7 +15857,7 @@ perform_all_in_game_tasks_76A2:
 76B1: CD 68 0B    call handle_enemes_0B68		; if skipped, enemy lies down and stays there, then no enemies appear
 76B4: CD E8 2F    call $2FE8
 76B7: CD 27 31    call $3127
-76BA: CD 81 30    call $3081
+76BA: CD 81 30    call update_enemies_3081
 76BD: CD BA 4B    call $4BBA
 76C0: CD E1 0B    call $0BE1
 76C3: CD A0 15    call $15A0
