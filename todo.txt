@@ -26,4 +26,8 @@ end of mainloop
 76C3: CD A0 15    call $15A0
 
 finish replacing aggressivity field
-identify all counds
+identify all counds: most done
+- missing ones not driven by play_sound_3656:
+  - theme music
+  - end car noises
+  
