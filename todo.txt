@@ -31,3 +31,4 @@ identify all counds: most done
   - theme music
   - end car noises
   
+compare elevatora ROM with elevatorb protection MCU chhip!!!

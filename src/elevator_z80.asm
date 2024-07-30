@@ -111,7 +111,7 @@ GS_INSERT_COIN_09 = 9
 0025: E1          pop  hl
 0026: C9          ret
 
-
+; part of protection?
 0028: E6 1F       and  $1F
 002A: E7          rst  $20
 002B: 21 48 86    ld   hl,$8648
@@ -1759,6 +1759,10 @@ jump_table_0BBF:
 0C3C: 32 34 80    ld   ($8034),a
 0C3F: CD CD 0C    call $0CCD
 0C42: C9          ret
+
+protection_0C43:
+; the bootleg version NOPs the following
+; bootleg: start NOP patch
 0C43: D5          push de
 0C44: 11 F6 82    ld   de,$82F6
 0C47: 1B          dec  de
@@ -1767,6 +1771,7 @@ jump_table_0BBF:
 0C4A: CA 50 0C    jp   z,$0C50
 0C4D: C3 81 0C    jp   $0C81
 0C50: D1          pop  de
+; bootleg: end NOP patch
 0C51: 3E 02       ld   a,$02
 0C53: 32 34 80    ld   ($8034),a
 0C56: 3A 36 80    ld   a,($8036)
@@ -2155,6 +2160,7 @@ handle_elevators_0EBF:
 0EF8: C8          ret  z
 0EF9: 32 84 83    ld   ($8384),a
 0EFC: C9          ret
+
 0EFD: 21 84 83    ld   hl,$8384
 0F00: 11 81 80    ld   de,$8081
 0F03: 06 07       ld   b,$07
@@ -2180,9 +2186,17 @@ handle_elevators_0EBF:
 0F22: 7E          ld   a,(hl)
 0F23: 34          inc  (hl)
 0F24: EF          rst  $28
+; bootleg: code replaced by below
 0F25: 21 80 80    ld   hl,$8080
 0F28: 4E          ld   c,(hl)
 0F29: 09          add  hl,bc
+; end code to replace
+; bootleg replacement code
+0F25: CD EC 34    call $34EC		; alternate code put where there was room
+0F28: 00          nop
+0F29: 00          nop
+; end bootleg code
+
 0F2A: 3F          ccf
 0F2B: 0E 25       ld   c,$25
 0F2D: ED 42       sbc  hl,bc
@@ -7903,7 +7917,9 @@ bootup_338f:
 33BF: 21 F9 34    ld   hl,$34F9
 33C2: 01 0A 00    ld   bc,$000A
 33C5: FB          ei
-33C6: C2 C5 34    jp   nz,$34C5
+; bootleg: below code NOPed out
+33C6: C2 C5 34    jp   nz,bad_hardware_34C5
+; bootleg: end of NOPed code
 33C9: CD AC 34    call rom_checksum_34AC
 33CC: 32 80 80    ld   ($8080),a
 33CF: 32 C6 85    ld   ($85C6),a
@@ -8033,11 +8049,18 @@ table_34A0:
 34B5: 7C          ld   a,h
 34B6: EE 80       xor  $80
 34B8: 32 0D D5    ld   (watchdog_d50d),a
+; bootleg: code below patched
 34BB: 20 F4       jr   nz,$34B1
 34BD: A8          xor  b
 34BE: C8          ret  z
+; bootleg: by code below
+34BB: 00          nop
+34BC: 3E 00       ld   a,$00
+34BE: C9          ret
+; bootleg: end patched code
 34BF: 21 E2 34    ld   hl,$34E2
 34C2: 01 17 00    ld   bc,$0017
+bad_hardware_34C5:
 34C5: E5          push hl
 34C6: C5          push bc
 34C7: AF          xor  a
@@ -8054,6 +8077,7 @@ table_34A0:
 34E0: 18 FB       jr   $34DD
 34E2: 07          rlca
 34E3: 00          nop
+; bootleg: code replaced by the code below
 34E4: 29          add  hl,hl
 34E5: 1C          inc  e
 34E6: 30 00       jr   nc,$34E8
@@ -8072,6 +8096,20 @@ table_34A0:
 34F9: 07          rlca
 34FA: 00          nop
 34FB: 29          add  hl,hl
+; bootleg: end of original code, replacement code below
+34E4: 3E 81       ld   a,$81
+34E6: 32 0E D5    ld   ($D50E),a
+34E9: C3 DE 73    jp   $73DE
+; entrypoint for aux. bootleg routine where there was room for it
+34EC: 3E 81       ld   a,$81
+34EE: 32 0E D5    ld   ($D50E),a
+34F1: C3 20 70    jp   $7020
+34F4: 3E 01       ld   a,$01
+34F6: 32 0E D5    ld   ($D50E),a
+34F9: F1          pop  af
+34FA: E1          pop  hl
+34FB: C9          ret
+; bootleg: end of replacement code
 34FC: 1C          inc  e
 34FD: 30 00       jr   nc,$34FF
 34FF: 2B          dec  hl
@@ -14259,7 +14297,7 @@ handle_music_6500:
 650E: 22 C1 85    ld   ($85C1),hl
 6511: 7C          ld   a,h
 6512: FE 60       cp   $60
-6514: C2 31 65    jp   nz,$6531
+6514: C2 31 65    jp   nz,$6531	; bootleg: remove nz cond, always jump
 6517: 21 00 00    ld   hl,$0000
 651A: 22 C1 85    ld   ($85C1),hl
 651D: 21 C3 85    ld   hl,$85C3
@@ -15484,9 +15522,15 @@ table_72D4:
 73E9: 7E          ld   a,(hl)
 73EA: 34          inc  (hl)
 73EB: EF          rst  $28
+; bootleg: code below replaced by alternate
 73EC: 21 C6 85    ld   hl,$85C6
 73EF: 4E          ld   c,(hl)
 73F0: 09          add  hl,bc
+; bootleg: end original code, replacement code below
+73EC: C3 E4 34    jp   $34E4
+73EF: F1          pop  af
+73F0: E1          pop  hl
+; bootleg: end replacement code
 73F1: 77          ld   (hl),a
 73F2: 3A AB 80    ld   a,($80AB)
 73F5: B7          or   a
@@ -15519,8 +15563,10 @@ table_73F9:
 7421: EF          rst  $28
 7422: 21 F8 73    ld   hl,table_73F9-1
 7425: 09          add  hl,bc
-7426: AE          xor  (hl)		
-7427: 28 C9       jr   z,$73F2
+7426: AE          xor  (hl)
+; bootleg: should jump inconditionally	
+7427: 28 C9       jr   z,$73F2   ; bootleg: should be jr $73F2
+; bootleg end. Rest of the code is meant to crash
 ; protection fails: jump in the woods
 7429: E1          pop  hl
 742A: C1          pop  bc
