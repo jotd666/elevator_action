@@ -106,7 +106,7 @@ GS_INSERT_COIN_09 = 9
 
 
 0020: E5          push hl
-0021: CD CF 77    call $77CF
+0021: CD CF 77    call mcu_comm_routine_77CF
 0024: D7          rst  $10
 0025: E1          pop  hl
 0026: C9          ret
@@ -114,10 +114,10 @@ GS_INSERT_COIN_09 = 9
 ; part of protection?
 0028: E6 1F       and  $1F
 002A: E7          rst  $20
-002B: 21 48 86    ld   hl,$8648
+002B: 21 48 86    ld   hl,protection_variable_8648
 002E: B6          or   (hl)
 002F: 77          ld   (hl),a
-0030: CD BD 77    call $77BD
+0030: CD BD 77    call mcu_comm_routine_77BD
 0033: C9          ret
 
 elevator_irq_0038:
@@ -401,19 +401,22 @@ player_in_or_on_elevator_01F4:
 024C: 87          add  a,a
 024D: 91          sub  c
 024E: 6F          ld   l,a
+; compute proper address in gfx rom
 024F: 26 00       ld   h,$00
 0251: 29          add  hl,hl
 0252: 29          add  hl,hl
 0253: 29          add  hl,hl
 0254: 29          add  hl,hl
-0255: 29          add  hl,hl
+0255: 29          add  hl,hl	; times 32
 0256: EB          ex   de,hl
-0257: 21 80 5F    ld   hl,$5F80
+0257: 21 80 5F    ld   hl,$5F80	; start in gfx rom
 025A: 19          add  hl,de
 025B: D5          push de
 025C: 22 09 D5    ld   (gfx_pointer_d509),hl
-025F: 11 08 80    ld   de,$8008
-0262: 21 04 D4    ld   hl,$D404
+025F: 11 08 80    ld   de,scroll_row_8008
+0262: 21 04 D4    ld   hl,gfx_rom_D404
+; copy 32 bytes of gfx rom to ram, value read from D404 changes at each read!!!
+; reads a row of building data from gfx rom to RAM
 0265: 06 20       ld   b,$20
 0267: 7E          ld   a,(hl)
 0268: 12          ld   (de),a
@@ -428,6 +431,7 @@ player_in_or_on_elevator_01F4:
 0276: CD 9C 02    call $029C
 0279: CD 87 03    call $0387
 027C: C9          ret
+
 027D: 21 01 80    ld   hl,$8001
 0280: 7E          ld   a,(hl)
 0281: 81          add  a,c
@@ -435,23 +439,23 @@ player_in_or_on_elevator_01F4:
 0283: D6 08       sub  $08
 0285: D8          ret  c
 0286: 77          ld   (hl),a
-0287: 23          inc  hl
-0288: 34          inc  (hl)
+0287: 23          inc  hl		; now pointing on $8002
+0288: 34          inc  (hl)		; increment value
 0289: 7E          ld   a,(hl)
 028A: D6 06       sub  $06
 028C: DA 93 02    jp   c,$0293
 028F: 77          ld   (hl),a
-0290: 23          inc  hl
-0291: 34          inc  (hl)
-0292: 2B          dec  hl
+0290: 23          inc  hl		; now pointing on $8003
+0291: 34          inc  (hl)		; increment value		
+0292: 2B          dec  hl		; now pointing on $8002
 0293: 4E          ld   c,(hl)
-0294: 23          inc  hl
+0294: 23          inc  hl		; now pointing on $8003
 0295: 7E          ld   a,(hl)
 0296: C6 05       add  a,$05
 0298: 47          ld   b,a
 0299: C3 47 02    jp   $0247
 
-029C: 3A 07 80    ld   a,($8007)
+029C: 3A 07 80    ld   a,(scroll_tile_pointer_8006+1)
 029F: B7          or   a
 02A0: C8          ret  z
 02A1: 2A 02 80    ld   hl,($8002)
@@ -482,7 +486,7 @@ player_in_or_on_elevator_01F4:
 02CE: 7E          ld   a,(hl)
 02CF: FE 08       cp   $08
 02D1: D0          ret  nc
-02D2: 21 08 80    ld   hl,$8008
+02D2: 21 08 80    ld   hl,scroll_row_8008
 02D5: 47          ld   b,a
 02D6: D5          push de
 02D7: 87          add  a,a
@@ -648,7 +652,7 @@ update_main_scrolling_03C3:
 03D9: C8          ret  z
 03DA: EB          ex   de,hl
 ; set top row with new tiles
-03DB: 21 08 80    ld   hl,$8008
+03DB: 21 08 80    ld   hl,scroll_row_8008
 03DE: ED A0       ldi
 03E0: ED A0       ldi
 03E2: ED A0       ldi
@@ -2321,6 +2325,7 @@ handle_elevators_0EBF:
 1012: 32 A4 80    ld   ($80A4),a
 1015: CD 36 10    call $1036
 1018: C9          ret
+
 1019: 47          ld   b,a
 101A: 3A A2 80    ld   a,(nb_credits_80A2)
 101D: 4F          ld   c,a
@@ -2344,18 +2349,19 @@ handle_elevators_0EBF:
 
 1036: 3A A2 80    ld   a,(nb_credits_80A2)
 1039: FE 09       cp   $09
-103B: 30 10       jr   nc,$104D
+103B: 30 10       jr   nc,over_9_credits_104D
 103D: AF          xor  a
 103E: 32 45 82    ld   ($8245),a
-1041: 3A 4D 82    ld   a,($824D)
+1041: 3A 4D 82    ld   a,(bank_switch_copy_824D)
 1044: F6 01       or   $01
-1046: 32 4D 82    ld   ($824D),a
+1046: 32 4D 82    ld   (bank_switch_copy_824D),a
 1049: 32 0E D5    ld   (bank_switch_d50e),a
 104C: C9          ret
 
-104D: 3A 4D 82    ld   a,($824D)
+over_9_credits_104D:
+104D: 3A 4D 82    ld   a,(bank_switch_copy_824D)
 1050: E6 FE       and  $FE
-1052: 32 4D 82    ld   ($824D),a
+1052: 32 4D 82    ld   (bank_switch_copy_824D),a
 1055: 32 0E D5    ld   (bank_switch_d50e),a
 1058: C9          ret
 
@@ -2624,7 +2630,7 @@ finish_irq_123E:
 125D: CD 00 65    call handle_music_6500
 1260: CD 6A 65    call $656A
 1263: CD DF 65    call $65DF
-1266: 21 48 86    ld   hl,$8648
+1266: 21 48 86    ld   hl,protection_variable_8648
 1269: 7E          ld   a,(hl)
 126A: 3C          inc  a
 126B: 3C          inc  a
@@ -2632,7 +2638,7 @@ finish_irq_123E:
 126E: FA 73 12    jp   m,$1273
 1271: EE 9A       xor  $9A
 1273: 77          ld   (hl),a
-1274: CD CF 77    call $77CF
+1274: CD CF 77    call mcu_comm_routine_77CF
 1277: FD E1       pop  iy
 1279: DD E1       pop  ix
 127B: C1          pop  bc
@@ -6026,16 +6032,17 @@ pseudo_random_1E06:
 2649: 3E F5       ld   a,$F5
 264B: 32 02 D5    ld   ($D502),a
 264E: 32 04 D5    ld   ($D504),a
-2651: 3A D9 81    ld   a,($81D9)
+2651: 3A D9 81    ld   a,(menu_or_game_tiles_81D9)
 2654: B7          or   a
 2655: CA 5C 26    jp   z,$265C
 2658: 3D          dec  a
 2659: CA 76 26    jp   z,$2676
+; copy gfx rom contents into character data
 265C: 21 00 00    ld   hl,$0000
 265F: 22 09 D5    ld   (gfx_pointer_d509),hl
-2662: 11 00 90    ld   de,$9000
-2665: 01 30 00    ld   bc,$0030
-2668: 3A 04 D4    ld   a,($D404)
+2662: 11 00 90    ld   de,character_data_9000
+2665: 01 30 00    ld   bc,$0030		; 256*48 bytes
+2668: 3A 04 D4    ld   a,(gfx_rom_D404)
 266B: 12          ld   (de),a
 266C: 13          inc  de
 266D: 10 F9       djnz $2668
@@ -6045,9 +6052,9 @@ pseudo_random_1E06:
 
 2676: 21 00 30    ld   hl,$3000
 2679: 22 09 D5    ld   (gfx_pointer_d509),hl
-267C: 11 00 90    ld   de,$9000
-267F: 01 30 00    ld   bc,$0030
-2682: 3A 04 D4    ld   a,($D404)
+267C: 11 00 90    ld   de,character_data_9000
+267F: 01 30 00    ld   bc,$0030		; 256*48 bytes
+2682: 3A 04 D4    ld   a,(gfx_rom_D404)
 2685: 12          ld   (de),a
 2686: 13          inc  de
 2687: 10 F9       djnz $2682
@@ -6088,7 +6095,7 @@ reload_8bit_tiimer_26C2:
 26C6: 32 AA 80    ld   (timer_8bit_80AA),a
 26C9: C9          ret
 
-26CA: 3A D9 81    ld   a,($81D9)
+26CA: 3A D9 81    ld   a,(menu_or_game_tiles_81D9)
 26CD: B7          or   a
 26CE: 28 03       jr   z,$26D3
 26D0: 3D          dec  a
@@ -6425,7 +6432,7 @@ table_280E:
 28EF: CD 47 02    call $0247
 28F2: 2A 06 80    ld   hl,(scroll_tile_pointer_8006)
 28F5: EB          ex   de,hl
-28F6: 21 08 80    ld   hl,$8008
+28F6: 21 08 80    ld   hl,scroll_row_8008
 28F9: 01 20 00    ld   bc,$0020
 28FC: ED B0       ldir
 28FE: C1          pop  bc
@@ -7172,7 +7179,7 @@ return_a_times_48_in_hl_2D84:
 2E2E: 32 36 82    ld   ($8236),a
 2E31: CD E1 71    call $71E1
 2E34: 3E 01       ld   a,$01
-2E36: 32 D9 81    ld   ($81D9),a
+2E36: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 2E39: CD 0C 26    call $260C
 2E3C: 3E 03       ld   a,GS_PUSH_START_03
 2E3E: 32 AC 80    ld   (game_state_80AC),a
@@ -7894,14 +7901,14 @@ enemy_vs_lamp_collision_32ED:
 
 bootup_338f:
 338F: F3          di				; disable interrupts
-3390: 31 00 88    ld   sp,$8800		; set stack pointer
+3390: 31 00 88    ld   sp,mcu_read_8800		; set stack pointer
 3393: ED 56       im   1			; set interrupt mode
 3395: 21 00 80    ld   hl,$8000		; erase RAM
 3398: AF          xor  a
 3399: 77          ld   (hl),a
 339A: 23          inc  hl
 339B: CB 5C       bit  3,h
-339D: 28 FA       jr   z,$3399		; until $9000
+339D: 28 FA       jr   z,$3399		; until character_data_9000
 339F: 32 EA 82    ld   (coin_counter_lock_82EA),a
 33A2: CD 17 34    call $3417
 33A5: 21 1E 17    ld   hl,$171E
@@ -7984,7 +7991,7 @@ bootup_338f:
 344A: 06 23       ld   b,$23
 344C: 78          ld   a,b
 344D: 32 0E D5    ld   (bank_switch_d50e),a
-3450: 32 4D 82    ld   ($824D),a
+3450: 32 4D 82    ld   (bank_switch_copy_824D),a
 3453: 3E C0       ld   a,$C0
 3455: 32 0B D5    ld   (sound_latch_D50B),a
 3458: CD 4D 36    call $364D
@@ -8067,7 +8074,7 @@ bad_hardware_34C5:
 34C8: 32 36 82    ld   ($8236),a
 34CB: CD E1 71    call $71E1
 34CE: 3E 01       ld   a,$01
-34D0: 32 D9 81    ld   ($81D9),a
+34D0: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 34D3: CD 0C 26    call $260C
 34D6: C1          pop  bc
 34D7: E1          pop  hl
@@ -9673,7 +9680,7 @@ set_character_on_ground_3D65:
 425E: DD 36 09 00 ld   (ix+$09),$00
 4262: CD 58 45    call $4558
 4265: C9          ret
-4266: 21 48 86    ld   hl,$8648
+4266: 21 48 86    ld   hl,protection_variable_8648
 4269: 86          add  a,(hl)
 426A: F6 BD       or   $BD
 426C: 2B          dec  hl
@@ -11127,7 +11134,7 @@ switch_to_hurry_up_music_466E:
 4E7F: 22 49 83    ld   ($8349),hl
 4E82: CD E1 71    call $71E1
 4E85: AF          xor  a
-4E86: 32 D9 81    ld   ($81D9),a
+4E86: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 4E89: CD 0C 26    call $260C
 4E8C: 3E 04       ld   a,GS_GAME_STARTING_04
 4E8E: 32 AC 80    ld   (game_state_80AC),a
@@ -15156,7 +15163,7 @@ table_6A48:
 6BDB: C9          ret
 
 run_in_service_mode_70EB:
-70EB: 31 00 88    ld   sp,$8800
+70EB: 31 00 88    ld   sp,mcu_read_8800
 70EE: 3E 01       ld   a,$01
 70F0: 32 EA 82    ld   (coin_counter_lock_82EA),a		; insert coin not allowed
 70F3: CD 3A 71    call $713A
@@ -15164,7 +15171,7 @@ run_in_service_mode_70EB:
 70F8: 32 AC 80    ld   (game_state_80AC),a
 70FB: 3E 20       ld   a,$20
 70FD: 32 0E D5    ld   (bank_switch_d50e),a
-7100: 32 4D 82    ld   ($824D),a
+7100: 32 4D 82    ld   (bank_switch_copy_824D),a
 7103: 3E C0       ld   a,$C0
 7105: 32 0B D5    ld   (sound_latch_D50B),a
 7108: CD 4D 36    call $364D
@@ -15197,7 +15204,7 @@ run_in_service_mode_70EB:
 7146: 32 36 82    ld   ($8236),a
 7149: CD E1 71    call $71E1
 714C: 3E 01       ld   a,$01
-714E: 32 D9 81    ld   ($81D9),a
+714E: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 7151: CD 0C 26    call $260C
 7154: 3E 02       ld   a,$02
 7156: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
@@ -15239,7 +15246,7 @@ run_in_service_mode_70EB:
 719B: 32 36 82    ld   ($8236),a
 719E: CD E1 71    call $71E1
 71A1: 3E 01       ld   a,$01
-71A3: 32 D9 81    ld   ($81D9),a
+71A3: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 71A6: CD 0C 26    call $260C
 71A9: 3E 01       ld   a,GS_TITLE_01
 71AB: 32 AC 80    ld   (game_state_80AC),a
@@ -15869,7 +15876,7 @@ mainloop_75A5:
 761B: 21 C1 85    ld   hl,$85C1
 761E: 19          add  hl,de
 761F: 73          ld   (hl),e
-7620: 3A 48 86    ld   a,($8648)
+7620: 3A 48 86    ld   a,(protection_variable_8648)
 7623: EE 99       xor  $99
 7625: E7          rst  $20
 7626: 01 00 20    ld   bc,$2000
@@ -15905,7 +15912,7 @@ ground_floor_reached_764E:
 
 7660: CD E1 71    call $71E1
 7663: AF          xor  a
-7664: 32 D9 81    ld   ($81D9),a
+7664: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 7667: CD 0C 26    call $260C
 766A: CD 2E 58    call $582E
 766D: CD B3 28    call $28B3
@@ -15973,7 +15980,7 @@ perform_all_in_game_tasks_76A2:
 76F7: 32 AB 80    ld   ($80AB),a
 76FA: CD E1 71    call $71E1
 76FD: 3E 01       ld   a,$01
-76FF: 32 D9 81    ld   ($81D9),a
+76FF: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
 7702: CD 0C 26    call $260C
 7705: 3E 08       ld   a,GS_GAME_OVER_08
 7707: 32 AC 80    ld   (game_state_80AC),a
@@ -16068,23 +16075,30 @@ player_500_message_7795:
 ; else game sets itself in a strange mode (title screen but
 ; nothing happening on screen)
 hardware_test_779F:
-779F: 3A 00 88    ld   a,($8800)
+779F: 3A 00 88    ld   a,(mcu_read_8800)
 77A2: 3A F4 7F    ld   a,($7FF4)
 77A5: 21 47 86    ld   hl,$8647
 77A8: 36 00       ld   (hl),$00
 77AA: E5          push hl
-77AB: CD CF 77    call $77CF
-77AE: CD BD 77    call $77BD
+77AB: CD CF 77    call mcu_comm_routine_77CF
+77AE: CD BD 77    call mcu_comm_routine_77BD
 77B1: E1          pop  hl
 77B2: FE 17       cp   $17			; must be 0x17 else fails check
 77B4: 3E 58       ld   a,$58
 77B6: 77          ld   (hl),a
+; bootleg: original code
 77B7: CB C7       set  0,a
-77B9: 32 48 86    ld   ($8648),a
+77B9: 32 48 86    ld   (protection_variable_8648),a
+; bootleg: replacement code: seems to do the same
+77B7: 21 48 86    ld   hl,protection_variable_8648    ; useless patch
+77BA: 36 59       ld   (hl),$59
+; bootleg: end replacement code
 77BC: C9          ret
 
+; communicates with MC68705 MCU for protection
+mcu_comm_routine_77BD:
 77BD: 3A 47 86    ld   a,($8647)
-77C0: 21 01 88    ld   hl,$8801
+77C0: 21 01 88    ld   hl,mcu_status_8801
 77C3: CB 4E       bit  1,(hl)
 77C5: 28 FC       jr   z,$77C3
 77C7: 2B          dec  hl
@@ -16096,9 +16110,10 @@ hardware_test_779F:
 77CD: F1          pop  af
 77CE: C9          ret
 
+mcu_comm_routine_77CF:
 77CF: 21 47 86    ld   hl,$8647
 77D2: 96          sub  (hl)
-77D3: 21 01 88    ld   hl,$8801
+77D3: 21 01 88    ld   hl,mcu_status_8801
 77D6: CB 46       bit  0,(hl)
 77D8: 28 FC       jr   z,$77D6
 77DA: 2B          dec  hl
