@@ -4497,1510 +4497,1511 @@ pseudo_random_1E06:
 1E74: ED 52       sbc  hl,de
 1E76: C9          ret
 
-1E77: 2C      
-1E78: 75      
-1E79: 4C      
-1E7A: 26 85   
-1E7C: 34      
-1E7D: B7      
-1E7E: 45      
-1E7F: 7A      
-1E80: 26 2B   
-1E82: 12      
-1E83: BB      
-1E84: 57      
-1E85: C3 75 38
-1E88: 6B      
-1E89: 12      
-1E8A: 63      
-1E8B: 3D      
-1E8C: C1      
-1E8D: 9A      
-1E8E: 26 2B   
-1E90: 10 3F   
-1E92: 1F      
-1E93: 5F      
-1E94: 70      
-1E95: 9C      
-1E96: 88      
-1E97: A0      
-1E98: 4C      
-1E99: 97      
-1E9A: B4      
-1E9B: C3 8C 73
-1E9E: 90      
-1E9F: A0      
-1EA0: 4F      
-1EA1: 0B      
-1EA2: 4F      
-1EA3: 58      
-1EA4: 1E A4   
-1EA6: C6 49   
-1EA8: 94      
-1EA9: BE      
-1EAA: 8C      
-1EAB: 39      
-1EAC: C3 89 38
-1EAF: 8B      
-1EB0: FD 6F   
-1EB2: FB      
-1EB3: 6F      
-1EB4: E7      
-1EB5: BD      
-1EB6: C3 4A 8F
-1EB9: 55      
-1EBA: F7      
-1EBB: B2      
-1EBC: 2B      
-1EBD: 68      
-1EBE: C7      
-1EBF: 35      
-1EC0: 93      
-1EC1: F9      
-1EC2: 9B      
-1EC3: E7      
-1EC4: 83      
-1EC5: 4E      
-1EC6: DB 87   
-1EC8: ED      
-1EC9: B6      
-1ECA: 2E CC   
-1ECC: 18 78   
-1ECE: 86      
-1ECF: 11 73 0F
-1ED2: FB      
-1ED3: B7      
-1ED4: 44      
-1ED5: EF      
-1ED6: 0E 3F   
-1ED8: 44      
-1ED9: 54      
-1EDA: 00      
-1EDB: 30 69   
-1EDD: 27      
-1EDE: A4      
-1EDF: 5F      
-1EE0: 27      
-1EE1: B7      
-1EE2: 9A      
-1EE3: E8      
-1EE4: 7A      
-1EE5: 50      
-1EE6: 0F      
-1EE7: 4B      
-1EE8: 4D      
-1EE9: DD 67   
-1EEB: C1      
-1EEC: 67      
-1EED: A5      
-1EEE: 2B      
-1EEF: 66      
-1EF0: 7A      
-1EF1: D5      
-1EF2: F1      
-1EF3: 39      
-1EF4: E3      
-1EF5: 8E      
-1EF6: EE A2   
-1EF8: EC B1 54
-1EFB: EB      
-1EFC: 2D      
-1EFD: A0      
-1EFE: 52      
-1EFF: 92      
-1F00: 79      
-1F01: C9      
-1F02: B6      
-1F03: ED      
-1F04: C8      
-1F05: 62      
-1F06: 8D      
-1F07: E5      
-1F08: 5F      
-1F09: 5E      
-1F0A: 05      
-1F0B: 3A 3E B0)
-1F0E: 4B      
-1F0F: 30 F7   
-1F11: AE      
-1F12: 87      
-1F13: 3A 21 4E)
-1F16: E7      
-1F17: C3 75 38
-1F1A: 17      
-1F1B: AC      
-1F1C: 82      
-1F1D: 68      
-1F1E: 49      
-1F1F: 10 4C   
-1F21: 94      
-1F22: 03      
-1F23: 06 04   
-1F25: 2C      
-1F26: 10 24   
-1F28: 77      
-1F29: 2C      
-1F2A: 7B      
-1F2B: E1      
-1F2C: AF      
-1F2D: 9D      
-1F2E: 62      
-1F2F: F0      
-1F30: F7      
-1F31: B0      
-1F32: 0E 42   
-1F34: 41      
-1F35: 9A      
-1F36: 26 2B   
-1F38: 18 3A   
-1F3A: 2C      
-1F3B: F7      
-1F3C: F5      
-1F3D: 61      
-1F3E: 18 E8   
-1F40: 7D      
-1F41: 7E      
-1F42: E3      
-1F43: 11 71 44
-1F46: 9E      
-1F47: 2F      
-1F48: 40      
-1F49: 04      
-1F4A: 6A      
-1F4B: 81      
-1F4C: F9      
-1F4D: 51      
-1F4E: 77      
-1F4F: A5      
-1F50: 47      
-1F51: F4 7B 90
-1F54: 17      
-1F55: 57      
-1F56: 91      
-1F57: B7      
-1F58: 41      
-1F59: 61      
-1F5A: 62      
-1F5B: DC AC 86
-1F5E: 65      
-1F5F: 55      
-1F60: 3D      
-1F61: 88      
-1F62: A2      
-1F63: CA C7 66
-1F66: 26 1A   
-1F68: DA EB 6F
-1F6B: 2B      
-1F6C: 29      
-1F6D: 00      
-1F6E: EB      
-1F6F: 97      
-1F70: 9D      
-1F71: 77      
-1F72: AF      
-1F73: EC 88 D7
-1F76: 4D      
-1F77: 9A      
-1F78: FD      
-1F79: C0      
-1F7A: 4B      
-1F7B: 74      
-1F7C: C4 EF 8E
-1F7F: 64      
-1F80: 03      
-1F81: 75      
-1F82: 3C      
-1F83: 36 5E   
-1F85: AF      
-1F86: C3 92 5D
-1F89: CD AC 5F
-1F8C: EF      
-1F8D: 63      
-1F8E: A2      
-1F8F: 62      
-1F90: B1      
-1F91: B0      
-1F92: F9      
-1F93: 1B      
-1F94: 44      
-1F95: B1      
-1F96: 38 43   
-1F98: 6D      
-1F99: 75      
-1F9A: AB      
-1F9B: 22 A3 0Bhl
-1F9E: B0      
-1F9F: BF      
-1FA0: BD      
-1FA1: 35      
-1FA2: D2 84 A1
-1FA5: 13      
-1FA6: 37      
-1FA7: 62      
-1FA8: 40      
-1FA9: 7A      
-1FAA: D1      
-1FAB: F3      
-1FAC: D5      
-1FAD: 55      
-1FAE: EA 0C 8A
-1FB1: 9E      
-1FB2: 2D      
-1FB3: DA 2F 7C
-1FB6: F5      
-1FB7: 7D      
-1FB8: 5F      
-1FB9: 41      
-1FBA: E1      
-1FBB: 6B      
-1FBC: DF      
-1FBD: 57      
-1FBE: F4 EF F1
-1FC1: 91      
-1FC2: 41      
-1FC3: B1      
-1FC4: DC 44 0E
-1FC7: A5      
-1FC8: 2B      
-1FC9: 4C      
-1FCA: 74      
-1FCB: 3A E3 A2)
-1FCE: 67      
-1FCF: D5      
-1FD0: F1      
-1FD1: 41      
-1FD2: C8      
-1FD3: 90      
-1FD4: 41      
-1FD5: 87      
-1FD6: C7      
-1FD7: 53      
-1FD8: B3      
-1FD9: 9B      
-1FDA: 61      
-1FDB: 4D      
-1FDC: D6 41   
-1FDE: 60      
-1FDF: 48      
-1FE0: B4      
-1FE1: C4 C4 B3
-1FE4: 9A      
-1FE5: 26 2B   
-1FE7: 1F      
-1FE8: C9      
-1FE9: C7      
-1FEA: 40      
-1FEB: 0C      
-1FEC: 9C      
-1FED: 51      
-1FEE: 26 3E   
-1FF0: A7      
-1FF1: 76      
-1FF2: 24      
-1FF3: 52      
-1FF4: 88      
-1FF5: BF      
-1FF6: D6 12   
-1FF8: 61      
-1FF9: B9      
-1FFA: E9      
-1FFB: D5      
-1FFC: C7      
-1FFD: D6 0D   
-1FFF: 13      
-2000: 66      
-2001: 5D      
-2002: 7D      
-2003: 5A      
-2004: 31 6E AE
-2007: 77      
-2008: 1E 38   
-200A: 27      
-200B: DF      
-200C: 2B      
-200D: DF      
-200E: 95      
-200F: D7      
-2010: C7      
-2011: AA      
-2012: E8      
-2013: 7E      
-2014: 5F      
-2015: 7C      
-2016: 8E      
-2017: 7C      
-2018: 8B      
-2019: E1      
-201A: CE 5F   
-201C: 73      
-201D: 3E E4   
-201F: 76      
-2020: 62      
-2021: 67      
-2022: 8C      
-2023: 4C      
-2024: D6 2C   
-2026: 45      
-2027: 04      
-2028: 03      
-2029: F7      
-202A: 92      
-202B: 89      
-202C: 60      
-202D: FE E8   
-202F: E2 5D C5
-2032: 26 1C   
-2034: 91      
-2035: C7      
-2036: 9A      
-2037: E8      
-2038: 79      
-2039: E0      
-203A: EF      
-203B: DC 73 EC
-203E: 86      
-203F: 52      
-2040: A1      
-2041: 14      
-2042: C7      
-2043: 39      
-2044: 0E C2   
-2046: 8C      
-2047: AE      
-2048: E9      
-2049: 9E      
-204A: E8      
-204B: 76      
-204C: 2B      
-204D: 10 28   
-204F: A1      
-2050: 4C      
-2051: 73      
-2052: 77      
-2053: 91      
-2054: FE C2   
-2056: 63      
-2057: B5      
-2058: A0      
-2059: 23      
-205A: 9B      
-205B: 49      
-205C: 9C      
-205D: 59      
-205E: A3      
-205F: 4E      
-2060: AE      
-2061: AE      
-2062: AD      
-2063: A8      
-2064: 54      
-2065: 0E 3D   
-2067: 6C      
-2068: 29      
-2069: 3A 23 9B)
-206C: 5E      
-206D: 82      
-206E: 6E      
-206F: 9C      
-2070: 00      
-2071: 9B      
-2072: D5      
-2073: 78      
-2074: 4B      
-2075: 44      
-2076: 83      
-2077: A2      
-2078: E6 4C   
-207A: 44      
-207B: E4 C2 C5
-207E: D3 1B   
-2080: CD 09 AE
-2083: 87      
-2084: EA 75 4B
-2087: 5B      
-2088: 46      
-2089: 44      
-208A: CC BC 9B
-208D: A4      
-208E: F0      
-208F: 47      
-2090: 45      
-2091: 4E      
-2092: 39      
-2093: E4 13 CD
-2096: FD 96 52
-2099: DD E9   
-209B: C6 7D   
-209D: 7C      
-209E: C7      
-209F: 52      
-20A0: C2 5D C5
-20A3: F2 66 26
-20A6: 4F      
-20A7: 16 24   
-20A9: BA      
-20AA: C8      
-20AB: 66      
-20AC: 29      
-20AD: D9      
-20AE: 0F      
-20AF: EA 11 5E
-20B2: E8      
-20B3: B2      
-20B4: A0      
-20B5: 17      
-20B6: 5E      
-20B7: AB      
-20B8: 3B      
-20B9: 50      
-20BA: 5F      
-20BB: 10 5D   
-20BD: C5      
-20BE: B3      
-20BF: 8B      
-20C0: 15      
-20C1: FD      
-20C2: 3B      
-20C3: 5D      
-20C4: C3 9C 4A
-20C7: DA E9 9E
-20CA: A3      
-20CB: 50      
-20CC: 0A      
-20CD: FA E9 DB
-20D0: 00      
-20D1: 1C      
-20D2: 96      
-20D3: 4A      
-20D4: C3 75 38
-20D7: 26 0E   
-20D9: 98      
-20DA: 60      
-20DB: 26 16   
-20DD: 29      
-20DE: 2B      
-20DF: F9      
-20E0: 97      
-20E1: 72      
-20E2: 5D      
-20E3: CB E7   
-20E5: 66      
-20E6: 26 AD   
-20E8: 71      
-20E9: 4C      
-20EA: 7B      
-20EB: 26 04   
-20ED: 10 05   
-20EF: 04      
-20F0: 3D      
-20F1: 68      
-20F2: 37      
-20F3: 53      
-20F4: 8E      
-20F5: 58      
-20F6: C2 5D C8
-20F9: A9      
-20FA: 95      
-20FB: 64      
-20FC: A2      
-20FD: 02      
-20FE: B5      
-20FF: 39      
-2100: F2 56 75
-2103: EA 07 95
-2106: DF      
-2107: B8      
-2108: 09      
-2109: E4 C9 EB
-210C: F5      
-210D: 2E AE   
-210F: C4 30 37
-2112: B4      
-2113: C8      
-2114: A3      
-2115: C6 40   
-2117: 34      
-2118: 2A F5 DC5)
-211B: 3B      
-211C: 5F      
-211D: 0F      
-211E: 17      
-211F: 79      
-2120: AE      
-2121: 87      
-2122: 86      
-2123: 11 2A 34
-2126: C9      
-2127: AF      
-2128: B1      
-2129: 50      
-212A: 5D      
-212B: D3 C6   
-212D: EC 01 14
-2130: EE 51   
-2132: 49      
-2133: C8      
-2134: 8A      
-2135: D6 13   
-2137: 50      
-2138: 5B      
-2139: 5B      
-213A: 21 02 4D
-213D: 99      
-213E: AE      
-213F: AE      
-2140: AE      
-2141: AC      
-2142: 24      
-2143: B4      
-2144: 62      
-2145: 94      
-2146: 0E 3A   
-2148: DF      
-2149: 71      
-214A: 1B      
-214B: 37      
-214C: 3E 93   
-214E: 58      
-214F: A3      
-2150: 9A      
-2151: 26 2B   
-2153: 1B      
-2154: FA 9B 12
-2157: 6D      
-2158: A5      
-2159: 25      
-215A: 5A      
-215B: CD 74 73
-215E: D6 81   
-2160: 8D      
-2161: 5C      
-2162: 02      
-2163: DE 5F   
-2165: 71      
-2166: EE BF   
-2168: 75      
-2169: 86      
-216A: 5D      
-216B: 79      
-216C: B5      
-216D: E3      
-216E: E8      
-216F: 02      
-2170: 81      
-2171: 40      
-2172: 8F      
-2173: EE 00   
-2175: 09      
-2176: 2F      
-2177: 93      
-2178: 15      
-2179: 2D      
-217A: 8F      
-217B: 34      
-217C: C9      
-217D: DA F3 74
-2180: 00      
-2181: 28 8D   
-2183: 74      
-2184: 26 43   
-2186: 8F      
-2187: D8      
-2188: D7      
-2189: 51      
-218A: 8B      
-218B: 4B      
-218C: 17      
-218D: 8A      
-218E: 24      
-218F: DA 13 89
-2192: E8      
-2193: 63      
-2194: C8      
-2195: 99      
-2196: B0      
-2197: 0E C7   
-2199: 5D      
-219A: BF      
-219B: D5      
-219C: 23      
-219D: A1      
-219E: F7      
-219F: 5D      
-21A0: BE      
-21A1: BD      
-21A2: 82      
-21A3: 4C      
-21A4: 4E      
-21A5: 88      
-21A6: 66      
-21A7: 0F      
-21A8: 87      
-21A9: 2A A3 5C3)
-21AC: 4B      
-21AD: D8      
-21AE: 38 89   
-21B0: EA C3 70
-21B3: 24      
-21B4: 9B      
-21B5: FB      
-21B6: 94      
-21B7: DA 86 60
-21BA: F5      
-21BB: 12      
-21BC: FB      
-21BD: BC      
-21BE: 9B      
-21BF: E6 6B   
-21C1: A0      
-21C2: 62      
-21C3: 6B      
-21C4: D5      
-21C5: A4      
-21C6: 85      
-21C7: AF      
-21C8: 87      
-21C9: 39      
-21CA: 20 26   
-21CC: E7      
-21CD: 5F      
-21CE: CB 1A   
-21D0: D5      
-21D1: F8      
-21D2: CA 04 C2
-21D5: B7      
-21D6: BA      
-21D7: 04      
-21D8: A2      
-21D9: 83      
-21DA: 1D      
-21DB: E2 77 0B
-21DE: 2A 00 0A0)
-21E1: FB      
-21E2: 1B      
-21E3: 71      
-21E4: 8B      
-21E5: 1C      
-21E6: 25      
-21E7: DC 61 65
-21EA: 5E      
-21EB: 20 2E   
-21ED: 4C      
-21EE: A5      
-21EF: 4B      
-21F0: 1A      
-21F1: 0E 90   
-21F3: 3B      
-21F4: 01 70 EA
-21F7: 0F      
-21F8: C5      
-21F9: 02      
-21FA: 40      
-21FB: 26 8B   
-21FD: 3B      
-21FE: 61      
-21FF: 4C      
-2200: 73      
-2201: B1      
-2202: 29      
-2203: 60      
-2204: FB      
-2205: 12      
-2206: 6F      
-2207: EA FD 9C
-220A: 86      
-220B: 60      
-220C: F9      
-220D: C5      
-220E: 0F      
-220F: B4      
-2210: A2      
-2211: 13      
-2212: 48      
-2213: 26 D7   
-2215: 2A B2 3B2)
-2218: 0C      
-2219: 3E BA   
-221B: 11 39 C4
-221E: AD      
-221F: AE      
-2220: 82      
-2221: 86      
-2222: 60      
-2223: F6 29   
-2225: 4D      
-2226: 58      
-2227: 50      
-2228: F5      
-2229: 4E      
-222A: A8      
-222B: 47      
-222C: 5E      
-222D: A5      
-222E: FB      
-222F: 5F      
-2230: CA 39 A2
-2233: 62      
-2234: B1      
-2235: AC      
-2236: 73      
-2237: 7E      
-2238: 91      
-2239: D0      
-223A: 71      
-223B: D1      
-223C: CE 30   
-223E: DB 32   
-2240: 54      
-2241: E8      
-2242: D6 20   
-2244: 31 C6 60
-2247: F1      
-2248: 20 29   
-224A: B5      
-224B: E4 58 AC
-224E: 37      
-224F: 53      
-2250: 8C      
-2251: 60      
-2252: 81      
-2253: 78      
-2254: 03      
-2255: 7D      
-2256: EB      
-2257: 7A      
-2258: EA E2 9B
-225B: 5E      
-225C: 2D      
-225D: EF      
-225E: CB 41   
-2260: 15      
-2261: 3A F4 8D)
-2264: D9      
-2265: D9      
-2266: AE      
-2267: AE      
-2268: 01 4E 1A
-226B: 28 8D   
-226D: 11 3D 9A
-2270: E8      
-2271: 79      
-2272: 72      
-2273: 0F      
-2274: C8      
-2275: 89      
-2276: 60      
-2277: 9A      
-2278: D5      
-2279: F0      
-227A: 9D      
-227B: 85      
-227C: 1F      
-227D: 4B      
-227E: D9      
-227F: 78      
-2280: 47      
-2281: EB      
-2282: C4 C7 EB
-2285: 73      
-2286: 31 36 16
-2289: EB      
-228A: B1      
-228B: 26 02   
-228D: C0      
-228E: 00      
-228F: 1F      
-2290: B1      
-2291: 0D      
-2292: 5E      
-2293: A3      
-2294: 82      
-2295: 83      
-2296: 80      
-2297: 47      
-2298: 3E 93   
-229A: 94      
-229B: E8      
-229C: 00      
-229D: 70      
-229E: 0A      
-229F: 83      
-22A0: E3      
-22A1: 6E      
-22A2: E1      
-22A3: C0      
-22A4: CB CE   
-22A6: AC      
-22A7: 0B      
-22A8: 0C      
-22A9: 20 87   
-22AB: 0B      
-22AC: 75      
-22AD: EA 37 C5
-22B0: 41      
-22B1: CD 62 00
-22B4: E9      
-22B5: 44      
-22B6: 59      
-22B7: 27      
-22B8: 99      
-22B9: 0F      
-22BA: BB      
-22BB: 95      
-22BC: D7      
-22BD: 97      
-22BE: AD      
-22BF: 5F      
-22C0: 6A      
-22C1: 76      
-22C2: 81      
-22C3: 65      
-22C4: DC 69 3C
-22C7: 4D      
-22C8: AE      
-22C9: 87      
-22CA: CB 61   
-22CC: A4      
-22CD: 5A      
-22CE: E2 25 4C
-22D1: 75      
-22D2: 11 90 EA
-22D5: 32 61 83a
-22D8: AD      
-22D9: CD 74 20
-22DC: FB      
-22DD: 65      
-22DE: 66      
-22DF: 39      
-22E0: B6      
-22E1: B1      
-22E2: 23      
-22E3: 74      
-22E4: 00      
-22E5: F0      
-22E6: C0      
-22E7: AC      
-22E8: 4B      
-22E9: EE 5C   
-22EB: B3      
-22EC: 1F      
-22ED: F6 15   
-22EF: 60      
-22F0: 1B      
-22F1: F0      
-22F2: BC      
-22F3: A0      
-22F4: E5      
-22F5: 96      
-22F6: 29      
-22F7: 6F      
-22F8: D7      
-22F9: 55      
-22FA: EB      
-22FB: 92      
-22FC: 4B      
-22FD: FC D6 25
-2300: 73      
-2301: E9      
-2302: 47      
-2303: 0D      
-2304: 5D      
-2305: 7F      
-2306: 60      
-2307: F6 0F   
-2309: 5C      
-230A: B1      
-230B: CC 46 FA
-230E: 74      
-230F: C2 E2 F6
-2312: 11 BD E0
-2315: 96      
-2316: 26 A8   
-2318: 00      
-2319: A9      
-231A: 3C      
-231B: 41      
-231C: B6      
-231D: 20 65   
-231F: 0E 82   
-2321: 45      
-2322: F8      
-2323: AE      
-2324: 00      
-2325: 6B      
-2326: A7      
-2327: 69      
-2328: 06 AD   
-232A: A4      
-232B: 2D      
-232C: 81      
-232D: 79      
-232E: A8      
-232F: 7A      
-2330: 17      
-2331: AD      
-2332: B0      
-2333: 47      
-2334: 87      
-2335: D4 D7 45
-2338: 61      
-2339: 65      
-233A: D0      
-233B: DC 86 97
-233E: 77      
-233F: 30 88   
-2341: D4 EA CA
-2344: 66      
-2345: 26 4A   
-2347: DA EF 62
-234A: 5E      
-234B: 5B      
-234C: 00      
-234D: EE 99   
-234F: 90      
-2350: 7A      
-2351: A2      
-2352: EE C8   
-2354: D7      
-2355: 40      
-2356: 9A      
-2357: 2F      
-2358: C2 4D 74
-235B: F8      
-235C: EF      
-235D: B1      
-235E: 86      
-235F: 23      
-2360: 77      
-2361: 5C      
-2362: 68      
-2363: 80      
-2364: D2 C5 C2
-2367: 5D      
-2368: CF      
-2369: AF      
-236A: 71      
-236B: 2F      
-236C: 95      
-236D: D2 62 B1
-2370: E3      
-2371: FB      
-2372: 1E 47   
-2374: E1      
-2375: 38 73   
-2377: 90      
-2378: 75      
-2379: EE 25   
-237B: A6      
-237C: 0E E0   
-237E: E2 BF 57
-2381: 16 86   
-2383: D1      
-2384: 13      
-2385: 5A      
-2386: 62      
-2387: 43      
-2388: 7D      
-2389: 14      
-238A: 13      
-238B: F8      
-238C: 75      
-238D: EA 3F 8E
-2390: DE 5F   
-2392: DD 22 BEix
-2396: AD      
-2397: 5F      
-2398: 73      
-2399: 14      
-239A: 8E      
-239B: 11 79 38
-239E: EF      
-239F: 11 B1 74
-23A2: B3      
-23A3: 1C      
-23A4: 67      
-23A5: 0E C7   
-23A7: 2F      
-23A8: 4F      
-23A9: 77      
-23AA: 6A      
-23AB: 06 A2   
-23AD: AA      
-23AE: D5      
-23AF: F4 64 FB
-23B2: C4 83 89
-23B5: FA 56 E6
-23B8: CB 61   
-23BA: 8F      
-23BB: 06 85   
-23BD: 90      
-23BE: 4A      
-23BF: B4      
-23C0: C7      
-23C1: C7      
-23C2: E7      
-23C3: 9A      
-23C4: 26 2B   
-23C6: 12      
-23C7: F9      
-23C8: FA 70 0F
-23CB: 9F      
-23CC: 81      
-23CD: 66      
-23CE: 5E      
-23CF: AA      
-23D0: A6      
-23D1: 24      
-23D2: 84      
-23D3: B8      
-23D4: BF      
-23D5: D6 46   
-23D7: 64      
-23D8: BC      
-23D9: 2C      
-23DA: D8      
-23DB: F7      
-23DC: 09      
-23DD: 00      
-23DE: 46      
-23DF: 86      
-23E0: 5D      
-23E1: 70      
-23E2: 9E      
-23E3: 35      
-23E4: 60      
-23E5: EE A7   
-23E7: 41      
-23E8: 6B      
-23E9: 5A      
-23EA: 0F      
-23EB: 5B      
-23EC: 03      
-23ED: C8      
-23EE: 07      
-23EF: F7      
-23F0: DD      
-23F1: E8      
-23F2: 72      
-23F3: 9F      
-23F4: AF      
-23F5: 82      
-23F6: AF      
-23F7: 8F      
-23F8: 14      
-23F9: F0      
-23FA: 8F      
-23FB: A3      
-23FC: 61      
-23FD: E6 A6   
-23FF: 62      
-2400: 69      
-2401: 8C      
-2402: 4C      
-2403: 06 20   
-2405: 48      
-2406: 04      
-2407: 23      
-2408: 29      
-2409: 95      
-240A: 8B      
-240B: 90      
-240C: F0      
-240D: E8      
-240E: 15      
-240F: 5D      
-2410: C8      
-2411: 26 4F   
-2413: 95      
-2414: FA 9A E8
-2417: 7C      
-2418: 00      
-2419: 1F      
-241A: DF      
-241B: 73      
-241C: 1F      
-241D: 86      
-241E: 94      
-241F: A1      
-2420: 44      
-2421: C7      
-2422: 69      
-2423: 01 C2 C0
-2426: D2 19 92
-2429: 18 7A   
-242B: 2B      
-242C: 13      
-242D: 5C      
-242E: A4      
-242F: 8C      
-2430: A6      
-2431: 7A      
-2432: B1      
-2433: 21 C2 96
-2436: B5      
-2437: E3      
-2438: 56      
-2439: CE 7C   
-243B: 9F      
-243C: 5C      
-243D: E3      
-243E: 8E      
-243F: EE AE   
-2441: D1      
-2442: AB      
-2443: 84      
-2444: 0E 6D   
-2446: 6F      
-2447: 59      
-2448: 6C      
-2449: 26 9B   
-244B: 5E      
-244C: B5      
-244D: 60      
-244E: DF      
-244F: 40      
-2450: CE 05   
-2452: B8      
-2453: 7B      
-2454: 47      
-2455: B6      
-2456: A2      
-2457: 1A      
-2458: 4C      
-2459: 47      
-245A: E7      
-245B: C2 F5 D6
-245E: 4E      
-245F: F1      
-2460: 4C      
-2461: AE      
-2462: 87      
-2463: 1A      
-2464: A5      
-2465: 4B      
-2466: 7D      
-2467: 49      
-2468: 47      
-2469: CF      
-246A: EC 9B D6
-246D: F0      
-246E: 7A      
-246F: 48      
-2470: 8E      
-2471: 79      
-2472: 08      
-2473: 13      
-2474: F1      
-2475: 3D      
-2476: D9      
-2477: 72      
-2478: 10 19   
-247A: F6 B0   
-247C: 70      
-247D: F7      
-247E: 92      
-247F: F2 5D C8
-2482: F2 96 26
-2485: 6F      
-2486: 49      
-2487: 24      
-2488: FD      
-2489: C8      
-248A: 69      
-248B: 2C      
-248C: 0D      
-248D: 02      
-248E: ED      
-248F: 14      
-2490: 50      
-2491: E8      
-2492: E2 D3 4B
-2495: 5E      
-2496: AE      
-2497: 6E      
-2498: 93      
-2499: 5F      
-249A: 14      
-249B: 50      
-249C: F5      
-249D: E6 BF   
-249F: 18 FD   
-24A1: 7E      
-24A2: 80      
-24A3: C3 CC 4A
-24A6: DA EC C1
-24A9: E3      
-24AA: 80      
-24AB: 0D      
-24AC: 2A 1C DBC)
-24AF: 03      
-24B0: 10 99   
-24B2: 4D      
-24B3: C3 75 38
-24B6: 49      
-24B7: 3E 9B   
-24B9: 94      
-24BA: 26 36   
-24BC: 29      
-24BD: 5B      
-24BE: 29      
-24BF: CA 75 5D
-24C2: CF      
-24C3: 1A      
-24C4: 66      
-24C5: 26 E1   
-24C7: 74      
-24C8: 4C      
-24C9: 7E      
-24CA: 26 04   
-24CC: 43      
-24CD: 08      
-24CE: 04      
-24CF: 6D      
-24D0: 6B      
-24D1: 67      
-24D2: 53      
-24D3: 80      
-24D4: 9B      
-24D5: C2 5D CC
-24D8: AC      
-24D9: 98      
-24DA: 94      
-24DB: A4      
-24DC: 42      
-24DD: E5      
-24DE: 69      
-24DF: 22 5A 75hl
-24E2: EA 3A C8
-24E5: D3 BC   
-24E7: 4C      
-24E8: 18 C9   
-24EA: 1B      
-24EB: F8      
-24EC: 51      
-24ED: A2      
-24EE: C4 73 77
-24F1: E4 CC D6
-24F4: 06 73   
-24F6: 64      
-24F7: 5A      
-24F8: 28 DC   
-24FA: 6B      
-24FB: 93      
-24FC: 02      
-24FD: 4A      
-24FE: 79      
-24FF: AE      
-2500: 87      
-2501: B6      
-2502: 11 5D 64
-2505: C9      
-2506: DF      
-2507: B1      
-2508: 94      
-2509: 51      
-250A: 03      
-250B: F9      
-250C: EF      
-250D: 34      
-250E: 44      
-250F: 1E 81   
-2511: 7C      
-2512: C8      
-2513: 8E      
-2514: 09      
-2515: 16 54   
-2517: 5F      
-2518: 8B      
-2519: 54      
-251A: 32 80 D9a
-251D: EE AE   
-251F: EE EF   
-2521: 54      
-2522: B4      
-2523: 92      
-2524: 97      
-2525: 0E 6A   
-2527: 02      
-2528: A4      
-2529: 4E      
-252A: 3A 3E 96)
-252D: 9C      
-252E: A3      
-252F: 9A      
-2530: 26 2B   
-2532: 1E FE   
-2534: CB 12   
-2536: 60      
-2537: A9      
-2538: 25      
-2539: 8D      
-253A: ED 74   
-253C: B3      
-253D: D6 C5   
-253F: 81      
-2540: 8C      
-2541: 25      
-2542: 02      
-2543: 9F      
-2544: A1      
-2545: 11 BF B5
-2548: C6 5D   
-254A: 7D      
-254B: B5      
-254C: E7      
-254D: 18 32   
-254F: B4      
-2550: 43      
-2551: B2      
-2552: E1      
-2553: 40      
-2554: 0C      
-2555: 62      
-2556: 97      
-2557: 49      
-2558: 20 B3   
-255A: 64      
-255B: C9      
-255C: 1A      
-255D: 27      
-255E: 74      
-255F: 00      
-2560: 68      
-2561: 8D      
-2562: 74      
-2563: 5A      
-2564: 46      
-2565: C2 DB 17
-2568: 84      
-2569: BF      
-256A: 4F      
-256B: 1B      
-256C: BD      
-256D: 27      
-256E: 1D      
-256F: 53      
-2570: B9      
-2571: 18 96   
-2573: FB      
-2574: 99      
-2575: B0      
-2576: 0E FA   
-2578: 9D      
-2579: B2      
-257A: D9      
-257B: 56      
-257C: A4      
-257D: 1B      
-257E: 9D      
-257F: B1      
-2580: B0      
-2581: B6      
-2582: 4F      
-2583: 82      
-2584: 8B      
-2585: 66      
-2586: 0F      
-2587: BA      
-2588: 2A E3 8F3)
-258B: 4E      
-258C: 08      
-258D: 68      
-258E: B9      
-258F: EA C6 73
-2592: 27      
-2593: DB 3E   
-2595: C7      
-2596: DA B6 60
-2599: F8      
-259A: 12      
-259B: 2E EC   
-259D: 9B      
-259E: 18 9E   
-25A0: D0      
-25A1: A2      
-25A2: 6E      
-25A3: 18 A7   
-25A5: C9      
-25A6: DF      
-25A7: B7      
-25A8: 39      
-25A9: 54      
-25AA: 26 2A   
-25AC: 5F      
-25AD: CE 1D   
-25AF: D5      
-25B0: FB      
-25B1: FD      
-25B2: 07      
-25B3: C2 EB ED
-25B6: 07      
-25B7: A6      
-25B8: 86      
-25B9: 50      
-25BA: 14      
-25BB: 9A      
-25BC: 0D      
-25BD: 5E      
-25BE: 00      
-25BF: 0D      
-25C0: FB      
-25C1: 1E A1   
-25C3: 8E      
-25C4: 1F      
-25C5: 25      
-25C6: DC 91 68
-25C9: 8E      
-25CA: 40      
-25CB: 50      
-25CC: 4C      
-25CD: C5      
-25CE: 4B      
-25CF: 5D      
-25D0: 0E 93   
-25D2: 6B      
-25D3: 04      
-25D4: A0      
-25D5: ED      
-25D6: 02      
-25D7: C8      
-25D8: 32 44 26a
-25DB: BE      
-25DC: 6F      
-25DD: 94      
-25DE: 4C      
-25DF: 76      
-25E0: E4 5C 60
-25E3: FE 15   
-25E5: 62      
-25E6: EA 3D D0
-25E9: B6      
-25EA: 60      
-25EB: FD      
-25EC: F5      
-25ED: 3F      
-25EE: B7      
-25EF: A2      
-25F0: 46      
-25F1: 7A      
-25F2: 26 0A   
-25F4: 2A E5 6B5)
-25F7: 0F      
-25F8: 51      
-25F9: EA 11 3C
-25FC: C4 AD AE
-25FF: B5      
-2600: 86      
-2601: 60      
-2602: F9      
-2603: 29      
-2604: 7D      
-2605: 88      
-2606: 80      
-2607: 28 8E   
-2609: AC      
-260A: 7B      
-260B: 5E      
+; seems unused? we'll see
+	dc.b	2C      
+	dc.b	75      
+	dc.b	4C      
+	dc.b	26 85   
+	dc.b	34      
+	dc.b	B7      
+	dc.b	45      
+	dc.b	7A      
+	dc.b	26 2B   
+	dc.b	12      
+	dc.b	BB      
+	dc.b	57      
+	dc.b	C3 75 38
+	dc.b	6B      
+	dc.b	12      
+	dc.b	63      
+	dc.b	3D      
+	dc.b	C1      
+	dc.b	9A      
+	dc.b	26 2B   
+	dc.b	10 3F   
+	dc.b	1F      
+	dc.b	5F      
+	dc.b	70      
+	dc.b	9C      
+	dc.b	88      
+	dc.b	A0      
+	dc.b	4C      
+	dc.b	97      
+	dc.b	B4      
+	dc.b	C3 8C 73
+	dc.b	90      
+	dc.b	A0      
+	dc.b	4F      
+	dc.b	0B      
+	dc.b	4F      
+	dc.b	58      
+	dc.b	1E A4   
+	dc.b	C6 49   
+	dc.b	94      
+	dc.b	BE      
+	dc.b	8C      
+	dc.b	39      
+	dc.b	C3 89 38
+	dc.b	8B      
+	dc.b	FD 6F   
+	dc.b	FB      
+	dc.b	6F      
+	dc.b	E7      
+	dc.b	BD      
+	dc.b	C3 4A 8F
+	dc.b	55      
+	dc.b	F7      
+	dc.b	B2      
+	dc.b	2B      
+	dc.b	68      
+	dc.b	C7      
+	dc.b	35      
+	dc.b	93      
+	dc.b	F9      
+	dc.b	9B      
+	dc.b	E7      
+	dc.b	83      
+	dc.b	4E      
+	dc.b	DB 87   
+	dc.b	ED      
+	dc.b	B6      
+	dc.b	2E CC   
+	dc.b	18 78   
+	dc.b	86      
+	dc.b	11 73 0F
+	dc.b	FB      
+	dc.b	B7      
+	dc.b	44      
+	dc.b	EF      
+	dc.b	0E 3F   
+	dc.b	44      
+	dc.b	54      
+	dc.b	00      
+	dc.b	30 69   
+	dc.b	27      
+	dc.b	A4      
+	dc.b	5F      
+	dc.b	27      
+	dc.b	B7      
+	dc.b	9A      
+	dc.b	E8      
+	dc.b	7A      
+	dc.b	50      
+	dc.b	0F      
+	dc.b	4B      
+	dc.b	4D      
+	dc.b	DD 67   
+	dc.b	C1      
+	dc.b	67      
+	dc.b	A5      
+	dc.b	2B      
+	dc.b	66      
+	dc.b	7A      
+	dc.b	D5      
+	dc.b	F1      
+	dc.b	39      
+	dc.b	E3      
+	dc.b	8E      
+	dc.b	EE A2   
+	dc.b	EC B1 54
+	dc.b	EB      
+	dc.b	2D      
+	dc.b	A0      
+	dc.b	52      
+	dc.b	92      
+	dc.b	79      
+	dc.b	C9      
+	dc.b	B6      
+	dc.b	ED      
+	dc.b	C8      
+	dc.b	62      
+	dc.b	8D      
+	dc.b	E5      
+	dc.b	5F      
+	dc.b	5E      
+	dc.b	05      
+	dc.b	3A 3E B0
+	dc.b	4B      
+	dc.b	30 F7   
+	dc.b	AE      
+	dc.b	87      
+	dc.b	3A 21 4E
+	dc.b	E7      
+	dc.b	C3 75 38
+	dc.b	17      
+	dc.b	AC      
+	dc.b	82      
+	dc.b	68      
+	dc.b	49      
+	dc.b	10 4C   
+	dc.b	94      
+	dc.b	03      
+	dc.b	06 04   
+	dc.b	2C      
+	dc.b	10 24   
+	dc.b	77      
+	dc.b	2C      
+	dc.b	7B      
+	dc.b	E1      
+	dc.b	AF      
+	dc.b	9D      
+	dc.b	62      
+	dc.b	F0      
+	dc.b	F7      
+	dc.b	B0      
+	dc.b	0E 42   
+	dc.b	41      
+	dc.b	9A      
+	dc.b	26 2B   
+	dc.b	18 3A   
+	dc.b	2C      
+	dc.b	F7      
+	dc.b	F5      
+	dc.b	61      
+	dc.b	18 E8   
+	dc.b	7D      
+	dc.b	7E      
+	dc.b	E3      
+	dc.b	11 71 44
+	dc.b	9E      
+	dc.b	2F      
+	dc.b	40      
+	dc.b	04      
+	dc.b	6A      
+	dc.b	81      
+	dc.b	F9      
+	dc.b	51      
+	dc.b	77      
+	dc.b	A5      
+	dc.b	47      
+	dc.b	F4 7B 90
+	dc.b	17      
+	dc.b	57      
+	dc.b	91      
+	dc.b	B7      
+	dc.b	41      
+	dc.b	61      
+	dc.b	62      
+	dc.b	DC AC 86
+	dc.b	65      
+	dc.b	55      
+	dc.b	3D      
+	dc.b	88      
+	dc.b	A2      
+	dc.b	CA C7 66
+	dc.b	26 1A   
+	dc.b	DA EB 6F
+	dc.b	2B      
+	dc.b	29      
+	dc.b	00      
+	dc.b	EB      
+	dc.b	97      
+	dc.b	9D      
+	dc.b	77      
+	dc.b	AF      
+	dc.b	EC 88 D7
+	dc.b	4D      
+	dc.b	9A      
+	dc.b	FD      
+	dc.b	C0      
+	dc.b	4B      
+	dc.b	74      
+	dc.b	C4 EF 8E
+	dc.b	64      
+	dc.b	03      
+	dc.b	75      
+	dc.b	3C      
+	dc.b	36 5E   
+	dc.b	AF      
+	dc.b	C3 92 5D
+	dc.b	CD AC 5F
+	dc.b	EF      
+	dc.b	63      
+	dc.b	A2      
+	dc.b	62      
+	dc.b	B1      
+	dc.b	B0      
+	dc.b	F9      
+	dc.b	1B      
+	dc.b	44      
+	dc.b	B1      
+	dc.b	38 43   
+	dc.b	6D      
+	dc.b	75      
+	dc.b	AB      
+	dc.b	22 A3 0Bhl
+	dc.b	B0      
+	dc.b	BF      
+	dc.b	BD      
+	dc.b	35      
+	dc.b	D2 84 A1
+	dc.b	13      
+	dc.b	37      
+	dc.b	62      
+	dc.b	40      
+	dc.b	7A      
+	dc.b	D1      
+	dc.b	F3      
+	dc.b	D5      
+	dc.b	55      
+	dc.b	EA 0C 8A
+	dc.b	9E      
+	dc.b	2D      
+	dc.b	DA 2F 7C
+	dc.b	F5      
+	dc.b	7D      
+	dc.b	5F      
+	dc.b	41      
+	dc.b	E1      
+	dc.b	6B      
+	dc.b	DF      
+	dc.b	57      
+	dc.b	F4 EF F1
+	dc.b	91      
+	dc.b	41      
+	dc.b	B1      
+	dc.b	DC 44 0E
+	dc.b	A5      
+	dc.b	2B      
+	dc.b	4C      
+	dc.b	74      
+	dc.b	3A E3 A2
+	dc.b	67      
+	dc.b	D5      
+	dc.b	F1      
+	dc.b	41      
+	dc.b	C8      
+	dc.b	90      
+	dc.b	41      
+	dc.b	87      
+	dc.b	C7      
+	dc.b	53      
+	dc.b	B3      
+	dc.b	9B      
+	dc.b	61      
+	dc.b	4D      
+	dc.b	D6 41   
+	dc.b	60      
+	dc.b	48      
+	dc.b	B4      
+	dc.b	C4 C4 B3
+	dc.b	9A      
+	dc.b	26 2B   
+	dc.b	1F      
+	dc.b	C9      
+	dc.b	C7      
+	dc.b	40      
+	dc.b	0C      
+	dc.b	9C      
+	dc.b	51      
+	dc.b	26 3E   
+	dc.b	A7      
+	dc.b	76      
+	dc.b	24      
+	dc.b	52      
+	dc.b	88      
+	dc.b	BF      
+	dc.b	D6 12   
+	dc.b	61      
+	dc.b	B9      
+	dc.b	E9      
+	dc.b	D5      
+	dc.b	C7      
+	dc.b	D6 0D   
+	dc.b	13      
+	dc.b	66      
+	dc.b	5D      
+	dc.b	7D      
+	dc.b	5A      
+	dc.b	31 6E AE
+	dc.b	77      
+	dc.b	1E 38   
+	dc.b	27      
+	dc.b	DF      
+	dc.b	2B      
+	dc.b	DF      
+	dc.b	95      
+	dc.b	D7      
+	dc.b	C7      
+	dc.b	AA      
+	dc.b	E8      
+	dc.b	7E      
+	dc.b	5F      
+	dc.b	7C      
+	dc.b	8E      
+	dc.b	7C      
+	dc.b	8B      
+	dc.b	E1      
+	dc.b	CE 5F   
+	dc.b	73      
+	dc.b	3E E4   
+	dc.b	76      
+	dc.b	62      
+	dc.b	67      
+	dc.b	8C      
+	dc.b	4C      
+	dc.b	D6 2C   
+	dc.b	45      
+	dc.b	04      
+	dc.b	03      
+	dc.b	F7      
+	dc.b	92      
+	dc.b	89      
+	dc.b	60      
+	dc.b	FE E8   
+	dc.b	E2 5D C5
+	dc.b	26 1C   
+	dc.b	91      
+	dc.b	C7      
+	dc.b	9A      
+	dc.b	E8      
+	dc.b	79      
+	dc.b	E0      
+	dc.b	EF      
+	dc.b	DC 73 EC
+	dc.b	86      
+	dc.b	52      
+	dc.b	A1      
+	dc.b	14      
+	dc.b	C7      
+	dc.b	39      
+	dc.b	0E C2   
+	dc.b	8C      
+	dc.b	AE      
+	dc.b	E9      
+	dc.b	9E      
+	dc.b	E8      
+	dc.b	76      
+	dc.b	2B      
+	dc.b	10 28   
+	dc.b	A1      
+	dc.b	4C      
+	dc.b	73      
+	dc.b	77      
+	dc.b	91      
+	dc.b	FE C2   
+	dc.b	63      
+	dc.b	B5      
+	dc.b	A0      
+	dc.b	23      
+	dc.b	9B      
+	dc.b	49      
+	dc.b	9C      
+	dc.b	59      
+	dc.b	A3      
+	dc.b	4E      
+	dc.b	AE      
+	dc.b	AE      
+	dc.b	AD      
+	dc.b	A8      
+	dc.b	54      
+	dc.b	0E 3D   
+	dc.b	6C      
+	dc.b	29      
+	dc.b	3A 23 9B
+	dc.b	5E      
+	dc.b	82      
+	dc.b	6E      
+	dc.b	9C      
+	dc.b	00      
+	dc.b	9B      
+	dc.b	D5      
+	dc.b	78      
+	dc.b	4B      
+	dc.b	44      
+	dc.b	83      
+	dc.b	A2      
+	dc.b	E6 4C   
+	dc.b	44      
+	dc.b	E4 C2 C5
+	dc.b	D3 1B   
+	dc.b	CD 09 AE
+	dc.b	87      
+	dc.b	EA 75 4B
+	dc.b	5B      
+	dc.b	46      
+	dc.b	44      
+	dc.b	CC BC 9B
+	dc.b	A4      
+	dc.b	F0      
+	dc.b	47      
+	dc.b	45      
+	dc.b	4E      
+	dc.b	39      
+	dc.b	E4 13 CD
+	dc.b	FD 96 52
+	dc.b	DD E9   
+	dc.b	C6 7D   
+	dc.b	7C      
+	dc.b	C7      
+	dc.b	52      
+	dc.b	C2 5D C5
+	dc.b	F2 66 26
+	dc.b	4F      
+	dc.b	16 24   
+	dc.b	BA      
+	dc.b	C8      
+	dc.b	66      
+	dc.b	29      
+	dc.b	D9      
+	dc.b	0F      
+	dc.b	EA 11 5E
+	dc.b	E8      
+	dc.b	B2      
+	dc.b	A0      
+	dc.b	17      
+	dc.b	5E      
+	dc.b	AB      
+	dc.b	3B      
+	dc.b	50      
+	dc.b	5F      
+	dc.b	10 5D   
+	dc.b	C5      
+	dc.b	B3      
+	dc.b	8B      
+	dc.b	15      
+	dc.b	FD      
+	dc.b	3B      
+	dc.b	5D      
+	dc.b	C3 9C 4A
+	dc.b	DA E9 9E
+	dc.b	A3      
+	dc.b	50      
+	dc.b	0A      
+	dc.b	FA E9 DB
+	dc.b	00      
+	dc.b	1C      
+	dc.b	96      
+	dc.b	4A      
+	dc.b	C3 75 38
+	dc.b	26 0E   
+	dc.b	98      
+	dc.b	60      
+	dc.b	26 16   
+	dc.b	29      
+	dc.b	2B      
+	dc.b	F9      
+	dc.b	97      
+	dc.b	72      
+	dc.b	5D      
+	dc.b	CB E7   
+	dc.b	66      
+	dc.b	26 AD   
+	dc.b	71      
+	dc.b	4C      
+	dc.b	7B      
+	dc.b	26 04   
+	dc.b	10 05   
+	dc.b	04      
+	dc.b	3D      
+	dc.b	68      
+	dc.b	37      
+	dc.b	53      
+	dc.b	8E      
+	dc.b	58      
+	dc.b	C2 5D C8
+	dc.b	A9      
+	dc.b	95      
+	dc.b	64      
+	dc.b	A2      
+	dc.b	02      
+	dc.b	B5      
+	dc.b	39      
+	dc.b	F2 56 75
+	dc.b	EA 07 95
+	dc.b	DF      
+	dc.b	B8      
+	dc.b	09      
+	dc.b	E4 C9 EB
+	dc.b	F5      
+	dc.b	2E AE   
+	dc.b	C4 30 37
+	dc.b	B4      
+	dc.b	C8      
+	dc.b	A3      
+	dc.b	C6 40   
+	dc.b	34      
+	dc.b	2A F5 DC5
+	dc.b	3B      
+	dc.b	5F      
+	dc.b	0F      
+	dc.b	17      
+	dc.b	79      
+	dc.b	AE      
+	dc.b	87      
+	dc.b	86      
+	dc.b	11 2A 34
+	dc.b	C9      
+	dc.b	AF      
+	dc.b	B1      
+	dc.b	50      
+	dc.b	5D      
+	dc.b	D3 C6   
+	dc.b	EC 01 14
+	dc.b	EE 51   
+	dc.b	49      
+	dc.b	C8      
+	dc.b	8A      
+	dc.b	D6 13   
+	dc.b	50      
+	dc.b	5B      
+	dc.b	5B      
+	dc.b	21 02 4D
+	dc.b	99      
+	dc.b	AE      
+	dc.b	AE      
+	dc.b	AE      
+	dc.b	AC      
+	dc.b	24      
+	dc.b	B4      
+	dc.b	62      
+	dc.b	94      
+	dc.b	0E 3A   
+	dc.b	DF      
+	dc.b	71      
+	dc.b	1B      
+	dc.b	37      
+	dc.b	3E 93   
+	dc.b	58      
+	dc.b	A3      
+	dc.b	9A      
+	dc.b	26 2B   
+	dc.b	1B      
+	dc.b	FA 9B 12
+	dc.b	6D      
+	dc.b	A5      
+	dc.b	25      
+	dc.b	5A      
+	dc.b	CD 74 73
+	dc.b	D6 81   
+	dc.b	8D      
+	dc.b	5C      
+	dc.b	02      
+	dc.b	DE 5F   
+	dc.b	71      
+	dc.b	EE BF   
+	dc.b	75      
+	dc.b	86      
+	dc.b	5D      
+	dc.b	79      
+	dc.b	B5      
+	dc.b	E3      
+	dc.b	E8      
+	dc.b	02      
+	dc.b	81      
+	dc.b	40      
+	dc.b	8F      
+	dc.b	EE 00   
+	dc.b	09      
+	dc.b	2F      
+	dc.b	93      
+	dc.b	15      
+	dc.b	2D      
+	dc.b	8F      
+	dc.b	34      
+	dc.b	C9      
+	dc.b	DA F3 74
+	dc.b	00      
+	dc.b	28 8D   
+	dc.b	74      
+	dc.b	26 43   
+	dc.b	8F      
+	dc.b	D8      
+	dc.b	D7      
+	dc.b	51      
+	dc.b	8B      
+	dc.b	4B      
+	dc.b	17      
+	dc.b	8A      
+	dc.b	24      
+	dc.b	DA 13 89
+	dc.b	E8      
+	dc.b	63      
+	dc.b	C8      
+	dc.b	99      
+	dc.b	B0      
+	dc.b	0E C7   
+	dc.b	5D      
+	dc.b	BF      
+	dc.b	D5      
+	dc.b	23      
+	dc.b	A1      
+	dc.b	F7      
+	dc.b	5D      
+	dc.b	BE      
+	dc.b	BD      
+	dc.b	82      
+	dc.b	4C      
+	dc.b	4E      
+	dc.b	88      
+	dc.b	66      
+	dc.b	0F      
+	dc.b	87      
+	dc.b	2A A3 5C3
+	dc.b	4B      
+	dc.b	D8      
+	dc.b	38 89   
+	dc.b	EA C3 70
+	dc.b	24      
+	dc.b	9B      
+	dc.b	FB      
+	dc.b	94      
+	dc.b	DA 86 60
+	dc.b	F5      
+	dc.b	12      
+	dc.b	FB      
+	dc.b	BC      
+	dc.b	9B      
+	dc.b	E6 6B   
+	dc.b	A0      
+	dc.b	62      
+	dc.b	6B      
+	dc.b	D5      
+	dc.b	A4      
+	dc.b	85      
+	dc.b	AF      
+	dc.b	87      
+	dc.b	39      
+	dc.b	20 26   
+	dc.b	E7      
+	dc.b	5F      
+	dc.b	CB 1A   
+	dc.b	D5      
+	dc.b	F8      
+	dc.b	CA 04 C2
+	dc.b	B7      
+	dc.b	BA      
+	dc.b	04      
+	dc.b	A2      
+	dc.b	83      
+	dc.b	1D      
+	dc.b	E2 77 0B
+	dc.b	2A 00 0A0
+	dc.b	FB      
+	dc.b	1B      
+	dc.b	71      
+	dc.b	8B      
+	dc.b	1C      
+	dc.b	25      
+	dc.b	DC 61 65
+	dc.b	5E      
+	dc.b	20 2E   
+	dc.b	4C      
+	dc.b	A5      
+	dc.b	4B      
+	dc.b	1A      
+	dc.b	0E 90   
+	dc.b	3B      
+	dc.b	01 70 EA
+	dc.b	0F      
+	dc.b	C5      
+	dc.b	02      
+	dc.b	40      
+	dc.b	26 8B   
+	dc.b	3B      
+	dc.b	61      
+	dc.b	4C      
+	dc.b	73      
+	dc.b	B1      
+	dc.b	29      
+	dc.b	60      
+	dc.b	FB      
+	dc.b	12      
+	dc.b	6F      
+	dc.b	EA FD 9C
+	dc.b	86      
+	dc.b	60      
+	dc.b	F9      
+	dc.b	C5      
+	dc.b	0F      
+	dc.b	B4      
+	dc.b	A2      
+	dc.b	13      
+	dc.b	48      
+	dc.b	26 D7   
+	dc.b	2A B2 3B2
+	dc.b	0C      
+	dc.b	3E BA   
+	dc.b	11 39 C4
+	dc.b	AD      
+	dc.b	AE      
+	dc.b	82      
+	dc.b	86      
+	dc.b	60      
+	dc.b	F6 29   
+	dc.b	4D      
+	dc.b	58      
+	dc.b	50      
+	dc.b	F5      
+	dc.b	4E      
+	dc.b	A8      
+	dc.b	47      
+	dc.b	5E      
+	dc.b	A5      
+	dc.b	FB      
+	dc.b	5F      
+	dc.b	CA 39 A2
+	dc.b	62      
+	dc.b	B1      
+	dc.b	AC      
+	dc.b	73      
+	dc.b	7E      
+	dc.b	91      
+	dc.b	D0      
+	dc.b	71      
+	dc.b	D1      
+	dc.b	CE 30   
+	dc.b	DB 32   
+	dc.b	54      
+	dc.b	E8      
+	dc.b	D6 20   
+	dc.b	31 C6 60
+	dc.b	F1      
+	dc.b	20 29   
+	dc.b	B5      
+	dc.b	E4 58 AC
+	dc.b	37      
+	dc.b	53      
+	dc.b	8C      
+	dc.b	60      
+	dc.b	81      
+	dc.b	78      
+	dc.b	03      
+	dc.b	7D      
+	dc.b	EB      
+	dc.b	7A      
+	dc.b	EA E2 9B
+	dc.b	5E      
+	dc.b	2D      
+	dc.b	EF      
+	dc.b	CB 41   
+	dc.b	15      
+	dc.b	3A F4 8D
+	dc.b	D9      
+	dc.b	D9      
+	dc.b	AE      
+	dc.b	AE      
+	dc.b	01 4E 1A
+	dc.b	28 8D   
+	dc.b	11 3D 9A
+	dc.b	E8      
+	dc.b	79      
+	dc.b	72      
+	dc.b	0F      
+	dc.b	C8      
+	dc.b	89      
+	dc.b	60      
+	dc.b	9A      
+	dc.b	D5      
+	dc.b	F0      
+	dc.b	9D      
+	dc.b	85      
+	dc.b	1F      
+	dc.b	4B      
+	dc.b	D9      
+	dc.b	78      
+	dc.b	47      
+	dc.b	EB      
+	dc.b	C4 C7 EB
+	dc.b	73      
+	dc.b	31 36 16
+	dc.b	EB      
+	dc.b	B1      
+	dc.b	26 02   
+	dc.b	C0      
+	dc.b	00      
+	dc.b	1F      
+	dc.b	B1      
+	dc.b	0D      
+	dc.b	5E      
+	dc.b	A3      
+	dc.b	82      
+	dc.b	83      
+	dc.b	80      
+	dc.b	47      
+	dc.b	3E 93   
+	dc.b	94      
+	dc.b	E8      
+	dc.b	00      
+	dc.b	70      
+	dc.b	0A      
+	dc.b	83      
+	dc.b	E3      
+	dc.b	6E      
+	dc.b	E1      
+	dc.b	C0      
+	dc.b	CB CE   
+	dc.b	AC      
+	dc.b	0B      
+	dc.b	0C      
+	dc.b	20 87   
+	dc.b	0B      
+	dc.b	75      
+	dc.b	EA 37 C5
+	dc.b	41      
+	dc.b	CD 62 00
+	dc.b	E9      
+	dc.b	44      
+	dc.b	59      
+	dc.b	27      
+	dc.b	99      
+	dc.b	0F      
+	dc.b	BB      
+	dc.b	95      
+	dc.b	D7      
+	dc.b	97      
+	dc.b	AD      
+	dc.b	5F      
+	dc.b	6A      
+	dc.b	76      
+	dc.b	81      
+	dc.b	65      
+	dc.b	DC 69 3C
+	dc.b	4D      
+	dc.b	AE      
+	dc.b	87      
+	dc.b	CB 61   
+	dc.b	A4      
+	dc.b	5A      
+	dc.b	E2 25 4C
+	dc.b	75      
+	dc.b	11 90 EA
+	dc.b	32 61 83a
+	dc.b	AD      
+	dc.b	CD 74 20
+	dc.b	FB      
+	dc.b	65      
+	dc.b	66      
+	dc.b	39      
+	dc.b	B6      
+	dc.b	B1      
+	dc.b	23      
+	dc.b	74      
+	dc.b	00      
+	dc.b	F0      
+	dc.b	C0      
+	dc.b	AC      
+	dc.b	4B      
+	dc.b	EE 5C   
+	dc.b	B3      
+	dc.b	1F      
+	dc.b	F6 15   
+	dc.b	60      
+	dc.b	1B      
+	dc.b	F0      
+	dc.b	BC      
+	dc.b	A0      
+	dc.b	E5      
+	dc.b	96      
+	dc.b	29      
+	dc.b	6F      
+	dc.b	D7      
+	dc.b	55      
+	dc.b	EB      
+	dc.b	92      
+	dc.b	4B      
+	dc.b	FC D6 25
+	dc.b	73      
+	dc.b	E9      
+	dc.b	47      
+	dc.b	0D      
+	dc.b	5D      
+	dc.b	7F      
+	dc.b	60      
+	dc.b	F6 0F   
+	dc.b	5C      
+	dc.b	B1      
+	dc.b	CC 46 FA
+	dc.b	74      
+	dc.b	C2 E2 F6
+	dc.b	11 BD E0
+	dc.b	96      
+	dc.b	26 A8   
+	dc.b	00      
+	dc.b	A9      
+	dc.b	3C      
+	dc.b	41      
+	dc.b	B6      
+	dc.b	20 65   
+	dc.b	0E 82   
+	dc.b	45      
+	dc.b	F8      
+	dc.b	AE      
+	dc.b	00      
+	dc.b	6B      
+	dc.b	A7      
+	dc.b	69      
+	dc.b	06 AD   
+	dc.b	A4      
+	dc.b	2D      
+	dc.b	81      
+	dc.b	79      
+	dc.b	A8      
+	dc.b	7A      
+	dc.b	17      
+	dc.b	AD      
+	dc.b	B0      
+	dc.b	47      
+	dc.b	87      
+	dc.b	D4 D7 45
+	dc.b	61      
+	dc.b	65      
+	dc.b	D0      
+	dc.b	DC 86 97
+	dc.b	77      
+	dc.b	30 88   
+	dc.b	D4 EA CA
+	dc.b	66      
+	dc.b	26 4A   
+	dc.b	DA EF 62
+	dc.b	5E      
+	dc.b	5B      
+	dc.b	00      
+	dc.b	EE 99   
+	dc.b	90      
+	dc.b	7A      
+	dc.b	A2      
+	dc.b	EE C8   
+	dc.b	D7      
+	dc.b	40      
+	dc.b	9A      
+	dc.b	2F      
+	dc.b	C2 4D 74
+	dc.b	F8      
+	dc.b	EF      
+	dc.b	B1      
+	dc.b	86      
+	dc.b	23      
+	dc.b	77      
+	dc.b	5C      
+	dc.b	68      
+	dc.b	80      
+	dc.b	D2 C5 C2
+	dc.b	5D      
+	dc.b	CF      
+	dc.b	AF      
+	dc.b	71      
+	dc.b	2F      
+	dc.b	95      
+	dc.b	D2 62 B1
+	dc.b	E3      
+	dc.b	FB      
+	dc.b	1E 47   
+	dc.b	E1      
+	dc.b	38 73   
+	dc.b	90      
+	dc.b	75      
+	dc.b	EE 25   
+	dc.b	A6      
+	dc.b	0E E0   
+	dc.b	E2 BF 57
+	dc.b	16 86   
+	dc.b	D1      
+	dc.b	13      
+	dc.b	5A      
+	dc.b	62      
+	dc.b	43      
+	dc.b	7D      
+	dc.b	14      
+	dc.b	13      
+	dc.b	F8      
+	dc.b	75      
+	dc.b	EA 3F 8E
+	dc.b	DE 5F   
+	dc.b	DD 22 BEix
+	dc.b	AD      
+	dc.b	5F      
+	dc.b	73      
+	dc.b	14      
+	dc.b	8E      
+	dc.b	11 79 38
+	dc.b	EF      
+	dc.b	11 B1 74
+	dc.b	B3      
+	dc.b	1C      
+	dc.b	67      
+	dc.b	0E C7   
+	dc.b	2F      
+	dc.b	4F      
+	dc.b	77      
+	dc.b	6A      
+	dc.b	06 A2   
+	dc.b	AA      
+	dc.b	D5      
+	dc.b	F4 64 FB
+	dc.b	C4 83 89
+	dc.b	FA 56 E6
+	dc.b	CB 61   
+	dc.b	8F      
+	dc.b	06 85   
+	dc.b	90      
+	dc.b	4A      
+	dc.b	B4      
+	dc.b	C7      
+	dc.b	C7      
+	dc.b	E7      
+	dc.b	9A      
+	dc.b	26 2B   
+	dc.b	12      
+	dc.b	F9      
+	dc.b	FA 70 0F
+	dc.b	9F      
+	dc.b	81      
+	dc.b	66      
+	dc.b	5E      
+	dc.b	AA      
+	dc.b	A6      
+	dc.b	24      
+	dc.b	84      
+	dc.b	B8      
+	dc.b	BF      
+	dc.b	D6 46   
+	dc.b	64      
+	dc.b	BC      
+	dc.b	2C      
+	dc.b	D8      
+	dc.b	F7      
+	dc.b	09      
+	dc.b	00      
+	dc.b	46      
+	dc.b	86      
+	dc.b	5D      
+	dc.b	70      
+	dc.b	9E      
+	dc.b	35      
+	dc.b	60      
+	dc.b	EE A7   
+	dc.b	41      
+	dc.b	6B      
+	dc.b	5A      
+	dc.b	0F      
+	dc.b	5B      
+	dc.b	03      
+	dc.b	C8      
+	dc.b	07      
+	dc.b	F7      
+	dc.b	DD      
+	dc.b	E8      
+	dc.b	72      
+	dc.b	9F      
+	dc.b	AF      
+	dc.b	82      
+	dc.b	AF      
+	dc.b	8F      
+	dc.b	14      
+	dc.b	F0      
+	dc.b	8F      
+	dc.b	A3      
+	dc.b	61      
+	dc.b	E6 A6   
+	dc.b	62      
+	dc.b	69      
+	dc.b	8C      
+	dc.b	4C      
+	dc.b	06 20   
+	dc.b	48      
+	dc.b	04      
+	dc.b	23      
+	dc.b	29      
+	dc.b	95      
+	dc.b	8B      
+	dc.b	90      
+	dc.b	F0      
+	dc.b	E8      
+	dc.b	15      
+	dc.b	5D      
+	dc.b	C8      
+	dc.b	26 4F   
+	dc.b	95      
+	dc.b	FA 9A E8
+	dc.b	7C      
+	dc.b	00      
+	dc.b	1F      
+	dc.b	DF      
+	dc.b	73      
+	dc.b	1F      
+	dc.b	86      
+	dc.b	94      
+	dc.b	A1      
+	dc.b	44      
+	dc.b	C7      
+	dc.b	69      
+	dc.b	01 C2 C0
+	dc.b	D2 19 92
+	dc.b	18 7A   
+	dc.b	2B      
+	dc.b	13      
+	dc.b	5C      
+	dc.b	A4      
+	dc.b	8C      
+	dc.b	A6      
+	dc.b	7A      
+	dc.b	B1      
+	dc.b	21 C2 96
+	dc.b	B5      
+	dc.b	E3      
+	dc.b	56      
+	dc.b	CE 7C   
+	dc.b	9F      
+	dc.b	5C      
+	dc.b	E3      
+	dc.b	8E      
+	dc.b	EE AE   
+	dc.b	D1      
+	dc.b	AB      
+	dc.b	84      
+	dc.b	0E 6D   
+	dc.b	6F      
+	dc.b	59      
+	dc.b	6C      
+	dc.b	26 9B   
+	dc.b	5E      
+	dc.b	B5      
+	dc.b	60      
+	dc.b	DF      
+	dc.b	40      
+	dc.b	CE 05   
+	dc.b	B8      
+	dc.b	7B      
+	dc.b	47      
+	dc.b	B6      
+	dc.b	A2      
+	dc.b	1A      
+	dc.b	4C      
+	dc.b	47      
+	dc.b	E7      
+	dc.b	C2 F5 D6
+	dc.b	4E      
+	dc.b	F1      
+	dc.b	4C      
+	dc.b	AE      
+	dc.b	87      
+	dc.b	1A      
+	dc.b	A5      
+	dc.b	4B      
+	dc.b	7D      
+	dc.b	49      
+	dc.b	47      
+	dc.b	CF      
+	dc.b	EC 9B D6
+	dc.b	F0      
+	dc.b	7A      
+	dc.b	48      
+	dc.b	8E      
+	dc.b	79      
+	dc.b	08      
+	dc.b	13      
+	dc.b	F1      
+	dc.b	3D      
+	dc.b	D9      
+	dc.b	72      
+	dc.b	10 19   
+	dc.b	F6 B0   
+	dc.b	70      
+	dc.b	F7      
+	dc.b	92      
+	dc.b	F2 5D C8
+	dc.b	F2 96 26
+	dc.b	6F      
+	dc.b	49      
+	dc.b	24      
+	dc.b	FD      
+	dc.b	C8      
+	dc.b	69      
+	dc.b	2C      
+	dc.b	0D      
+	dc.b	02      
+	dc.b	ED      
+	dc.b	14      
+	dc.b	50      
+	dc.b	E8      
+	dc.b	E2 D3 4B
+	dc.b	5E      
+	dc.b	AE      
+	dc.b	6E      
+	dc.b	93      
+	dc.b	5F      
+	dc.b	14      
+	dc.b	50      
+	dc.b	F5      
+	dc.b	E6 BF   
+	dc.b	18 FD   
+	dc.b	7E      
+	dc.b	80      
+	dc.b	C3 CC 4A
+	dc.b	DA EC C1
+	dc.b	E3      
+	dc.b	80      
+	dc.b	0D      
+	dc.b	2A 1C DBC
+	dc.b	03      
+	dc.b	10 99   
+	dc.b	4D      
+	dc.b	C3 75 38
+	dc.b	49      
+	dc.b	3E 9B   
+	dc.b	94      
+	dc.b	26 36   
+	dc.b	29      
+	dc.b	5B      
+	dc.b	29      
+	dc.b	CA 75 5D
+	dc.b	CF      
+	dc.b	1A      
+	dc.b	66      
+	dc.b	26 E1   
+	dc.b	74      
+	dc.b	4C      
+	dc.b	7E      
+	dc.b	26 04   
+	dc.b	43      
+	dc.b	08      
+	dc.b	04      
+	dc.b	6D      
+	dc.b	6B      
+	dc.b	67      
+	dc.b	53      
+	dc.b	80      
+	dc.b	9B      
+	dc.b	C2 5D CC
+	dc.b	AC      
+	dc.b	98      
+	dc.b	94      
+	dc.b	A4      
+	dc.b	42      
+	dc.b	E5      
+	dc.b	69      
+	dc.b	22 5A 75hl
+	dc.b	EA 3A C8
+	dc.b	D3 BC   
+	dc.b	4C      
+	dc.b	18 C9   
+	dc.b	1B      
+	dc.b	F8      
+	dc.b	51      
+	dc.b	A2      
+	dc.b	C4 73 77
+	dc.b	E4 CC D6
+	dc.b	06 73   
+	dc.b	64      
+	dc.b	5A      
+	dc.b	28 DC   
+	dc.b	6B      
+	dc.b	93      
+	dc.b	02      
+	dc.b	4A      
+	dc.b	79      
+	dc.b	AE      
+	dc.b	87      
+	dc.b	B6      
+	dc.b	11 5D 64
+	dc.b	C9      
+	dc.b	DF      
+	dc.b	B1      
+	dc.b	94      
+	dc.b	51      
+	dc.b	03      
+	dc.b	F9      
+	dc.b	EF      
+	dc.b	34      
+	dc.b	44      
+	dc.b	1E 81   
+	dc.b	7C      
+	dc.b	C8      
+	dc.b	8E      
+	dc.b	09      
+	dc.b	16 54   
+	dc.b	5F      
+	dc.b	8B      
+	dc.b	54      
+	dc.b	32 80 D9a
+	dc.b	EE AE   
+	dc.b	EE EF   
+	dc.b	54      
+	dc.b	B4      
+	dc.b	92      
+	dc.b	97      
+	dc.b	0E 6A   
+	dc.b	02      
+	dc.b	A4      
+	dc.b	4E      
+	dc.b	3A 3E 96
+	dc.b	9C      
+	dc.b	A3      
+	dc.b	9A      
+	dc.b	26 2B   
+	dc.b	1E FE   
+	dc.b	CB 12   
+	dc.b	60      
+	dc.b	A9      
+	dc.b	25      
+	dc.b	8D      
+	dc.b	ED 74   
+	dc.b	B3      
+	dc.b	D6 C5   
+	dc.b	81      
+	dc.b	8C      
+	dc.b	25      
+	dc.b	02      
+	dc.b	9F      
+	dc.b	A1      
+	dc.b	11 BF B5
+	dc.b	C6 5D   
+	dc.b	7D      
+	dc.b	B5      
+	dc.b	E7      
+	dc.b	18 32   
+	dc.b	B4      
+	dc.b	43      
+	dc.b	B2      
+	dc.b	E1      
+	dc.b	40      
+	dc.b	0C      
+	dc.b	62      
+	dc.b	97      
+	dc.b	49      
+	dc.b	20 B3   
+	dc.b	64      
+	dc.b	C9      
+	dc.b	1A      
+	dc.b	27      
+	dc.b	74      
+	dc.b	00      
+	dc.b	68      
+	dc.b	8D      
+	dc.b	74      
+	dc.b	5A      
+	dc.b	46      
+	dc.b	C2 DB 17
+	dc.b	84      
+	dc.b	BF      
+	dc.b	4F      
+	dc.b	1B      
+	dc.b	BD      
+	dc.b	27      
+	dc.b	1D      
+	dc.b	53      
+	dc.b	B9      
+	dc.b	18 96   
+	dc.b	FB      
+	dc.b	99      
+	dc.b	B0      
+	dc.b	0E FA   
+	dc.b	9D      
+	dc.b	B2      
+	dc.b	D9      
+	dc.b	56      
+	dc.b	A4      
+	dc.b	1B      
+	dc.b	9D      
+	dc.b	B1      
+	dc.b	B0      
+	dc.b	B6      
+	dc.b	4F      
+	dc.b	82      
+	dc.b	8B      
+	dc.b	66      
+	dc.b	0F      
+	dc.b	BA      
+	dc.b	2A E3 8F3
+	dc.b	4E      
+	dc.b	08      
+	dc.b	68      
+	dc.b	B9      
+	dc.b	EA C6 73
+	dc.b	27      
+	dc.b	DB 3E   
+	dc.b	C7      
+	dc.b	DA B6 60
+	dc.b	F8      
+	dc.b	12      
+	dc.b	2E EC   
+	dc.b	9B      
+	dc.b	18 9E   
+	dc.b	D0      
+	dc.b	A2      
+	dc.b	6E      
+	dc.b	18 A7   
+	dc.b	C9      
+	dc.b	DF      
+	dc.b	B7      
+	dc.b	39      
+	dc.b	54      
+	dc.b	26 2A   
+	dc.b	5F      
+	dc.b	CE 1D   
+	dc.b	D5      
+	dc.b	FB      
+	dc.b	FD      
+	dc.b	07      
+	dc.b	C2 EB ED
+	dc.b	07      
+	dc.b	A6      
+	dc.b	86      
+	dc.b	50      
+	dc.b	14      
+	dc.b	9A      
+	dc.b	0D      
+	dc.b	5E      
+	dc.b	00      
+	dc.b	0D      
+	dc.b	FB      
+	dc.b	1E A1   
+	dc.b	8E      
+	dc.b	1F      
+	dc.b	25      
+	dc.b	DC 91 68
+	dc.b	8E      
+	dc.b	40      
+	dc.b	50      
+	dc.b	4C      
+	dc.b	C5      
+	dc.b	4B      
+	dc.b	5D      
+	dc.b	0E 93   
+	dc.b	6B      
+	dc.b	04      
+	dc.b	A0      
+	dc.b	ED      
+	dc.b	02      
+	dc.b	C8      
+	dc.b	32 44 26a
+	dc.b	BE      
+	dc.b	6F      
+	dc.b	94      
+	dc.b	4C      
+	dc.b	76      
+	dc.b	E4 5C 60
+	dc.b	FE 15   
+	dc.b	62      
+	dc.b	EA 3D D0
+	dc.b	B6      
+	dc.b	60      
+	dc.b	FD      
+	dc.b	F5      
+	dc.b	3F      
+	dc.b	B7      
+	dc.b	A2      
+	dc.b	46      
+	dc.b	7A      
+	dc.b	26 0A   
+	dc.b	2A E5 6B5
+	dc.b	0F      
+	dc.b	51      
+	dc.b	EA 11 3C
+	dc.b	C4 AD AE
+	dc.b	B5      
+	dc.b	86      
+	dc.b	60      
+	dc.b	F9      
+	dc.b	29      
+	dc.b	7D      
+	dc.b	88      
+	dc.b	80      
+	dc.b	28 8E   
+	dc.b	AC      
+	dc.b	7B      
+	dc.b	5E      
 
 
 
@@ -6899,6 +6900,7 @@ credit_string_2A37:
 2C05: 6F          ld   l,a
 2C06: 5D          ld   e,l
 2C07: C9          ret
+
 2C08: 21 81 80    ld   hl,$8081
 2C0B: 06 0B       ld   b,$0B
 2C0D: CD F5 1D    call pseudo_random_1DF5
@@ -6913,11 +6915,13 @@ credit_string_2A37:
 2C1C: 23          inc  hl
 2C1D: 10 F2       djnz $2C11
 2C1F: C9          ret
+
 2C20: CD 2D 2C    call $2C2D
 2C23: CD 92 2C    call $2C92
 2C26: CD E2 2C    call $2CE2
 2C29: CD FF 2C    call $2CFF
 2C2C: C9          ret
+
 2C2D: DD 21 D5 83 ld   ix,$83D5
 2C31: 21 66 2C    ld   hl,$2C66
 2C34: 06 00       ld   b,$00
@@ -16025,31 +16029,31 @@ perform_all_in_game_tasks_76A2:
 7764: C9          ret
 
 string_7765:
-7765: 28 1C       
-7767: 20 1E       
-7769: 00          
-776A: 2F          
-776B: 23          
-776C: 1E 1F       
-776E: FF 
+	dc.b	28 1C       
+	dc.b	20 1E       
+	dc.b	00          
+	dc.b	2F          
+	dc.b	23          
+	dc.b	1E 1F       
+	dc.b	FF 
      
 string_776F:	 
-776F: 1A          
-7770: 1B          
-7771: 1C          
-7772: 1D          
-7773: 1E 1F       
-7775: 04          
-7776: 00          
-7777: 05          
-7778: 00          
-7779: 28 1C       
-777B: 20 1E       
-777D: 00          
-777E: 2F          
-777F: 23          
-7780: 1E 1F       
-7782: FF 
+	dc,b	1A          
+	dc,b	1B          
+	dc,b	1C          
+	dc,b	1D          
+	dc,b	1E 1F       
+	dc,b	04          
+	dc,b	00          
+	dc,b	05          
+	dc,b	00          
+	dc,b	28 1C       
+	dc,b	20 1E       
+	dc,b	00          
+	dc,b	2F          
+	dc,b	23          
+	dc,b	1E 1F       
+	dc,b	FF 
          
 7783: 21 95 77    ld   hl,player_500_message_7795
 7786: 11 CC C5    ld   de,$C5CC
@@ -16060,15 +16064,15 @@ string_776F:
 7794: C9          ret
 
 player_500_message_7795:
-7795: 1A   
-7796: 1B   
-7797: 1C   
-7798: 1D   
-7799: 1E 1F
-779B: 04   
-779C: 00   
-779D: 05   
-779E: FF   
+	dc.b	1A   
+	dc.b	1B   
+	dc.b	1C   
+	dc.b	1D   
+	dc.b	1E 1F
+	dc.b	04   
+	dc.b	00   
+	dc.b	05   
+	dc.b	FF   
 
 
 ; this sets important variables. Can't be skipped properly
