@@ -44,23 +44,25 @@
 ; character struct offsets
 character_x_00 = 0x0
 character_x_right_01 = 0x1
-character_unknown_02 = 0x2
+character_fine_y_offset_02 = 0x2
 character_y_offset_03 = 0x3
 character_state_04 = 0x4
 character_delta_x_05 = 0x5
 character_situation_06 = 0x6  ; 0: ground, 1: in elevator, 2: on elevator, 3: ??, 4: in stairs, 5: ??
 current_floor_07 = 0x7
-associated_elevator_08 = 0x8
+associated_elevator_08 = 0x8	; for player & enemies
+spawning_door_08 = 0x8			; for unspawned enemies, number of door to spawn from 0-7
 enemy_state_09 = 0x9			; 0xFF: inactive, 0: active, 1: ??
 character_unknown_0a = 0xa
 character_unknown_0b = 0xb
 character_unknown_0c = 0xc
 move_direction_0d = 0xd
 
-; elevator structs offsets
+; elevator structs offsets (size=8)
 current_floor_01 = 0x1
 max_floor_02 = 0x2
 min_floor_03 = 0x3
+player_control_07 = 0x7		; when player can control elevator
 
 ; character situations
 CS_ON_GROUND_00 = 0
@@ -688,7 +690,7 @@ update_main_scrolling_03C3:
 041E: C9          ret
 
 041F: 21 77 83    ld   hl,$8377
-0422: 3A 21 85    ld   a,($8521)
+0422: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 0425: 4F          ld   c,a
 0426: 0D          dec  c
 0427: 06 03       ld   b,$03
@@ -1510,7 +1512,7 @@ enemy_shot_collision_08F8:
 0A28: AF          xor  a
 0A29: 32 20 85    ld   ($8520),a
 0A2C: 3A 2C 80    ld   a,($802C)
-0A2F: 32 21 85    ld   ($8521),a
+0A2F: 32 21 85    ld   (player_structure_851A+current_floor_07),a
 0A32: 3E 01       ld   a,$01
 0A34: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 0A37: CD 03 0B    call $0B03
@@ -1535,7 +1537,7 @@ enemy_shot_collision_08F8:
 0A63: CD A0 15    call $15A0
 0A66: CD CF 73    call $73CF
 0A69: C3 15 0A    jp   $0A15
-0A6C: 3A 23 85    ld   a,($8523)
+0A6C: 3A 23 85    ld   a,(player_structure_851A+9)
 0A6F: FE 03       cp   $03
 0A71: 38 04       jr   c,$0A77
 0A73: 7E          ld   a,(hl)
@@ -1597,7 +1599,7 @@ enemy_shot_collision_08F8:
 0AEC: 19          add  hl,de
 0AED: 10 FB       djnz $0AEA
 0AEF: C9          ret
-0AF0: 21 81 80    ld   hl,$8081
+0AF0: 21 81 80    ld   hl,elevator_directions_array_8081
 0AF3: 3A 2D 80    ld   a,($802D)
 0AF6: 3C          inc  a
 0AF7: 87          add  a,a
@@ -1626,7 +1628,7 @@ enemy_shot_collision_08F8:
 0B1D: 32 04 80    ld   (scroll_speed_8004),a
 0B20: C9          ret
 0B21: 06 08       ld   b,$08
-0B23: 3A 23 85    ld   a,($8523)
+0B23: 3A 23 85    ld   a,(player_structure_851A+9)
 0B26: FE 02       cp   $02
 0B28: 30 02       jr   nc,$0B2C
 0B2A: 06 01       ld   b,$01
@@ -1649,7 +1651,7 @@ enemy_shot_collision_08F8:
 
 0B4C: 3E FF       ld   a,$FF
 0B4E: 32 1E 85    ld   ($851E),a
-0B51: 32 23 85    ld   ($8523),a
+0B51: 32 23 85    ld   (player_structure_851A+9),a
 0B54: 3E 01       ld   a,$01
 0B56: 32 33 80    ld   ($8033),a
 0B59: 3E 03       ld   a,$03
@@ -2141,10 +2143,10 @@ protection_0C43:
 handle_elevators_0EBF:
 0EBF: CD D2 0E    call $0ED2
 0EC2: CD FD 0E    call $0EFD
-0EC5: CD 65 0F    call $0F65
+0EC5: CD 65 0F    call update_elevator_directions_0F65
 0EC8: CD 31 0F    call $0F31
 0ECB: CD 61 5D    call $5D61
-0ECE: CD 99 0F    call $0F99
+0ECE: CD 99 0F    call set_elevators_neutral_controls_0F99
 0ED1: C9          ret
 
 0ED2: 3A C4 83    ld   a,($83C4)
@@ -2166,7 +2168,7 @@ handle_elevators_0EBF:
 0EFC: C9          ret
 
 0EFD: 21 84 83    ld   hl,$8384
-0F00: 11 81 80    ld   de,$8081
+0F00: 11 81 80    ld   de,elevator_directions_array_8081
 0F03: 06 07       ld   b,$07
 0F05: 7E          ld   a,(hl)
 0F06: FE 80       cp   $80
@@ -2233,6 +2235,8 @@ handle_elevators_0EBF:
 0F61: D1          pop  de
 0F62: 10 F0       djnz $0F54
 0F64: C9          ret
+
+update_elevator_directions_0F65:
 0F65: 3A 03 80    ld   a,($8003)
 0F68: FE 14       cp   $14
 0F6A: 38 18       jr   c,$0F84
@@ -2246,23 +2250,27 @@ handle_elevators_0EBF:
 0F7D: 20 05       jr   nz,$0F84
 0F7F: 3E 0F       ld   a,$0F
 0F81: 32 88 80    ld   ($8088),a
-0F84: 11 81 80    ld   de,$8081
-0F87: 21 E1 83    ld   hl,$83E1
+0F84: 11 81 80    ld   de,elevator_directions_array_8081
+0F87: 21 E1 83    ld   hl,$83E1		; in the middle of elevator struct
 0F8A: 06 07       ld   b,$07
+; loop on 7 elevators (out of 21?)
 0F8C: 1A          ld   a,(de)
 0F8D: 77          ld   (hl),a
 0F8E: 13          inc  de
 0F8F: 13          inc  de
 0F90: D5          push de
-0F91: 11 15 00    ld   de,$0015
+0F91: 11 15 00    ld   de,$0015		; skip 2 elevators
 0F94: 19          add  hl,de
 0F95: D1          pop  de
 0F96: 10 F4       djnz $0F8C
 0F98: C9          ret
-0F99: 21 84 83    ld   hl,$8384
+
+set_elevators_neutral_controls_0F99:
+
+0F99: 21 84 83    ld   hl,elevator_array_837D+player_control_07
 0F9C: 11 08 00    ld   de,$0008
 0F9F: 06 0B       ld   b,$0B
-0FA1: 3E 80       ld   a,$80
+0FA1: 3E 80       ld   a,$80		; set no move
 0FA3: 77          ld   (hl),a
 0FA4: 19          add  hl,de
 0FA5: 10 FC       djnz $0FA3
@@ -2485,7 +2493,7 @@ table_10CA:
 1145: CD 75 11    call $1175
 1148: 3E 02       ld   a,$02
 114A: 32 37 82    ld   (skill_level_8237),a
-114D: CD 3E 2A    call $2A3E
+114D: CD 3E 2A    call init_level_skill_params_2A2E
 1150: CD 00 27    call $2700
 1153: CD 65 2A    call $2A65
 1156: CD 9B 75    call start_next_level_759B
@@ -2510,10 +2518,10 @@ table_10CA:
 1180: 56          ld   d,(hl)
 1181: 23          inc  hl
 1182: 22 3C 82    ld   ($823C),hl
-1185: ED 53 D6 81 ld   ($81D6),de
+1185: ED 53 D6 81 ld   (pseudo_random_seed_81D6),de
 1189: C9          ret
 118A: 2A 3C 82    ld   hl,($823C)
-118D: ED 5B D6 81 ld   de,($81D6)
+118D: ED 5B D6 81 ld   de,(pseudo_random_seed_81D6)
 1191: 73          ld   (hl),e
 1192: 23          inc  hl
 1193: 72          ld   (hl),d
@@ -2836,7 +2844,7 @@ handle_enemies_12A2:
 13EA: 30 12       jr   nc,$13FE
 13EC: 3E FF       ld   a,$FF
 13EE: DD 77 05    ld   (ix+character_delta_x_05),a
-13F1: DD 77 02    ld   (ix+$02),a
+13F1: DD 77 02    ld   (ix+character_fine_y_offset_02),a
 13F4: 2A EF 80    ld   hl,($80EF)
 13F7: 77          ld   (hl),a
 13F8: 11 05 00    ld   de,$0005
@@ -2954,7 +2962,7 @@ handle_enemies_12A2:
 148C: DD 7E 00    ld   a,(ix+character_x_00)
 148F: 77          ld   (hl),a
 1490: 23          inc  hl
-1491: DD 46 02    ld   b,(ix+$02)
+1491: DD 46 02    ld   b,(ix+character_fine_y_offset_02)
 1494: 0E 00       ld   c,$00
 1496: 16 04       ld   d,$04
 1498: E5          push hl
@@ -2988,7 +2996,7 @@ handle_enemies_12A2:
 14C0: 36 61       ld   (hl),$61
 14C2: C9          ret
 14C3: E5          push hl
-14C4: DD 46 02    ld   b,(ix+$02)
+14C4: DD 46 02    ld   b,(ix+character_fine_y_offset_02)
 14C7: DD 4E 04    ld   c,(ix+$04)
 14CA: CD 05 56    call $5605
 14CD: 44          ld   b,h
@@ -3024,7 +3032,7 @@ handle_enemies_12A2:
 14FC: E6 03       and  $03
 14FE: 47          ld   b,a
 14FF: C9          ret
-1500: DD 46 02    ld   b,(ix+$02)
+1500: DD 46 02    ld   b,(ix+character_fine_y_offset_02)
 1503: DD 4E 04    ld   c,(ix+$04)
 1506: CD 05 56    call $5605
 1509: 11 7F C8    ld   de,$C87F
@@ -3039,7 +3047,7 @@ handle_enemies_12A2:
 1519: 38 02       jr   c,$151D
 151B: 13          inc  de
 151C: 13          inc  de
-151D: DD 7E 02    ld   a,(ix+$02)
+151D: DD 7E 02    ld   a,(ix+character_fine_y_offset_02)
 1520: FE 0B       cp   $0B
 1522: 38 06       jr   c,$152A
 1524: FE 10       cp   $10
@@ -4015,7 +4023,7 @@ enemy_in_elevator_1AE3:
 1AE7: DD 77 1A    ld   (ix+$1a),a
 1AEA: DD 77 17    ld   (ix+$17),a
 1AED: DD 36 0E 5A ld   (ix+$0e),$5A
-1AF1: 3A 21 85    ld   a,($8521)
+1AF1: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 1AF4: FE 07       cp   $07
 1AF6: DA 25 1B    jp   c,$1B25
 1AF9: DD 7E 10    ld   a,(ix+$10)
@@ -4026,8 +4034,8 @@ enemy_in_elevator_1AE3:
 1B06: 3A 20 85    ld   a,($8520)
 1B09: B7          or   a
 1B0A: 28 0D       jr   z,$1B19
-1B0C: 3A 22 85    ld   a,($8522)
-1B0F: DD BE 08    cp   (ix+$08)
+1B0C: 3A 22 85    ld   a,(player_structure_851A+associated_elevator_08)
+1B0F: DD BE 08    cp   (ix+associated_elevator_08)
 1B12: 20 05       jr   nz,$1B19
 1B14: CD 89 1B    call $1B89
 1B17: 18 03       jr   $1B1C
@@ -4068,6 +4076,7 @@ enemy_jumping_above_elevator_1B38:
 1B6B: D2 20 1B    jp   nc,$1B20
 1B6E: CD 9E 1B    call $1B9E
 1B71: C3 1C 1B    jp   $1B1C
+
 1B74: CD CE 62    call load_character_elevator_structure_62CE
 1B77: CD AA 1B    call $1BAA
 1B7A: FD 7E 00    ld   a,(iy+$00)
@@ -4097,7 +4106,7 @@ enemy_jumping_above_elevator_1B38:
 1BB2: 3C          inc  a
 1BB3: DD B6 19    or   (ix+$19)
 1BB6: 20 1D       jr   nz,$1BD5
-1BB8: 3A 23 85    ld   a,($8523)
+1BB8: 3A 23 85    ld   a,(player_structure_851A+9)
 1BBB: D6 05       sub  $05
 1BBD: 28 16       jr   z,$1BD5
 1BBF: 3D          dec  a
@@ -4181,7 +4190,7 @@ enemy_shooting_state_1C14:
 1C58: 21 B5 1D    ld   hl,$1DB5
 1C5B: CD 3F 1D    call $1D3F
 1C5E: C9          ret
-1C5F: 3A 23 85    ld   a,($8523)
+1C5F: 3A 23 85    ld   a,(player_structure_851A+9)
 1C62: D6 05       sub  $05
 1C64: 28 E8       jr   z,$1C4E
 1C66: 3D          dec  a
@@ -4411,32 +4420,34 @@ table_1D75:
 
 pseudo_random_1DF5:
 1DF5: E5          push hl
-1DF6: 2A D6 81    ld   hl,($81D6)
+1DF6: 2A D6 81    ld   hl,(pseudo_random_seed_81D6)
 1DF9: 7D          ld   a,l
 1DFA: C6 C7       add  a,$C7
 1DFC: 6F          ld   l,a
 1DFD: 8C          adc  a,h
 1DFE: D6 C7       sub  $C7
 1E00: 67          ld   h,a
-1E01: 22 D6 81    ld   ($81D6),hl
+1E01: 22 D6 81    ld   (pseudo_random_seed_81D6),hl
 1E04: E1          pop  hl
 1E05: C9          ret
 
 pseudo_random_1E06:
-1E06: 2A D6 81    ld   hl,($81D6)
+1E06: 2A D6 81    ld   hl,(pseudo_random_seed_81D6)
 1E09: 7D          ld   a,l
 1E0A: C6 C7       add  a,$C7
 1E0C: 6F          ld   l,a
 1E0D: 8C          adc  a,h
 1E0E: D6 C7       sub  $C7
 1E10: 67          ld   h,a
-1E11: 22 D6 81    ld   ($81D6),hl
+1E11: 22 D6 81    ld   (pseudo_random_seed_81D6),hl
 1E14: C9          ret
 
+; seems to be never called. Only called from 1E1D through $1E2A
 1E15: E5          push hl
 1E16: CD 06 1E    call pseudo_random_1E06
-1E19: 26 A0       ld   h,$A0
-1E1B: 2E 06       ld   l,$06
+1E19: 26 A0       ld   h,$A0		; standard params for random
+1E1B: 2E 06       ld   l,$06		; not called/used
+; now the code is used
 1E1D: BC          cp   h
 1E1E: DA 22 1E    jp   c,$1E22
 1E21: 94          sub  h
@@ -4448,7 +4459,7 @@ pseudo_random_1E06:
 
 1E2A: E5          push hl
 1E2B: CD 06 1E    call pseudo_random_1E06
-1E2E: 26 C0       ld   h,$C0
+1E2E: 26 C0       ld   h,$C0		; harder params for random
 1E30: 2E 07       ld   l,$07
 1E32: C3 1D 1E    jp   $1E1D
 
@@ -6039,7 +6050,7 @@ pseudo_random_1E06:
 2658: 3D          dec  a
 2659: CA 76 26    jp   z,$2676
 ; copy gfx rom contents into character data
-265C: 21 00 00    ld   hl,$0000
+265C: 21 00 00    ld   hl,$0000		; game tiles
 265F: 22 09 D5    ld   (gfx_pointer_d509),hl
 2662: 11 00 90    ld   de,character_data_9000
 2665: 01 30 00    ld   bc,$0030		; 256*48 bytes
@@ -6051,7 +6062,7 @@ pseudo_random_1E06:
 2670: C2 68 26    jp   nz,$2668
 2673: C3 8D 26    jp   $268D
 
-2676: 21 00 30    ld   hl,$3000
+2676: 21 00 30    ld   hl,$3000		; menu tiles
 2679: 22 09 D5    ld   (gfx_pointer_d509),hl
 267C: 11 00 90    ld   de,character_data_9000
 267F: 01 30 00    ld   bc,$0030		; 256*48 bytes
@@ -6640,8 +6651,9 @@ credit_string_2A37:
     dc.b  2C   
     dc.b  31 FF
 	
+init_level_skill_params_2A2E:
 2A3E: 21 00 00    ld   hl,$0000                                      
-2A41: 22 31 82    ld   (timer_16bit_8231),hl		; reset timer
+2A41: 22 31 82    ld   (level_timer_16bit_8231),hl		; reset timer
 2A44: 3E 04       ld   a,$04
 2A46: 32 33 82    ld   ($8233),a
 2A49: 3A 37 82    ld   a,(skill_level_8237)
@@ -6690,7 +6702,7 @@ credit_string_2A37:
 2A9A: CD AA 2A    call $2AAA
 2A9D: CD ED 2A    call $2AED
 2AA0: CD 10 2B    call $2B10
-2AA3: CD 99 0F    call $0F99
+2AA3: CD 99 0F    call set_elevators_neutral_controls_0F99
 2AA6: CD 08 2C    call $2C08
 2AA9: C9          ret
 
@@ -6698,7 +6710,7 @@ credit_string_2A37:
 2AAE: 11 D7 2A    ld   de,$2AD7
 2AB1: 06 00       ld   b,$00
 2AB3: 1A          ld   a,(de)
-2AB4: DD 77 03    ld   (ix+character_y_offset_03),a
+2AB4: DD 77 03    ld   (ix+min_floor_03),a
 2AB7: 13          inc  de
 2AB8: 1A          ld   a,(de)
 2AB9: DD 77 02    ld   (ix+$02),a
@@ -6707,9 +6719,9 @@ credit_string_2A37:
 2AC0: 3C          inc  a
 2AC1: B8          cp   b
 2AC2: C2 C8 2A    jp   nz,$2AC8
-2AC5: DD 35 03    dec  (ix+character_y_offset_03)
+2AC5: DD 35 03    dec  (ix+min_floor_03)
 2AC8: C5          push bc
-2AC9: 01 08 00    ld   bc,$0008
+2AC9: 01 08 00    ld   bc,$0008			; elevator struct size
 2ACC: DD 09       add  ix,bc
 2ACE: C1          pop  bc
 2ACF: 04          inc  b
@@ -6901,7 +6913,7 @@ credit_string_2A37:
 2C06: 5D          ld   e,l
 2C07: C9          ret
 
-2C08: 21 81 80    ld   hl,$8081
+2C08: 21 81 80    ld   hl,elevator_directions_array_8081
 2C0B: 06 0B       ld   b,$0B
 2C0D: CD F5 1D    call pseudo_random_1DF5
 2C10: 4F          ld   c,a
@@ -7006,7 +7018,7 @@ credit_string_2A37:
 2CBB: 9A          sbc  a,d
 2CBC: F2 C0 2C    jp   p,$2CC0
 2CBF: EB          ex   de,hl
-2CC0: DD 75 02    ld   (ix+$02),l
+2CC0: DD 75 02    ld   (ix+character_fine_y_offset_02),l
 2CC3: DD 74 03    ld   (ix+character_y_offset_03),h
 2CC6: EB          ex   de,hl
 2CC7: DD 36 0D 01 ld   (ix+move_direction_0d),$01
@@ -7378,7 +7390,7 @@ one_or_two_players_button_string_2EFD:
 2F8F: 13          inc  de
 2F90: 10 FC       djnz $2F8E
 2F92: 3A 2C 80    ld   a,($802C)
-2F95: 32 21 85    ld   ($8521),a
+2F95: 32 21 85    ld   (player_structure_851A+current_floor_07),a
 2F98: CD AA 2F    call $2FAA
 2F9B: C9          ret
 
@@ -7472,17 +7484,17 @@ initial_player_structure_2F9C
 
 handle_elevator_sound_3046:
 3046: 16 00       ld   d,$00
-3048: 3A 20 85    ld   a,($8520)
+3048: 3A 20 85    ld   a,(player_structure_851A+character_situation_06)
 304B: B7          or   a
 304C: 28 21       jr   z,$306F
 304E: FE 03       cp   $03
 3050: 30 1D       jr   nc,$306F
-3052: 3A 23 85    ld   a,($8523)
+3052: 3A 23 85    ld   a,(player_structure_851A+9)
 3055: FE 05       cp   $05
 3057: 38 04       jr   c,$305D
 3059: FE 07       cp   $07
 305B: 20 12       jr   nz,$306F
-305D: 3A 22 85    ld   a,($8522)
+305D: 3A 22 85    ld   a,(player_structure_851A+8)
 3060: E6 7F       and  $7F
 3062: 5F          ld   e,a
 3063: 87          add  a,a
@@ -7600,7 +7612,7 @@ handle_player_controls_30CF:
 3121: 22 3C 82    ld   ($823C),hl
 3124: C3 EC 30    jp   $30EC
 
-3127: 3A 23 85    ld   a,($8523)
+3127: 3A 23 85    ld   a,(player_structure_851A+9)
 312A: FE 07       cp   $07
 312C: C0          ret  nz
 312D: 3A 20 85    ld   a,($8520)
@@ -7776,7 +7788,7 @@ shot_lamp_collision_31BA:
 3287: A7          and  a
 3288: DD E1       pop  ix
 328A: C8          ret  z
-328B: 3A D6 81    ld   a,($81D6)
+328B: 3A D6 81    ld   a,(pseudo_random_seed_81D6)
 328E: 32 32 82    ld   (level_timer_16bit_msb_8232),a
 3291: C9          ret
 
@@ -7794,7 +7806,7 @@ shot_lamp_collision_31BA:
 32AD: A7          and  a
 32AE: FD E1       pop  iy
 32B0: C8          ret  z
-32B1: 3A D6 81    ld   a,($81D6)
+32B1: 3A D6 81    ld   a,(pseudo_random_seed_81D6)
 32B4: 32 32 82    ld   (level_timer_16bit_msb_8232),a
 32B7: AF          xor  a
 32B8: DD E5       push ix
@@ -7830,7 +7842,7 @@ enemy_vs_lamp_collision_32ED:
 32FA: DD BE 07    cp   (ix+$07)
 32FD: C0          ret  nz
 32FE: 3A 3F 82    ld   a,($823F)
-3301: DD BE 02    cp   (ix+$02)
+3301: DD BE 02    cp   (ix+character_fine_y_offset_02)
 3304: D0          ret  nc
 3305: 3A 41 82    ld   a,(falling_lamp_x_8241)
 3308: DD BE 00    cp   (ix+character_x_00)
@@ -8189,7 +8201,7 @@ bad_hardware_34C5:
 358E: CD C7 76    call $76C7
 3591: C9          ret
 
-3592: CD 3E 2A    call $2A3E
+3592: CD 3E 2A    call init_level_skill_params_2A2E
 3595: CD 00 27    call $2700
 3598: CD 65 2A    call $2A65
 359B: C3 47 35    jp   $3547
@@ -8198,32 +8210,32 @@ bad_hardware_34C5:
 35A3: 32 36 82    ld   ($8236),a
 35A6: 21 53 82    ld   hl,$8253
 35A9: 11 34 82    ld   de,nb_lives_8234
-35AC: CD 13 36    call $3613
+35AC: CD 13 36    call swap_memory_increase_pointers_3613
 35AF: 11 4D 83    ld   de,$834D
 35B2: CD 1B 36    call $361B
 35B5: 11 4A 82    ld   de,$824A
-35B8: CD 13 36    call $3613
+35B8: CD 13 36    call swap_memory_increase_pointers_3613
 35BB: 11 73 83    ld   de,$8373
-35BE: CD 13 36    call $3613
+35BE: CD 13 36    call swap_memory_increase_pointers_3613
 35C1: 11 37 82    ld   de,skill_level_8237
-35C4: CD 13 36    call $3613
+35C4: CD 13 36    call swap_memory_increase_pointers_3613
 35C7: 11 2C 80    ld   de,$802C
-35CA: CD 13 36    call $3613
-35CD: 11 31 82    ld   de,timer_16bit_8231
-35D0: CD 13 36    call $3613
-35D3: CD 13 36    call $3613
+35CA: CD 13 36    call swap_memory_increase_pointers_3613
+35CD: 11 31 82    ld   de,level_timer_16bit_8231
+35D0: CD 13 36    call swap_memory_increase_pointers_3613
+35D3: CD 13 36    call swap_memory_increase_pointers_3613
 35D6: 11 33 82    ld   de,$8233
-35D9: CD 13 36    call $3613
+35D9: CD 13 36    call swap_memory_increase_pointers_3613
 35DC: 11 00 80    ld   de,$8000
-35DF: CD 13 36    call $3613
+35DF: CD 13 36    call swap_memory_increase_pointers_3613
 35E2: 11 4C 83    ld   de,$834C
-35E5: CD 13 36    call $3613
+35E5: CD 13 36    call swap_memory_increase_pointers_3613
 35E8: 11 ED 82    ld   de,$82ED
-35EB: CD 13 36    call $3613
+35EB: CD 13 36    call swap_memory_increase_pointers_3613
 35EE: 11 CE 81    ld   de,$81CE
 35F1: CD 23 36    call $3623
 35F4: 11 2D 80    ld   de,$802D
-35F7: CD 13 36    call $3613
+35F7: CD 13 36    call swap_memory_increase_pointers_3613
 35FA: 11 83 83    ld   de,$8383
 35FD: CD 2F 36    call $362F
 3600: 11 DA 81    ld   de,$81DA
@@ -8233,6 +8245,10 @@ bad_hardware_34C5:
 360C: 11 F1 81    ld   de,$81F1
 360F: CD 2B 36    call $362B
 3612: C9          ret
+
+; < HL,DE
+; swaps memory pointed by addresses, then increases HL and DE
+swap_memory_increase_pointers_3613:
 3613: 1A          ld   a,(de)
 3614: 4E          ld   c,(hl)
 3615: 77          ld   (hl),a
@@ -8241,8 +8257,9 @@ bad_hardware_34C5:
 3618: 23          inc  hl
 3619: 13          inc  de
 361A: C9          ret
+
 361B: 06 03       ld   b,$03
-361D: CD 13 36    call $3613
+361D: CD 13 36    call swap_memory_increase_pointers_3613
 3620: 10 FB       djnz $361D
 3622: C9          ret
 3623: 06 08       ld   b,$08
@@ -8253,7 +8270,7 @@ bad_hardware_34C5:
 362D: 18 EE       jr   $361D
 362F: 06 0A       ld   b,$0A
 3631: C5          push bc
-3632: CD 13 36    call $3613
+3632: CD 13 36    call swap_memory_increase_pointers_3613
 3635: 01 07 00    ld   bc,$0007
 3638: EB          ex   de,hl
 3639: 09          add  hl,bc
@@ -8268,12 +8285,12 @@ bad_hardware_34C5:
 3644: CD B7 46    call $46B7
 3647: 00          nop
 3648: 00          nop
-3649: CD D2 64    call $64D2
+3649: CD D2 64    call l_64D2
 364C: C9          ret
 
 364D: 3E 80       ld   a,$80
 364F: 32 79 87    ld   ($8779),a
-3652: CD D2 64    call $64D2
+3652: CD D2 64    call l_64D2
 3655: C9          ret
 
 play_sound_3656:
@@ -8291,15 +8308,16 @@ play_sound_3656:
 3665: C2 6B 36    jp   nz,$366B
 ; character on ground
 3668: C3 C5 46    jp   $46C5
+
 366B: CD CE 62    call load_character_elevator_structure_62CE
 366E: FD 46 01    ld   b,(iy+current_floor_01)        ; 83CE: elevator current floor
-3671: DD 7E 03    ld   a,(ix+$03)
+3671: DD 7E 03    ld   a,(ix+character_y_offset_03)
 3674: FD 86 00    add  a,(iy+$00)
 3677: FE 30       cp   $30
 3679: 30 01       jr   nc,$367C
 367B: 05          dec  b
 367C: 78          ld   a,b
-367D: DD 86 06    add  a,(ix+$06)
+367D: DD 86 06    add  a,(ix+character_situation_06)
 3680: 47          ld   b,a
 3681: DD 7E 08    ld   a,(ix+$08)
 3684: E6 80       and  $80
@@ -8311,7 +8329,7 @@ play_sound_3656:
 3690: DD 7E 09    ld   a,(ix+$09)
 3693: FE 05       cp   $05
 3695: C8          ret  z
-3696: DD 46 00    ld   b,(ix$00)
+3696: DD 46 00    ld   b,(ix+$00)
 3699: DD 4E 01    ld   c,(ix+$01)
 369C: FD 56 04    ld   d,(iy+$04)
 369F: FD 5E 05    ld   e,(iy+$05)
@@ -8323,9 +8341,10 @@ play_sound_3656:
 36A9: 92          sub  d
 36AA: 67          ld   h,a
 36AB: DA 1A 37    jp   c,$371A
-36AE: DD 7E 06    ld   a,(ix+$06)
+36AE: DD 7E 06    ld   a,(ix+character_situation_06)
 36B1: 3D          dec  a
 36B2: C8          ret  z
+; not in elevator
 36B3: 78          ld   a,b
 36B4: 81          add  a,c
 36B5: 92          sub  d
@@ -8358,7 +8377,7 @@ play_sound_3656:
 36ED: FE 1F       cp   $1F
 36EF: CA 13 37    jp   z,$3713
 36F2: D9          exx
-36F3: DD 46 02    ld   b,(ix+$02)
+36F3: DD 46 02    ld   b,(ix+character_fine_y_offset_02)
 36F6: DD 4E 03    ld   c,(ix+character_y_offset_03)
 36F9: FD 56 00    ld   d,(iy+$00)
 36FC: 78          ld   a,b
@@ -8386,7 +8405,7 @@ play_sound_3656:
 372D: FE 1F       cp   $1F
 372F: CA 53 37    jp   z,$3753
 3732: D9          exx
-3733: DD 46 02    ld   b,(ix+$02)
+3733: DD 46 02    ld   b,(ix+character_fine_y_offset_02)
 3736: DD 4E 03    ld   c,(ix+character_y_offset_03)
 3739: FD 56 00    ld   d,(iy+$00)
 373C: 78          ld   a,b
@@ -8457,7 +8476,7 @@ play_sound_3656:
 37BC: 21 05 45    ld   hl,$4505
 37BF: 2B          dec  hl
 37C0: 7E          ld   a,(hl)
-37C1: DD 77 02    ld   (ix+$02),a
+37C1: DD 77 02    ld   (ix+character_fine_y_offset_02),a
 37C4: 23          inc  hl
 37C5: 7E          ld   a,(hl)
 37C6: DD 77 03    ld   (ix+character_y_offset_03),a
@@ -8474,15 +8493,16 @@ play_sound_3656:
 37D9: 0E 06       ld   c,$06
 37DB: 79          ld   a,c
 37DC: DD 96 03    sub  (ix+character_y_offset_03)
-37DF: DD 86 02    add  a,(ix+$02)
-37E2: DD 77 02    ld   (ix+$02),a
+37DF: DD 86 02    add  a,(ix+character_fine_y_offset_02)
+37E2: DD 77 02    ld   (ix+character_fine_y_offset_02),a
 37E5: DD 71 03    ld   (ix+character_y_offset_03),c
 37E8: C9          ret
 
-37E9: DD 7E 06    ld   a,(ix+$06)
+37E9: DD 7E 06    ld   a,(ix+character_situation_06)
 37EC: 3D          dec  a
 37ED: C8          ret  z
-37EE: DD 7E 08    ld   a,(ix+$08)
+; not in elevator
+37EE: DD 7E 08    ld   a,(ix+associated_elevator_08)
 37F1: E6 80       and  $80
 37F3: C0          ret  nz
 37F4: FD 7E 02    ld   a,(iy+$02)
@@ -8493,7 +8513,7 @@ play_sound_3656:
 3800: DD 86 02    add  a,(ix+$02)
 3803: FE 30       cp   $30
 3805: D8          ret  c
-3806: DD 36 09 06 ld   (ix+$09),$06
+3806: DD 36 09 06 ld   (ix+enemy_state_09),$06
 380A: DD 36 0A 00 ld   (ix+$0a),$00
 380E: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3811: B7          or   a
@@ -8503,7 +8523,7 @@ play_sound_3656:
 3819: 3A 20 85    ld   a,($8520)
 381C: 3D          dec  a
 381D: C0          ret  nz
-381E: 3A 22 85    ld   a,($8522)
+381E: 3A 22 85    ld   a,(player_structure_851A+8)
 3821: DD AE 08    xor  (ix+$08)
 3824: E6 7F       and  $7F
 3826: CC E7 56    call z,$56E7
@@ -9818,7 +9838,7 @@ table_42E2:
 433F: FE 03       cp   CS_FALLING_03
 4341: DA 4F 43    jp   c,$434F
 4344: CA 2B 3B    jp   z,$3B2B
-4347: FE 05       cp   $05
+4347: FE 05       cp   $CS_IN_ROOM_05
 4349: DA 64 3E    jp   c,$3E64
 434C: C3 3E 3C    jp   $3C3E
 434F: CD 59 43    call $4359
@@ -10139,28 +10159,34 @@ handle_character_entering_elevator_446E:
 ; in elevator
 45B9: 3A BA 85    ld   a,(current_enemy_index_85BA)
 45BC: C3 74 46    jp   $4674
-45BF: 3A 21 85    ld   a,($8521)
+
+player_elevator_control_upper_stories_45BF:
+45BF: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 45C2: FE 07       cp   $07
-45C4: D8          ret  c
+45C4: D8          ret  c		; can't control elevators from 7 to ground from here
+player_elevator_control_45C5:	; called from somewhere else
 45C5: DD 7E 0D    ld   a,(ix+move_direction_0d)
-45C8: 47          ld   b,a
-45C9: E6 F3       and  $F3
+45C8: 47          ld   b,a0
+45C9: E6 F3       and  $F3		; cancel down movement: no crouch in elevator
 45CB: DD 77 0D    ld   (ix+move_direction_0d),a
 45CE: CB 58       bit  3,b
-45D0: 20 0B       jr   nz,$45DD
+45D0: 20 0B       jr   nz,player_commands_elevator_up_45DD
 45D2: CB 50       bit  2,b
 45D4: C8          ret  z
+player_commands_elevator_down_45D5:
 45D5: CD CE 62    call load_character_elevator_structure_62CE
-45D8: FD 36 07 FE ld   (iy+$07),$FE
+45D8: FD 36 07 FE ld   (iy+player_control_07),$FE
 45DC: C9          ret
+
+player_commands_elevator_up_45DD:
 45DD: CD CE 62    call load_character_elevator_structure_62CE
-45E0: FD 36 07 02 ld   (iy+$07),$02
+45E0: FD 36 07 02 ld   (iy+player_control_07),$02
 45E4: C9          ret
 
 ground_floor_reached_45E5:
 45E5: 3E 06       ld   a,GS_GROUND_FLOOR_REACHED_06
 45E7: 32 AC 80    ld   (game_state_80AC),a
-45EA: 21 81 80    ld   hl,$8081
+45EA: 21 81 80    ld   hl,elevator_directions_array_8081
 45ED: 3A 2D 80    ld   a,($802D)
 45F0: 3C          inc  a
 45F1: 87          add  a,a
@@ -10205,7 +10231,7 @@ ground_floor_reached_45E5:
 464C: FE 10       cp   $10
 464E: C0          ret  nz
 ; switch to hurry up music as soon as fine timer is 0xFF
-464F: 3A 31 82    ld   a,(timer_16bit_8231)
+464F: 3A 31 82    ld   a,(level_timer_16bit_8231)
 4652: B7          or   a
 4653: CA 65 46    jp   z,$4665
 4656: 3D          dec  a
@@ -10214,11 +10240,12 @@ ground_floor_reached_45E5:
 465B: C0          ret  nz
 465C: 3E 82       ld   a,$82
 465E: 32 79 87    ld   ($8779),a
-4661: CD D2 64    call $64D2
+4661: CD D2 64    call l_64D2
 4664: C9          ret
+
 4665: 3E 80       ld   a,$80
 4667: 32 79 87    ld   ($8779),a
-466A: CD D2 64    call $64D2
+466A: CD D2 64    call l_64D2
 466D: C9          ret
 
 switch_to_hurry_up_music_466E:
@@ -10227,7 +10254,7 @@ switch_to_hurry_up_music_466E:
 4673: C9          ret
 
 4674: B7          or   a
-4675: C2 BF 45    jp   nz,$45BF
+4675: C2 BF 45    jp   nz,player_elevator_control_upper_stories_45BF
 4678: DD 7E 0D    ld   a,(ix+move_direction_0d)
 467B: E6 0C       and  $0C
 467D: 47          ld   b,a
@@ -10241,12 +10268,14 @@ switch_to_hurry_up_music_466E:
 468D: 47          ld   b,a
 468E: 7E          ld   a,(hl)
 468F: B8          cp   b
-4690: DA A0 46    jp   c,$46A0
+4690: DA A0 46    jp   c,$46A0		; skips when level_timer_16bit_msb_8232 >= $10
 4693: 36 00       ld   (hl),$00
-4695: C3 C5 45    jp   $45C5
+4695: C3 C5 45    jp   player_elevator_control_45C5	; for all stories
+
 4698: 21 EF 82    ld   hl,$82EF
 469B: 36 00       ld   (hl),$00
 469D: C3 8A 46    jp   $468A
+
 46A0: DD 7E 0D    ld   a,(ix+move_direction_0d)
 46A3: E6 F3       and  $F3
 46A5: DD 77 0D    ld   (ix+move_direction_0d),a
@@ -10591,7 +10620,7 @@ switch_to_hurry_up_music_466E:
 49C5: 28 10       jr   z,$49D7
 49C7: FE 03       cp   $03
 49C9: 30 0C       jr   nc,$49D7
-49CB: 3A 22 85    ld   a,($8522)
+49CB: 3A 22 85    ld   a,(player_structure_851A+8)
 49CE: DD AE 08    xor  (ix+$08)
 49D1: E6 7F       and  $7F
 49D3: 20 02       jr   nz,$49D7
@@ -10681,7 +10710,7 @@ switch_to_hurry_up_music_466E:
 4A9C: 3A 20 85    ld   a,($8520)
 4A9F: 3D          dec  a
 4AA0: C0          ret  nz
-4AA1: 3A 22 85    ld   a,($8522)
+4AA1: 3A 22 85    ld   a,(player_structure_851A+8)
 4AA4: DD AE 08    xor  (ix+$08)
 4AA7: E6 7F       and  $7F
 4AA9: CC E7 56    call z,$56E7
@@ -11016,6 +11045,7 @@ switch_to_hurry_up_music_466E:
 4D6D: 86          add  a,(hl)
 4D6E: 77          ld   (hl),a
 4D6F: C9          ret
+
 4D70: AF          xor  a
 4D71: 32 AB 80    ld   ($80AB),a
 4D74: 3E 1F       ld   a,$1F
@@ -11030,7 +11060,7 @@ switch_to_hurry_up_music_466E:
 4D8A: 7E          ld   a,(hl)
 4D8B: FE 14       cp   $14
 4D8D: DA 83 4D    jp   c,$4D83
-4D90: 3E C2       ld   a,$C2
+4D90: 3E C2       ld   a,$C2	; sound of grappine thrown on roof
 4D92: 32 0B D5    ld   (sound_latch_D50B),a
 4D95: AF          xor  a
 4D96: 32 3C 83    ld   ($833C),a
@@ -11142,7 +11172,7 @@ switch_to_hurry_up_music_466E:
 4E89: CD 0C 26    call $260C
 4E8C: 3E 04       ld   a,GS_GAME_STARTING_04
 4E8E: 32 AC 80    ld   (game_state_80AC),a
-4E91: CD 3E 2A    call $2A3E
+4E91: CD 3E 2A    call init_level_skill_params_2A2E
 4E94: CD 2E 58    call $582E
 4E97: CD 00 27    call $2700
 4E9A: CD 65 2A    call $2A65
@@ -11622,7 +11652,7 @@ enemy_unknown_state_51A7:
 51AE: DD 77 17    ld   (ix+$17),a
 51B1: CD 68 05    call $0568
 51B4: DA F8 51    jp   c,$51F8
-51B7: 3A 21 85    ld   a,($8521)
+51B7: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 51BA: FE 07       cp   $07
 51BC: 38 47       jr   c,$5205
 51BE: DD 7E 10    ld   a,(ix+$10)
@@ -11656,7 +11686,7 @@ enemy_unknown_state_51A7:
 5208: DD 7E 10    ld   a,(ix+$10)
 520B: B7          or   a
 520C: C2 F4 51    jp   nz,$51F4
-520F: 3A 21 85    ld   a,($8521)
+520F: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5212: FE 07       cp   $07
 5214: 30 09       jr   nc,$521F
 5216: 3A 20 85    ld   a,($8520)
@@ -11665,7 +11695,7 @@ enemy_unknown_state_51A7:
 521C: 3D          dec  a
 521D: 28 16       jr   z,$5235
 521F: CD 7A 52    call $527A
-5222: 3A 21 85    ld   a,($8521)
+5222: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5225: DD 96 07    sub  (ix+$07)
 5228: 3E 00       ld   a,$00
 522A: 17          rla
@@ -11714,7 +11744,7 @@ enemy_above_elevator_524E:
 5290: FD 7E 00    ld   a,(iy+$00)
 5293: B7          or   a
 5294: C8          ret  z
-5295: 21 81 80    ld   hl,$8081
+5295: 21 81 80    ld   hl,elevator_directions_array_8081
 5298: DD 7E 08    ld   a,(ix+$08)
 529B: E6 7F       and  $7F
 529D: 87          add  a,a
@@ -11731,7 +11761,7 @@ enemy_above_elevator_524E:
 52AD: DD 77 10    ld   (ix+$10),a
 52B0: CD B4 52    call $52B4
 52B3: C9          ret
-52B4: 3A 21 85    ld   a,($8521)
+52B4: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 52B7: 47          ld   b,a
 52B8: DD 7E 08    ld   a,(ix+$08)
 52BB: E6 7F       and  $7F
@@ -11813,7 +11843,7 @@ enemy_above_elevator_524E:
 5350: C3 F4 51    jp   $51F4
 5353: CD BA 53    call $53BA
 5356: C3 F4 51    jp   $51F4
-5359: 3A 21 85    ld   a,($8521)
+5359: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 535C: FE 14       cp   $14
 535E: 20 10       jr   nz,$5370
 5360: 3A 1A 85    ld   a,(player_structure_851A)
@@ -11821,7 +11851,7 @@ enemy_above_elevator_524E:
 5365: 38 DF       jr   c,$5346
 5367: DD 36 0B 01 ld   (ix+$0b),$01
 536B: 18 13       jr   $5380
-536D: 3A 21 85    ld   a,($8521)
+536D: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5370: FE 12       cp   $12
 5372: 20 D2       jr   nz,$5346
 5374: 3A 1A 85    ld   a,(player_structure_851A)
@@ -11944,7 +11974,7 @@ enemy_walk_state_53F6:
 5495: 87          add  a,a
 5496: 5F          ld   e,a
 5497: 16 00       ld   d,$00
-5499: 21 81 80    ld   hl,$8081
+5499: 21 81 80    ld   hl,elevator_directions_array_8081
 549C: 19          add  hl,de
 549D: 7E          ld   a,(hl)
 549E: B7          or   a
@@ -12042,7 +12072,7 @@ enemy_walk_state_53F6:
 557A: 3A 20 85    ld   a,($8520)
 557D: FE 04       cp   $04
 557F: C0          ret  nz
-5580: 3A 21 85    ld   a,($8521)
+5580: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5583: DD 96 07    sub  (ix+$07)
 5586: 28 02       jr   z,$558A
 5588: 3C          inc  a
@@ -12547,9 +12577,9 @@ update_upper_status_bar_57C6:
 58F7: CD 1F 04    call $041F
 58FA: C9          ret
 
-58FB: 2A 31 82    ld   hl,(timer_16bit_8231)
+58FB: 2A 31 82    ld   hl,(level_timer_16bit_8231)
 58FE: 23          inc  hl
-58FF: 22 31 82    ld   (timer_16bit_8231),hl
+58FF: 22 31 82    ld   (level_timer_16bit_8231),hl
 5902: CD 2F 59    call compute_difficulty_592F
 5905: 06 01       ld   b,$01
 5907: 3A 32 82    ld   a,(level_timer_16bit_msb_8232)
@@ -12571,7 +12601,7 @@ update_upper_status_bar_57C6:
 5922: 30 01       jr   nc,$5925
 5924: AF          xor  a
 5925: 32 75 83    ld   ($8375),a
-5928: CD 4D 59    call $594D
+5928: CD 4D 59    call update_max_nb_enemies_and_spawn_proba_594D
 592B: CD FC 5A    call $5AFC
 592E: C9          ret
 
@@ -12596,6 +12626,9 @@ compute_difficulty_592F:
 5949: D6 0C       sub  $0C
 594B: 18 ED       jr   $593A
 
+; depending on difficulty level, select max enemies
+; either 3 or 4, also update probability to spawn enemies
+update_max_nb_enemies_and_spawn_proba_594D:
 594D: 06 03       ld   b,$03
 594F: 3A 37 82    ld   a,(skill_level_8237)
 5952: 87          add  a,a
@@ -12607,11 +12640,11 @@ compute_difficulty_592F:
 595B: 38 02       jr   c,$595F
 595D: 06 04       ld   b,$04
 595F: 78          ld   a,b
-5960: 32 7B 83    ld   ($837B),a
+5960: 32 7B 83    ld   (max_nb_enemies_837B),a
 5963: 3A 74 83    ld   a,(instant_difficulty_level_8374)
 5966: 87          add  a,a
-5967: 87          add  a,a
-5968: 32 7C 83    ld   ($837C),a
+5967: 87          add  a,a			; times 4
+5968: 32 7C 83    ld   (probablility_to_spawn_an_enemy_837C),a
 596B: C9          ret
 
 596C: 21 77 83    ld   hl,$8377
@@ -12624,7 +12657,7 @@ compute_difficulty_592F:
 5975: DD 21 3A 85 ld   ix,enemy_1_853A	; first enemy pointer
 5979: 11 20 00    ld   de,$0020			; $20 per enemy
 597C: 06 04       ld   b,$04			; 4 enemies
-597E: 3A 21 85    ld   a,($8521)
+597E: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5981: 4F          ld   c,a
 5982: 0D          dec  c
 ; start loop on enemies
@@ -12695,7 +12728,8 @@ enemy_exiting_room_599D:
 59F0: 19          add  hl,de
 59F1: 10 FC       djnz $59EF
 59F3: C9          ret
-59F4: 3A 20 85    ld   a,($8520)
+
+59F4: 3A 20 85    ld   a,(player_structure_851A+character_situation_06)
 59F7: B7          or   a
 59F8: CA FF 59    jp   z,$59FF
 59FB: CD 0D 5A    call player_hit_by_enemy_shots_test_5A0D
@@ -12705,11 +12739,11 @@ enemy_exiting_room_599D:
 5A03: 20 04       jr   nz,$5A09
 5A05: CD 0D 5A    call player_hit_by_enemy_shots_test_5A0D
 5A08: C9          ret
-5A09: CD 26 5A    call $5A26
+5A09: CD 26 5A    call try_to_spawn_an_enemy_5A26
 5A0C: C9          ret
 
 player_hit_by_enemy_shots_test_5A0D:
-5A0D: 3A 7B 83    ld   a,($837B)
+5A0D: 3A 7B 83    ld   a,(max_nb_enemies_837B)
 5A10: 47          ld   b,a
 5A11: DD 21 3A 85 ld   ix,enemy_1_853A
 ; loop on enemies
@@ -12721,14 +12755,17 @@ player_hit_by_enemy_shots_test_5A0D:
 5A21: DD 19       add  ix,de
 5A23: 10 F0       djnz $5A15
 5A25: C9          ret
-5A26: 3A 7B 83    ld   a,($837B)
+
+try_to_spawn_an_enemy_5A26:
+5A26: 3A 7B 83    ld   a,(max_nb_enemies_837B)	; 3 or 4
 5A29: 47          ld   b,a
 5A2A: DD 21 3A 85 ld   ix,enemy_1_853A
+; loop
 5A2E: 3A 7A 83    ld   a,($837A)
 5A31: 4F          ld   c,a
 5A32: 1E 01       ld   e,$01
 5A34: CD F5 1D    call pseudo_random_1DF5
-5A37: 21 7C 83    ld   hl,$837C
+5A37: 21 7C 83    ld   hl,probablility_to_spawn_an_enemy_837C
 5A3A: BE          cp   (hl)
 5A3B: 38 04       jr   c,$5A41
 5A3D: CD 2A 1E    call $1E2A
@@ -12738,9 +12775,11 @@ player_hit_by_enemy_shots_test_5A0D:
 5A47: DD 19       add  ix,de
 5A49: 10 E3       djnz $5A2E
 5A4B: C9          ret
-5A4C: DD 7E 09    ld   a,(ix+$09)
+
+; < e: random offset to apply
+5A4C: DD 7E 09    ld   a,(ix+enemy_state)
 5A4F: 3C          inc  a
-5A50: 28 0C       jr   z,$5A5E
+5A50: 28 0C       jr   z,$5A5E		; jump if enemy inactive
 5A52: DD 7E 06    ld   a,(ix+character_situation_06)
 5A55: FE 05       cp   CS_IN_ROOM_05
 5A57: C0          ret  nz
@@ -12756,24 +12795,26 @@ player_hit_by_enemy_shots_test_5A0D:
 5A69: 7E          ld   a,(hl)
 5A6A: B9          cp   c
 5A6B: D0          ret  nc
-5A6C: 3A 21 85    ld   a,($8521)
+5A6C: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5A6F: 83          add  a,e
 5A70: 3D          dec  a
-5A71: DD 77 07    ld   (ix+$07),a
+5A71: DD 77 07    ld   (ix+current_floor_07),a
 5A74: CD F5 1D    call pseudo_random_1DF5
 5A77: E6 07       and  $07
-5A79: DD 77 08    ld   (ix+$08),a
+5A79: DD 77 08    ld   (ix+spawning_door_08),a
 5A7C: E5          push hl
-5A7D: CD AB 5A    call $5AAB
+5A7D: CD AB 5A    call must_spawn_enemy_5AAB
 5A80: E1          pop  hl
-5A81: DD 36 09 FF ld   (ix+$09),$FF
+5A81: DD 36 09 FF ld   (ix+enemy_state_09),$FF	; inactive
 5A85: C8          ret  z
-; spawn a new enemy, located in a room
+; must_spawn_enemy_5AAB returned nonzero:
+; spawn a new enemy, located in the room we picked at random
+; above, or by "cheating" if floor 20 and timer > 0x1000
 spawn_enemy_5A86:
 5A86: 3E 00       ld   a,$00
 5A88: DD 77 0D    ld   (ix+move_direction_0d),a
 5A8B: DD 77 19    ld   (ix+$19),a
-5A8E: DD 77 09    ld   (ix+$09),a
+5A8E: DD 77 09    ld   (ix+enemy_state_09),a	; enemy active
 5A91: DD 77 0F    ld   (ix+$0f),a
 5A94: DD 77 10    ld   (ix+$10),a
 5A97: DD 36 06 05 ld   (ix+character_situation_06),CS_IN_ROOM_05
@@ -12784,48 +12825,59 @@ spawn_enemy_5A86:
 5AA7: DD 77 13    ld   (ix+enemy_aggressivity_13),a
 5AAA: C9          ret
 
+must_spawn_enemy_5AAB:
 5AAB: C5          push bc
-5AAC: DD 7E 07    ld   a,(ix+$07)
+5AAC: DD 7E 07    ld   a,(ix+current_floor_07)
+; probably never happens, floor range is 0-31
 5AAF: B7          or   a
 5AB0: DA DC 5A    jp   c,$5ADC
 5AB3: FE 1F       cp   $1F
 5AB5: D2 DC 5A    jp   nc,$5ADC
 5AB8: FE 14       cp   $14
-5ABA: 28 23       jr   z,$5ADF
-5ABC: DD 5E 07    ld   e,(ix+$07)
+5ABA: 28 23       jr   z,special_enemy_cheat_20th_floor_5ADF
+5ABC: DD 5E 07    ld   e,(ix+current_floor_07)
 5ABF: 16 00       ld   d,$00
 5AC1: 21 10 82    ld   hl,red_door_position_array_8210
 5AC4: 19          add  hl,de
-5AC5: 7E          ld   a,(hl)
-5AC6: DD BE 08    cp   (ix+$08)
-5AC9: 28 11       jr   z,$5ADC
+5AC5: 7E          ld   a,(hl)		; red door index
+5AC6: DD BE 08    cp   (ix+spawning_door_08)
+5AC9: 28 11       jr   z,$5ADC		; don"t spawn enemy from red door
 5ACB: 21 F1 81    ld   hl,$81F1
 5ACE: 19          add  hl,de
 5ACF: 7E          ld   a,(hl)
-5AD0: DD 46 08    ld   b,(ix+$08)
+5AD0: DD 46 08    ld   b,(ix+spawning_door_08)
 5AD3: 07          rlca
 5AD4: 05          dec  b
 5AD5: F2 D3 5A    jp   p,$5AD3
-5AD8: E6 01       and  $01
+5AD8: E6 01       and  $01		; test spawn enemy
 5ADA: C1          pop  bc
 5ADB: C9          ret
-5ADC: AF          xor  a
+
+5ADC: AF          xor  a		; don't spawn enemy
 5ADD: C1          pop  bc
 5ADE: C9          ret
-5ADF: 3A 21 85    ld   a,($8521)
+
+special_enemy_cheat_20th_floor_5ADF:
+5ADF: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5AE2: FE 14       cp   $14
 5AE4: 20 D6       jr   nz,$5ABC
-5AE6: 3A 1A 85    ld   a,(player_structure_851A)
+5AE6: 3A 1A 85    ld   a,(player_structure_851A+character_x_00)
 5AE9: FE AE       cp   $AE
 5AEB: 38 CF       jr   c,$5ABC
 5AED: 3A 32 82    ld   a,(level_timer_16bit_msb_8232)
 5AF0: FE 10       cp   $10
 5AF2: 38 C8       jr   c,$5ABC
-5AF4: DD 36 08 06 ld   (ix+$08),$06
-5AF8: F6 01       or   $01
+; if player is on 20th floor on the hard right part
+; (the isolated door, with a wall on the left, and stairs)
+; force enemies to spawn on that very door 
+; when timer is in "hurry" mode
+; (seems that they'll ignore the fact that the door is red too!)
+5AF4: DD 36 08 06 ld   (ix+spawning_door_08),$06
+5AF8: F6 01       or   $01		; spawn enemy
 5AFA: C1          pop  bc
 5AFB: C9          ret
-5AFC: 3A 31 82    ld   a,(timer_16bit_8231)
+
+5AFC: 3A 31 82    ld   a,(level_timer_16bit_8231)
 5AFF: E6 FF       and  $FF
 5B01: FE FF       cp   $FF
 5B03: 20 11       jr   nz,$5B16
@@ -12853,7 +12905,7 @@ spawn_enemy_5A86:
 5B30: 10 F8       djnz $5B2A
 5B32: C9          ret
 5B33: DD 36 08 FF ld   (ix+$08),$FF
-5B37: 3A 21 85    ld   a,($8521)
+5B37: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5B3A: 47          ld   b,a
 5B3B: FE 1F       cp   $1F
 5B3D: 38 02       jr   c,$5B41
@@ -12928,7 +12980,7 @@ spawn_enemy_5A86:
 5BBD: DD 36 1C 0B ld   (ix+$1c),$0B
 5BC1: DD 36 1A E7 ld   (ix+$1a),$E7
 5BC5: C9          ret
-5BC6: 3A 21 85    ld   a,($8521)
+5BC6: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5BC9: FE 14       cp   $14
 5BCB: 20 10       jr   nz,$5BDD
 5BCD: 3A 1A 85    ld   a,(player_structure_851A)
@@ -12952,7 +13004,7 @@ spawn_enemy_5A86:
 5C01: D8          ret  c
 5C02: DD 36 1A C2 ld   (ix+$1a),$C2
 5C06: C9          ret
-5C07: 3A 21 85    ld   a,($8521)
+5C07: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5C0A: FE 12       cp   $12
 5C0C: 20 10       jr   nz,$5C1E
 5C0E: 3A 1A 85    ld   a,(player_structure_851A)
@@ -12975,23 +13027,25 @@ spawn_enemy_5A86:
 5C3E: D8          ret  c
 5C3F: DD 36 1A D8 ld   (ix+$1a),$D8
 5C43: C9          ret
+
 5C44: 3A 2D 80    ld   a,($802D)
 5C47: 87          add  a,a
 5C48: 87          add  a,a
 5C49: 87          add  a,a
 5C4A: 87          add  a,a
-5C4B: 87          add  a,a
+5C4B: 87          add  a,a		; times 32
 5C4C: C6 38       add  a,$38
 5C4E: DD 77 1A    ld   (ix+$1a),a
 5C51: C9          ret
+
 5C52: DD 36 1C 03 ld   (ix+$1c),$03
 5C56: DD 36 1E 01 ld   (ix+$1e),$01
 5C5A: DD 36 1A 78 ld   (ix+$1a),$78
-5C5E: DD 7E 07    ld   a,(ix+$07)
-5C61: FE 14       cp   $14
+5C5E: DD 7E 07    ld   a,(ix+current_floor_07)
+5C61: FE 14       cp   $14		; 20th floor
 5C63: 28 4A       jr   z,$5CAF
 5C65: D0          ret  nc
-5C66: FE 12       cp   $12
+5C66: FE 12       cp   $12		; 18th floor
 5C68: CA 00 5D    jp   z,$5D00
 5C6B: D2 D2 5C    jp   nc,$5CD2
 5C6E: B7          or   a
@@ -13054,7 +13108,7 @@ table_5C8D:
 5CC9: DD 36 1A E7 ld   (ix+$1a),$E7
 5CCD: DD 36 1C 0B ld   (ix+$1c),$0B
 5CD1: C9          ret
-5CD2: 3A 21 85    ld   a,($8521)
+5CD2: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 5CD5: FE 12       cp   $12
 5CD7: 20 10       jr   nz,$5CE9
 5CD9: 3A 1A 85    ld   a,(player_structure_851A)
@@ -13109,13 +13163,14 @@ table_5C8D:
 5D4E: E6 0F       and  $0F
 5D50: C6 40       add  a,$40
 5D52: 47          ld   b,a
-5D53: DD 7E 07    ld   a,(ix+$07)
+5D53: DD 7E 07    ld   a,(ix+current_floor_07)
 5D56: B7          or   a
 5D57: 78          ld   a,b
 5D58: F2 5D 5D    jp   p,$5D5D
 5D5B: ED 44       neg
 5D5D: DD 77 1A    ld   (ix+$1a),a
 5D60: C9          ret
+
 5D61: CD 8E 5D    call $5D8E
 5D64: 3E 0A       ld   a,$0A
 5D66: 32 0E 85    ld   ($850E),a
@@ -13133,12 +13188,14 @@ table_5C8D:
 5D88: 36 00       ld   (hl),$00
 5D8A: CD 2E 61    call $612E
 5D8D: C9          ret
+
 5D8E: CD 95 5D    call $5D95
 5D91: CD 29 5F    call $5F29
 5D94: C9          ret
+
 5D95: DD 21 D5 83 ld   ix,$83D5
 5D99: FD 21 7D 83 ld   iy,elevator_array_837D
-5D9D: 21 81 80    ld   hl,$8081
+5D9D: 21 81 80    ld   hl,elevator_directions_array_8081
 5DA0: 22 11 85    ld   ($8511),hl
 5DA3: AF          xor  a
 5DA4: 32 0E 85    ld   ($850E),a
@@ -13163,6 +13220,7 @@ table_5C8D:
 5DD4: 32 9E 84    ld   ($849E),a
 5DD7: 32 B3 84    ld   ($84B3),a
 5DDA: C9          ret
+
 5DDB: 2A 11 85    ld   hl,($8511)
 5DDE: 23          inc  hl
 5DDF: 7E          ld   a,(hl)
@@ -13240,6 +13298,7 @@ table_5C8D:
 5E72: 23          inc  hl
 5E73: 36 00       ld   (hl),$00
 5E75: C9          ret
+
 5E76: 2A 2A 80    ld   hl,($802A)
 5E79: 3A 0E 85    ld   a,($850E)
 5E7C: B7          or   a
@@ -13345,6 +13404,7 @@ table_5C8D:
 5F31: 21 13 85    ld   hl,elevator_scroll_array_8513
 5F34: 11 15 00    ld   de,$0015
 5F37: 06 07       ld   b,$07
+; loop on elevators
 5F39: DD 7E 0F    ld   a,(ix+$0f)
 5F3C: 81          add  a,c
 5F3D: 77          ld   (hl),a
@@ -13352,6 +13412,7 @@ table_5C8D:
 5F3F: DD 19       add  ix,de
 5F41: 10 F6       djnz $5F39
 5F43: C9          ret
+
 5F44: CD 96 5F    call $5F96
 5F47: CD DF 5F    call $5FDF
 5F4A: DD 66 01    ld   h,(ix+character_x_right_01)
@@ -13404,26 +13465,26 @@ table_5C8D:
 5FB5: EB          ex   de,hl
 5FB6: AF          xor  a
 5FB7: ED 52       sbc  hl,de
-5FB9: DD 7E 09    ld   a,(ix+$09)
+5FB9: DD 7E 09    ld   a,(ix+enemy_state_09)
 5FBC: 32 0C 85    ld   ($850C),a
 5FBF: 7D          ld   a,l
-5FC0: DD 86 08    add  a,(ix+$08)
+5FC0: DD 86 08    add  a,(ix+associated_elevator_08)
 5FC3: DD 96 0C    sub  (ix+$0c)
-5FC6: DD 77 08    ld   (ix+$08),a
+5FC6: DD 77 08    ld   (ix+associated_elevator_08),a
 5FC9: FA D6 5F    jp   m,$5FD6
 5FCC: D6 08       sub  $08
 5FCE: D8          ret  c
-5FCF: DD 77 08    ld   (ix+$08),a
-5FD2: DD 34 09    inc  (ix+$09)
+5FCF: DD 77 08    ld   (ix+associated_elevator_08),a
+5FD2: DD 34 09    inc  (ix+enemy_state_09)
 5FD5: C9          ret
 5FD6: C6 08       add  a,$08
-5FD8: DD 77 08    ld   (ix+$08),a
-5FDB: DD 35 09    dec  (ix+$09)
+5FD8: DD 77 08    ld   (ix+associated_elevator_08),a
+5FDB: DD 35 09    dec  (ix+enemy_state_09)
 5FDE: C9          ret
 5FDF: 2A 2A 80    ld   hl,($802A)
 5FE2: 44          ld   b,h
 5FE3: 4D          ld   c,l
-5FE4: DD 56 07    ld   d,(ix+$07)
+5FE4: DD 56 07    ld   d,(ix+current_floor_07)
 5FE7: DD 5E 06    ld   e,(ix+character_situation_06)
 5FEA: AF          xor  a
 5FEB: ED 52       sbc  hl,de
@@ -13774,6 +13835,7 @@ feed_elevator_columns_6177:
 620C: DD 7E 06    ld   a,(ix+character_situation_06)
 620F: 3D          dec  a
 6210: CA 22 62    jp   z,$6222
+; not in elevator
 6213: 3D          dec  a
 6214: CA 2B 62    jp   z,$622B
 6217: DD 46 07    ld   b,(ix+$07)
@@ -14270,6 +14332,7 @@ unused_6362:
 	dc.b	00      
 	dc.b	00      
 
+l_64D2:
 64D2: 3A 79 87    ld   a,($8779)
 64D5: FE FF       cp   $FF
 64D7: 28 26       jr   z,$64FF
@@ -15567,7 +15630,7 @@ table_73F9:
 7414: 3A AB 80    ld   a,($80AB)
 7417: B7          or   a
 7418: C8          ret  z
-7419: 3A D6 81    ld   a,($81D6)
+7419: 3A D6 81    ld   a,(pseudo_random_seed_81D6)
 741C: E6 07       and  $07
 741E: 4F          ld   c,a
 741F: 06 00       ld   b,$00
@@ -15834,20 +15897,20 @@ mainloop_75A5:
 75B5: C0          ret  nz
 75B6: DD 21 1A 85 ld   ix,player_structure_851A
 75BA: CD E8 75    call $75E8
-75BD: DD 7E 09    ld   a,(ix+$09)
+75BD: DD 7E 09    ld   a,(ix+enemy_state_09)
 75C0: FE FF       cp   $FF
 75C2: CA FE 75    jp   z,$75FE
 75C5: FE 05       cp   $05
 75C7: D2 A5 75    jp   nc,mainloop_75A5
 75CA: DD 7E 06    ld   a,(ix+character_situation_06)
-75CD: FE 02       cp   $02
+75CD: FE 02       cp   CS_ABOVE_ELEVATOR_02
 75CF: D2 A5 75    jp   nc,mainloop_75A5
 75DF: DD 7E 07    ld   a,(ix+current_floor_07)		; character current floor ix=851A
 75E2: B7          or   a
 75E3: 20 C0       jr   nz,mainloop_75A5
 75E5: C3 4E 76    jp   ground_floor_reached_764E	; ground, now check documents
 
-75E8: DD 7E 09    ld   a,(ix+$09)
+75E8: DD 7E 09    ld   a,(ix+enemy_state_09)
 75EB: FE 05       cp   $05
 75ED: D8          ret  c
 75EE: FE 07       cp   $07
@@ -15890,7 +15953,7 @@ mainloop_75A5:
 762C: 20 FB       jr   nz,$7629
 762E: 3E C0       ld   a,$C0
 7630: 32 0B D5    ld   (sound_latch_D50B),a
-7633: 3A 21 85    ld   a,($8521)
+7633: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 7636: FE 05       cp   $05
 7638: D2 3D 76    jp   nc,$763D
 763B: 3E 05       ld   a,$05
