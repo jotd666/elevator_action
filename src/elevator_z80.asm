@@ -157,10 +157,11 @@ elevator_irq_0038:
 0067: 83          add  a,e
 0068: 5F          ld   e,a
 0069: 16 00       ld   d,$00
-006B: 21 70 00    ld   hl,$0070
+006B: 21 70 00    ld   hl,jump_table_0070
 006E: 19          add  hl,de
 006F: E9          jp   (hl)
 
+jump_table_0070:
 0070: C3 88 00    jp   $0088
 0073: C3 B3 00    jp   $00B3
 0076: C3 D3 00    jp   $00D3
@@ -2743,7 +2744,7 @@ handle_enemies_12A2:
 1323: DD 77 01    ld   (ix+character_x_right_01),a
 1326: CD 86 14    call $1486
 1329: DD 7E 02    ld   a,(ix+$02)
-132C: 21 40 13    ld   hl,$1340
+132C: 21 40 13    ld   hl,table_1340
 132F: FE 10       cp   $10
 1331: D2 3C 13    jp   nc,$133C
 1334: FE 0B       cp   $0B
@@ -2751,22 +2752,25 @@ handle_enemies_12A2:
 1339: 21 48 13    ld   hl,$1348
 133C: CD C3 14    call $14C3
 133F: C9          ret
-1340: 9D          sbc  a,l
-1341: 9D          sbc  a,l
-1342: 00          nop
-1343: 00          nop
-1344: 00          nop
-1345: 00          nop
-1346: 00          nop
-1347: 00          nop
-1348: 9F          sbc  a,a
-1349: 9F          sbc  a,a
-134A: 00          nop
-134B: 00          nop
-134C: 00          nop
-134D: 00          nop
-134E: 00          nop
-134F: 00          nop
+
+table_1340:
+	dc.b	9D
+	dc.b	9D
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	9F
+	dc.b	9F
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	dc.b	00
+	
 1350: DD 7E 04    ld   a,(ix+$04)
 1353: B7          or   a
 1354: 20 0A       jr   nz,$1360
@@ -2845,7 +2849,7 @@ handle_enemies_12A2:
 13DA: 87          add  a,a
 13DB: 4F          ld   c,a
 13DC: 06 00       ld   b,$00
-13DE: 21 16 14    ld   hl,$1416
+13DE: 21 16 14    ld   hl,table_1416
 13E1: 09          add  hl,bc
 13E2: CD C3 14    call $14C3
 13E5: DD 7E 06    ld   a,(ix+character_situation_06)
@@ -2874,70 +2878,72 @@ handle_enemies_12A2:
 1413: 86          add  a,(hl)
 1414: 77          ld   (hl),a
 1415: C9          ret
-1416: 57          ld   d,a
-1417: 57          ld   d,a
-1418: 58          ld   e,b
-1419: 58          ld   e,b
-141A: 59          ld   e,c
-141B: 58          ld   e,b
-141C: 58          ld   e,b
-141D: 58          ld   e,b
-141E: 40          ld   b,b
-141F: 40          ld   b,b
-1420: 40          ld   b,b
-1421: 40          ld   b,b
-1422: 40          ld   b,b
-1423: 40          ld   b,b
-1424: 40          ld   b,b
-1425: 40          ld   b,b
-1426: 9E          sbc  a,(hl)
-1427: 9E          sbc  a,(hl)
-1428: 82          add  a,d
-1429: 82          add  a,d
-142A: 83          add  a,e
-142B: 82          add  a,d
-142C: 82          add  a,d
-142D: 82          add  a,d
-142E: 80          add  a,b
-142F: 80          add  a,b
-1430: 82          add  a,d
-1431: 82          add  a,d
-1432: 83          add  a,e
-1433: 82          add  a,d
-1434: 82          add  a,d
-1435: 82          add  a,d
-1436: 57          ld   d,a
-1437: 57          ld   d,a
-1438: 58          ld   e,b
-1439: 58          ld   e,b
-143A: 58          ld   e,b
-143B: 5A          ld   e,d
-143C: 58          ld   e,b
-143D: 58          ld   e,b
-143E: 40          ld   b,b
-143F: 40          ld   b,b
-1440: 40          ld   b,b
-1441: 40          ld   b,b
-1442: 40          ld   b,b
-1443: 40          ld   b,b
-1444: 40          ld   b,b
-1445: 40          ld   b,b
-1446: 9E          sbc  a,(hl)
-1447: 9E          sbc  a,(hl)
-1448: 82          add  a,d
-1449: 82          add  a,d
-144A: 82          add  a,d
-144B: 84          add  a,h
-144C: 82          add  a,d
-144D: 82          add  a,d
-144E: 80          add  a,b
-144F: 80          add  a,b
-1450: 82          add  a,d
-1451: 82          add  a,d
-1452: 82          add  a,d
-1453: 84          add  a,h
-1454: 82          add  a,d
-1455: 82          add  a,d
+
+table_1416:
+	dc.b	57
+	dc.b	57
+	dc.b	58
+	dc.b	58
+	dc.b	59
+	dc.b	58
+	dc.b	58
+	dc.b	58
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	9E
+	dc.b	9E
+	dc.b	82
+	dc.b	82
+	dc.b	83
+	dc.b	82
+	dc.b	82
+	dc.b	82
+	dc.b	80
+	dc.b	80
+	dc.b	82
+	dc.b	82
+	dc.b	83
+	dc.b	82
+	dc.b	82
+	dc.b	82
+	dc.b	57
+	dc.b	57
+	dc.b	58
+	dc.b	58
+	dc.b	58
+	dc.b	5A
+	dc.b	58
+	dc.b	58
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	40
+	dc.b	9E
+	dc.b	9E
+	dc.b	82
+	dc.b	82
+	dc.b	82
+	dc.b	84
+	dc.b	82
+	dc.b	82
+	dc.b	80
+	dc.b	80
+	dc.b	82
+	dc.b	82
+	dc.b	82
+	dc.b	84
+	dc.b	82
+	dc.b	82
 1456: DD 7E 05    ld   a,(ix+character_delta_x_05)
 1459: CB 57       bit  2,a
 145B: 06 2F       ld   b,$2F
@@ -3369,6 +3375,7 @@ table_16E3
 	dc.b	0C      
 	dc.b	FA 0B 5B
 	dc.b	20 2B   
+table_171E:
 	dc.b	84      
 	dc.b	6F      
 	dc.b	7F      
@@ -6723,7 +6730,7 @@ init_level_skill_params_2A2E:
 2AA9: C9          ret
 
 2AAA: DD 21 7D 83 ld   ix,elevator_array_837D
-2AAE: 11 D7 2A    ld   de,$2AD7
+2AAE: 11 D7 2A    ld   de,table_2AD7
 2AB1: 06 00       ld   b,$00
 2AB3: 1A          ld   a,(de)
 2AB4: DD 77 03    ld   (ix+min_floor_03),a
@@ -6745,22 +6752,24 @@ init_level_skill_params_2A2E:
 2AD1: FE 0B       cp   $0B
 2AD3: C2 B3 2A    jp   nz,$2AB3
 2AD6: C9          ret
-2AD7: 07          rlca
-2AD8: 0B          dec  bc
-2AD9: 01 06 01    ld   bc,$0106
-2ADC: 07          rlca
-2ADD: 01 05 01    ld   bc,$0105
-2AE0: 07          rlca
-2AE1: 01 07 07    ld   bc,$0707
-2AE4: 0D          dec  c
-2AE5: 0D          dec  c
-2AE6: 0F          rrca
-2AE7: 0A          ld   a,(bc)
-2AE8: 0C          inc  c
-2AE9: 0F          rrca
-2AEA: 11 13 1F    ld   de,$1F13
+
+table_2AD7:
+	dc.b	07      
+	dc.b	0B      
+	dc.b	01 06 01
+	dc.b	07      
+	dc.b	01 05 01
+	dc.b	07      
+	dc.b	01 07 07
+	dc.b	0D      
+	dc.b	0D      
+	dc.b	0F      
+	dc.b	0A      
+	dc.b	0C      
+	dc.b	0F      
+	dc.b	11 13 1F
 2AED: 21 81 83    ld   hl,$8381
-2AF0: 11 05 2B    ld   de,$2B05
+2AF0: 11 05 2B    ld   de,table_2B05
 2AF3: 06 0B       ld   b,$0B
 2AF5: C5          push bc
 2AF6: 1A          ld   a,(de)
@@ -6774,13 +6783,15 @@ init_level_skill_params_2A2E:
 2B01: C1          pop  bc
 2B02: 10 F1       djnz $2AF5
 2B04: C9          ret
-2B05: 11 31 51    ld   de,$5131
-2B08: 71          ld   (hl),c
-2B09: 91          sub  c
-2B0A: B1          or   c
-2B0B: D1          pop  de
-2B0C: 11 71 71    ld   de,$7171
-2B0F: 71          ld   (hl),c
+table_2B05:
+	dc.b	11 31 51
+	dc.b	71      
+	dc.b	91      
+	dc.b	B1      
+	dc.b	D1      
+	dc.b	11 71 71
+	dc.b	71  
+    
 2B10: 21 7D 83    ld   hl,elevator_array_837D
 2B13: 06 0B       ld   b,$0B
 2B15: 11 08 00    ld   de,$0008
@@ -7412,11 +7423,11 @@ one_or_two_players_button_string_2EFD:
 2F98: CD AA 2F    call $2FAA
 2F9B: C9          ret
 
-initial_player_structure_2F9C
-	dc.b	67      | x
-	dc.b	6F      | fine x
-	dc.b	1C   
-	dc.b	06 		| y offset
+initial_player_structure_2F9C:
+	dc.b	67      ; x
+	dc.b	6F      ; fine x
+	dc.b	1C      ;
+	dc.b	06 		; y offset
 	dc.b	02
 	dc.b	00   
 	dc.b	00   
@@ -7424,8 +7435,8 @@ initial_player_structure_2F9C
 	dc.b	00   
 	dc.b	00   
 	dc.b	00   
+	dc.b	01 00 00
 	
-2FA7: 01 00 00    ld   bc,$0000
 2FAA: DD 21 1A 85 ld   ix,player_structure_851A
 2FAE: DD 7E 07    ld   a,(ix+$07)
 2FB1: FE 1F       cp   $1F
@@ -7806,6 +7817,8 @@ shot_lamp_collision_31BA:
 3287: A7          and  a
 3288: DD E1       pop  ix
 328A: C8          ret  z
+	; ouch! this is going to make game much harder! TODO check this
+	; possibly a protection check
 328B: 3A D6 81    ld   a,(pseudo_random_seed_81D6)
 328E: 32 32 82    ld   (level_timer_16bit_msb_8232),a
 3291: C9          ret
@@ -7942,10 +7955,10 @@ bootup_338f:
 3399: 77          ld   (hl),a
 339A: 23          inc  hl
 339B: CB 5C       bit  3,h
-339D: 28 FA       jr   z,$3399		; until character_data_9000
+339D: 28 FA       jr   z,$3399		; until 8800
 339F: 32 EA 82    ld   (coin_counter_lock_82EA),a
 33A2: CD 17 34    call $3417
-33A5: 21 1E 17    ld   hl,$171E
+33A5: 21 1E 17    ld   hl,table_171E
 33A8: 11 C9 81    ld   de,$81C9
 33AB: 01 05 00    ld   bc,$0005
 33AE: ED B0       ldir
@@ -10190,7 +10203,7 @@ player_elevator_control_upper_stories_45BF:
 45C4: D8          ret  c		; can't control elevators from 7 to ground from here
 player_elevator_control_45C5:	; called from somewhere else
 45C5: DD 7E 0D    ld   a,(ix+move_direction_0d)
-45C8: 47          ld   b,a0
+45C8: 47          ld   b,a
 45C9: E6 F3       and  $F3		; cancel down movement: no crouch in elevator
 45CB: DD 77 0D    ld   (ix+move_direction_0d),a
 45CE: CB 58       bit  3,b
@@ -12277,7 +12290,7 @@ table_563F:
 56AC: 38 05       jr   c,$56B3
 56AE: FE 10       cp   $10
 56B0: DA 02 57    jp   c,$5702
-56B3: 21 7B 57    ld   hl,$577B
+56B3: 21 7B 57    ld   hl,table_577B
 56B6: C3 02 57    jp   $5702
 56B9: C5          push bc
 56BA: D5          push de
@@ -12384,21 +12397,21 @@ award_end_of_level_bonus_56F9:
 5775: 3E 3D       ld   a,$3D
 5777: 32 0B D5    ld   (sound_latch_D50B),a
 577A: C9          ret
-577B: 00          nop
-577C: 01 00 50    ld   bc,$5000
-577F: 01 00 50    ld   bc,$5000
-5782: 01 00 00    ld   bc,$0000
-5785: 02          ld   (bc),a
-5786: 00          nop
-5787: 00          nop
-5788: 03          inc  bc
-5789: 00          nop
-578A: 00          nop
-578B: 03          inc  bc
-578C: 00          nop
-578D: 00          nop
-578E: 05          dec  b
-578F: 00          nop
+table_577B:     
+	dc.b	00 01 00 50
+	dc.b	01 00 50
+	dc.b	01 00 00
+	dc.b	02      
+	dc.b	00      
+	dc.b	00      
+	dc.b	03      
+	dc.b	00      
+	dc.b	00      
+	dc.b	03      
+	dc.b	00      
+	dc.b	00      
+	dc.b	05      
+	dc.b	00      
 thousand_points_5790:
 	dc.b	00 10 00
 	

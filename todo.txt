@@ -31,4 +31,4 @@ identify all counds: most done
   - theme music
   - end car noises
   
-figure 8002 and 800E
+figure 8002 and 800E pointers? values?
