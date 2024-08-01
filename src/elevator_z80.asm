@@ -85,16 +85,19 @@ GS_INSERT_COIN_09 = 9
 
 0000: C3 8F 33    jp   bootup_338f
 
+; doesn't seem reached
 0003: 21 49 86    ld   hl,$8649
 0006: 7E          ld   a,(hl)
 0007: C8          ret  z
 
+rst_08:
 0008: 2F          cpl
 0009: 32 49 86    ld   ($8649),a
 000C: 3E 9C       ld   a,$9C
 000E: E7          rst  $20
 000F: C9          ret
 
+rst_10:
 0010: 07          rlca
 0011: 21 47 86    ld   hl,$8647
 0014: 7E          ld   a,(hl)
@@ -106,7 +109,7 @@ GS_INSERT_COIN_09 = 9
 001E: C9          ret
 
 
-
+rst_20:
 0020: E5          push hl
 0021: CD CF 77    call mcu_comm_routine_77CF
 0024: D7          rst  $10
@@ -4442,27 +4445,34 @@ pseudo_random_1E06:
 1E11: 22 D6 81    ld   (pseudo_random_seed_81D6),hl
 1E14: C9          ret
 
-; seems to be never called. Only called from 1E1D through $1E2A
+; seems to be never called. Only called from 1E1D through ramdon_1E2A
 1E15: E5          push hl
 1E16: CD 06 1E    call pseudo_random_1E06
 1E19: 26 A0       ld   h,$A0		; standard params for random
 1E1B: 2E 06       ld   l,$06		; not called/used
 ; now the code is used
+some_arith_op_1E1D:
 1E1D: BC          cp   h
-1E1E: DA 22 1E    jp   c,$1E22
-1E21: 94          sub  h
-1E22: CB 0C       rrc  h
-1E24: 2D          dec  l
-1E25: C2 1D 1E    jp   nz,$1E1D
+1E1E: DA 22 1E    jp   c,$1E22	; jumps if h > a
+1E21: 94          sub  h		; a = a - h
+1E22: CB 0C       rrc  h		; h = h / 2
+1E24: 2D          dec  l		; do it l times
+1E25: C2 1D 1E    jp   nz,some_arith_op_1E1D
 1E28: E1          pop  hl
 1E29: C9          ret
 
+; random dollowed by some kind of division to get a small
+; number in A
+ramdon_1E2A:
 1E2A: E5          push hl
 1E2B: CD 06 1E    call pseudo_random_1E06
-1E2E: 26 C0       ld   h,$C0		; harder params for random
+1E2E: 26 C0       ld   h,$C0
 1E30: 2E 07       ld   l,$07
-1E32: C3 1D 1E    jp   $1E1D
+1E32: C3 1D 1E    jp   some_arith_op_1E1D
 
+; random dollowed by some kind of division to get a small
+; number in A
+ramdon_1E35:
 1E35: E5          push hl
 1E36: CD 06 1E    call pseudo_random_1E06
 1E39: 26 E0       ld   h,$E0
@@ -6684,7 +6694,7 @@ init_level_skill_params_2A2E:
 2A7F: 19          add  hl,de
 2A80: 10 FB       djnz $2A7D
 2A82: 06 02       ld   b,$02
-2A84: CD 35 1E    call $1E35
+2A84: CD 35 1E    call ramdon_1E35
 2A87: 26 00       ld   h,$00
 2A89: 6F          ld   l,a
 2A8A: 29          add  hl,hl
@@ -7273,51 +7283,51 @@ return_a_times_48_in_hl_2D84:
 
 ; "PUSH"
 push_string_2EE0:
-2EE0: 1A          
-2EE1: 22 2D 2B    
-2EE4: FF          
+	dc.b	1A          
+	dc.b	22 2D 2B    
+	dc.b	FF          
 
 ; "ONLY 1 PLAYER BUTTON"
 only_1_player_button_string_2EE5:
-2EE5: 00      
-2EE6: 00      
-2EE7: 2F      
-2EE8: 25      
-2EE9: 1B      
-2EEA: 1D      
-2EEB: 00      
-2EEC: 11 00 1A
-2EEF: 1B      
-2EF0: 1C      
-2EF1: 1D      
-2EF2: 1E 1F   
-2EF4: 00      
-2EF5: 29      
-2EF6: 22 31 31
-2EF9: 2F      
-2EFA: 25      
-2EFB: 00      
-2EFC: FF      
+	dc.b	00      
+	dc.b	00      
+	dc.b	2F      
+	dc.b	25      
+	dc.b	1B      
+	dc.b	1D      
+	dc.b	00      
+	dc.b	11 00 1A
+	dc.b	1B      
+	dc.b	1C      
+	dc.b	1D      
+	dc.b	1E 1F   
+	dc.b	00      
+	dc.b	29      
+	dc.b	22 31 31
+	dc.b	2F      
+	dc.b	25      
+	dc.b	00      
+	dc.b	FF      
 
 ; "1 - OR 2 PLAYERS BUTTON"
 one_or_two_players_button_string_2EFD:
-2EFD: 11 2A 00
-2F00: 2F      
-2F01: 1F      
-2F02: 00      
-2F03: 00      
-2F04: 12      
-2F05: 2A 1A 1B
-2F08: 1C      
-2F09: 1D      
-2F0A: 1E 1F   
-2F0C: 00      
-2F0D: 00      
-2F0E: 29      
-2F0F: 22 31 31
-2F12: 2F      
-2F13: 25      
-2F14: FF      
+	dc.b	11 2A 00
+	dc.b	2F      
+	dc.b	1F      
+	dc.b	00      
+	dc.b	00      
+	dc.b	12      
+	dc.b	2A 1A 1B
+	dc.b	1C      
+	dc.b	1D      
+	dc.b	1E 1F   
+	dc.b	00      
+	dc.b	00      
+	dc.b	29      
+	dc.b	22 31 31
+	dc.b	2F      
+	dc.b	25      
+	dc.b	FF      
 
 
 2F15: AF          xor  a
@@ -9838,7 +9848,7 @@ table_42E2:
 433F: FE 03       cp   CS_FALLING_03
 4341: DA 4F 43    jp   c,$434F
 4344: CA 2B 3B    jp   z,$3B2B
-4347: FE 05       cp   $CS_IN_ROOM_05
+4347: FE 05       cp   CS_IN_ROOM_05
 4349: DA 64 3E    jp   c,$3E64
 434C: C3 3E 3C    jp   $3C3E
 434F: CD 59 43    call $4359
@@ -12747,7 +12757,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5A10: 47          ld   b,a
 5A11: DD 21 3A 85 ld   ix,enemy_1_853A
 ; loop on enemies
-5A15: CD 2A 1E    call $1E2A
+5A15: CD 2A 1E    call ramdon_1E2A
 5A18: 5F          ld   e,a
 5A19: 0E 01       ld   c,$01
 5A1B: CD 4C 5A    call $5A4C
@@ -12768,7 +12778,7 @@ try_to_spawn_an_enemy_5A26:
 5A37: 21 7C 83    ld   hl,probablility_to_spawn_an_enemy_837C
 5A3A: BE          cp   (hl)
 5A3B: 38 04       jr   c,$5A41
-5A3D: CD 2A 1E    call $1E2A
+5A3D: CD 2A 1E    call ramdon_1E2A
 5A40: 5F          ld   e,a
 5A41: CD 4C 5A    call $5A4C
 5A44: 11 20 00    ld   de,$0020
