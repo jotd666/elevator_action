@@ -2293,7 +2293,7 @@ set_elevators_neutral_controls_0F99:
 0FB1: 21 A5 80    ld   hl,$80A5
 0FB4: 3A 4F 82    ld   a,(copy_of_dip_switches_2_824F)
 0FB7: CD D2 0F    call $0FD2
-0FBA: 21 A7 80    ld   hl,$80A7
+0FBA: 21 A7 80    ld   hl,coin_slot_2_dsw_copy_80A7
 0FBD: 3A 4F 82    ld   a,(copy_of_dip_switches_2_824F)
 0FC0: 0F          rrca
 0FC1: 0F          rrca
@@ -2336,7 +2336,7 @@ set_elevators_neutral_controls_0F99:
 1005: CB 7F       bit  7,a
 1007: C0          ret  nz
 1008: 3A A4 80    ld   a,($80A4)
-100B: 21 A7 80    ld   hl,$80A7
+100B: 21 A7 80    ld   hl,coin_slot_2_dsw_copy_80A7
 100E: CD 19 10    call $1019
 1011: 78          ld   a,b
 1012: 32 A4 80    ld   ($80A4),a
@@ -6567,7 +6567,7 @@ table_280E:
 29B3: 21 22 2A    ld   hl,right_coin_shot_string_2A22
 29B6: 11 89 C6    ld   de,$C689
 29B9: CD F9 29    call copy_string_to_screen_29F9
-29BC: 2A A7 80    ld   hl,($80A7)
+29BC: 2A A7 80    ld   hl,(coin_slot_2_dsw_copy_80A7)
 29BF: 11 C8 C6    ld   de,$C6C8
 29C2: CD D0 29    call $29D0
 29C5: C9          ret
@@ -6962,7 +6962,7 @@ table_2B05:
 2C2C: C9          ret
 
 2C2D: DD 21 D5 83 ld   ix,$83D5
-2C31: 21 66 2C    ld   hl,$2C66
+2C31: 21 66 2C    ld   hl,table_2C66
 2C34: 06 00       ld   b,$00
 2C36: 7E          ld   a,(hl)
 2C37: DD 77 04    ld   (ix+$04),a
@@ -6992,37 +6992,39 @@ table_2B05:
 2C61: B8          cp   b
 2C62: C2 36 2C    jp   nz,$2C36
 2C65: C9          ret
-2C66: 6F          ld   l,a
-2C67: 02          ld   (bc),a
-2C68: 84          add  a,h
-2C69: 01 7F 01    ld   bc,handle_main_scrolling_017F
-2C6C: 64          ld   h,h
-2C6D: 00          nop
-2C6E: AF          xor  a
-2C6F: 01 64 00    ld   bc,$0064
-2C72: 4F          ld   c,a
-2C73: 01 64 00    ld   bc,$0064
-2C76: AF          xor  a
-2C77: 01 64 00    ld   bc,$0064
-2C7A: AF          xor  a
-2C7B: 01 64 00    ld   bc,$0064
-2C7E: CF          rst  $08
-2C7F: 02          ld   (bc),a
-2C80: 84          add  a,h
-2C81: 01 2F 03    ld   bc,$032F
-2C84: A4          and  h
-2C85: 02          ld   (bc),a
-2C86: 9F          sbc  a,a
-2C87: 02          ld   (bc),a
-2C88: 14          inc  d
-2C89: 02          ld   (bc),a
-2C8A: 8F          adc  a,a
-2C8B: 03          inc  bc
-2C8C: 04          inc  b
-2C8D: 03          inc  bc
-2C8E: 2F          cpl
-2C8F: 06 C4       ld   b,$C4
-2C91: 03          inc  bc
+table_2C66:
+	dc.b	6F      
+	dc.b	02      
+	dc.b	84      
+	dc.b	01 7F 01
+	dc.b	64      
+	dc.b	00      
+	dc.b	AF      
+	dc.b	01 64 00
+	dc.b	4F      
+	dc.b	01 64 00
+	dc.b	AF      
+	dc.b	01 64 00
+	dc.b	AF      
+	dc.b	01 64 00
+	dc.b	CF      
+	dc.b	02      
+	dc.b	84      
+	dc.b	01 2F 03
+	dc.b	A4      
+	dc.b	02      
+	dc.b	9F      
+	dc.b	02      
+	dc.b	14      
+	dc.b	02      
+	dc.b	8F      
+	dc.b	03      
+	dc.b	04      
+	dc.b	03      
+	dc.b	2F      
+	dc.b	06 C4   
+	dc.b	03      
+
 2C92: DD 21 D5 83 ld   ix,$83D5
 2C96: 06 0B       ld   b,$0B
 2C98: 2A 28 80    ld   hl,($8028)
@@ -14970,7 +14972,7 @@ table_67CA:
 6962: CB 3F       srl  a
 6964: 5F          ld   e,a
 6965: 16 00       ld   d,$00
-6967: 21 48 6A    ld   hl,table_6A48
+6967: 21 48 6A    ld   hl,jump_table_64A8
 696A: 19          add  hl,de
 696B: 5E          ld   e,(hl)
 696C: 23          inc  hl
@@ -15069,21 +15071,15 @@ table_67CA:
 6A44: DD 77 0E    ld   (ix+$0e),a
 6A47: C9          ret
 
-table_6A48:
-	dc.b	87   
-	dc.b	69   
-	dc.b	89   
-	dc.b	69   
-	dc.b	A8   
-	dc.b	69   
-	dc.b	BC   
-	dc.b	69   
-	dc.b	C1   
-	dc.b	69   
-	dc.b	C6 69
-	dc.b	CB 69
-	dc.b	D0   
-	dc.b	69   
+jump_table_64A8:
+	.word	$6987   
+	.word	$6989   
+	.word	$69A8   
+	.word	$69BC   
+	.word	$69C1   
+	.word	$69C6
+	.word	$69CB
+	.word	$69D0   
 
 6A58: E5          push hl
 6A59: D5          push de
