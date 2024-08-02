@@ -2427,6 +2427,7 @@ over_9_credits_104D:
 10AC: 32 A2 80    ld   (nb_credits_80A2),a
 10AF: C9          ret
 
+display_credit_info_10b0:
 10B0: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
 10B3: CB 57       bit  2,a
 10B5: 20 09       jr   nz,$10C0
@@ -2434,12 +2435,12 @@ over_9_credits_104D:
 10BA: C6 10       add  a,$10
 10BC: 32 BE C7    ld   ($C7BE),a
 10BF: C9          ret
-10C0: 21 CA 10    ld   hl,table_10CA
+10C0: 21 CA 10    ld   hl,free_play_string_10CA
 10C3: 11 B7 C7    ld   de,$C7B7
 10C6: CD F9 29    call copy_string_to_screen_29F9
 10C9: C9          ret
 
-table_10CA:
+free_play_string_10CA:
 	dc.b  27 1F 1E 1E 33 1A 1B 1C 1D 1E FF
 
 ; seems not reached
@@ -2492,7 +2493,7 @@ table_10CA:
 1129: CA 67 11    jp   z,$1167
 112C: 3D          dec  a
 112D: CA 5A 11    jp   z,$115A
-1130: 21 D3 7D    ld   hl,$7DD3
+1130: 21 D3 7D    ld   hl,recorded_inputs_7DD3
 1133: 22 3C 82    ld   ($823C),hl
 1136: 3E 05       ld   a,$05
 1138: 32 2C 80    ld   ($802C),a
@@ -2508,12 +2509,12 @@ table_10CA:
 1153: CD 65 2A    call $2A65
 1156: CD 9B 75    call start_next_level_759B
 1159: C9          ret
-115A: 21 D3 7B    ld   hl,$7BD3
+115A: 21 D3 7B    ld   hl,recorded_inputs_7BD3
 115D: 22 3C 82    ld   ($823C),hl
 1160: 3E 12       ld   a,$12
 1162: 32 2C 80    ld   ($802C),a
 1165: 18 D4       jr   $113B
-1167: 21 63 7A    ld   hl,$7A63
+1167: 21 63 7A    ld   hl,recorded_inputs_7A63
 116A: 22 3C 82    ld   ($823C),hl
 116D: 3E 1C       ld   a,$1C
 116F: 32 2C 80    ld   ($802C),a
@@ -2521,7 +2522,7 @@ table_10CA:
 1174: C9          ret
 1175: 3A 3B 82    ld   a,(game_in_play_flag_823B)
 1178: 3D          dec  a
-1179: 28 0F       jr   z,$118A
+1179: 28 0F       jr   z,$118A		; never called
 117B: 2A 3C 82    ld   hl,($823C)
 117E: 5E          ld   e,(hl)
 117F: 23          inc  hl
@@ -2530,6 +2531,9 @@ table_10CA:
 1182: 22 3C 82    ld   ($823C),hl
 1185: ED 53 D6 81 ld   (pseudo_random_seed_81D6),de
 1189: C9          ret
+; doesn't seem to be ever called
+; this is part of the record mode used to record demo sequences
+
 118A: 2A 3C 82    ld   hl,($823C)
 118D: ED 5B D6 81 ld   de,(pseudo_random_seed_81D6)
 1191: 73          ld   (hl),e
@@ -2596,12 +2600,12 @@ title_sequence_11F0:
 
 push_start_screen_11F9:
 11F9: CD B6 2E    call $2EB6
-11FC: CD B0 10    call $10B0
+11FC: CD B0 10    call display_credit_info_10b0
 11FF: C3 3E 12    jp   finish_irq_123E
 
 game_intro_1202:
 1202: CD 0B 50    call $500B
-1205: CD B0 10    call $10B0
+1205: CD B0 10    call display_credit_info_10b0
 1208: CD C6 57    call update_upper_status_bar_57C6
 120B: CD 01 58    call display_nb_lives_5801
 120E: C3 3E 12    jp   finish_irq_123E
@@ -2612,7 +2616,7 @@ game_running_1211:
 1217: CD 5C 61    call animate_elevators_615C
 121A: CD F0 15    call update_sprites_15F0
 121D: CD C6 57    call update_upper_status_bar_57C6
-1220: CD B0 10    call $10B0
+1220: CD B0 10    call display_credit_info_10b0
 1223: CD 01 58    call display_nb_lives_5801
 1226: C3 3E 12    jp   finish_irq_123E
 
@@ -2625,7 +2629,7 @@ next_life_122F:
 1232: C3 3E 12    jp   finish_irq_123E
 
 game_over_1235:
-1235: CD B0 10    call $10B0
+1235: CD B0 10    call display_credit_info_10b0
 1238: C3 3E 12    jp   finish_irq_123E
 
 insert_coin_screen_123B:
@@ -6541,7 +6545,7 @@ table_280E:
 2971: 20 F8       jr   nz,$296B
 2973: CD 39 58    call $5839
 2976: CD C6 57    call update_upper_status_bar_57C6
-2979: CD B0 10    call $10B0
+2979: CD B0 10    call display_credit_info_10b0
 297C: CD 8E 29    call $298E
 297F: 21 2C 01    ld   hl,$012C
 2982: 22 2F 82    ld   ($822F),hl
@@ -7232,7 +7236,7 @@ return_a_times_48_in_hl_2D84:
 2E43: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 2E46: CD 39 58    call $5839
 2E49: CD C6 57    call update_upper_status_bar_57C6
-2E4C: CD B0 10    call $10B0
+2E4C: CD B0 10    call display_credit_info_10b0
 2E4F: C9          ret
 
 2E50: CD 98 2E    call $2E98
@@ -7589,7 +7593,8 @@ update_enemies_3081:
 handle_player_controls_30CF:
 30CF: 3A 3B 82    ld   a,(game_in_play_flag_823B)
 30D2: B7          or   a
-30D3: C2 0C 31    jp   nz,$310C
+30D3: C2 0C 31    jp   nz,demo_or_input_log_310C
+; zero: game in play
 30D6: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
 30D9: 07          rlca
 30DA: 07          rlca
@@ -7628,15 +7633,19 @@ handle_player_controls_30CF:
 3108: 32 3A 82    ld   (shoot_gun_requested_823A),a
 310B: C9          ret
 
-; when does that happen??
+demo_or_input_log_310C:
 310C: 2A 3C 82    ld   hl,($823C)
 310F: 3D          dec  a
-3110: 28 0A       jr   z,$311C
+3110: 28 0A       jr   z,read_and_log_input_311C
 3112: 7E          ld   a,(hl)
 3113: 23          inc  hl
 3114: CB BC       res  7,h
 3116: 22 3C 82    ld   ($823C),hl
 3119: C3 EC 30    jp   $30EC
+	; this is not reachable, as the routine is only called if game in play
+	; so with D0==1 or D0==2 (demo)
+	; it is probably a leftover of input recording code
+read_and_log_input_311C:
 311C: 3A 08 D4    ld   a,(input_1_D408)
 311F: 77          ld   (hl),a
 3120: 23          inc  hl
@@ -10934,7 +10943,7 @@ switch_to_hurry_up_music_466E:
 4C2E: 30 17       jr   nc,$4C47
 4C30: 22 F2 82    ld   ($82F2),hl
 4C33: 21 F4 82    ld   hl,$82F4
-4C36: 3A F8 7F    ld   a,($7FF8)
+4C36: 3A F8 7F    ld   a,(table_7FF8)
 4C39: 00          nop
 4C3A: AE          xor  (hl)
 4C3B: 77          ld   (hl),a
@@ -12986,7 +12995,7 @@ special_enemy_cheat_20th_floor_5ADF:
 5B7F: 83          add  a,e
 5B80: 5F          ld   e,a
 5B81: 16 00       ld   d,$00
-5B83: 21 91 5B    ld   hl,$5B91
+5B83: 21 91 5B    ld   hl,table_5B93-2
 5B86: 19          add  hl,de
 5B87: 7E          ld   a,(hl)
 5B88: DD 77 1A    ld   (ix+$1a),a
@@ -12994,34 +13003,37 @@ special_enemy_cheat_20th_floor_5ADF:
 5B8D: C0          ret  nz
 5B8E: DD 36 1C 0B ld   (ix+$1c),$0B
 5B92: C9          ret
-5B93: 58          ld   e,b
-5B94: 98          sbc  a,b
-5B95: 58          ld   e,b
-5B96: 98          sbc  a,b
-5B97: 58          ld   e,b
-5B98: 98          sbc  a,b
-5B99: 58          ld   e,b
-5B9A: 98          sbc  a,b
-5B9B: 58          ld   e,b
-5B9C: 98          sbc  a,b
-5B9D: 58          ld   e,b
-5B9E: 98          sbc  a,b
-5B9F: 18 D8       jr   $5B79
-5BA1: 18 D8       jr   $5B7B
-5BA3: 18 D8       jr   $5B7D
-5BA5: 18 D8       jr   $5B7F
-5BA7: 78          ld   a,b
-5BA8: D8          ret  c
-5BA9: D8          ret  c
-5BAA: D8          ret  c
-5BAB: 18 18       jr   $5BC5
-5BAD: 18 18       jr   $5BC7
-5BAF: 78          ld   a,b
-5BB0: 78          ld   a,b
-5BB1: 78          ld   a,b
-5BB2: C2 DD 36    jp   nz,$36DD
-5BB5: 1A          ld   a,(de)
-5BB6: 78          ld   a,b
+
+table_5B93:
+	dc.b	58   
+	dc.b	98   
+	dc.b	58   
+	dc.b	98   
+	dc.b	58   
+	dc.b	98   
+	dc.b	58   
+	dc.b	98   
+	dc.b	58   
+	dc.b	98   
+	dc.b	58   
+	dc.b	98   
+	dc.b	18 D8
+	dc.b	18 D8
+	dc.b	18 D8
+	dc.b	18 D8
+	dc.b	78   
+	dc.b	D8   
+	dc.b	D8   
+	dc.b	D8   
+	dc.b	18 18
+	dc.b	18 18
+	dc.b	78   
+	dc.b	78   
+	dc.b	78   
+	dc.b	C2 
+	.align	2
+
+5BB3: DD 36 1A 78 ld   (ix+$1a),$78        
 5BB7: DD 7E 00    ld   a,(ix+character_x_00)
 5BBA: FE AC       cp   $AC
 5BBC: D8          ret  c
@@ -15087,7 +15099,7 @@ jump_table_64A8:
 6A5B: E6 0F       and  $0F
 6A5D: 5F          ld   e,a
 6A5E: 16 00       ld   d,$00
-6A60: 21 7D 6A    ld   hl,$6A7D
+6A60: 21 7D 6A    ld   hl,table_6A7D
 6A63: 19          add  hl,de
 6A64: 7E          ld   a,(hl)
 6A65: FE 00       cp   $00
@@ -15107,13 +15119,12 @@ jump_table_64A8:
 6A7B: E1          pop  hl
 6A7C: C9          ret
 
-6A83: 01 10 00    ld   bc,$0010
-6A86: 00          nop
-6A87: 01 10 10    ld   bc,$1010
-6A8A: 10 00       djnz $6A8C
-6A8C: 01 EB FD    ld   bc,$FDEB
-6A8F: 4E          ld   c,(hl)
-6A90: 01 06 00    ld   bc,$0006
+table_6A7D:
+	dc.b	00 00 00 00 00 00 01 10 00 00 01 10 10 10 00 01
+
+6A8D: EB          ex   de,hl                                          
+6A8E: FD 4E 01    ld   c,(iy+$01)                                     
+6A91: 06 00       ld   b,$00                                          
 6A93: FD CB 00 6E bit  5,(iy+$00)
 6A97: 28 02       jr   z,$6A9B
 6A99: 06 FF       ld   b,$FF
@@ -15367,7 +15378,7 @@ run_in_service_mode_70EB:
 71B0: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 71B3: CD 39 58    call $5839
 71B6: CD C6 57    call update_upper_status_bar_57C6
-71B9: CD B0 10    call $10B0
+71B9: CD B0 10    call display_credit_info_10b0
 71BC: CD F9 71    call $71F9
 71BF: FD E5       push iy
 71C1: DD E5       push ix
@@ -16109,7 +16120,7 @@ perform_all_in_game_tasks_76A2:
 770C: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 770F: CD 39 58    call $5839
 7712: CD C6 57    call update_upper_status_bar_57C6
-7715: CD B0 10    call $10B0
+7715: CD B0 10    call display_credit_info_10b0
 7718: 3A 45 86    ld   a,($8645)
 771B: B7          or   a
 771C: 20 04       jr   nz,$7722
@@ -16245,3 +16256,93 @@ mcu_comm_routine_77CF:
 77DF: F6 40       or   $40
 77E1: E7          rst  $20
 77E2: C9          ret
+
+table_7FF8:
+	dc.b	73 1E BD 19 3E E4 D1 C9
+
+recorded_inputs_7A63:
+	dc.b	05 AF FF FF FF FF FF FF FF FD FD FD FD FD FD FD 
+	dc.b	FD FF FF FF FE FF FF FF FF FF FF FF FF FB FB FB 
+	dc.b	FB FB FB FB FB FB FB FB FB FF FF FF FF FF FF FF 
+	dc.b	FF FF FF FF FF F7 F7 F7 FF FF FB FB FB FB FB FF 
+	dc.b	FF F7 F7 F7 FF FF FF EF EF EF FB FB FB FF FF FF 
+	dc.b	FF FF FF FF FF FF FF FF FF F7 F7 F7 F7 F7 F7 FF 
+	dc.b	FF FF FF FF FF FD FD FF FF FF FF FF EF EB EB FB 
+	dc.b	FB FB FB FB FF FF FF FF FF FF FF FF FD F5 F5 F5 
+	dc.b	F5 F5 F5 F5 F5 FF FF FF FF FF FF FE FE FE FE FE 
+	dc.b	DE DE DE FE FE FE FE FE FE FE FE FE FE FE FE FE 
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FF FD FD FF FF 
+	dc.b	FF FF FF FF FF FB FB FB FB FB EB EB FB FB FB FB 
+	dc.b	FB FB FB FB FB FB FB FB FB FB FB FB FB FB FF FF 
+	dc.b	F7 F7 F7 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 D5 D5 D5 
+	dc.b	F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 
+	dc.b	F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 F5 
+	dc.b	F5 FD FF FE FE FE FE FE FE FE FE FE FF FF FD FD 
+	dc.b	FD FD FD FD FE FE FE FE FE DE DE DE DE FE FE FE 
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE 
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 
+	dc.b	FF FF FF FF FF FB FB FB FB FB FB FB FB FB FB FB 
+recorded_inouts_7BD3:
+	dc.b	02 94 FF FF FF FF FF FF FF FF FF FE FE FE FE FE  
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE  
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE  
+	dc.b	FE FE FA FA FA FA FA FA FA FA FA FA FA FA FA FA  
+	dc.b	FA FA FA FA FA FA FA FA FA FA FA FA FE FF FF FF  
+	dc.b	FF FF FF FF FF FD FD FD FD FD FD FD FD FD FD FD  
+	dc.b	FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD  
+	dc.b	FD FD FD FD FD FD FD FD FE FF FF FF FB EB EB FB  
+	dc.b	EB EB FB FB FB FB FB FB FB FB FB FF FF FF FF FF  
+	dc.b	FF FF FF FF EB EB FB FB EB FB FB FB FF FF FF FF  
+	dc.b	FF FF FF F7 F7 F7 F7 F7 F7 FF FF FF FF FF FF FD  
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF  
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FB  
+	dc.b	FB FB FB FB FB FF FF FF FF FF FF FF FF F7 F7 F7  
+	dc.b	F7 F7 F7 F7 FF FF FF FF FF FB FB FB FB FB FB FB  
+	dc.b	FB FB FF FF FF FF FF FF FF F7 F7 FF FF FF FF FF  
+	dc.b	FF FF FF FF FF FF FF FF FB FB FB FB FB FB FB FF  
+	dc.b	FB FB FB FB FB FB FB FF FF FF FF FF FD FD FD FD  
+	dc.b	FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD  
+	dc.b	FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD  
+	dc.b	FD FD FD FD FD FE FF FF FF FF FF FF FF FF FF FF  
+	dc.b	FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD FD  
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FE FF FB FB FB  
+	dc.b	FB EB EB EB FB EB EB FB EB EB FB FB FB FB FB FB  
+	dc.b	FB FB FB FF F7 F7 F7 FF FF FF FE FE FE FE FE FF  
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF  
+	dc.b	FF FF FF FF FE FE FE FE FE FE FE FE FE FE FE FE  
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE FE  
+	dc.b	FE FE FE FE FE FE FE FE FE FE FE FE FE FF FF FF  
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF  
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF  
+	dc.b	FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF  
+recorded_inputs_7DD3:
+	dc.b	69 F9 BF BF BF BF BF BF BF BF BF BF BD BD BD BD
+	dc.b	BD BF BB BB BB BB BB BB BB BB BB BF BF BF BF BF
+	dc.b	BF BF BF BE BE BE BE BE BF BB B9 B9 B9 B9 B9 A9
+	dc.b	A9 B9 A9 B9 B9 B9 BD BF BF BF BF BF BF B7 B7 B7
+	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
+	dc.b	BF BF BF BF BF BF BE BE BE BE BE BF BF BF BB BB
+	dc.b	BB BB BB BB BB BB BB BB BB BB BA BE BE BE BE BE
+	dc.b	BE BE BE BE BE BE BE BE BE BE BE BE BD BD BF BF
+	dc.b	BF AB AB BB BB BB BF BF 9F 9F BF BF BF BF BF BF
+	dc.b	BF BE BE BE BE BE BE BE BE BE BE BE BE BE BE BE
+	dc.b	BE BE BE BE BE BE BE BE BE BE BE BE BE BD BF BF
+	dc.b	BF BF BF BF BF BF BF BF BF BE BE BE BE BE BE BE
+	dc.b	BF BF BF BD BD BD BD BD BD BD BD BD BD BD BF AB
+	dc.b	BB BB AB BB BB BB BB BB BB BB BB BB BF BF B7 B7
+	dc.b	B5 B5 B5 B5 B5 B5 B5 BF BF BB BB BB BB BB BB BB
+	dc.b	BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB BB
+	dc.b	BB BB BB BB BB BB BB BB BB BB BB BB BB BF BF BF
+	dc.b	BD BD BD BD BD BD BD BD BD 9D 9D BD BD BD BD BD
+	dc.b	BD BD BD BD BF BF BF BF 9F 9F 9F BF BF BF BE BE
+	dc.b	BE BE BE BE BF BF BF BD BD 9D BD BD BD BD BD BD
+	dc.b	BD BD BD BD BD BD BD BD BD BD BD BD BD BD BD BD
+	dc.b	9D 9D BD BD BD BF BF BE BE BE BE BE BE BE BE BE
+	dc.b	BE BE BE BE BE BE BE BE BE BF BF BF BF BF BF BF
+	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
+	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
+	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
+	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
+ 

@@ -32,3 +32,9 @@ identify all counds: most done
   - end car noises
   
 figure 8002 and 800E pointers? values?
+dig out problematic*.py script with d3/d4/a1, d5/d6/a0
+check bootleg 34e4 bankswitch
+debug l_6b7e
+reverse: compute_d1w_from_d0b_68d6 looks like multiplication, check inputs!!
+confirm: 6b8a useless read (bogus) into d2 which isn't used
+red doors position tables: l_278b
