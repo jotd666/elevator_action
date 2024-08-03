@@ -7992,13 +7992,13 @@ bootup_338f:
 33CC: 32 80 80    ld   ($8080),a
 33CF: 32 C6 85    ld   ($85C6),a
 33D2: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
-33D5: CB 57       bit  2,a
-33D7: 20 0B       jr   nz,$33E4
-33D9: CD 5F 71    call $715F
+33D5: CB 57       bit  2,a					;  free play ?
+33D7: 20 0B       jr   nz,$33E4				; yes? skip title sequence
+33D9: CD 5F 71    call title_and_insert_coin_sequence_715F
 33DC: 3A A2 80    ld   a,(nb_credits_80A2)
 33DF: B7          or   a
 33E0: 28 1F       jr   z,$3401
-33E2: 18 00       jr   $33E4
+33E2: 18 00       jr   $33E4		; useless jump
 33E4: CD 29 35    call $3529
 33E7: 3E C0       ld   a,$C0
 33E9: 32 0B D5    ld   (sound_latch_D50B),a
@@ -15404,7 +15404,7 @@ run_in_service_mode_70EB:
 7103: 3E C0       ld   a,$C0
 7105: 32 0B D5    ld   (sound_latch_D50B),a
 7108: CD 4D 36    call $364D
-710B: 21 5A 71    ld   hl,$715A
+710B: 21 5A 71    ld   hl,string_715A
 710E: 11 EE C5    ld   de,$C5EE
 7111: CD F9 29    call copy_string_to_screen_29F9
 7114: 3E 5A       ld   a,$5A
@@ -15438,10 +15438,13 @@ run_in_service_mode_70EB:
 7154: 3E 02       ld   a,$02
 7156: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 7159: C9          ret
-715A: 31 2C 1B    ld   sp,$1B2C
-715D: 31 FF CD    ld   sp,$CDFF
-7160: 9A          sbc  a,d
-7161: 71          ld   (hl),c
+; "TILT"
+string_715A:
+		dc.b	31 2C 1B
+		dc.b	31 FF
+
+title_and_insert_coin_sequence_715F:
+715F: CD 9A 71    call $719A                                          
 7162: CD 50 72    call $7250
 7165: 21 A3 80    ld   hl,$80A3
 7168: 7E          ld   a,(hl)
@@ -15564,10 +15567,11 @@ table_7238:
 725D: 23          inc  hl
 725E: 10 FB       djnz $725B
 7260: C9          ret
+
 7261: CD AF 72    call $72AF
 7264: 21 08 CC    ld   hl,$CC08
 7267: 22 09 86    ld   ($8609),hl
-726A: 21 61 73    ld   hl,$7361
+726A: 21 61 73    ld   hl,table_7361
 726D: 22 0B 86    ld   ($860B),hl
 7270: 21 0F 86    ld   hl,$860F
 7273: 22 0D 86    ld   ($860D),hl
@@ -15725,6 +15729,13 @@ table_72D4:
 735C: 23          inc  hl
 735D: 22 0D 86    ld   ($860D),hl
 7360: C9          ret
+
+table_7361:
+	dc.b	86 87 84 85 82 83 80 81 8D 8E 8B 8C 8B 00 89 8A
+	dc.b	86 87 84 85 82 83 80 81 95 96 93 94 91 92 8F 90
+	dc.b	9D 9D 9B 9C 99 9A 97 98 A5 A6 A3 A4 A1 A2 9F A0
+	dc.b	AB AC A9 AA A9 AA A7 A8 B3 B4 B1 B2 AF B0 AD AE
+	dc.b	00 00 F8 
 
 73A4: F9          ld   sp,hl
 73A5: 3A 07 86    ld   a,($8607)

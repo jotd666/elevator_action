@@ -42,3 +42,14 @@ debug 0247
 
 intro "elevator" letters python mockup
 elevator letters scroll: addresses 7462 ???
+
+try to resolve undefined
+
+title:
+reverse l_7334
+reverse 73A5
+l_74cf
+l_74e5
+l_7503
+
+l_715f: main title loop?

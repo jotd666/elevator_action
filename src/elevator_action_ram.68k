@@ -1,0 +1,5 @@
+	.global	video_mode_d600
+video_mode_d600:
+	.byte	0
+
+	
