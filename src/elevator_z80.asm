@@ -6139,7 +6139,7 @@ reload_8bit_tiimer_26C2:
 26CE: 28 03       jr   z,$26D3
 26D0: 3D          dec  a
 26D1: 28 28       jr   z,$26FB
-26D3: 21 E3 77    ld   hl,$77E3
+26D3: 21 E3 77    ld   hl,palette_data_77E3
 26D6: 3A 3B 82    ld   a,(game_in_play_flag_823B)
 26D9: B7          or   a
 26DA: 20 12       jr   nz,$26EE
@@ -6147,13 +6147,13 @@ reload_8bit_tiimer_26C2:
 26DF: 47          ld   b,a
 26E0: 3A 37 82    ld   a,(skill_level_8237)
 26E3: 90          sub  b
-26E4: E6 03       and  $03
-26E6: 0F          rrca
-26E7: 0F          rrca
+26E4: E6 03       and  $03		; 4 palettes
+26E6: 0F          rrca			
+26E7: 0F          rrca			; multiply by 64
 26E8: EB          ex   de,hl
 26E9: 26 00       ld   h,$00
 26EB: 6F          ld   l,a
-26EC: 29          add  hl,hl
+26EC: 29          add  hl,hl	; times 2, 128 bytes for each of 4 entries
 26ED: 19          add  hl,de
 26EE: 11 00 D2    ld   de,palette_D200
 26F1: 01 80 00    ld   bc,$0080
@@ -16256,6 +16256,43 @@ mcu_comm_routine_77CF:
 77DF: F6 40       or   $40
 77E1: E7          rst  $20
 77E2: C9          ret
+
+palette_data_77E3:
+	dc.b	01 FF 00 19 00 00 01 6D 00 A7 00 53 00 0A 00 3F
+	dc.b	01 FF 00 92 01 92 00 49 01 B1 00 3F 00 00 01 6D
+	dc.b	00 98 01 A4 01 B6 00 92 00 11 00 92 00 49 01 F8
+	dc.b	01 FF 01 E2 01 FF 01 FF 01 FF 00 3F 01 24 01 FF
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 FF
+	dc.b	01 FF 01 FA 01 E2 01 FF 01 FF 01 24 01 FF 01 FA
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 6D
+	dc.b	01 FF 01 F8 00 92 00 49 01 92 00 00 01 6D 01 FA
+
+	dc.b	01 FF 00 19 00 00 01 6D 00 A7 00 53 00 0A 00 03
+	dc.b	01 FF 00 92 00 59 00 49 01 B1 00 3F 00 00 01 6D
+	dc.b	00 98 00 08 01 B6 00 92 00 80 00 92 00 49 01 F8
+	dc.b	01 FF 01 E2 01 FF 01 FF 01 FF 00 3F 01 24 01 FF
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 FF
+	dc.b	01 FF 01 FA 01 E2 01 FF 01 FF 01 24 01 FF 01 FA
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 6D
+	dc.b	01 FF 01 F8 00 92 00 49 00 59 00 00 01 6D 01 FA
+
+	dc.b	01 FF 00 19 00 00 01 6D 00 A7 00 53 00 0A 00 3F
+	dc.b	01 FF 00 92 00 40 00 49 01 B1 00 3F 00 00 01 6D
+	dc.b	00 98 01 D1 01 B6 00 92 00 1A 00 92 00 49 01 F8
+	dc.b	01 FF 01 E2 01 FF 01 FF 01 FF 00 3F 01 24 01 FF
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 FF
+	dc.b	01 FF 01 FA 01 E2 01 FF 01 FF 01 24 01 FF 01 FA
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 6D
+	dc.b	01 FF 01 F8 00 92 00 49 00 40 00 00 01 6D 01 FA
+
+	dc.b	01 FF 00 19 00 00 01 6D 00 A7 00 53 00 0A 00 87
+	dc.b	01 FF 00 92 00 DB 00 49 01 B1 00 3F 00 00 01 6D
+	dc.b	00 98 01 FF 01 B6 00 92 01 89 00 92 00 49 01 F8
+	dc.b	01 FF 01 E2 01 FF 01 FF 01 FF 00 3F 01 24 01 FF
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 FF
+	dc.b	01 FF 01 FA 01 E2 01 FF 01 FF 01 24 01 FF 01 FA
+	dc.b	01 FF 00 3F 00 A7 00 53 00 0A 00 00 00 0B 01 6D
+	dc.b	01 FF 01 F8 00 92 00 49 00 DB 00 00 01 6D 01 FA
 
 table_7FF8:
 	dc.b	73 1E BD 19 3E E4 D1 C9
