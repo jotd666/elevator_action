@@ -1,6 +1,6 @@
 l_8000 = 0x0000
 l_8001 = 0x0001
-l_8002 = 0x0002
+scroll_related_value_8002 = 0x0002
 l_8003 = 0x0003
 scroll_speed_8004 = 0x0004
 main_scroll_value_8005 = 0x0005

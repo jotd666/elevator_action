@@ -34,21 +34,10 @@ identify all counds: most done
 figure 8002 and 800E pointers? values?
 dig out problematic*.py script with d3/d4/a1, d5/d6/a0
 check bootleg 34e4 bankswitch
-debug l_6b7e
 
-reverse: compute_d1w_from_d0b_68d6 looks like multiplication, check inputs!!
-confirm: 6b8a useless read (bogus) into d2 which isn't used
+
 red doors position tables: l_278b
-breakpoint!!! 2e62
 
-reverse:jump_table_64A8: (b 6967
-	.long	jump_6987   
-	.long	jump_6989   
-	.long	jump_69A8   
-	.long	jump_69BC   
-	.long	jump_69C1   
-	.long	jump_69C6
-	.long	jump_69CB
-	.long	jump_69D0 
+debug 0247
+
 	
-2F1F: check A0 value
