@@ -15558,7 +15558,7 @@ table_7238:
 
 7250: 21 00 00    ld   hl,$0000
 7253: 22 3F 86    ld   ($863F),hl
-7256: 21 2F 86    ld   hl,$862F
+7256: 21 2F 86    ld   hl,title_letters_y_scroll_values_862F
 7259: 06 10       ld   b,$10
 725B: 36 00       ld   (hl),$00
 725D: 23          inc  hl
@@ -15571,7 +15571,7 @@ table_7238:
 726D: 22 0B 86    ld   ($860B),hl
 7270: 21 0F 86    ld   hl,$860F
 7273: 22 0D 86    ld   ($860D),hl
-7276: 11 2F 86    ld   de,$862F
+7276: 11 2F 86    ld   de,title_letters_y_scroll_values_862F
 7279: 06 08       ld   b,$08
 727B: 1A          ld   a,(de)
 727C: 32 08 86    ld   ($8608),a
@@ -15604,7 +15604,7 @@ table_7238:
 72AE: C9          ret
 72AF: 3A 40 86    ld   a,($8640)
 72B2: 4F          ld   c,a
-72B3: 11 2F 86    ld   de,$862F
+72B3: 11 2F 86    ld   de,title_letters_y_scroll_values_862F
 72B6: 21 D2 72    ld   hl,table_72D4-2
 72B9: 06 08       ld   b,$08
 72BB: C5          push bc
@@ -15818,11 +15818,29 @@ table_73F9:
 742C: DD E1       pop  ix
 742E: DD E9       jp   (ix)			; indirect call!! looks like a protection!
 
-7430: CD 37 74    call $7437
+7430: CD 37 74    call update_title_elevator_scroll_7437
 7433: CD 75 74    call $7475
 7436: C9          ret
 
-
+update_title_elevator_scroll_7437:
+7437: 21 2F 86    ld   hl,title_letters_y_scroll_values_862F                                       
+743A: 11 48 D0    ld   de,$D048                                       
+743D: ED A0       ldi                                                 
+743F: ED A0       ldi  	; E                                               
+7441: ED A0       ldi                                                 
+7443: ED A0       ldi   ; L                                           
+7445: ED A0       ldi                                                 
+7447: ED A0       ldi   ; E                                              
+7449: ED A0       ldi                                                 
+744B: ED A0       ldi   ; V                                              
+744D: ED A0       ldi                                                 
+744F: ED A0       ldi   ; A                                              
+7451: ED A0       ldi                                                 
+7453: ED A0       ldi   ; T                                              
+7455: ED A0       ldi                                                 
+7457: ED A0       ldi   ; O                                              
+7459: ED A0       ldi                                                 
+745B: ED A0       ldi   ; R                                                                     
 745D: 21 0F 86    ld   hl,$860F
 7460: 06 08       ld   b,$08
 7462: C5          push bc

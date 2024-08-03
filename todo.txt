@@ -40,4 +40,5 @@ red doors position tables: l_278b
 
 debug 0247
 
-	
+intro "elevator" letters python mockup
+elevator letters scroll: addresses 7462 ???
