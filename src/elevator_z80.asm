@@ -15793,7 +15793,8 @@ table_7361:
 73E9: 7E          ld   a,(hl)
 73EA: 34          inc  (hl)
 73EB: EF          rst  $28
-; bootleg: code below replaced by alternate
+; bootleg: code below replaced by alternate (lifted
+; from alternate bank at 73DE
 73EC: 21 C6 85    ld   hl,$85C6
 73EF: 4E          ld   c,(hl)
 73F0: 09          add  hl,bc
@@ -16596,3 +16597,72 @@ dynamic_ram_code_85EF:
 85FF: B2       or   d
 8600: DD 77 0D ld   (ix+move_direction_0d),a
 8603: C9       ret
+
+; here's the code found in alternate bank (bank switch = 81)
+
+7021: 80       add  a,b
+7022: 80       add  a,b
+7023: 4E       ld   c,(hl)
+7024: 09       add  hl,bc
+7025: E5       push hl
+7026: 21 FF 71 ld   hl,$71FF
+7029: 09       add  hl,bc
+702A: 7E       ld   a,(hl)
+702B: F5       push af
+702C: C3 F4 34 jp   $34F4
+
+73DE: 21 C6 85 ld   hl,$85C6
+73E1: 4E       ld   c,(hl)
+73E2: 09       add  hl,bc
+73E3: E5       push hl
+73E4: 21 FF 70 ld   hl,$70FF
+73E7: 09       add  hl,bc
+73E8: 7E       ld   a,(hl)
+73E9: F5       push af
+73EA: 3E 01    ld   a,$01
+73EC: 32 0E D5 ld   ($D50E),a
+
+7100: B2       or   d
+7101: DD 77 0D ld   (ix+$0d),a
+7104: C9       ret
+7105: A0       and  b
+7106: 05       dec  b
+7107: 5E       ld   e,(hl)
+
+; part then copied to 85CF and maybe to 85EF
+; with a few manual changes
+7108: DD 7E 09 ld   a,(ix+$09)
+710B: 06 00    ld   b,$00
+710D: FE 04    cp   $04
+710F: 28 02    jr   z,$7113
+7111: 06 04    ld   b,$04
+7113: 78       ld   a,b
+7114: B2       or   d
+7115: DD 77 0D ld   (ix+$0d),a
+7118: C9       ret
+
+7119: 1E 12    ld   e,$12
+711B: 08       ex   af,af'
+711C: 1D       dec  e
+711D: 02       ld   (bc),a
+711E: 08       ex   af,af'
+711F: 5E       ld   e,(hl)
+7120: EC 77 C9 call pe,$C977
+7123: 5E       ld   e,(hl)
+7124: 92       sub  d
+7125: 08       ex   af,af'
+7126: 1E C9    ld   e,$C9
+7128: DD 7E 09 ld   a,(ix+$09)
+712B: 06 00    ld   b,$00
+712D: FE 02    cp   $02
+712F: 28 06    jr   z,$7137
+7131: 06 04    ld   b,$04
+7133: 38 02    jr   c,$7137
+7135: 06 08    ld   b,$08
+7137: 78       ld   a,b
+7138: B2       or   d
+7139: DD 77 0D ld   (ix+$0d),a
+713C: C9       ret
+713D: A0       and  b
+713E: 05       dec  b
+713F: 5E       ld   e,(hl)

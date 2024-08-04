@@ -4,12 +4,8 @@
 
 reverse stuff:
 
-- up/down read / elevator control by player
-- when "hurry up" is triggered (music changes, can't control elevators)
-  => when timer at 8232 reaches $10: elevators not controllable, if timer
-     set lowers, elevators are controllable again
 - when color changes (light shot)
-- shot positions
+- shot positions / animation routines
 - colorbanks (D506/7)
 
 enemy A.I when is 51A7 calles?
@@ -26,25 +22,18 @@ end of mainloop
 76C3: CD A0 15    call $15A0
 
 finish replacing aggressivity field
-identify all counds: most done
-- missing ones not driven by play_sound_3656:
-  - theme music
-  - end car noises
+
   
 figure 8002 and 800E pointers? values?
 dig out problematic*.py script with d3/d4/a1, d5/d6/a0
-check bootleg 34e4 bankswitch
 
 
 red doors position tables: l_278b
-
-debug 0247
 
 intro "elevator" letters python mockup
 elevator letters scroll: addresses 7462 ???
 0e9f called when??? reset charset???
 
-try to resolve undefined
 
 boot sequence: simply (when game runs properly)
 
@@ -55,7 +44,4 @@ l_74cf
 l_74e5
 l_7503
 
-0e7a ground floor reached add sp!!
 
-dump mem after 34ee (bank = 81) and after 34f9 (bank 1)
-compare mem see if there is some bankswitch

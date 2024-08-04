@@ -168,6 +168,7 @@ character_unknown_0a = 0xa
 character_unknown_0b = 0xb
 character_unknown_0c = 0xc
 move_direction_0d = 0xd
+unknown_0f = 0xf
 enemy_aggressivity_13 = 0x13
 
 * elevator structs offsets (size=8)
@@ -252,8 +253,281 @@ load_d1d2_address_from_6bdc_in_a4:
 	rts
 	
 play_sound:
+	move.l	a0,-(a7)
+	move.w	d1,-(a7)
+	moveq	#0,d1
+	move.b	D0,d1
+	moveq 	#0,d0
+	lea		sound_table(pc),a0
+	move.b	(a0,d1.w),d0
+	jmi		0f
+	jbsr	osd_sound_start
+1:
+	move.w	(a7)+,d1
+	move.l	(a7)+,a0
 	rts
-	
+0:	
+	* sound not linked to our sound engine
+	jbsr	osd_break
+	jra	1b
+
+sound_table:
+	.byte	-1   | 0x00
+	.byte	-1   | 0x01
+	.byte	-1   | 0x02
+	.byte	-1   | 0x03
+	.byte	-1   | 0x04
+	.byte	-1   | 0x05
+	.byte	-1   | 0x06
+	.byte	-1   | 0x07
+	.byte	-1   | 0x08
+	.byte	-1   | 0x09
+	.byte	-1   | 0x0a
+	.byte	-1   | 0x0b
+	.byte	-1   | 0x0c
+	.byte	-1   | 0x0d
+	.byte	-1   | 0x0e
+	.byte	-1   | 0x0f
+	.byte	-1   | 0x10
+	.byte	-1   | 0x11
+	.byte	-1   | 0x12
+	.byte	-1   | 0x13
+	.byte	-1   | 0x14
+	.byte	-1   | 0x15
+	.byte	-1   | 0x16
+	.byte	-1   | 0x17
+	.byte	-1   | 0x18
+	.byte	-1   | 0x19
+	.byte	-1   | 0x1a
+	.byte	-1   | 0x1b
+	.byte	-1   | 0x1c
+	.byte	-1   | 0x1d
+	.byte	-1   | 0x1e
+	.byte	-1   | 0x1f
+	.byte	-1   | 0x20
+	.byte	-1   | 0x21
+	.byte	-1   | 0x22
+	.byte	-1   | 0x23
+	.byte	-1   | 0x24
+	.byte	-1   | 0x25
+	.byte	-1   | 0x26
+	.byte	-1   | 0x27
+	.byte	-1   | 0x28
+	.byte	-1   | 0x29
+	.byte	-1   | 0x2a
+	.byte	-1   | 0x2b
+	.byte	-1   | 0x2c
+	.byte	-1   | 0x2d
+	.byte	-1   | 0x2e
+	.byte	-1   | 0x2f
+	.byte	-1   | 0x30
+	.byte	-1   | 0x31
+	.byte	-1   | 0x32
+	.byte	-1   | 0x33
+	.byte	-1   | 0x34
+	.byte	-1   | 0x35
+	.byte	-1   | 0x36
+	.byte	-1   | 0x37
+	.byte	-1   | 0x38
+	.byte	-1   | 0x39
+	.byte	-1   | 0x3a
+	.byte	-1   | 0x3b
+	.byte	-1   | 0x3c
+	.byte	-1   | 0x3d
+	.byte	-1   | 0x3e
+	.byte	-1   | 0x3f
+	.byte	-1   | 0x40
+	.byte	-1   | 0x41
+	.byte	-1   | 0x42
+	.byte	-1   | 0x43
+	.byte	-1   | 0x44
+	.byte	-1   | 0x45
+	.byte	-1   | 0x46
+	.byte	-1   | 0x47
+	.byte	-1   | 0x48
+	.byte	-1   | 0x49
+	.byte	-1   | 0x4a
+	.byte	-1   | 0x4b
+	.byte	-1   | 0x4c
+	.byte	-1   | 0x4d
+	.byte	-1   | 0x4e
+	.byte	-1   | 0x4f
+	.byte	-1   | 0x50
+	.byte	-1   | 0x51
+	.byte	-1   | 0x52
+	.byte	-1   | 0x53
+	.byte	-1   | 0x54
+	.byte	-1   | 0x55
+	.byte	-1   | 0x56
+	.byte	-1   | 0x57
+	.byte	-1   | 0x58
+	.byte	-1   | 0x59
+	.byte	-1   | 0x5a
+	.byte	-1   | 0x5b
+	.byte	-1   | 0x5c
+	.byte	-1   | 0x5d
+	.byte	-1   | 0x5e
+	.byte	-1   | 0x5f
+	.byte	-1   | 0x60
+	.byte	-1   | 0x61
+	.byte	-1   | 0x62
+	.byte	-1   | 0x63
+	.byte	-1   | 0x64
+	.byte	-1   | 0x65
+	.byte	-1   | 0x66
+	.byte	-1   | 0x67
+	.byte	-1   | 0x68
+	.byte	-1   | 0x69
+	.byte	-1   | 0x6a
+	.byte	-1   | 0x6b
+	.byte	-1   | 0x6c
+	.byte	-1   | 0x6d
+	.byte	-1   | 0x6e
+	.byte	-1   | 0x6f
+	.byte	-1   | 0x70
+	.byte	-1   | 0x71
+	.byte	-1   | 0x72
+	.byte	-1   | 0x73
+	.byte	-1   | 0x74
+	.byte	-1   | 0x75
+	.byte	-1   | 0x76
+	.byte	-1   | 0x77
+	.byte	-1   | 0x78
+	.byte	-1   | 0x79
+	.byte	-1   | 0x7a
+	.byte	-1   | 0x7b
+	.byte	-1   | 0x7c
+	.byte	-1   | 0x7d
+	.byte	-1   | 0x7e
+	.byte	-1   | 0x7f
+	.byte	-1   | 0x80
+	.byte	-1   | 0x81
+	.byte	-1   | 0x82
+	.byte	-1   | 0x83
+	.byte	-1   | 0x84
+	.byte	-1   | 0x85
+	.byte	-1   | 0x86
+	.byte	-1   | 0x87
+	.byte	-1   | 0x88
+	.byte	-1   | 0x89
+	.byte	-1   | 0x8a
+	.byte	-1   | 0x8b
+	.byte	-1   | 0x8c
+	.byte	-1   | 0x8d
+	.byte	-1   | 0x8e
+	.byte	-1   | 0x8f
+	.byte	-1   | 0x90
+	.byte	-1   | 0x91
+	.byte	-1   | 0x92
+	.byte	-1   | 0x93
+	.byte	-1   | 0x94
+	.byte	-1   | 0x95
+	.byte	-1   | 0x96
+	.byte	-1   | 0x97
+	.byte	-1   | 0x98
+	.byte	-1   | 0x99
+	.byte	-1   | 0x9a
+	.byte	-1   | 0x9b
+	.byte	-1   | 0x9c
+	.byte	-1   | 0x9d
+	.byte	-1   | 0x9e
+	.byte	-1   | 0x9f
+	.byte	-1   | 0xa0
+	.byte	-1   | 0xa1
+	.byte	-1   | 0xa2
+	.byte	-1   | 0xa3
+	.byte	-1   | 0xa4
+	.byte	-1   | 0xa5
+	.byte	-1   | 0xa6
+	.byte	-1   | 0xa7
+	.byte	-1   | 0xa8
+	.byte	-1   | 0xa9
+	.byte	-1   | 0xaa
+	.byte	-1   | 0xab
+	.byte	-1   | 0xac
+	.byte	-1   | 0xad
+	.byte	-1   | 0xae
+	.byte	-1   | 0xaf
+	.byte	-1   | 0xb0
+	.byte	-1   | 0xb1
+	.byte	-1   | 0xb2
+	.byte	-1   | 0xb3
+	.byte	-1   | 0xb4
+	.byte	-1   | 0xb5
+	.byte	-1   | 0xb6
+	.byte	-1   | 0xb7
+	.byte	-1   | 0xb8
+	.byte	-1   | 0xb9
+	.byte	-1   | 0xba
+	.byte	-1   | 0xbb
+	.byte	-1   | 0xbc
+	.byte	-1   | 0xbd
+	.byte	-1   | 0xbe
+	.byte	-1   | 0xbf
+	.byte	-1   | 0xc0
+	.byte	-1   | 0xc1
+	.byte	-1   | 0xc2
+	.byte	-1   | 0xc3
+	.byte	-1   | 0xc4
+	.byte	-1   | 0xc5
+	.byte	-1   | 0xc6
+	.byte	-1   | 0xc7
+	.byte	-1   | 0xc8
+	.byte	-1   | 0xc9
+	.byte	-1   | 0xca
+	.byte	-1   | 0xcb
+	.byte	-1   | 0xcc
+	.byte	-1   | 0xcd
+	.byte	-1   | 0xce
+	.byte	-1   | 0xcf
+	.byte	-1   | 0xd0
+	.byte	-1   | 0xd1
+	.byte	-1   | 0xd2
+	.byte	-1   | 0xd3
+	.byte	-1   | 0xd4
+	.byte	-1   | 0xd5
+	.byte	-1   | 0xd6
+	.byte	-1   | 0xd7
+	.byte	-1   | 0xd8
+	.byte	-1   | 0xd9
+	.byte	-1   | 0xda
+	.byte	-1   | 0xdb
+	.byte	-1   | 0xdc
+	.byte	-1   | 0xdd
+	.byte	-1   | 0xde
+	.byte	-1   | 0xdf
+	.byte	-1   | 0xe0
+	.byte	-1   | 0xe1
+	.byte	-1   | 0xe2
+	.byte	-1   | 0xe3
+	.byte	-1   | 0xe4
+	.byte	-1   | 0xe5
+	.byte	-1   | 0xe6
+	.byte	-1   | 0xe7
+	.byte	-1   | 0xe8
+	.byte	-1   | 0xe9
+	.byte	-1   | 0xea
+	.byte	-1   | 0xeb
+	.byte	-1   | 0xec
+	.byte	-1   | 0xed
+	.byte	-1   | 0xee
+	.byte	-1   | 0xef
+	.byte	-1   | 0xf0
+	.byte	-1   | 0xf1
+	.byte	-1   | 0xf2
+	.byte	-1   | 0xf3
+	.byte	-1   | 0xf4
+	.byte	-1   | 0xf5
+	.byte	-1   | 0xf6
+	.byte	-1   | 0xf7
+	.byte	-1   | 0xf8
+	.byte	-1   | 0xf9
+	.byte	-1   | 0xfa
+	.byte	-1   | 0xfb
+	.byte	-1   | 0xfc
+	.byte	-1   | 0xfd
+	.byte	-1   | 0xfe
+	.byte	-1   | 0xff
 	
 * < A2: ROM address
 * < D5: ROM address
@@ -673,11 +947,10 @@ l_0247:
 	exg	d3,d5                              	| [$0256: ex   de,hl]
 	lea		gfxrom+0x5F80,a0                          	| [$0257: ld   hl,$5F80] start in gfx rom
 	add.w	d3,a0                            	| [$025a: add  hl,de]
-	illegal		| TODO debug this in MAME
 	move.w	d3,-(sp)                        	| [$025b: push de]
 											| [$025c: ld   (gfx_pointer_d509),hl]
 	lea	scroll_row_8008(a6),a1             	| [$025f: ld   de,scroll_row_8008]
-	lea	gfxrom,a0                    	| [$0262: ld   hl,gfx_rom_D404]
+											| [$0262: ld   hl,gfx_rom_D404]
 * copy 32 bytes of gfx rom to ram, value read from D404 changes at each read!!!
 * reads a row of building data from gfx rom to RAM
 	move.b	#0x20,d1                        	| [$0265: ld   b,$20]
@@ -1363,18 +1636,18 @@ l_05ed:
 	cmp.b	(0x16,a2),d0                     	| [$05f0: cp   (ix+$16)]
 	INVERT_XC_FLAGS                        	| [$05f3: ccf]
 	rts                                    	| [$05f4: ret]
+
 l_05f5:
-	.warning "check d4 value"
 	jbsr	pseudo_random_with_regsave_1DF5                	| [$05f5: call pseudo_random_with_regsave_1DF5]
-	lea	table_0659,a0                          	| [$05f8: ld   hl,$0659]
-	move.b	(enemy_aggressivity_13,a2),d4   	| [$05fb: ld   e,(ix+enemy_aggressivity_13)]
+	lea	odds_table_0659,a0                          	| [$05f8: ld   hl,$0659]
 	moveq   #0,d3                               	| [$05fe: ld   d,$00]
-	move.b	d4,d3
+	move.b	(enemy_aggressivity_13,a2),d3   	| [$05fb: ld   e,(ix+enemy_aggressivity_13)]
 	add.w	d3,a0                            	| [$0600: add  hl,de]
 	cmp.b	(a0),d0                          	| [$0601: cp   (hl)]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$0602: ret  nc] [...]
 0:
+	* special attack (which one???) on random
 	lea	l_82FD(a6),a3                      	| [$0603: ld   iy,$82FD]
 	move.b	(character_x_right_01,a2),d0    	| [$0607: ld   a,(ix+character_x_right_01)]
 	add.b	(character_x_00,a2),d0           	| [$060a: add  a,(ix+character_x_00)]
@@ -1421,7 +1694,7 @@ l_064c:
 	jbsr	l_0669                            	| [$0655: call $0669]
 	rts                                    	| [$0658: ret]
 
-table_0659:
+odds_table_0659:
 	.byte	0x00
 	.byte	0x00
 	.byte	0x02
@@ -2315,21 +2588,29 @@ l_0b98:
 	cmp.b	#CS_FALLING_03,d0                	| [$0ba8: cp   CS_FALLING_03]
 	jcc	l_0bd1                             	| [$0baa: jp   nc,$0BD1]
 * ground, in/on elevator or unknown 3
-	illegal 
-	move.b	(0x0f,a2),d0                    	| [$0bad: ld   a,(ix+$0f)]
-	move.b	d0,d1                           	| [$0bb0: ld   b,a]
-	add.b	d1,d0                            	| [$0bb1: add  a,b]
-	add.b	d1,d0                            	| [$0bb2: add  a,b]
-	add.b	d2,d0                            	| [$0bb3: add  a,c]
-	move.b	d0,d4                           	| [$0bb4: ld   e,a]
-	add.b	d4,d0                            	| [$0bb5: add  a,e]
-	add.b	d4,d0                            	| [$0bb6: add  a,e]
-	moveq   #0,d3                               	| [$0bb8: ld   d,$00]
-	move.b	d0,d3                           	| [$0bb7: ld   e,a]
+* code used to multiply by 3 (jmp xxx), now we use longs so we need
+* to multiply by 4 instead
+	moveq	#0,d0
+	move.b	(unknown_0f,a2),d0                  | [$0bad: ld   a,(ix+$0f)]
+	                           	| [$0bb0: ld   b,a]
+	add.b	d0,d0                            	| [$0bb1: add  a,b]
+	add.b	d0,d0                            	| [$0bb2: add  a,b] d0 *= 4
+	add.b	d2,d0                            	| [$0bb3: add  a,c] plus d2
+	moveq   #0,d3                               | [$0bb8: ld   d,$00]
+	move.b	d0,d3                           	| [$0bb4: ld   e,a] times 4 again
+	add.b	d3,d3                            	| [$0bb5: add  a,e]
+	add.b	d3,d3                            	| [$0bb6: add  a,e]
+	.ifndef	RELEASE											| [$0bb7: ld   e,a]
+	cmp.w	#21,d3
+	jcs		0f
+	* out of bounds!
+	jbsr	osd_break
+	illegal
+0:
+	.endif
 	lea	jump_table_0BBF,a0                 	| [$0bba: ld   hl,jump_table_0BBF]
 	add.w	d3,a0                            	| [$0bbd: add  hl,de]
-      .warning   "review d3 computation above debug MAME"
-	jra	(a0)                               	| [$0bbe: jp   (hl)]
+ 	jra	(a0)                               	| [$0bbe: jp   (hl)]
 
 jump_table_0BBF:
 	.long	enemy_walk_state_53F6              	| [$0bbf: jp   enemy_walk_state_53F6]
@@ -2793,9 +3074,6 @@ table_0E66:
 	
 l_0e7a:
 	move.b	l_8033(a6),d0                   	| [$0e7a: ld   a,($8033)]
-	illegal		| WTF!!!
-	*addq.b	#1,sp                           	| [$0e7b: inc  sp]
-	add.b	d1,d0                            	| [$0e7c: add  a,b]
 											| [$0e7d: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0e7e: ret  z] [...]
@@ -9523,7 +9801,8 @@ l_34ec:
 	move.b	#0x81,d0                        	| [$34ec: ld   a,$81]
 	move.b	d0,bank_switch_d50e                       	| [$34ee: ld   ($D50E),a]
 	moveq	#0,d1
-* lifted from bootleg ROM
+* lifted from bootleg ROM, when bankswitch is switched to an almost empty part
+* except this section
 	lea	l_8080(a6),a0                      	| [$7020: ld   hl,$8080]
 	move.b	(a0),d1                         	| [$7023: ld   c,(hl)]
 	add.w	d1,a0                            	| [$7024: add  hl,bc]
@@ -9733,16 +10012,16 @@ l_364d:
 	rts                                    	| [$3655: ret]
 
 play_sound_3656:
-	move.b	d0,d1                           	| [$3656: ld   b,a]
-	move.b	game_in_play_flag_823B(a6),d0   	| [$3657: ld   a,(game_in_play_flag_823B)]
+	                           	| [$3656: ld   b,a]
+	tst.b	game_in_play_flag_823B(a6)   	| [$3657: ld   a,(game_in_play_flag_823B)]
 	                             	| [$365a: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$365b: ret  nz] [...]
 0:
 * plays sound only if real game (not demo)
-	move.b	d1,d0                           	| [$365c: ld   a,b]
-	jbsr	play_sound             	| [$365d: ld   (sound_latch_D50B),a]
-	rts                                    	| [$3660: ret]
+	                           	| [$365c: ld   a,b]
+	jbra	play_sound             	| [$365d: ld   (sound_latch_D50B),a]
+	                                    	| [$3660: ret]
 
 l_3661:
 	move.b	(character_situation_06,a2),d0  	| [$3661: ld   a,(ix+character_situation_06)]
@@ -19187,10 +19466,13 @@ exx:
     rts
 
 * the following code is installed in RAM by the protection process
-* I don't know if it's decrypted or whatever, it's copied and called from
-* within the game. If it's not decrypted properly, of course the game is
+* I don't know exacty how it's done but it's copied and called from
+* within the game. 
+* We can find this code verbatim in the first bank which is 
+* active at some point (when bank switcher gets $81 value after 0x34ee) If it's 
+* not installed properly, of course the game is
 * going to freeze/crash. For instance dynamic_ram_code_85EF
-* is called during demo, when lamps are shot, and regularly from then
+* is called during demo after a few seconds of play and regularly from then
 
 dynamic_ram_code_805b:
 	clr.b	(a0)                             	| [$805b: ld   (hl),$00]
