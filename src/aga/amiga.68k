@@ -182,10 +182,13 @@ start:
 		.global osd_w_colorram
 		.global osd_update_sprites
 		.global osd_set_main_scroll
-		.global osd_read_dsw
+		.global osd_read_dsw1
+		.global osd_read_dsw2
+		.global osd_read_dsw3
 		.global osd_read_inputs_1
 		.global osd_read_inputs_2
 		.global	osd_set_gfx_bank
+		.global	osd_set_column_scroll
 		
 	
 	.include	"ReadJoypad.i"
@@ -702,12 +705,8 @@ _vblank:
 	* allowing 50 fps without a hitch :)
 
 	bsr		really_update_sprites
-	
-	.ifne  OPT_ENABLE_DOUBLE_BUFFERING
-	jbsr	is_game_over_displayed
-	beq.b	23f				| avoid nasty blinking effect when GAME OVER
-	bsr		switch_screen_buffers
-	.endif
+		bsr		switch_screen_buffers
+
 23:
 	* don't blit, but update hw sprites as it doesn't cost a lot
 	bsr		really_update_hardware_sprites
@@ -780,28 +779,7 @@ osd_wait:
 	bne.b	2b
 	rts
 
-* < Z=1 if title is displayed
-is_title_displayed:
-	cmp.b	#0xB5,bg_videoram+0x149
-	rts
 
-
-* < Z=1 if game over is displayed
-is_game_over_displayed:
-	move.l	a1,-(a7)
-	lea		bg_videoram,A1
-	cmp.b	#0x47,(0x20C,a1)
-	movem.l	(a7)+,a1
-	rts
-	
-* < Z=1 if moonbase is displayed (rightmost tile still present)
-is_moonbase_displayed:
-	move.l	a1,-(a7)
-	lea		bg_videoram,A1
-	cmp.b	#0x8C,(0x373,a1)
-	movem.l	(a7)+,a1
-	rts
-	
 * brutally redraw everything
 
 refresh_tiles:
@@ -820,96 +798,6 @@ refresh_tiles:
 	
 	rts
 	
-clear_background:
-	
-	tst.b	background_cleared_flag
-	beq.b	0f
-	* already cleared: don't redo it
-	rts
-0:
-	movem.l	d0-d7/A0-A6,-(a7)
-	
-	bsr		really_clear_background
-	st		background_cleared_flag
-	WAIT_BLIT
-	bsr		refresh_tiles
-	movem.l	(A7)+,d0-d7/A0-A6
-	rts
-	
-* called when player killed, game briefly sets y layer to 0
-* which should trigger erasure of top of the mountain/city
-* just in case the game then resets to a lower/upper checkpoint
-
-clear_previous_green_layer:
-	movem.l	d0-d7/A0-A6,-(a7)
-	lea		_custom,a5
-	moveq	#0,d1
-	move.b	previous_green_layer_y,d1
-	jeq		1f		| safety
-	* top (in case new layer is lower)
-	move.w	#32,d4		| should do it for all cases
-	* now D4 is the full height to clear
-	move	#NB_PLAYFIELD_PLANES,d3
-	moveq	#34,d2			| width = 32 (all screen width)
-	moveq	#0,d0			| X=0 (all screen)
-	move.l	fg_drawed_screen_ptr(pc),a1
-	movem.l	d0-d4/A2-A6,-(a7)
-	jbsr		clear_fg_planes_any_blitter_internal
-	movem.l	(A7),d0-d4/A2-A6
-	move.l	fg_displayed_screen_ptr(pc),a1
-	jbsr		clear_fg_planes_any_blitter_internal
-	movem.l	(A7)+,d0-d4/A2-A6
-
-	* bottom (in case new layer is upper)
-	add.w	green_height,d1
-	sub.w	d4,d1
-	move.l	fg_drawed_screen_ptr(pc),a1
-	movem.l	d0-d4/A2-A6,-(a7)
-	jbsr		clear_fg_planes_any_blitter_internal
-	movem.l	(A7),d0-d4/A2-A6
-	move.l	fg_displayed_screen_ptr(pc),a1
-	jbsr		clear_fg_planes_any_blitter_internal
-	movem.l	(A7)+,d0-d4/A2-A6
-1:
-	movem.l	(a7)+,d0-d7/a0-a6
-	rts
-	
-really_clear_background:
-	lea		_custom,a5
-	lea		blue_mountains_bitplanes,a0
-	move.w	#NB_PLAYFIELD_PLANES*2-1,d1
-0:
-	move.w	#0x1fe,d0		| noop, let panel show
-	move.w	d0,(a0)
-	addq.w	#4,a0
-	dbf		d1,0b
-
-	* compute height
-	moveq	#0,d1
-	tst.b	previous_blue_layer_y
-	beq.b	0f		| no previous Y means no clear!
-	move.w	#Y_MAX+8,d4
-	*sub.w	d1,d4
-	* now D4 is the full height to clear
-	move	#NB_PLAYFIELD_PLANES,d3
-	moveq	#34,d2			| width = 32 (all screen width)
-	moveq	#0,d0			| X=0 (all screen)
-	move.l	fg_drawed_screen_ptr(pc),a1
-	movem.l	d0-d4/A2-A6,-(a7)
-	jbsr		clear_fg_planes_any_blitter_internal
-	movem.l	(A7)+,d0-d4/A2-A6
-	move.l	fg_displayed_screen_ptr(pc),a1
-	jbsr		clear_fg_planes_any_blitter_internal
-	
-	
-	clr.b	previous_blue_layer_y   | only done once!
-	
-	* color 0 for mountain fillers
-	bsr		reset_colors_and_scrolling
-	
-0:
-
-	rts
 
 
 current_x:
@@ -3079,8 +2967,20 @@ osd_read_in_0:
 
 	rts
 	
+osd_set_column_scroll:
+	rts
 	
-osd_read_dsw:
+osd_read_dsw1:
+	* actual dipswitches
+	move.b	dip_switches(pc),d0
+	not.b	d0		| active low
+	rts
+osd_read_dsw2:
+	* actual dipswitches
+	move.b	dip_switches(pc),d0
+	not.b	d0		| active low
+	rts
+osd_read_dsw3:
 	* actual dipswitches
 	move.b	dip_switches(pc),d0
 	not.b	d0		| active low

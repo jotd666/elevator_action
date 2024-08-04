@@ -7378,13 +7378,13 @@ one_or_two_players_button_string_2EFD:
 2F31: E5          push hl
 2F32: DD E1       pop  ix
 2F34: DD E9       jp   (ix)
-* unreached??
-2F36: 44          ld   b,h
-2F37: 82          add  a,d
-2F38: D5          push de
-2F39: 10 21       djnz $2F5C
-2F3B: FB          ei
-2F3C: 80          add  a,b
+
+	dc.b	44     
+	dc.b	82     
+	dc.b	D5     
+	dc.b	10 
+
+2F3A: 21 FB 80    ld   hl,$80FB                                      
 2F3D: 06 28       ld   b,$28
 2F3F: 36 FF       ld   (hl),$FF
 2F41: 23          inc  hl
@@ -8187,6 +8187,17 @@ bad_hardware_34C5:
 34FF: 2B          dec  hl
 3500: 26 00       ld   h,$00
 3502: 08          ex   af,af'
+
+; lifted from bootleg ROM
+7020: 21 80 80    ld   hl,$8080                                       
+7023: 4E          ld   c,(hl)                                         
+7024: 09          add  hl,bc                                          
+7025: E5          push hl                                             
+7026: 21 FF 71    ld   hl,$71FF                                       
+7029: 09          add  hl,bc                                          
+702A: 7E          ld   a,(hl)                                         
+702B: F5          push af                                             
+702C: C3 F4 34    jp   $34F4                                          
 
 cache_dip_switches_3503:
 3503: 3A 0A D4    ld   a,(dip_switches_D40A)
@@ -16436,6 +16447,16 @@ palette_data_77E3:
 table_7FF8:
 	dc.b	73 1E BD 19 3E E4 D1 C9
 
+table_79E3:
+	dc.b	01 20 01 FF 00 00 01 6D 00 A7 00 53 00 0A 00 3F
+	dc.b	01 FF 01 C7 00 3F 00 07 00 0A 00 9C 01 D8 00 00
+	dc.b	01 FF 01 C7 01 FF 00 07 01 FF 01 FF 01 FF 01 FF
+	dc.b	01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF
+	dc.b	01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF
+	dc.b	01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF
+	dc.b	01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF
+	dc.b	01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF 01 FF
+ 
 recorded_inputs_7A63:
 	dc.b	05 AF FF FF FF FF FF FF FF FD FD FD FD FD FD FD 
 	dc.b	FD FF FF FF FE FF FF FF FF FF FF FF FF FB FB FB 

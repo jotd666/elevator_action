@@ -1,14 +1,18 @@
 	.global infinite_lives_flag
 	.global perfect_challenge_stage_flag
 	.global invincible_flag
+	.global infinite_time_flag
 	.global start_level
 	.global vb_ticks_count
 	.global break_at_startup_flag
 	.global log_ptr
 	.global highscore_needs_saving_flag
 	.global	video_mode_d600
+	.global colorbank_D506
+	.global colorbank_D507
 	.global sound_latch_D50B
 	.global sprite_ram_d100
+	.global bank_switch_d50e
 	.global	regscopy
 	.ifndef	RELEASE
 	.global ram_start_8000
@@ -55,6 +59,8 @@ invincible_flag:
 	.byte	0
 infinite_lives_flag:
 	.byte	0
+infinite_time_flag:
+	.byte	0
 
 highscore_needs_saving_flag:
 	.byte	0
@@ -70,7 +76,14 @@ break_at_startup_flag:
 	.byte	0
 sound_latch_D50B:
 	.byte	0
+colorbank_D506:
+	.byte	0
+colorbank_D507:
+	.byte	0
 video_mode_d600:
+	.byte	0
+* maybe sound-related?? maybe useless
+bank_switch_d50e:
 	.byte	0
 start_level:
 	.byte	0

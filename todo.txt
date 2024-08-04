@@ -46,7 +46,8 @@ elevator letters scroll: addresses 7462 ???
 
 try to resolve undefined
 
-debug dyn code 85cf 85ef 805b 8071 
+boot sequence: simply (when game runs properly)
+
 title:
 reverse l_7334
 reverse 73A5
@@ -56,3 +57,5 @@ l_7503
 
 0e7a ground floor reached add sp!!
 
+dump mem after 34ee (bank = 81) and after 34f9 (bank 1)
+compare mem see if there is some bankswitch
