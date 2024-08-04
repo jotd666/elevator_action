@@ -1,5 +1,80 @@
+	.global infinite_lives_flag
+	.global perfect_challenge_stage_flag
+	.global invincible_flag
+	.global start_level
+	.global vb_ticks_count
+	.global break_at_startup_flag
+	.global log_ptr
+	.global highscore_needs_saving_flag
 	.global	video_mode_d600
+	.global sound_latch_D50B
+	.global sprite_ram_d100
+	.global	regscopy
+	.ifndef	RELEASE
+	.global ram_start_8000
+	.endif
+	
+	.ifdef   __amiga__
+	.ascii	"RAM_STRT"
+	.ifndef	RELEASE
+	.endif
+	.else
+	* Neogeo: needs different writable section from ROM code
+    .bss
+	.endif
+
+	.align	2
+
+	
+
+ram_buffer:
+	.ifdef	RELEASE
+	.skip	0xD000-0x8000
+	.else
+	.skip	0x20000
+ram_start_8000:
+	.long	0
+	.endif
+	
+
+vbl_sync_counter_start_screen:
+	.word	0
+high_score_beaten:
+	.word	0
+stack_top:
+	.long	0
+sprite_ram_d100:
+	.skip	0x100
+	
+regscopy:
+	.skip	56
+log_ptr:
+	dc.l	0x100
+
+invincible_flag:
+	.byte	0
+infinite_lives_flag:
+	.byte	0
+
+highscore_needs_saving_flag:
+	.byte	0
+vb_ticks_count:
+	.byte	0
+current_ticks_count:
+	.byte	0
+vbl_sync_flag:
+	.byte	0
+vbl_sync_counter:
+	.byte	0
+break_at_startup_flag:
+	.byte	0
+sound_latch_D50B:
+	.byte	0
 video_mode_d600:
 	.byte	0
+start_level:
+	.byte	0
+	.ascii	"RAM_END!"
+
 
 	

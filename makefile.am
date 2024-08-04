@@ -45,11 +45,12 @@ WHDASM = vasmm68k_mot -DDATETIME -I$(HDBASE)/amiga39_JFF_OS/include -I$(WHDBASE)
 
 
 # leave MAIN_OBJ first
-OBJS_OCS = $(OCS_MAIN_OBJ) game_rom.o sound_engine.o sounds_ocs.o $(PROGNAME).o vbr.o graphics_ocs.o ReadJoyPad.o ptplayer.o 
-OBJS_ECS = $(ECS_MAIN_OBJ) game_rom.o sound_engine.o sounds_ecs.o $(PROGNAME).o vbr.o graphics_ecs.o ReadJoyPad.o ptplayer.o 
-OBJS_AGA = $(AGA_MAIN_OBJ) game_rom.o sound_engine.o sounds_aga.o $(PROGNAME).o vbr.o graphics_aga.o ReadJoyPad.o ptplayer.o 
+OBJS_OCS = $(OCS_MAIN_OBJ) gfxrom.o sound_engine.o sounds_ocs.o $(PROGNAME).o vbr.o graphics_ocs.o ReadJoyPad.o ptplayer.o 
+OBJS_ECS = $(ECS_MAIN_OBJ) gfxrom.o sound_engine.o sounds_ecs.o $(PROGNAME).o vbr.o graphics_ecs.o ReadJoyPad.o ptplayer.o 
+OBJS_AGA = $(AGA_MAIN_OBJ) gfxrom.o sound_engine.o sounds_aga.o $(PROGNAME).o vbr.o graphics_aga.o ReadJoyPad.o ptplayer.o 
+OBJS_AGA = $(AGA_MAIN_OBJ) gfxrom.o sound_engine.o sounds_aga.o $(PROGNAME).o vbr.o graphics_aga.o ReadJoyPad.o ptplayer.o 
 #all: $(MAIN_AGA) $(MAIN_ECS) $(MAIN_OCS) $(AMIGA_SHELL) $(WHDLOADER) $(WHDLOADER_CHIP) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) 
-all: elevator_action.o
+all: $(MAIN_AGA)
 
 $(AMIGA_SHELL): shell.o
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o
@@ -64,28 +65,25 @@ shell.o: $(AMIGA_SHARED_SRC)/shell.68k
 
 $(AMIGA_OCS_SRC)/graphics.68k: $(ASSETS)/convert_graphics_ecs.py $(ASSETS)/shared.py $(ASSETS)/../$(PROGNAME)_gfx.c
 	cmd /c $(ASSETS)\convert_graphics_ecs.py
-$(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/gen_scroll_table.py $(ASSETS)/convert_graphics_aga.py $(ASSETS)/shared.py $(ASSETS)/../$(PROGNAME)_gfx.c
-	cmd /c $(ASSETS)\convert_graphics_aga.py
+#$(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py $(ASSETS)/shared.py
+#	cmd /c $(ASSETS)\convert_graphics_aga.py
 
 $(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/moon_patrol_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
-$(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/moon_patrol_conv.mod
-	cmd /c $(ASSETS)\convert_sounds.py
+#$(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/moon_patrol_conv.mod
+#	cmd /c $(ASSETS)\convert_sounds.py
 	
 $(MAIN_OCS): $(OBJS_OCS)
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN_OCS) $(OBJS_OCS)
 $(MAIN_AGA): $(OBJS_AGA)
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN_AGA) $(OBJS_AGA)
 
-#$(PROGNAME).o: $(PROGNAME).68k $(PROGNAME).inc $(PROGNAME)_ram.68k $(PROGNAME)_game_ram.68k
-$(PROGNAME).o: $(PROGNAME).68k
+$(PROGNAME).o: $(PROGNAME).68k $(PROGNAME).inc $(PROGNAME)_ram.68k
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME).o
 sound_engine.o: $(AMIGA_SHARED_SRC)/sound_engine.68k
 	$(ASM) -Iamiga $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o
 ocs.o: $(AMIGA_OCS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_OCS_SRC)/tiles_palette.68k $(AMIGA_OCS_SRC)/bobs_palette.68k
 	$(ASM) -Iamiga -Iocs $(AMIGA_OCS_SRC)/amiga.68k -o ocs.o
-ecs.o: $(AMIGA_ECS_SRC)/amiga.68k $(AMIGA_ECS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_ECS_SRC)/tiles_palette.68k $(AMIGA_ECS_SRC)/bobs_palette.68k
-	$(ASM) -Iamiga -Iecs $(AMIGA_ECS_SRC)/amiga.68k -o ecs.o
 aga.o: $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/tiles_palette.68k $(AMIGA_AGA_SRC)/bobs_palette.68k
 	$(ASM_020) -Iamiga -Iaga $(AMIGA_AGA_SRC)/amiga.68k -o aga.o
 vbr.o: $(AMIGA_SHARED_SRC)/vbr.68k
@@ -94,16 +92,12 @@ ptplayer.o: $(AMIGA_SHARED_SRC)/ptplayer.68k
 	$(ASM) -I$(AMIGA_SHARED_SRC) $(AMIGA_SHARED_SRC)/ptplayer.68k -o ptplayer.o
 sounds_ocs.o: $(AMIGA_OCS_SRC)/sounds.68k
 	$(ASM) -I$(AMIGA_OCS_SRC) $(AMIGA_OCS_SRC)/sounds.68k -o sounds_ocs.o
-sounds_ecs.o: $(AMIGA_ECS_SRC)/sounds.68k
-	$(ASM) -I$(AMIGA_ECS_SRC) $(AMIGA_ECS_SRC)/sounds.68k -o sounds_ecs.o
 sounds_aga.o: $(AMIGA_AGA_SRC)/sounds.68k
 	$(ASM) -I$(AMIGA_AGA_SRC) $(AMIGA_AGA_SRC)/sounds.68k -o sounds_aga.o
 ReadJoyPad.o: $(AMIGA_SHARED_SRC)/ReadJoyPad.68k amiga/ReadJoyPad.i
 	$(ASM) -I$(AMIGA_SHARED_SRC) $(AMIGA_SHARED_SRC)/ReadJoyPad.68k -o ReadJoyPad.o
-game_rom.o: game_rom.68k
-	$(ASM) game_rom.68k -o game_rom.o
-graphics_ecs.o: $(AMIGA_ECS_SRC)/graphics.68k $(PROGNAME).inc
-	$(ASM) $(AMIGA_ECS_SRC)/graphics.68k -o graphics_ecs.o
+gfxrom.o: gfxrom.68k
+	$(ASM) gfxrom.68k -o gfxrom.o
 graphics_aga.o: $(AMIGA_AGA_SRC)/graphics.68k $(PROGNAME).inc
 	$(ASM) $(AMIGA_AGA_SRC)/graphics.68k -o graphics_aga.o
 graphics_ocs.o: $(AMIGA_OCS_SRC)/graphics.68k $(PROGNAME).inc

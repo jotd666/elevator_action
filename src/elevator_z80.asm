@@ -2091,7 +2091,7 @@ table_0D2D:
 0E4A: D0          ret  nc
 0E4B: E5          push hl
 0E4C: C5          push bc
-0E4D: 21 66 0E    ld   hl,$0E66
+0E4D: 21 66 0E    ld   hl,table_0E66
 0E50: 06 00       ld   b,$00
 0E52: 4B          ld   c,e
 0E53: 09          add  hl,bc
@@ -2110,6 +2110,9 @@ table_0D2D:
 0E63: E1          pop  hl
 0E64: 77          ld   (hl),a
 0E65: C9          ret
+table_0E66:
+	dc.b	E4 E6 E8 E8 E6 E4 E6 EA EA E6 E4 E6 E8 E8 E6 E4
+	dc.b	E6 EA EA E6 
 
 0E7A: 3A 33 80    ld   a,($8033)
 0E7B: 33          inc  sp
@@ -8184,6 +8187,8 @@ bad_hardware_34C5:
 34FF: 2B          dec  hl
 3500: 26 00       ld   h,$00
 3502: 08          ex   af,af'
+
+cache_dip_switches_3503:
 3503: 3A 0A D4    ld   a,(dip_switches_D40A)
 3506: 2F          cpl			; active low?
 3507: 32 4E 82    ld   (copy_of_dip_switches_1_824E),a		; main DSW (lives, skill...)
@@ -12837,7 +12842,7 @@ try_to_spawn_an_enemy_5A26:
 5A4B: C9          ret
 
 ; < e: random offset to apply
-5A4C: DD 7E 09    ld   a,(ix+enemy_state)
+5A4C: DD 7E 09    ld   a,(ix+enemy_state_09)
 5A4F: 3C          inc  a
 5A50: 28 0C       jr   z,$5A5E		; jump if enemy inactive
 5A52: DD 7E 06    ld   a,(ix+character_situation_06)
