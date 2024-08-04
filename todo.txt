@@ -46,7 +46,7 @@ elevator letters scroll: addresses 7462 ???
 
 try to resolve undefined
 
-debug dyn code 85cf 85ef 8071 805b
+debug dyn code 85cf 85ef 805b 8071 
 title:
 reverse l_7334
 reverse 73A5

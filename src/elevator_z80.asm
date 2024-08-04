@@ -193,7 +193,7 @@ jump_table_0070:
 00B3: CD 48 01    call $0148
 00B6: 16 00       ld   d,$00
 00B8: DD 72 11    ld   (ix+$11),d
-00BB: C3 EF 85    jp   $85EF
+00BB: C3 EF 85    jp   dynamic_ram_code_85EF
 00BE: 16 00       ld   d,$00
 00C0: DD 72 11    ld   (ix+$11),d
 00C3: CD 74 01    call $0174
@@ -201,10 +201,10 @@ jump_table_0070:
 00C9: DD BE 10    cp   (ix+$10)
 00CC: 28 02       jr   z,$00D0
 00CE: 16 20       ld   d,$20
-00D0: C3 EF 85    jp   $85EF
+00D0: C3 EF 85    jp   dynamic_ram_code_85EF
 00D3: 16 00       ld   d,$00
 00D5: DD 72 11    ld   (ix+$11),d
-00D8: C3 CF 85    jp   $85CF
+00D8: C3 CF 85    jp   dynamic_ram_code_85CF
 00DB: 16 00       ld   d,$00
 00DD: DD 72 11    ld   (ix+$11),d
 00E0: CD 74 01    call $0174
@@ -212,7 +212,7 @@ jump_table_0070:
 00E6: DD BE 10    cp   (ix+$10)
 00E9: 28 02       jr   z,$00ED
 00EB: 16 20       ld   d,$20
-00ED: C3 CF 85    jp   $85CF
+00ED: C3 CF 85    jp   dynamic_ram_code_85CF
 00F0: 16 00       ld   d,$00
 00F2: DD 72 11    ld   (ix+$11),d
 00F5: 18 12       jr   $0109
@@ -2004,7 +2004,7 @@ table_0D2D:
 0DBD: 21 41 80    ld   hl,$8041
 0DC0: 57          ld   d,a
 0DC1: 06 09       ld   b,$09
-0DC3: CD 5B 80    call $805B
+0DC3: CD 5B 80    call dynamic_ram_code_805B
 0DC6: 15          dec  d
 0DC7: 15          dec  d
 0DC8: 23          inc  hl
@@ -2017,7 +2017,7 @@ table_0D2D:
 0DD4: 15          dec  d
 0DD5: 23          inc  hl
 0DD6: 10 F7       djnz $0DCF
-0DD8: CD 5B 80    call $805B
+0DD8: CD 5B 80    call dynamic_ram_code_805B
 0DDB: 15          dec  d
 0DDC: 15          dec  d
 0DDD: 23          inc  hl
@@ -2030,7 +2030,7 @@ table_0D2D:
 0DE8: 23          inc  hl
 0DE9: 10 F7       djnz $0DE2
 0DEB: 06 06       ld   b,$06
-0DED: CD 5B 80    call $805B
+0DED: CD 5B 80    call dynamic_ram_code_805B
 0DF0: 15          dec  d
 0DF1: 15          dec  d
 0DF2: 23          inc  hl
@@ -2083,7 +2083,7 @@ table_0D2D:
 0E3C: B7          or   a
 0E3D: F8          ret  m
 0E3E: FE 08       cp   $08
-0E40: DA 71 80    jp   c,$8071
+0E40: DA 71 80    jp   c,dynamic_ram_code_8071
 0E43: D6 08       sub  $08
 0E45: 5F          ld   e,a
 0E46: FE 14       cp   $14
@@ -16522,3 +16522,56 @@ recorded_inputs_7DD3:
 	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
 	dc.b	BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF BF
  
+; the following code is installed in RAM by the protection process
+; I don't know if it's decrypted or whatever, it's copied and called from
+; within the game. If it's not decrypted properly, of course the game is
+; going to freeze/crash. For instance dynamic_ram_code_85EF
+; is called during demo, when lamps are shot, and regularly from then
+
+dynamic_ram_code_805B:
+805B: 36 00    ld   (hl),$00
+805D: 7A       ld   a,d
+805E: B7       or   a
+805F: F8       ret  m
+8060: FE 0C    cp   $0C
+8062: D0       ret  nc
+8063: FE 08    cp   $08
+8065: 38 0A    jr   c,dynamic_ram_code_8071
+8067: D6 08    sub  $08
+8069: 87       add  a,a
+806A: 87       add  a,a
+806B: 5F       ld   e,a
+806C: 3E FA    ld   a,$FA
+806E: 93       sub  e
+806F: 77       ld   (hl),a
+8070: C9       ret
+
+dynamic_ram_code_8071:
+8071: 87       add  a,a
+8072: C6 EC    add  a,$EC
+8074: 77       ld   (hl),a
+8075: C9       ret
+
+dynamic_ram_code_85CF:
+85CF: DD 7E 09 ld   a,(ix+enemy_state_09)
+85D2: 06 00    ld   b,$00
+85D4: FE 04    cp   $04
+85D6: 28 02    jr   z,$85DA
+85D8: 06 04    ld   b,$04
+85DA: 78       ld   a,b
+85DB: B2       or   d
+85DC: DD 77 0D ld   (ix+move_direction_0d),a
+85DF: C9       ret
+
+dynamic_ram_code_85EF:
+85EF: DD 7E 09 ld   a,(ix+enemy_state_09)
+85F2: 06 00    ld   b,$00
+85F4: FE 02    cp   $02
+85F6: 28 06    jr   z,$85FE
+85F8: 06 04    ld   b,$04
+85FA: 38 02    jr   c,$85FE
+85FC: 06 08    ld   b,$08
+85FE: 78       ld   a,b
+85FF: B2       or   d
+8600: DD 77 0D ld   (ix+move_direction_0d),a
+8603: C9       ret

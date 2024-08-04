@@ -251,15 +251,6 @@ load_d1d2_address_from_6bdc_in_a4:
 play_sound:
 	rts
 	
-execute_dynamic_ram_code_805b:
-	ILLEGAL
-execute_dynamic_ram_code_8071:
-	ILLEGAL
-
-execute_dynamic_ram_code_85cf:
-	ILLEGAL
-execute_dynamic_ram_code_85ef:
-	ILLEGAL
 	
 * < A2: ROM address
 * < D5: ROM address
@@ -274,7 +265,7 @@ execute_dynamic_ram_code_8246:
 	bne.b	0f
 	jbra	l_2f1f		| would execute jmp (ix), ix = $2F1F
 0:
-	* undiscovered cases
+	* undiscovered cases (are there some?? don't think so)
 	jbsr	osd_break
 	illegal
 	NOP
@@ -319,7 +310,7 @@ rst_20:
 	move.l	(sp)+,a0                        	| [$0025: pop  hl]
 	rts                                    	| [$0026: ret]
 
-* part of protection?
+* part of protection? probably used to decrypt code put in RAM
 rst_28:
 	and.b	#0x1F,d0                         	| [$0028: and  $1F]
 	jbsr	rst_20                            	| [$002a: rst  $20]
@@ -413,7 +404,7 @@ l_00b3:
 	jbsr	l_0148                            	| [$00b3: call $0148]
 	moveq   #0,d3                               	| [$00b6: ld   d,$00]
 	move.b	d3,(0x11,a2)                    	| [$00b8: ld   (ix+$11),d]
-	jra	execute_dynamic_ram_code_85ef                         	| [$00bb: jp   $85EF]
+	jra	dynamic_ram_code_85ef                         	| [$00bb: jp   $85EF]
 l_00be:
 	moveq   #0,d3                               	| [$00be: ld   d,$00]
 	move.b	d3,(0x11,a2)                    	| [$00c0: ld   (ix+$11),d]
@@ -423,11 +414,11 @@ l_00be:
 	jeq	l_00d0                             	| [$00cc: jr   z,$00D0]
 	move.b	#0x20,d3                        	| [$00ce: ld   d,$20]
 l_00d0:
-	jra	execute_dynamic_ram_code_85ef     	| [$00d0: jp   $85EF]
+	jra	dynamic_ram_code_85ef     	| [$00d0: jp   $85EF]
 l_00d3:
 	moveq   #0,d3                               	| [$00d3: ld   d,$00]
 	move.b	d3,(0x11,a2)                    	| [$00d5: ld   (ix+$11),d]
-	jra	execute_dynamic_ram_code_85cf                         	| [$00d8: jp   $85CF]
+	jra	dynamic_ram_code_85cf                         	| [$00d8: jp   $85CF]
 l_00db:
 	moveq   #0,d3                               	| [$00db: ld   d,$00]
 	move.b	d3,(0x11,a2)                    	| [$00dd: ld   (ix+$11),d]
@@ -19159,6 +19150,67 @@ exx:
     movem.l d1-d4/a0/a1/a4,(a6)
     movem.l (a7)+,d1-d4/a0/a1/a4
     rts
+
+* the following code is installed in RAM by the protection process
+* I don't know if it's decrypted or whatever, it's copied and called from
+* within the game. If it's not decrypted properly, of course the game is
+* going to freeze/crash. For instance dynamic_ram_code_85EF
+* is called during demo, when lamps are shot, and regularly from then
+
+dynamic_ram_code_805B:
+	clr.b	(a0)                             	| [$805b: ld   (hl),$00]
+	move.b	d3,d0                           	| [$805d: ld   a,d]
+	or.b	d0,d0                             	| [$805e: or   a]
+	bpl.b	0f                               	| [...]
+	rts                                    	| [$805f: ret  m] [...]
+0:
+	cmp.b	#0x0C,d0                         	| [$8060: cp   $0C]
+	bcs.b	0f                               	| [...]
+	rts                                    	| [$8062: ret  nc] [...]
+0:
+	cmp.b	#0x08,d0                         	| [$8063: cp   $08]
+	jcs	dynamic_ram_code_8071              	| [$8065: jr   c,dynamic_ram_code_8071]
+	sub.b	#0x08,d0                         	| [$8067: sub  $08]
+	add.b	d0,d0                            	| [$8069: add  a,a]
+	add.b	d0,d0                            	| [$806a: add  a,a]
+	move.b	d0,d4                           	| [$806b: ld   e,a]
+	move.b	#0xFA,d0                        	| [$806c: ld   a,$FA]
+	sub.b	d4,d0                            	| [$806e: sub  e]
+	move.b	d0,(a0)                         	| [$806f: ld   (hl),a]
+	rts                                    	| [$8070: ret]
+
+dynamic_ram_code_8071:
+	add.b	d0,d0                            	| [$8071: add  a,a]
+	add.b	#0xEC,d0                         	| [$8072: add  a,$EC]
+	move.b	d0,(a0)                         	| [$8074: ld   (hl),a]
+	rts                                    	| [$8075: ret]
+
+dynamic_ram_code_85CF:
+	move.b	(enemy_state_09,a2),d0          	| [$85cf: ld   a,(ix+enemy_state_09)]
+	clr.b	d1                               	| [$85d2: ld   b,$00]
+	cmp.b	#0x04,d0                         	| [$85d4: cp   $04]
+	jeq	l_85da                         	| [$85d6: jr   z,$85DA]
+	move.b	#0x04,d1                        	| [$85d8: ld   b,$04]
+l_85da:
+	move.b	d1,d0                           	| [$85da: ld   a,b]
+	or.b	d3,d0                             	| [$85db: or   d]
+	move.b	d0,(move_direction_0d,a2)       	| [$85dc: ld   (ix+move_direction_0d),a]
+	rts                                    	| [$85df: ret]
+
+dynamic_ram_code_85EF:
+	move.b	(enemy_state_09,a2),d0          	| [$85ef: ld   a,(ix+enemy_state_09)]
+	clr.b	d1                               	| [$85f2: ld   b,$00]
+	cmp.b	#0x02,d0                         	| [$85f4: cp   $02]
+	jeq	l_85fe                         	| [$85f6: jr   z,$85FE]
+	move.b	#0x04,d1                        	| [$85f8: ld   b,$04]
+	cmp.b	#0x02,d0
+	jcs	l_85fe                         	| [$85fa: jr   c,$85FE]
+	move.b	#0x08,d1                        	| [$85fc: ld   b,$08]
+l_85fe:
+	move.b	d1,d0                           	| [$85fe: ld   a,b]
+	or.b	d3,d0                             	| [$85ff: or   d]
+	move.b	d0,(move_direction_0d,a2)       	| [$8600: ld   (ix+move_direction_0d),a]
+	rts                                    	| [$8603: ret]
 
 
 recorded_inputs_7A63:
