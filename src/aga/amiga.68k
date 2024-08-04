@@ -29,10 +29,7 @@ Y_MAX = 260
 
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
 BASE_BPLCON2_VALUE = 0x0064
-SCREEN_ADDRESS = 0x8000
-DEFAULT_SCROLL_VALUE_BG = 0x0C07
-DEFAULT_SCROLL_VALUE_FG = 0x4080
-DEFAULT_SCROLL_VALUE = DEFAULT_SCROLL_VALUE_BG+DEFAULT_SCROLL_VALUE_FG
+SCREEN_ADDRESS = 0xC400
 
 
 * if the alloc_sprite & update_sprite routines
@@ -80,7 +77,7 @@ OPT_ENABLE_DOUBLE_BUFFERING = 1
 
 _custom = 0xDFF000
 
-OPT_ENABLE_MULTIPLEXED_SPRITES = 1
+OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 
 NB_PLAYFIELD_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
@@ -189,7 +186,6 @@ start:
 		.global osd_read_inputs_2
 		.global	osd_set_gfx_bank
 		.global	osd_set_column_scroll
-		
 	
 	.include	"ReadJoypad.i"
 	.include	"whdload_funcs.i"
@@ -333,11 +329,7 @@ _user:
 	lea		bg_screen_buffer,a0
 	bsr		align_for_fmode
 	move.l	a0,bg_panel_screen_ptr
-	lea		blue_mountain_buffer,a0
-	bsr		align_for_fmode
-	move.l	a0,bg_base_mountain_screen_ptr
-	move.l	a0,bg_mountain_screen_ptr
-	
+
 
 	move.l	bg_panel_screen_ptr,a0
 	*add.w	#BG_NB_BYTES_PER_ROW*SCROLL_MIN_Y,a0
@@ -354,8 +346,7 @@ _user:
 	* set them even if reset by game afterwards
 	* avoiding ugly stripe bitplane effect at startup
 	bsr		set_panel_bitplanes
-	bsr		set_mountain_bitplanes
-	bsr		set_ground_bitplanes
+
 
 
 *	move.l	dip_switch_start_course(pc),d0
@@ -780,256 +771,26 @@ osd_wait:
 	rts
 
 
-* brutally redraw everything
 
-refresh_tiles:
-	move.w	#0x3FF,d2
-	moveq	#0,d7
-	lea		bg_videoram,a0
-	lea		bg_colorram,a1
-0:
-	move.b	(a0)+,d0
-	move.b	(a1)+,d1
-	movem.l	a0/a1/d7/d2,-(a7)
-	jbsr		update_bg_tile
-	movem.l	(a7)+,a0/a1/d7/d2
-	addq.w	#1,d7
-	dbf		d2,0b
 	
-	rts
 	
-
-
-current_x:
-	dc.w	0
-	
-* < A0: 
-update_background:
-	.ifdef	STATIC_SCROLL_TEST
-	move	current_x,d0
-	moveq	#1,d1
-	move.w	#150,d3
-	move.w	#0,d5
-	BTST	#7,0xBFE001
-	bne		0f
-	add.w	#1,current_x
-0:
-	BTST	#6,0xBFE001
-	bne		0f
-	sub.w	#1,current_x
-0:
-	* < D0.W: X position of blue layer (0-256)
-* < D1.W: X position of green layer (0-256)
-* < D2.W: Y position of blue layer
-* < D3.W: Y position of green layer
-* < D4.B: 0xFB: green mountains, 0xFC: green city, 0: no layers
-* < D5.W: X position of the ground layer
-*
-
-	jra		update_scrollable_layers
-	.endif
-
-	move.l	a0,a2		| a2 points to shadow mem E1C0
-	* don't update scroll if title displayed and the values are the same as before
-	jbsr	is_title_displayed
-	beq.b	1f
-	jbsr	is_game_over_displayed
-	bne.b	0f
-	rts
-0:
-
-	lea		previous_values(pc),a1
-	cmp.b	(a0)+,(a1)+
-	beq.b	1f			| force update if ground is not moving
-	moveq	#5,d0		| 5 values to compare
-0:
-	cmp.b	(a0)+,(a1)+
-	bne.b	1f			| only update if values have changed
-	dbf		d0,0b
-	rts
-1:
-	moveq	#0,d0     | X position of blue layer (0-256)
-	moveq	#0,d1     | X position of green layer (0-256)
-	moveq	#0,d2     | Y position of blue layer
-	moveq	#0,d3     | Y position of green layer
-	moveq	#0,d4     | layer control (0: no layers)
-	moveq	#0,d5     | X position of ground layer
-	
-	lea		previous_values(pc),a1
-	move.b	(a2)+,d5
-	move.b	d5,(a1)+	| ground layer
-	move.b	(a2)+,d1	| green layer X
-	move.b	d1,(a1)+
-	move.b	(a2)+,d0	| blue layer X
-	move.b	d0,(a1)+
-	move.b	(a2)+,d3    | green layer Y
-	beq.b	0f	
-	move.b	(a1),previous_green_layer_y
-0:
-	move.b	d3,(a1)+
-	move.b	(a2)+,d2     | blue layer Y
-	move.b	d2,(a1)+
-	move.b	(a2)+,d4	 | layer control
-	move.b	d4,(a1)
-	jeq		clear_background	| layer control = 0 + ground was moving: clear
-	
-	* if player killed while climbing slope, we have to reset green layer
-	* as some would remain
-	move.b	previous_green_layer_y,d6
-	beq.b	1f
-	tst.b	d3
-	bne.b	1f
-	jbsr	clear_previous_green_layer
-1:
-	not.b	d0
-	not.b	d1
-	not.b	d5
-	* only display if Y != 0
-	tst.b	d2
-	jne		0f
-	
-	tst.b	previous_blue_layer_y
-	beq.b	1f
-
-	move.b	d2,previous_blue_layer_y
-	* Y just went 0: no more mountains or game playfield (only status text)
-	rts
-0:
-	tst.b	previous_blue_layer_y
-	bne.b	2f
-	* was previously at 0: screen switch to mountains display
-	* active again!
-	
-	movem.w	d0-d5,-(a7)
-	lea		ground_bitplanes,a0
-	move.w	#bplpt,d0
-	.rept	4
-	move.w	d0,(a0)
-	addq	#4,a0
-	addq	#2,d0
-	move.w	d0,(a0)
-	addq	#4,a0
-	addq	#6,d0
-	.endr
-	bsr		really_clear_background
-	movem.w	(a7)+,d0-d5	
-	
-	jra		23f
-2:
-	move.b	previous_blue_layer_y,d6
-	sub.b	d2,d6
-	jpl		22f
-	neg.b	d6
-22:
-	cmp.b	#2,d6
-	jcs		23f
-	* more diff than 2: brutal Y change: we have to clear the top of screen
-	* (happens when player killed after changing terrain height, and last
-	* checkpoint is on some other terrain height, rare but happens)
-	* with AGA, only green layer is impacted
-	movem.w	d0-d5,-(a7)
-	bsr		really_clear_background
-	movem.w	(a7)+,d0-d5
-23:
-	move.b	d2,previous_blue_layer_y
-	jra		update_scrollable_layers
-1:
-	rts
-	
-previous_values:
-	ds.b	6
-	
-previous_blue_layer_y:
-	.byte	0
-previous_green_layer_y:
-	.byte	0
-	.align	2
-	
-* < A0: pointer on sprite shadow zone E100
-* length: 256 bytes for 64 max sprites on screen (48 for this game!)
-* there seem to be 4 sprite blocks of 0x40 bytes
-* in each block, first sprites have priority
-* so top priority sprite is the one with offset 0xF0
-* last priority sprite is the one with offset 0x3C
-* as it's drawn first
-* ATM let's not worry about that. Mixing bobs & sprites
-* will cause us priority issues anyway
-
 osd_update_sprites:
-	* first pre-filter/remove stuff (for instance if too many jeep wheels
-	* when exploding
 	movem.l	a0-a6/d0-d7,-(a7)
 
-	clr.b	nb_displayed_wheels
-	clr.b	nb_displayed_ships
-	clr.b	nb_displayed_rocks
-	lea		sprite_registers(pc),a1
-	lea		hardware_sprite_flag_table,a2
-	move.w	#NB_TARGET_SPRITES-1,d7
-	moveq	#0,d0
-0:
-	move.b	(TARGET_SPRITE_Y,a0),d1
-	jeq		ignore_sprite
-	move.b	(TARGET_SPRITE_CODE,a0),d0
-	move.b	(a2,d0.w),d3
-	beq.b	2f			| not a hardware sprite, skip
-	
-	* now sprites with bob backups
-	cmp.b	#BB_SHIP,d3
-	bcs.b	2f				| not a hardware sprite
-*	jne	20f
-	* count UFOs
-	* UFO: if too low, convert to bob to avoid conflict
-	not.b	d1		| convert to real coord
-	add.w	#16,d1	| add ufo sprite height
-	cmp.b	sprite_y_split_limit,d1
-	bcc.b	convert_to_bob		| over this Y (means below this line), HW sprite conflicts with lower part sprites
-	
-	* count how many we have
-	move.b	nb_displayed_ships,d0
-	addq.b	#1,d0
-	move.b	d0,nb_displayed_ships
-	cmp.b	#NB_HOST_SPRITES+1,d0
-	bcc.b	convert_to_bob	| if already 8 sprites, switch to bob copy
-2:
-	move.l	(a0)+,(a1)+		| brutal copy
-	dbf		d7,0b
-3:
-	
-	* copy 6 more values (scroll registers)
-	move.l	(a0)+,(a1)+
-	move.w	(a0)+,(a1)+
-	
+
+
 	movem.l	(a7)+,a0-a6/d0-d7
 	rts
 	
-convert_to_bob:
-	* more than 8 ships: convert to sprite, now it's a bob
-	* (bob mirror has been conveniently created 128 slots after)
-	add.b	#0x80,(TARGET_SPRITE_CODE,a0)
-	bra.b	2b
-	
-ignore_sprite:
-	addq.w	#4,a0
-	clr.l	(a1)+
-	dbf		d7,0b
-	bra.b	3b
+
 
 really_update_hardware_sprites:
 
-	lea		sprite_registers,a0
-	st.b	do_upper_part
-	bsr		update_hardware_sprites
-	.ifne	OPT_ENABLE_MULTIPLEXED_SPRITES
-	lea		sprite_registers,a0
-	clr.b	do_upper_part
-	bsr		update_hardware_sprites
-	.endif
 
 	rts
 	
 is_game_playing:
-	btst.b	#7,game_status_bits_E046
+	moveq	#0,d0
 	rts
 	
 
@@ -1361,11 +1122,6 @@ update_bobs:
 12:
 	dbf		d7,1b
 	
-	* now that we have deleted the bobs, we can update the backgrounds
-	move.l	a0,-(a7)
-	lea		(0xC0,a0),a0		| shadow for x,y background pos
-	bsr		update_background
-	move.l	(a7)+,a0
 	
     lea _custom,A5
 	lea		hardware_sprite_flag_table,a2
@@ -2176,8 +1932,6 @@ platform_init:
 
     move.w #0x83E0,dmacon(a5)
  
-	* blit the blue mountain strip now, it's not going to change
-	jbsr	blit_blue_mountain_strip
 
 	* install keyboard and vblank/copper handler
 	move.l	system_vbr(pc),a1
@@ -2295,8 +2049,17 @@ decode_sprite_data:
 	rts
 
 osd_set_gfx_bank:
+	move.b	d0,current_gfx_bank
 	rts
 	
+* D0: scroll value
+* D1: column index 0-xx
+*
+* depends on gfx bank
+* if title gfx bank, index is letter index
+* if game gfx bank, index is elevator index
+osd_set_column_scroll:
+	rts
 	
 * d7=screen address (preserved), d0=tile (preserved)
 * d7 starts at 0x8000 ends at 0x83FF
@@ -2310,7 +2073,7 @@ osd_w_videoram:
 	sub.w	#SCREEN_ADDRESS,d7
 	bcs.b	0f
 	.ifndef	RELEASE
-	cmp.w	#0x400,d7
+	cmp.w	#0x400*3,d7
 	bcs.b	1f
 0:
 	* should not happen
@@ -2320,16 +2083,20 @@ osd_w_videoram:
 	bra.b	0f
 	.endif
 1:
-	lea		bg_videoram,a1
+	.ifdef	RELEASE
+	lea		ram_buffer+SCREEN_ADDRESS-0x8000,a1
+	.else
+	move.l		ram_start_8000,a1
+	add.w	#SCREEN_ADDRESS-0x8000,a1
+	.endif
+	
 	add.w	d7,a1
 	
 	cmp.b	(a1),d0
 	beq.b	0f		| already the proper value
 3:
-	move.b	(a1),latest_overwritten_tile_code
 	move.b	d0,(a1)	| update logical grid
-	lea		bg_colorram,a1
-	move.b	(a1,d7.W),d1
+
 	
 
 	jbsr		update_bg_tile
@@ -2435,24 +2202,6 @@ update_bg_tile:
 	cmp.l	d0,a0
 	jeq		12f		| should not happen
 
-	jbsr	is_game_over_displayed
-	bne.b	0f
-	cmp.b	#0x10,d3		| row where "GAME OVER" is printed
-	jeq		copy_third_plane_game_over
-
-0:
-	* we have to copy the shot on the FRONT layer, not back
-	* (as it would be hidden by the green mountains / lost in the blue
-	* mountains)
-	*
-	* special case for vertical shots. We managed to put the color in the 4th
-	* plane so it doesn't interact with the mountain background which only use 3
-	* the color change a bit and it's yellow instead of white but it's already
-	* a miracle that it displays properly given the constraints
-	and.b	#0xF8,d2
-	cmp.b	#0x60,d2
-	jeq		copy_third_plane
-
 	
 	* just copy
 4:
@@ -2470,11 +2219,6 @@ update_bg_tile:
 	* clear tile
 
 11:
-	move.b	latest_overwritten_tile_code,d0
-	and.b	#0xF8,d0
-	cmp.b	#0x60,d0
-	jeq	erase_third_plane
-111:
 	.set	offset,0
 	.rept	8
 	clr.b	(offset,a1)
@@ -2488,59 +2232,6 @@ update_bg_tile:
 12:
 	* clut/tile combo not declared as used
 	**blitz
-	rts
-
-copy_third_plane:
-	bsr		load_3rd_fg_bitplane
-
-	addq	#8,a0		| non-zero shot bitplane (first bitplane is empty)
-	.set	offset,0
-	.rept	8
-	move.b	(a0)+,d0
-	beq.b	0f
-	move.b	d0,(offset,a1)
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	move.b	d0,(offset,a2)
-	.endif
-0:
-
-	.set	offset,offset+FG_NB_BYTES_PER_ROW
-	.endr
-
-
-0:
-	rts
-	
-copy_third_plane_game_over:
-	bsr		load_3rd_fg_bitplane
-	* copy data of first letters bitplane to 3rd bitplane
-	* => GAME OVER written in white over the mountains!
-	.set	offset,0
-	.rept	8
-	move.b	(a0)+,d0
-	move.b	d0,(offset,a1)
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	move.b	d0,(offset,a2)
-	.endif
-
-	.set	offset,offset+FG_NB_BYTES_PER_ROW
-	.endr
-
-
-0:
-	rts
-	
-erase_third_plane:
-	bsr		load_3rd_fg_bitplane
-	.set	offset,0
-	.rept	8
-	clr.b	(offset,a1)
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	clr.b	(offset,a2)
-	.endif
-	.set	offset,offset+FG_NB_BYTES_PER_ROW
-	.endr
-
 	rts
 
 
@@ -2565,16 +2256,6 @@ load_fg_bitplane:
 	rts
 
 
-load_3rd_fg_bitplane:
-	jbsr	load_fg_bitplane
-	
-	move.w	#FG_SCREEN_PLANE_SIZE*3,d5
-	add.w	d5,a1		| add D5 3 times
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	add.w	d5,a2
-	.endif
-	rts
-	
 
 			
 store_sprite_pos_16:
@@ -2644,62 +2325,6 @@ set_panel_bitplanes:
 	movem.l	a0/a1,-(a7)
     move.l	bg_panel_screen_ptr(pc),a1
 	lea	panel_bitplanes+2,a0
-	bsr		set_bg_bitplanes
-	movem.l	(a7)+,a0/a1
-	rts
-	
-set_mountain_bitplanes:
-	movem.l	d0-d2/a0/a1,-(a7)
-	* share the buffer between the panel and background
-	* only the background gets a pointer refresh
-	* we also re-set the bitplanes as they may be cleared by 
-	* "clear_background"
-	lea	blue_mountains_bitplanes,a0
-	move.w	#NB_PLAYFIELD_PLANES-1,d1
-	move.w	#bplpt,d0
-0:
-	move.w	d0,(a0)
-	addq	#2,d0
-	addq.w	#4,a0
-	move.w	d0,(a0)
-	addq	#6,d0
-	addq.w	#4,a0
-	dbf		d1,0b
-	
-	move.l	bg_mountain_screen_ptr(pc),a1
-	lea	blue_mountains_bitplanes+2,a0
-	move.l	a1,d0
- 	move.l	#BG_SCREEN_PLANE_SIZE,d2
-
-	* set 2 planes
-	.rept	2
-    swap d0
-    move.w d0,(a0)
-    swap d0
-    move.w d0,(4,a0)    
-    addq.w  #8,a0
-    add.l d2,d0
-	.endr
-	* set same empty plane
-	.rept	2
-    swap d0
-    move.w d0,(a0)
-    swap d0
-    move.w d0,(4,a0)    
-    addq.w  #8,a0
-	.endr
-
-
-	movem.l	(a7)+,d0-d2/a0/a1
-	rts
-	
-set_ground_bitplanes:
-	movem.l	a0/a1,-(a7)
-	* share the buffer between the panel and background
-	* only the background gets a pointer refresh
-	move.l	bg_ground_screen_ptr(pc),a1
-	
-	lea	ground_bitplanes+2,a0
 	bsr		set_bg_bitplanes
 	movem.l	(a7)+,a0/a1
 	rts
@@ -2776,29 +2401,6 @@ seed:
 
 	
 * d7=screen address
-osd_r_videoram:
-	movem.l	a0/d7,-(a7)
-	sub.w	#SCREEN_ADDRESS,d7
-	bmi.b	0f
-	.ifndef	RELEASE
-	cmp.w	#0x400,d7
-	bcs.b	1f
-0:
-	* should not happen
-	lea		read_videoram_out_of_range_error,a0
-	jbsr	osd_break
-	clr.b	d0
-	move.b	D1,d1
-	nop
-	bra.b	2f
-	.endif
-1:
-	lea		bg_videoram,a0
-	move.b	(a0,d7.w),d0
-2:
-	movem.l	(a7)+,a0/d7
-	rts
-
 
 osd_set_main_scroll:
 	rts
@@ -2914,16 +2516,15 @@ BIT_INSERT_COIN = 3
 BIT_START_1P = 0
 BIT_START_2P = 1
 
-osd_read_in_0:
+osd_read_inputs_1__:
+
 	moveq	#-1,d0
 		
 	movem.l	a0/d1,-(a7)
 
-	tst.b	in_continue_loop_flag
-	bne.b	0f
-	bsr		is_game_playing
-	bne.b	2f
-0:
+*	bsr		is_game_playing
+*	bne.b	2f
+*0:
 	* if game not playing, or within "continue" loop
 	* consider "fire" as insert coin
 	move.l	_joypad_state(pc),d1
@@ -2967,22 +2568,19 @@ osd_read_in_0:
 
 	rts
 	
-osd_set_column_scroll:
-	rts
-	
 osd_read_dsw1:
 	* actual dipswitches
-	move.b	dip_switches(pc),d0
+	move.b	dip_switches_1(pc),d0
 	not.b	d0		| active low
 	rts
 osd_read_dsw2:
 	* actual dipswitches
-	move.b	dip_switches(pc),d0
+	move.b	dip_switches_2(pc),d0
 	not.b	d0		| active low
 	rts
 osd_read_dsw3:
 	* actual dipswitches
-	move.b	dip_switches(pc),d0
+	move.b	dip_switches_3(pc),d0
 	not.b	d0		| active low
 	rts
 
@@ -3025,16 +2623,15 @@ handle_keyboard:
 	cmp.b	#0x50,d0	| F1 key
 	bne.b	0f
 	move.w	#0x0FF,_custom+color
-	move.b	#0x80,time_bcd_E511
+	
 	st.b	cheat_used
-	st.b	section_completed_flag
+	
 0:
 	cmp.b	#0x51,d0	| F2 key
 	bne.b	0f
 	st.b	cheat_used
 	move.w	#0x0FF,_custom+color
-	st.b	course_completed_flag
-	move.b	#0x80,time_bcd_E511
+	
 0:
 	cmp.b	#0x52,d0	| F3 key
 	bne.b	0f
@@ -3059,7 +2656,7 @@ handle_keyboard:
 	bne.b	0f
 	move.w	#0x0FF,_custom+color
 	* last life, if killed, direct game over
-	move.b	#1,nb_lives_E515
+	
 0:
 	cmp.b	#0x58,d0	| F9 key crashes game (restarts whdload)
 	bne.b	0f
@@ -3084,19 +2681,6 @@ handle_keyboard:
 	movem.l	(a7)+,d0/a0/a5
 	rts
 	
-reset_colors_and_scrolling:
-		
-	* also remove plane positionning for ground, seems to mess
-	* with displayed bitplanes (you have broken a record! is truncated)
-	lea		ground_bitplanes,a0
-	move.w	#0x1FE,d0
-	movew	#7,d1
-0:
-	move.w	d0,(a0)
-	addq	#4,a0
-	dbf		d1,0b
-	rts
-
 toggle_pause:
 	* pause only within game
 	jbsr		is_game_playing
@@ -3208,9 +2792,14 @@ dip_switch_start_course:
 dip_switch_start_lives:
 		.long	0
 	.long	0
-dip_switches:
+dip_switches_1:
 		.byte	0
-
+dip_switches_2:
+		.byte	0
+dip_switches_3:
+		.byte	0
+current_gfx_bank:
+	.byte	0
 
 mid_screen_interrupt:
 	.byte	0
@@ -3400,7 +2989,7 @@ color_line_copper:
 copperlist:
     *.word   0x1801,0xFFFE
 	* reset scrolling to default (panel)
-	.word	bplcon1,DEFAULT_SCROLL_VALUE
+	.word	bplcon1,0
 
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	0,4

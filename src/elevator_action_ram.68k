@@ -14,6 +14,7 @@
 	.global sprite_ram_d100
 	.global bank_switch_d50e
 	.global	regscopy
+	.global	ram_buffer
 	.ifndef	RELEASE
 	.global ram_start_8000
 	.endif

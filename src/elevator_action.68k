@@ -677,7 +677,7 @@ l_0247:
 	move.w	d3,-(sp)                        	| [$025b: push de]
 											| [$025c: ld   (gfx_pointer_d509),hl]
 	lea	scroll_row_8008(a6),a1             	| [$025f: ld   de,scroll_row_8008]
-	lea	gfx_rom_D404,a0                    	| [$0262: ld   hl,gfx_rom_D404]
+	lea	gfxrom,a0                    	| [$0262: ld   hl,gfx_rom_D404]
 * copy 32 bytes of gfx rom to ram, value read from D404 changes at each read!!!
 * reads a row of building data from gfx rom to RAM
 	move.b	#0x20,d1                        	| [$0265: ld   b,$20]
@@ -3144,7 +3144,7 @@ l_1073:
 l_1085:
 	move.b	copy_of_service_mode_824C(a6),d0	| [$1085: ld   a,(copy_of_service_mode_824C)]
 	move.b	d0,d1                           	| [$1088: ld   b,a]
-	move.b	service_mode_D40C,d0            	| [$1089: ld   a,(service_mode_D40C)]
+*	move.b	service_mode_D40C,d0            	| [$1089: ld   a,(service_mode_D40C)]
 	move.b	d0,copy_of_service_mode_824C(a6)	| [$108c: ld   (copy_of_service_mode_824C),a]
 	btst.b	#4,d0                           	| [$108f: bit  4,a]
 	bne.b	0f                               	| [...]
@@ -7127,7 +7127,8 @@ l_26b2:
 	jne	l_26b2                             	| [$26b5: djnz $26B2]
 * reset all column scroll registers
 												| [$26b7: ld   hl,$D000]
-	move.b	#0x60,d1                        	| [$26ba: ld   b,$60]
+	* 8 letters 
+	move.b	#0x7,d1                        	| [$26ba: ld   b,$60]
 	moveq	#0,d0
 l_26bc:
 	jbsr	osd_set_column_scroll               	| [$26bc: ld   (hl),$00]
@@ -14635,8 +14636,8 @@ l_582e:
 	move.b	#0x32,d0                        	| [$5831: ld   a,$32]
 	move.b	#0x60,d1                        	| [$5833: ld   b,$60]
 l_5835:
-	move.b	d0,(a0)                         	| [$5835: ld   (hl),a]
-	addq.w	#1,a0                           	| [$5836: inc  hl]
+	move.b	d0,(a0)+                         	| [$5835: ld   (hl),a]
+	                           	| [$5836: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_5835                             	| [$5837: djnz $5835]
 
@@ -16150,19 +16151,20 @@ animate_elevators_615C:
 	rts                                    	| [$6162: ret]
 
 set_elevator_column_scroll_6163:
-	lea	column_scroll_layer_3_D040+2,a0    	| [$6163: ld   hl,column_scroll_layer_3_D040+2]
+	    	| [$6163: ld   hl,column_scroll_layer_3_D040+2]
 	lea	elevator_scroll_array_8513(a6),a1  	| [$6166: ld   de,elevator_scroll_array_8513]
-	move.b	#0x07,d1                        	| [$6169: ld   b,$07] 4*7 = 28 columns, set 3 out of 4
+	moveq	#0,d1                        	| [$6169: ld   b,$07] 4*7 = 28 columns, set 3 out of 4
 l_616b:
 	move.b	(a1)+,d0                         	| [$616b: ld   a,(de)]
-	move.b	d0,(a0)+                         	| [$616c: ld   (hl),a]
-	                           	| [$616d: inc  hl]
-	move.b	d0,(a0)+                         	| [$616e: ld   (hl),a]
-	                           	| [$616f: inc  hl]
-	move.b	d0,(a0)+                         	| [$6170: ld   (hl),a]
+	jbsr	osd_set_column_scroll                         	| [$616c: ld   (hl),a]
+	           	| [$616d: inc  hl]
+	                         	| [$616e: ld   (hl),a]
+	           	| [$616f: inc  hl]
+	                         	| [$6170: ld   (hl),a]
 	                           	| [$6171: inc  hl] * 2
 	                           	| [$6173: inc  de]
-	subq.b	#1,d1                           	| [...]
+	addq.b	#1,d1                           	| [...]
+	cmp.b	#7,d1
 	jne	l_616b                             	| [$6174: djnz $616B]
 	rts                                    	| [$6176: ret]
 
@@ -18150,8 +18152,8 @@ l_72bb:
 	move.l	a0,-(sp)                        	| [$72bc: push hl]
 	move.b	d2,d0                           	| [$72bd: ld   a,c]
 l_72be:
-	addq.w	#1,a0                           	| [$72be: inc  hl]
-	addq.w	#1,a0                           	| [$72bf: inc  hl]
+	addq.w	#2,a0                           	| [$72be: inc  hl]
+	                          	| [$72bf: inc  hl]
 	cmp.b	(a0),d0                          	| [$72c0: cp   (hl)]
 	jcc	l_72be                             	| [$72c1: jr   nc,$72BE]
 	addq.w	#1,a0                           	| [$72c3: inc  hl]
@@ -18403,49 +18405,56 @@ update_title_elevator_scroll_7437:
 	lea	title_letters_y_scroll_values_862F(a6),a0	| [$7437: ld   hl,title_letters_y_scroll_values_862F]
 	.warning	"column scroll for letters"
 	*lea	l_D048,a1                          	| [$743a: ld   de,$D048]
+	moveq 	#0,d1
+0:
+	move.b	(a0)+,d0
+	addq.w	#1,a0		| same value twice
+	jbsr	osd_set_column_scroll
+	addq	#1,d1
+	cmp.b	#8,d1
+	jne		0b
+									| [$743d: ldi]
+									| [$743f: ldi]
 	
-	jbsr	ldi                               	| [$743d: ldi]
-	jbsr	ldi                               	| [$743f: ldi]
-
-	jbsr	ldi                               	| [$7441: ldi]
-	jbsr	ldi                               	| [$7443: ldi]
-
-	jbsr	ldi                               	| [$7445: ldi]
-	jbsr	ldi                               	| [$7447: ldi]
-
-	jbsr	ldi                               	| [$7449: ldi]
-	jbsr	ldi                               	| [$744b: ldi]
-
-	jbsr	ldi                               	| [$744d: ldi]
-	jbsr	ldi                               	| [$744f: ldi]
-
-	jbsr	ldi                               	| [$7451: ldi]
-	jbsr	ldi                               	| [$7453: ldi]
-
-	jbsr	ldi                               	| [$7455: ldi]
-	jbsr	ldi                               	| [$7457: ldi]
-
-	jbsr	ldi                               	| [$7459: ldi]
-	jbsr	ldi                               	| [$745b: ldi]
+									| [$7441: ldi]
+									| [$7443: ldi]
+	
+									| [$7445: ldi]
+									| [$7447: ldi]
+	
+									| [$7449: ldi]
+									| [$744b: ldi]
+	
+									| [$744d: ldi]
+									| [$744f: ldi]
+	
+									| [$7451: ldi]
+									| [$7453: ldi]
+	
+									| [$7455: ldi]
+									| [$7457: ldi]
+	
+									| [$7459: ldi]
+									| [$745b: ldi]
 	lea	l_860F(a6),a0                      	| [$745d: ld   hl,$860F]
 	move.b	#0x08,d1                        	| [$7460: ld   b,$08]
 l_7462:
 	.warning  "debug addresses here"
 	movem.w	d1/d2,-(sp)                    	| [$7462: push bc]
 	move.l	a4,-(sp)                        	| [$7462: push bc]
-	move.b	(a0),d2                         	| [$7463: ld   c,(hl)]
-	addq.w	#1,a0                           	| [$7464: inc  hl]
-	move.b	(a0),d1                         	| [$7465: ld   b,(hl)]
-	addq.w	#1,a0                           	| [$7466: inc  hl]
-	move.b	(a0),d4                         	| [$7467: ld   e,(hl)]
-	addq.w	#1,a0                           	| [$7468: inc  hl]
-	move.b	(a0),d3                         	| [$7469: ld   d,(hl)]
-	addq.w	#1,a0                           	| [$746a: inc  hl]
-	move.b	(a4),d0                         	| [$746b: ld   a,(bc)]
-	move.b	d0,(a1)                         	| [$746c: ld   (de),a]
-	addq.w	#1,a4                           	| [$746d: inc  bc]
-	addq.w	#1,a1                           	| [$746e: inc  de]
-	move.b	(a4),d0                         	| [$746f: ld   a,(bc)]
+	move.b	(a0)+,d2                         	| [$7463: ld   c,(hl)]
+	                           	| [$7464: inc  hl]
+	move.b	(a0)+,d1                         	| [$7465: ld   b,(hl)]
+	                           	| [$7466: inc  hl]
+	move.b	(a0)+,d4                         	| [$7467: ld   e,(hl)]
+	                           	| [$7468: inc  hl]
+	move.b	(a0)+,d3                         	| [$7469: ld   d,(hl)]
+	                           	| [$746a: inc  hl]
+	move.b	(a4)+,(a1)+                         	| [$746b: ld   a,(bc)]
+	                        	| [$746c: ld   (de),a]
+	                           	| [$746d: inc  bc]
+	                           	| [$746e: inc  de]
+	move.b	(a4),(a1)                         	| [$746f: ld   a,(bc)]
 	move.b	d0,(a1)                         	| [$7470: ld   (de),a]
 	move.l	(sp)+,a4                        	| [$7471: pop  bc]
 	movem.w	(sp)+,d1/d2                    	| [$7471: pop  bc]
