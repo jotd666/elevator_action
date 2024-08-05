@@ -1,6 +1,9 @@
 from PIL import Image,ImageOps
+import os
 
-with open("elevator_ram","rb") as f:
+this_dir = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(this_dir,"elevator_ram_in_game"),"rb") as f:
     contents = f.read()
 
 
@@ -20,8 +23,10 @@ for i in range(side):
         blank_image.putpixel((i,j),transparent)
 
 
-def load_tileset(image_name,side,dump_prefix=""):
-    tiles_1 = Image.open(image_name)
+def load_tileset(image_name,game_gfx,side,dump_prefix=""):
+    full_image_path = os.path.join(this_dir,"elevator",
+                        "game" if game_gfx else "title",image_name)
+    tiles_1 = Image.open(full_image_path)
     nb_rows = tiles_1.size[1] // side
     nb_cols = tiles_1.size[0] // side
 
@@ -36,7 +41,7 @@ def load_tileset(image_name,side,dump_prefix=""):
             tileset_1.append(img)
             if dump_prefix:
                 img = ImageOps.scale(img,5,resample=Image.Resampling.NEAREST)
-                img.save(f"dumps/{dump_prefix}_{k:02x}.png")
+                img.save(os.path.join(dumpdir,f"{dump_prefix}_{k:02x}.png"))
             k += 1
 
     return tileset_1
@@ -62,29 +67,28 @@ def create_layer(tileset,address):
     return layer_1
 
 
-tileset_1 = load_tileset("elevator/tiles_0.png",side)
-layer_1 = create_layer(tileset_1,0xC400)
-#layer_1.save("layer1.png")
+game_layer = []
 
-tileset_2 = load_tileset("elevator/tiles_1.png",side)
-layer_2 = create_layer(tileset_2,0xC800)
-#layer_2.save("layer2.png")
+for i in range(0,3):
+    tileset = load_tileset(f"tiles_{i}.png",True,side)
+    layer = create_layer(tileset,0xC400+(0x400*i))
+    game_layer.append(layer)
+    layer.save(f"game_layer_{i+1}.png")
 
-tileset_3 = load_tileset("elevator/tiles_2.png",side)
-layer_3 = create_layer(tileset_3,0xCC00)
-#layer_3.save("layer3.png")
 
-all_layers = Image.new("RGBA",layer_1.size)
+all_layers = Image.new("RGBA",layer.size)
 
-all_layers.paste(layer_3,(0,0),layer_3)
-all_layers.paste(layer_2,(0,0),layer_2)
-all_layers.paste(layer_1,(0,-16),layer_1)
+layer = game_layer[2]
+all_layers.paste(layer,(0,0),layer)
+layer = game_layer[1]
+all_layers.paste(layer,(0,0),layer)
+layer = game_layer[0]
+all_layers.paste(layer,(0,-16),layer)
 
 # sprites at D100
 # X,Y,attribute (0,1 X flip) and code starting from 0x40
 
-sprites_pic = "elevator/sprites_4.png"
-sprites_set = load_tileset(sprites_pic,16,"sprite")
+sprites_set = load_tileset("sprites_4.png",True,16,"sprite")
 
 for sprite_address in range(0xD100,0xD200,4):
     block = contents[sprite_address-0x8000:sprite_address-0x8000+4]
