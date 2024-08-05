@@ -3,7 +3,7 @@ import os
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
-with open(os.path.join(this_dir,"elevator_ram_in_game"),"rb") as f:
+with open(os.path.join(this_dir,"ram_in_game"),"rb") as f:
     contents = f.read()
 
 
@@ -48,8 +48,8 @@ def load_tileset(image_name,game_gfx,side,dump_prefix=""):
 
 def create_layer(tileset,address):
     layer_number = (address-0xC000)//0x400
-    layer_nb_rows = 32
-    layer_nb_cols = 30
+    layer_nb_rows = 34
+    layer_nb_cols = 32
     layer_1 = Image.new("RGBA",(layer_nb_rows*side,layer_nb_cols*side))
 
     current_x = 0
@@ -61,44 +61,64 @@ def create_layer(tileset,address):
             layer_1.paste(img,(current_x,current_y))
 
         current_x += side
-        if current_x == layer_nb_rows*side:
+        if current_x == layer_nb_cols*side:
             current_x = 0
             current_y += side
     return layer_1
 
 
-game_layer = []
+if False:
+    game_layer = []
 
-for i in range(0,3):
-    tileset = load_tileset(f"tiles_{i}.png",True,side)
-    layer = create_layer(tileset,0xC400+(0x400*i))
-    game_layer.append(layer)
-    layer.save(f"game_layer_{i+1}.png")
-
-
-all_layers = Image.new("RGBA",layer.size)
-
-layer = game_layer[2]
-all_layers.paste(layer,(0,0),layer)
-layer = game_layer[1]
-all_layers.paste(layer,(0,0),layer)
-layer = game_layer[0]
-all_layers.paste(layer,(0,-16),layer)
-
-# sprites at D100
-# X,Y,attribute (0,1 X flip) and code starting from 0x40
-
-sprites_set = load_tileset("sprites_4.png",True,16,"sprite")
-
-for sprite_address in range(0xD100,0xD200,4):
-    block = contents[sprite_address-0x8000:sprite_address-0x8000+4]
-    x,y,attribute,code = block
-
-    code -= 0x40
-    y = 240-y
-    sprite = sprites_set[code]
-
-    all_layers.paste(sprite,(x,y))
+    for i in range(0,3):
+        tileset = load_tileset(f"tiles_{i}.png",True,side)
+        layer = create_layer(tileset,0xC400+(0x400*i))
+        game_layer.append(layer)
+        layer.save(f"game_layer_{i+1}.png")
 
 
-all_layers.save("all.png")
+    all_layers = Image.new("RGBA",layer.size)
+
+    layer = game_layer[2]
+    all_layers.paste(layer,(0,0),layer)
+    layer = game_layer[1]
+    all_layers.paste(layer,(0,0),layer)
+    layer = game_layer[0]
+    all_layers.paste(layer,(0,-16),layer)
+
+    # sprites at D100
+    # X,Y,attribute (0,1 X flip) and code starting from 0x40
+
+    sprites_set = load_tileset("sprites_4.png",True,16,"sprite")
+
+    for sprite_address in range(0xD100,0xD200,4):
+        block = contents[sprite_address-0x8000:sprite_address-0x8000+4]
+        x,y,attribute,code = block
+
+        code -= 0x40
+        y = 240-y
+        sprite = sprites_set[code]
+
+        all_layers.paste(sprite,(x,y))
+
+
+    all_layers.save("in_game_layers.png")
+
+with open(os.path.join(this_dir,"ram_title"),"rb") as f:
+    contents = f.read()
+
+    title_layer = []
+
+    for i in range(0,2):
+        tileset = load_tileset(f"tiles_{i}.png",False,side)
+        layer = create_layer(tileset,0xC400+(0x400*i))
+        title_layer.append(layer)
+        layer.save(f"title_layer_{i+1}.png")
+
+    layer = create_layer(tileset,0xCC00)
+    title_layer.append(layer)
+    layer.save(f"title_layer_3.png")
+
+
+    all_layers = Image.new("RGBA",layer.size)
+
