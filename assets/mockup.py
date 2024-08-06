@@ -47,6 +47,7 @@ def load_tileset(image_name,game_gfx,side,dump_prefix=""):
     return tileset_1
 
 def create_layer(tileset,address):
+    used_tiles = set()
     layer_number = (address-0xC000)//0x400
     layer_nb_rows = 34
     layer_nb_cols = 32
@@ -57,6 +58,7 @@ def create_layer(tileset,address):
     for addr in range(address,address+0x400):
         c = contents[addr-0x8000]
         if c:
+            used_tiles.add(c)
             img = tileset[c]
             layer_1.paste(img,(current_x,current_y))
 
@@ -64,16 +66,18 @@ def create_layer(tileset,address):
         if current_x == layer_nb_cols*side:
             current_x = 0
             current_y += side
-    return layer_1
+    return used_tiles,layer_1
 
 
-if False:
+
+if True:
     game_layer = []
-
+    used_tiles = []
     for i in range(0,3):
         tileset = load_tileset(f"tiles_{i}.png",True,side)
-        layer = create_layer(tileset,0xC400+(0x400*i))
+        ut,layer = create_layer(tileset,0xC400+(0x400*i))
         game_layer.append(layer)
+        used_tiles.append(ut)
         layer.save(f"game_layer_{i+1}.png")
 
 
@@ -107,18 +111,20 @@ if False:
 with open(os.path.join(this_dir,"ram_title"),"rb") as f:
     contents = f.read()
 
-    title_layer = []
+title_layer = []
+title_used_tiles = []
 
-    for i in range(0,2):
-        tileset = load_tileset(f"tiles_{i}.png",False,side)
-        layer = create_layer(tileset,0xC400+(0x400*i))
-        title_layer.append(layer)
-        layer.save(f"title_layer_{i+1}.png")
-
-    layer = create_layer(tileset,0xCC00)
+for i in range(0,2):
+    tileset = load_tileset(f"tiles_{i}.png",False,side)
+    ut,layer = create_layer(tileset,0xC400+(0x400*i))
     title_layer.append(layer)
-    layer.save(f"title_layer_3.png")
+    title_used_tiles.append(ut)
+    layer.save(f"title_layer_{i+1}.png")
 
+ut,layer = create_layer(tileset,0xCC00)
+title_layer.append(layer)
+layer.save(f"title_layer_3.png")
+title_used_tiles.append(ut)
 
-    all_layers = Image.new("RGBA",layer.size)
+all_layers = Image.new("RGBA",layer.size)
 
