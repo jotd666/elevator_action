@@ -25,7 +25,7 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 ##;    map(0xd200, 0xd27f).mirror(0x0080).ram().share(m_paletteram);
 
 side = 8
-transparent = (254,254,254)  # not possible to get it in the game
+transparent = (254,0,254)  # not possible to get it in the game
 dummy = (1,1,1)  # not possible to get it in the game
 
 def dump_asm_bytes(*args,**kwargs):
@@ -65,9 +65,13 @@ def ensure_empty(d):
 
 def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
     tile_type = "game" if game_gfx else "title"
-    full_image_path = os.path.join(this_dir,os.path.pardir,"elevator",
-                        tile_type,image_name)
-    tiles_1 = Image.open(full_image_path)
+
+    if isinstance(image_name,str):
+        full_image_path = os.path.join(this_dir,os.path.pardir,"elevator",
+                            tile_type,image_name)
+        tiles_1 = Image.open(full_image_path)
+    else:
+        tiles_1 = image_name
     nb_rows = tiles_1.size[1] // side
     nb_cols = tiles_1.size[0] // side
 
@@ -104,7 +108,7 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
 
     return sorted(set(palette)),tileset_1
 
-dump_it = False
+dump_it = True
 
 title_layer = [load_tileset("tiles_{}.png".format(i if i<2 else 1),False,side,used_title_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(title_layer_names)]
 
@@ -114,22 +118,19 @@ title_playfield_palette = title_playfield_palette + (16-len(title_playfield_pale
 
 
 game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(game_layer_names)]
-sprites_palette,sprites_set = load_tileset("sprites_4.png",True,16,None,"sprites",dump=dump_it)
-sprites_palette_2,sprites_set_2 = load_tileset("sprites_5.png",True,16,None,"sprites_alt",dump=dump_it)
-
-# sprites can be on either playfield.
-
-game_playfield_palette = tuple(sorted(set(x for tl in game_layer for x in tl[0]) | set(sprites_palette)))
-
-nb_game_colors = len(game_playfield_palette)
-print(f"nb colors in-game: {nb_game_colors}")
-# with elevator colors as sprites, the number of colors would rather be 11
-# we'll sort that out later
-if nb_game_colors > 16:
-    raise Exception("max 16 colors allowed")
-game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
 
 sprite_names = dict()
+
+
+def change_color(img,color1,color2):
+    rval = Image.new("RGB",img.size)
+    for x in range(img.size[0]):
+        for y in range(img.size[1]):
+            p = img.getpixel((x,y))
+            if p==(0,0,0):
+                p = transparent
+            rval.putpixel((x,y),p)
+    return rval
 
 def add_sprite_range(start,end,name):
     for i in range(start,end):
@@ -146,6 +147,67 @@ add_sprite_range(57,59,"shot")
 add_sprite_range(59,62,"player")
 add_sprite_range(62,63,"exclamation")
 add_sprite_range(63,64,"lamp")
+
+# add 2 special enemy "cluts"
+add_sprite_range(16+64,32+64,"enemy_lights_out")
+add_sprite_range(16+128,32+128,"enemy_dark_floor")
+
+sprites_path = os.path.join(this_dir,os.path.pardir,"elevator","game")
+sprites_1_sheet = Image.open(os.path.join(sprites_path,"sprites_4.png"))
+sprites_2_sheet = Image.open(os.path.join(sprites_path,"sprites_5.png"))
+# make a color correspondence dictionary
+color_translation_dict = {}
+
+
+for x in range(sprites_1_sheet.size[0]):
+    for y in range(sprites_1_sheet.size[1]):
+        p1 = sprites_1_sheet.getpixel((x,y))
+        # ignore black from sprite 2
+        p2 = sprites_2_sheet.getpixel((x,y))
+        if p2==p1==(0,0,0):
+            continue
+        if p1 == (0,0,0):
+            p1 = dummy
+        color_translation_dict[p2] = p1
+
+# one problem is: spies and lamps are black, and the main sheet (sprites_4) has proper colors for all sprites
+# but transparent color is black (when dumped with MAME gfx save)
+# we have to rebuild the sprite sheet with magenta (for instance) as transparent color
+#
+# consider the sprite sheet 2 which has all differentiated colors, but most are wrong, and convert black to pink
+sprites_2_sheet = change_color(sprites_2_sheet,(0,0,0),transparent)
+# now just apply inverse conversion, with a step using dummy to make sure we don't lose
+# black enemy bodies and other black parts that are missing from sprite sheet 1
+for x in range(sprites_2_sheet.size[0]):
+    for y in range(sprites_2_sheet.size[1]):
+        p = sprites_2_sheet.getpixel((x,y))
+        # ignore black from sprite 2
+        p = color_translation_dict.get(p)
+        if p:
+            sprites_1_sheet.putpixel((x,y),p)
+        p = sprites_1_sheet.getpixel((x,y))
+        if p==(0,0,0):
+            sprites_1_sheet.putpixel((x,y),transparent)
+        elif p==dummy:
+            sprites_1_sheet.putpixel((x,y),(0,0,0))
+
+sys.exit(0)
+
+sprites_palette,sprites_set = load_tileset("sprites_4.png",True,16,None,"sprites",dump=dump_it)
+sprites_palette_2,sprites_set_2 = load_tileset("sprites_5.png",True,16,None,"sprites_alt",dump=dump_it)
+
+
+
+game_playfield_palette = tuple(sorted(set(x for tl in game_layer for x in tl[0]) | set(sprites_palette)))
+
+nb_game_colors = len(game_playfield_palette)
+print(f"nb colors in-game: {nb_game_colors}")
+# with elevator colors as sprites, the number of colors would rather be 11
+# we'll sort that out later
+if nb_game_colors > 16:
+    raise Exception("max 16 colors allowed")
+game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
+
 
 current_plane_idx = 0
 
