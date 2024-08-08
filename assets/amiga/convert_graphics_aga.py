@@ -1,5 +1,7 @@
 # TODO:
-# - transparent color that is not black (for spies)
+# - wrong colors for muzzle flash for spies with alternate cluts (dark, lights out)
+#   => generate those sprite tiles from the original, not from the alternate sprite sheet
+#      using 2 color replaces
 # - identify dynamic colors per level (4 sets)
 # - identify which colors to change when lights are shot
 
@@ -63,7 +65,7 @@ def ensure_empty(d):
     else:
         os.makedirs(d)
 
-def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
+def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,name_dict=None):
     tile_type = "game" if game_gfx else "title"
 
     if isinstance(image_name,str):
@@ -77,7 +79,6 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
 
 
     tileset_1 = []
-    k=0
 
     if dump:
         dump_subdir = os.path.join(dumpdir,tile_type,tileset_name)
@@ -92,7 +93,7 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
                 tileset_1.append(None)
             else:
 
-                img = Image.new("RGBA",(side,side))
+                img = Image.new("RGB",(side,side))
                 img.paste(tiles_1,(-i*side,-j*side))
 
                 # only consider colors of used tiles
@@ -102,8 +103,13 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
                 tileset_1.append(img)
                 if dump:
                     img = ImageOps.scale(img,5,resample=Image.Resampling.NEAREST)
-                    img.save(os.path.join(dump_subdir,f"{k:02x}.png"))
-                k += 1
+                    if name_dict:
+                        name = name_dict.get(tile_number,"unknown")
+                    else:
+                        name = "unknown"
+
+                    img.save(os.path.join(dump_subdir,f"{name}_{tile_number:02x}.png"))
+
             tile_number += 1
 
     return sorted(set(palette)),tileset_1
@@ -127,30 +133,34 @@ def change_color(img,color1,color2):
     for x in range(img.size[0]):
         for y in range(img.size[1]):
             p = img.getpixel((x,y))
-            if p==(0,0,0):
-                p = transparent
+            if p==color1:
+                p = color2
             rval.putpixel((x,y),p)
     return rval
 
-def add_sprite_range(start,end,name):
+def add_sprite_range(start,end,name,namedict=sprite_names):
     for i in range(start,end):
-        sprite_names[i] = name
+        namedict[i] = name
 
 # better name sprites, as some color hacks are needed (black color is used for spies and lamps)
 add_sprite_range(0,16,"player")
 add_sprite_range(16,32,"enemy")
-add_sprite_range(32,40,"door")
-add_sprite_range(43,49,"car")
-add_sprite_range(49,51,"player_shoots")
-add_sprite_range(51,57,"enemy_shoots")
-add_sprite_range(57,59,"shot")
-add_sprite_range(59,62,"player")
-add_sprite_range(62,63,"exclamation")
-add_sprite_range(63,64,"lamp")
+add_sprite_range(32,40,"red_door")
+add_sprite_range(43,48,"car")
+add_sprite_range(48,50,"player_shoots")
+add_sprite_range(50,56,"enemy_shoots")
+add_sprite_range(56,58,"shot")
+add_sprite_range(59,61,"player")
+add_sprite_range(61,62,"exclamation")
+add_sprite_range(62,64,"lamp")
 
-# add 2 special enemy "cluts"
-add_sprite_range(16+64,32+64,"enemy_lights_out")
-add_sprite_range(16+128,32+128,"enemy_dark_floor")
+alt_sprite_names = dict()
+# add 2 special enemy "cluts" and blue opening door
+#add_sprite_range(16,32,"enemy_lights_out",namedict=alt_sprite_names)
+add_sprite_range(16,32,"enemy_dark_floor",namedict=alt_sprite_names)
+add_sprite_range(50,56,"enemy_dark_floor_shoots",namedict=alt_sprite_names)
+add_sprite_range(32,40,"blue_door",namedict=alt_sprite_names)
+
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"elevator","game")
 sprites_1_sheet = Image.open(os.path.join(sprites_path,"sprites_4.png"))
@@ -191,18 +201,31 @@ for x in range(sprites_2_sheet.size[0]):
         elif p==dummy:
             sprites_1_sheet.putpixel((x,y),(0,0,0))
 
-sys.exit(0)
 
-sprites_palette,sprites_set = load_tileset("sprites_4.png",True,16,None,"sprites",dump=dump_it)
-sprites_palette_2,sprites_set_2 = load_tileset("sprites_5.png",True,16,None,"sprites_alt",dump=dump_it)
+sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,None,"sprites",dump=dump_it,name_dict=sprite_names)
+# dark floor enemies + blue door
+sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,40)) | set(range(50,56)),"sprites_alt",dump=dump_it,name_dict=alt_sprite_names)
 
+# create lights out enemies
+sprites_3_sheet = change_color(sprites_2_sheet,(0,0,176),(0,0,255))
+sprites_3_sheet = change_color(sprites_3_sheet,(79,79,79),(0,0,0))
 
+sprites_palette_3,sprites_set_3 = load_tileset(sprites_3_sheet,True,16,set(range(16,32)) | set(range(50,56)),"lights_out_enemies",dump=dump_it,name_dict=None)
 
-game_playfield_palette = tuple(sorted(set(x for tl in game_layer for x in tl[0]) | set(sprites_palette)))
+full_sprite_set = sprites_set + sprites_set_2 + sprites_set_3
+
+# playfield+status+sprites
+game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0]) |
+ set(sprites_palette) |
+  set(sprites_palette_2) |
+  set(sprites_palette_3)))
+# elevators
+game_background_palette = tuple(sorted(game_layer[2][0]))
 
 nb_game_colors = len(game_playfield_palette)
 print(f"nb colors in-game: {nb_game_colors}")
-# with elevator colors as sprites, the number of colors would rather be 11
+# with elevator colors as sprites, the number of colors is around 14
+# we could go down using dynamic color change between status & main
 # we'll sort that out later
 if nb_game_colors > 16:
     raise Exception("max 16 colors allowed")
@@ -212,15 +235,27 @@ game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette
 current_plane_idx = 0
 
 layer_bitmaps = {}
-for tn,tc,palette in (["title",title_layer,title_playfield_palette],["game",game_layer,game_playfield_palette]):
+
+nb_planes = 4
+
+
+for tn,tc in (["title",title_layer],["game",game_layer]):
+
     layer_bitmaps[tn] = [[] for _ in range(3)]
     for lidx,(_,ts) in enumerate(tc):  # for each layer
+        if tn=="title":
+            palette = title_playfield_palette
+        elif lidx < 2:
+            palette = game_playfield_palette
+        else:
+            palette = game_background_palette
+
         tile_list = layer_bitmaps[tn][lidx]
 
         for tidx,tile in enumerate(ts):  # for each tile
             if tile:
                 try:
-                    planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=4)
+                    planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=nb_planes)
                 except bitplanelib.BitplaneException as e:
                     print(tn,lidx,tidx,e)
                     print(palette)
@@ -229,7 +264,6 @@ for tn,tc,palette in (["title",title_layer,title_playfield_palette],["game",game
                     tile_list.append(None)
                     continue
 
-                nb_planes = 4
                 plane_list = []
                 planesize = len(planes)//nb_planes
                 for sl in range(0,len(planes),planesize):
@@ -249,6 +283,35 @@ for tn,tc,palette in (["title",title_layer,title_playfield_palette],["game",game
             else:
                 tile_list.append(None)
 
+#BOBs
+
+bob_list = []
+bob_bitplane_cache = dict()
+current_plane_idx = 0
+
+for tile in full_sprite_set:
+    if tile:
+        planes = bitplanelib.palette_image2raw(tile,None,game_playfield_palette,forced_nb_planes=nb_planes,
+        generate_mask=True,blit_pad=True,
+        mask_color=transparent)
+        plane_list = []
+        planesize = len(planes)//(nb_planes+1)
+        for sl in range(0,len(planes),planesize):
+            plane = planes[sl:sl+planesize]
+            if any(plane):
+                plane_idx = bob_bitplane_cache.get(plane)
+                if plane_idx is None:
+                    # create entry
+                    plane_idx = current_plane_idx
+                    bob_bitplane_cache[plane] = current_plane_idx
+                    current_plane_idx += 1
+                plane_list.append(plane_idx)
+            else:
+                # empty plane: use index -1
+                plane_list.append(-1)
+        bob_list.append(plane_list)
+    else:
+        bob_list.append(None)
 
 src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","aga")
 
@@ -296,6 +359,27 @@ character_tables:
                             f.write(f"tile_plane_{t}")
                         f.write("\n")
 
+    f.write("\nbob_table:\n")
+    for i,tile in enumerate(bob_list):
+        f.write("\t.long\t")
+        if tile:
+            f.write(f"bob_planes_{i}")
+        else:
+            f.write("0")
+
+        f.write("\n")
+
+    for i,tile in enumerate(bob_list):
+        if tile:
+            f.write(f"bob_planes_{i}:\n")
+            for p in tile:
+                f.write("\t.long\t")
+                if p==-1:
+                    f.write("0")
+                else:
+                    f.write(f"bob_plane_{p}")
+                f.write("\n")
+
     f.write("\n* tile bitplanes\n")
     # dump bitplanes
     for k,v in tile_bitplane_cache.items():
@@ -304,6 +388,11 @@ character_tables:
 
     f.write("\n\t.section\t.datachip\n\n")
 
+    f.write("\n* bob bitplanes\n")
+    # dump bitplanes
+    for k,v in bob_bitplane_cache.items():
+        f.write(f"bob_plane_{v}:")
+        bitplanelib.dump_asm_bytes(k,f,mit_format=True)
 
 
 
