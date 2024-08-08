@@ -65,8 +65,9 @@ shell.o: $(AMIGA_SHARED_SRC)/shell.68k
 
 $(AMIGA_OCS_SRC)/graphics.68k: $(ASSETS)/convert_graphics_ecs.py $(ASSETS)/shared.py $(ASSETS)/../$(PROGNAME)_gfx.c
 	cmd /c $(ASSETS)\convert_graphics_ecs.py
-#$(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py $(ASSETS)/shared.py
-#	cmd /c $(ASSETS)\convert_graphics_aga.py
+	# $(ASSETS)/shared.py
+$(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py
+	cmd /c $(ASSETS)\convert_graphics_aga.py
 
 $(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/moon_patrol_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
@@ -84,7 +85,7 @@ sound_engine.o: $(AMIGA_SHARED_SRC)/sound_engine.68k
 	$(ASM) -Iamiga $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o
 ocs.o: $(AMIGA_OCS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_OCS_SRC)/tiles_palette.68k $(AMIGA_OCS_SRC)/bobs_palette.68k
 	$(ASM) -Iamiga -Iocs $(AMIGA_OCS_SRC)/amiga.68k -o ocs.o
-aga.o: $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/tiles_palette.68k $(AMIGA_AGA_SRC)/bobs_palette.68k
+aga.o: $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/palettes.68k
 	$(ASM_020) -Iamiga -Iaga $(AMIGA_AGA_SRC)/amiga.68k -o aga.o
 vbr.o: $(AMIGA_SHARED_SRC)/vbr.68k
 	$(ASM_020) -Iamiga $(AMIGA_SHARED_SRC)/vbr.68k -o vbr.o

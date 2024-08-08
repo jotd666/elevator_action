@@ -4,7 +4,7 @@
 # - identify which colors to change when lights are shot
 
 from PIL import Image,ImageOps
-import os,bitplanelib
+import os,sys,bitplanelib
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -84,41 +84,68 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False):
 
     for j in range(nb_rows):
         for i in range(nb_cols):
-            tile_number += 1
-            if used_tiles and tile_number-1 not in used_tiles:
+            if used_tiles and tile_number not in used_tiles:
                 tileset_1.append(None)
-                continue
+            else:
 
-            img = Image.new("RGBA",(side,side))
-            img.paste(tiles_1,(-i*side,-j*side))
+                img = Image.new("RGBA",(side,side))
+                img.paste(tiles_1,(-i*side,-j*side))
 
-            # only consider colors of used tiles
-            palette.update(set(bitplanelib.palette_extract(img)))
-            tileset_1.append(img)
-            if dump:
-                img = ImageOps.scale(img,5,resample=Image.Resampling.NEAREST)
-                img.save(os.path.join(dump_subdir,f"{k:02x}.png"))
-            k += 1
+                # only consider colors of used tiles
+                palette.update(set(bitplanelib.palette_extract(img)))
 
+
+                tileset_1.append(img)
+                if dump:
+                    img = ImageOps.scale(img,5,resample=Image.Resampling.NEAREST)
+                    img.save(os.path.join(dump_subdir,f"{k:02x}.png"))
+                k += 1
+            tile_number += 1
 
     return sorted(set(palette)),tileset_1
 
-dump_it = True
-
-game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(game_layer_names)]
-
-
-sprites_palette,sprites_set = load_tileset("sprites_4.png",True,16,None,"sprites",dump=dump_it)
-
-# sprites can be on either playfield.
-
-game_playfield_palette = tuple(sorted(set(game_layer[1][0]+sprites_palette)))
-game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
+dump_it = False
 
 title_layer = [load_tileset("tiles_{}.png".format(i if i<2 else 1),False,side,used_title_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(title_layer_names)]
 
-title_playfield_palette = tuple(sorted(set(title_layer[1][0])))
+title_playfield_palette = tuple(sorted(set(x for tl in title_layer for x in tl[0])))
 title_playfield_palette = title_playfield_palette + (16-len(title_playfield_palette)) * (dummy,)
+
+
+
+game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(game_layer_names)]
+sprites_palette,sprites_set = load_tileset("sprites_4.png",True,16,None,"sprites",dump=dump_it)
+sprites_palette_2,sprites_set_2 = load_tileset("sprites_5.png",True,16,None,"sprites_alt",dump=dump_it)
+
+# sprites can be on either playfield.
+
+game_playfield_palette = tuple(sorted(set(x for tl in game_layer for x in tl[0]) | set(sprites_palette)))
+
+nb_game_colors = len(game_playfield_palette)
+print(f"nb colors in-game: {nb_game_colors}")
+# with elevator colors as sprites, the number of colors would rather be 11
+# we'll sort that out later
+if nb_game_colors > 16:
+    raise Exception("max 16 colors allowed")
+game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
+
+sprite_names = dict()
+
+def add_sprite_range(start,end,name):
+    for i in range(start,end):
+        sprite_names[i] = name
+
+# better name sprites, as some color hacks are needed (black color is used for spies and lamps)
+add_sprite_range(0,16,"player")
+add_sprite_range(16,32,"enemy")
+add_sprite_range(32,40,"door")
+add_sprite_range(43,49,"car")
+add_sprite_range(49,51,"player_shoots")
+add_sprite_range(51,57,"enemy_shoots")
+add_sprite_range(57,59,"shot")
+add_sprite_range(59,62,"player")
+add_sprite_range(62,63,"exclamation")
+add_sprite_range(63,64,"lamp")
 
 current_plane_idx = 0
 
@@ -134,6 +161,9 @@ for tn,tc,palette in (["title",title_layer,title_playfield_palette],["game",game
                     planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=4)
                 except bitplanelib.BitplaneException as e:
                     print(tn,lidx,tidx,e)
+                    print(palette)
+                    tile.save("error.png")
+                    sys.exit(1)
                     tile_list.append(None)
                     continue
 
@@ -158,7 +188,18 @@ for tn,tc,palette in (["title",title_layer,title_playfield_palette],["game",game
                 tile_list.append(None)
 
 
-src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","amiga")
+src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","aga")
+
+# dump palettes
+with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
+    f.write("level_palettes:\n")
+    for i in range(4):
+        f.write(f"\t.long\tlevel_palette_{i}\n")
+    for i in range(4):
+        f.write(f"level_palette_{i}:\n")
+        bitplanelib.palette_dump(game_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+    f.write("title_palette:\n")
+    bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_tables\n")
@@ -190,7 +231,7 @@ character_tables:
                         if t < 0:
                             f.write("0")
                         else:
-                            f.write(f"tie_plane_{t}")
+                            f.write(f"tile_plane_{t}")
                         f.write("\n")
 
     f.write("\n* tile bitplanes\n")

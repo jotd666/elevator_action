@@ -795,308 +795,17 @@ is_game_playing:
 	
 
 really_update_sprites:
-	jbsr		really_update_hardware_sprites
 	lea		sprite_registers,a0
 	bsr		update_bobs
 	
 
 	rts
 	
-	
-* sprite_y_split_limit has to be carefully computed from copper pos
-* where second sprite write is done
 
-update_hardware_sprites:
-	* clear host sprites
-	moveq	#NB_HOST_SPRITES-1,d0
-
-	lea		sprite_table,a4
-	lea		host_sprites(pc),a2
-0:
-	clr.b	(SPRITE_X,a2)	| clear X is enough to know it's free
-	st.b	(SPRITE_CLUT,a2) | invalid clut
-	addq.w	#SPRITE_SIZEOF,a2
-	dbf		d0,0b
-
-	* check active sprites, we'll disable the sprites that aren't active anymore
-	moveq	#NB_TARGET_SPRITES-1,d7
-1:
-	* code = 0 and clut = 0 => disabled
-	moveq	#0,d2
-	move.b	(TARGET_SPRITE_CODE,a0),d2
-	beq.b	2f
-	bmi.b	2f			| fake sprite converted to bob => skip
-	* check if real/attached sprite
-	* this part is needed when mixing sprites & bobs
-	* or when using "attached" sprites
-	* (my definition of attached sprites differs from
-	* the Amiga HW attached sprites which I don't use)
-	* here I just save a lot of sprites by displaying
-	* one 16x32 sprite instead of 2 16x16 for some objects
-	* like for instance the jeep or explosions
-	
-	* the fact that there's 0 isn't a problem either
-	* in this mixed sprite/bob port as it is probably
-	* a bob. For games like Bagman & Pengo, there are no
-	* bobs, so if a sprite doesn't exist, we have to signal it
-	* but not here. Here the filtering has to be done early
-	* else we'll allocate a sprite and figure out it's not
-	* a sprite, but it will be too late!
-
-	moveq	#0,d3
-	move.w	d2,d4
-	lsl.w	#4,d4		| times 16
-	tst.l	(a4,d4.w)	| test pointer
-	bmi.b	2f			| attached: skip
-	beq.b	2f			| not a sprite: skip
-	
-	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
-	beq.b	2f			| Y set to 0: not shown
-	not.b	d1			| negate Y: get normal Y coord!
-	
-	.ifne	OPT_ENABLE_MULTIPLEXED_SPRITES
-	
-	* depending on upper or lower part, filter sprite
-	tst.b	do_upper_part
-	beq.b	21f
-	* higher part
-	cmp.b	sprite_y_split_limit,d1
-	bcc.b	2f		| low sprite: skip
-	bra.b	22f
-21:
-	* lower part
-	cmp.b	sprite_y_split_limit,d1
-	bcs.b	2f		| high sprite: skip
-22:
-	.endif
-	
-*	cmp.b	#255,d1
-*	beq.b	2f			| Y set to 255: not shown	
-	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
-
-
-
-	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
-*	btst	#7,d3
-* test y-flip (happens, ex hole-making ufos)
-*	beq.b	23f
-*	blitz
-*23:
-
-* < D2: sprite code & flags
-* < D3: sprite color (clut index)
-* > D6: allocated sprite index
-
-	* sprite active: allocate a sprite in host table
-	* it HAS to succeed (in Pengo it did, here I'm less sure)
-	bsr		alloc_sprite
-2:
-	addq.w	#4,a0
-	dbf		d7,1b
-	
-	***********************************************
-	* all sprites are allocated: now display them *
-	***********************************************
-	
-	lea		host_sprites(pc),a2		| input structure
-	lea		sprites_upper_part,a3				| copperlist
-	.ifne	OPT_ENABLE_MULTIPLEXED_SPRITES
-	tst.b	do_upper_part
-	bne.b	222f
-	lea		sprites_lower_part,a3
-222:
-	.endif
-	
-	moveq	#0,d6
-10:
-	moveq	#0,d1
-	move.b	(SPRITE_Y,a2),d1		| Y=0 can happen when X != 0
-	beq.b	101f
-	move.b	(SPRITE_X,a2),d0
-	bne.b	20f
-101:
-	* slot free: replace sprite by blank
-	* this doesn't allow that a sprite crosses the sprite_y_split_limit
-	* boundary but in that case we'll switch for a BOB
-	* (there are potentially too many UFO ships for sprites anyway)
-	lea	blank_sprite_table,a1
-	.ifne	OPT_ENABLE_MULTIPLEXED_SPRITES
-	tst.b	do_upper_part
-	beq.b	11f
-	add.w	#8*4,a1		| lower part blanks
-11:
-	.endif
-	move.w	d6,d4
-	add.w	d4,d4
-	add.w	d4,d4			| times 4 for offset
-	move.l	(a1,d4.w),a5	| fetch relevant blank sprite data
-	moveq	#0,D0			
-	moveq	#0,D1			| position: X,Y=0
-	move.w	#16,d3
-	jra		220f			| and treat that like a 16-high sprite
-20:
-	* lookup sprite code
-	
-	and.w	#0xFF,d0
-	moveq	#0,d2
-	move.b	(SPRITE_CODE,a2),d2
-		
-	move.w	d2,d4
-	lsl.w	#4,d4
-	move.b	(SPRITE_CLUT,a2),d3
-	btst	#6,d3		| flip x?
-	beq.b	25f
-	addq.w	#4,d4		| other sprite
-25:
-	btst	#7,d3		| flip y?
-	beq.b	251f
-	addq.w	#8,d4		| other sprite
-251:
-	move.l	(a4,d4.w),d4	| get pointer
-	.ifndef	RELEASE
-	bne.b	26f
-	* sprite doesn't exist (flip bit set but no flipped image)
-	blitz
-	move.b	d1,d1
-	move.b	d2,d2
-	jra		30f
-26:
-	.endif
-	
-	move.l	d4,a5
-	move.w	d6,d4					| load sprite index
-	add.w	d4,d4
-	add.w	d4,d4					| sprite index times 4 (pointer index)
-	move.l	(a5,d4.W),a5			| get buffer for this sprite index
-
-	* apply correction NOW, not earlier as it would wrap as a byte
-	.ifne	SPRITE_Y_CORRECTION
-	add.w	#SPRITE_Y_CORRECTION,d1
-	.endif
-	.ifne	HW_SPRITE_X_CORRECTION
-	add.w	#HW_SPRITE_X_CORRECTION,d0
-	.endif
-
-	move.w	(A5)+,d3
-	cmp.w	#16,d3
-	bne.b	221f
-220:
-	bsr		store_sprite_pos_16
-	bra.b	223f
-221:
-	cmp.w	#32,d3
-	beq.b	222f
-	blitz		| should not happen, values can be 16 or 32 (sanity check!)
-222:
-	bsr		store_sprite_pos_32
-223:
-
-	.ifeq	OPT_ENABLE_MULTIPLEXED_SPRITES
-	* just store control word
-	move.l	d0,(a5)
-	.else
-	* multiplexed
-	tst.b	do_upper_part
-	beq.b	224f
-	* store control word
-	move.l	d0,(a5)
-	* multiplexed: we have to store upper part pic pointer end control word
-	* in a buffer to link to it, d4 is the index of sprite * 4 already
-	move.l	a5,-(a7)
-	* we add 4+64 or 4+128 (32) to skip control word+sprite data
-	add.w	d3,d3
-	add.w	d3,d3	| 16*4 or 32*4
-	addq	#4,d3
-	add.w	d3,a5
-	* we used to clear previous control word (needed if no lower sprite)
-	* but doing so makes lower sprites blink when activated
-	* anyway we make lower sprites point on blanks when not used so
-	* we can leave that untouched, let the lower sprite write it
-	lea		upper_sprite_buffers(pc),a1
-	move.l	a5,(a1,d4.w)	| store pointer on control word for lower matching sprite
-	move.l	(a7)+,a5
-	bra.b	225f
-224:
-	* sprite lower part: it doesn't work if we store the control word in A5, it's too late
-	* as upper sprite has finished rendering and stumbled on 0 control word. We have to set
-	* this control word on the upper sprite end control word to enable sprite "chaining"
-	* and store sprite buffer without control word in lower part copperlist!
-	*
-	* big thanks to Ross for the explanation
-	*
-	* what happens is: sprite DMA stumbles on non-zero control word and waits for the beam to
-	* reach the given X/Y pos. In the meantime, we have plenty of time to change sprite pointer
-	* so when sprite DMA resumes, the pointer points on the lower sprite data!
-	*
-	addq	#4,a5			| skip second sprite control word
-	lea		upper_sprite_buffers(pc),a1
-	move.l	(a1,d4.w),a1
-	move.l	d0,(a1)			| store control word in the end of upper sprite data
-225:
-	.endif
-	move.l	a5,d0		| sprite pointer with or without control word
-	
-	* set colors
-	lea		sprite_cluts+2,a6
-	moveq	#0,d3
-	move.b	(SPRITE_CLUT,a2),d3
-	bmi.b	25f			| blank sprite with invalid clut: skip color set!
-	and.b	#0xF,d3		| mask color only, ignore flip bits
-	lsl.w	#3,d3		| times 8
-
-	add.w	d3,a6
-	* check if CLUT doesn't contain only color zero
-	* (we may as well cache the values in spare registers)
-	move.l	(a6)+,d3
-	move.w	(a6)+,d7
-*	bne.b	24f
-*	tst.l	d3
-*	bne.b	24f
-*	* all black sprites would hide mpatrol sprites & tiles
-*	* we want to hide them instead (no need to change palette)
-*	* inherited from pengo, probably not required
-*	move.l	#blank_sprite,d0
-*	bra.b	25f
-*24:
-	* d6 is the sprite index: compute/set proper color
-	move.w	d6,d5
-	bclr	#0,d5
-	add.w	d5,d5
-	add.w	d5,d5	| times 4*2
-	move.w	d5,d2
-	add.w	d2,d2
-	lea		sprites_upper_cols+6,a5	| sprite palette + 2 (first color skipped)
-	.ifne	OPT_ENABLE_MULTIPLEXED_SPRITES
-	tst.b	do_upper_part
-	bne.b	241f
-	lea		sprites_lower_cols+6,a5	| sprite palette + 2 (first color skipped)
-241:
-	.endif
-	
-	add.w	d2,a5
-	* copy 3 colors from cached registers into sprite color copperlist
-	move.w	d3,(4,a5)
-	swap	d3
-	move.w	d3,(a5)
-	move.w	d7,(8,a5)
-25:
-	add.w	d4,d4		| index times 8
-	* set sprite in copperlist
-	move.w	d0,(6,a3,d4.w)
-	swap	d0
-	move.w	d0,(2,a3,d4.w)	
-30:
-	* next sprite
-	lea		(SPRITE_SIZEOF,a2),a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	jne	10b	
-	rts
 
 update_bobs:
 
 	move.l	bob_previous_drawed_sprites(pc),a4
-	lea		hardware_sprite_flag_table,a6
 	lea		_custom,a5
 	
 
@@ -1124,7 +833,6 @@ update_bobs:
 	
 	
     lea _custom,A5
-	lea		hardware_sprite_flag_table,a2
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
 	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
@@ -1134,9 +842,6 @@ update_bobs:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
-	cmp.b	#1,(a2,d2.w)	| is that a hardware sprite without bob backup?
-	jeq	2f					| yes: don't bother!s
-	
 	
 	moveq	#0,d1
 	moveq	#0,d3
@@ -2909,14 +2614,9 @@ blank_sprite_table:
 	.set	offset,offset+64+8
 	.endr
 	
-tiles_palette:
-	.include "tiles_palette.68k"
+palettes:
+	.include "palettes.68k"
 
-bobs_palette:
-	.include "bobs_palette.68k"
-	* sprites "individual" 4-color palettes
-sprite_cluts:
-	.include "palette_cluts.68k"
 	
 	* on amiga, this file is included in mpatrol.68k file
 	* so the assembler can optimize by using PC-relative addressing
