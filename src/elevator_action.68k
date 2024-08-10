@@ -7341,7 +7341,6 @@ init_hw_scroll_and_charset_260C:
 												| [$2649: ld   a,$F5]
 												| [$264b: ld   ($D502),a]
 												| [$264e: ld   ($D504),a]
-l_2651:
 	move.b	menu_or_game_tiles_81D9(a6),d0  	| [$2651: ld   a,(menu_or_game_tiles_81D9)]
 	                             	| [$2654: or   a]
 	jeq	l_265c                             	| [$2655: jp   z,$265C]
@@ -7349,7 +7348,7 @@ l_2651:
 	jeq	l_2676                             	| [$2659: jp   z,$2676]
 * copy gfx rom contents into character data
 l_265c:
-	moveq	#0,D0
+	moveq	#1,D0
 	jbsr	osd_set_gfx_bank
 	
 											| [$265c: ld   hl,$0000] game tiles 0
@@ -7368,7 +7367,7 @@ l_265c:
 	jra	l_268d                             	| [$2673: jp   $268D]
 
 l_2676:
-	moveq	#1,D0
+	moveq	#0,D0
 	jbsr	osd_set_gfx_bank				| [$2676: ld   hl,$3000] menu tiles
    	| [$2679: ld   (gfx_pointer_d509),hl]
  
@@ -7431,7 +7430,7 @@ reload_8bit_timer_26C2:
 
 set_level_palette_26ca:
 	move.b	menu_or_game_tiles_81D9(a6),d0  	| [$26ca: ld   a,(menu_or_game_tiles_81D9)]
-	tst.b	d0                             	| [$26cd: or   a]
+											| [$26cd: or   a]
 	jeq	l_26d3                             	| [$26ce: jr   z,$26D3]
 	subq.b	#1,d0                           	| [$26d0: dec  a]
 	jeq	l_26fb                             	| [$26d1: jr   z,$26FB]
@@ -7782,10 +7781,10 @@ l_28c0:
 	move.b	d0,d1                           	| [$28d5: ld   b,a]
 	add.b	d1,d0                            	| [$28d6: add  a,b]
 	add.b	d1,d0                            	| [$28d7: add  a,b]
-	add.b	d0,d0                            	| [$28d8: add  a,a]
-	add.b	d0,d0                            	| [$28d9: add  a,a]
-	add.b	d0,d0                            	| [$28da: add  a,a]
-	add.b	d0,d0                            	| [$28db: add  a,a]
+	lsl.b	#4,d0                            	| [$28d8: add  a,a]
+												| [$28d9: add  a,a]
+												| [$28da: add  a,a]
+												| [$28db: add  a,a]
 	move.b	d0,(a0)                         	| [$28dc: ld   (hl),a]
 	rts                                    	| [$28dd: ret]
 
@@ -7846,7 +7845,7 @@ l_2921:
 	add.w	d5,d5                            	| [$292d: add  hl,hl]
 												| [$292e: dec  bc]
 	move.b	-(a4),d0                         	| [$292f: ld   a,(bc)]
-	move.b	d0,d4                           	| [$2930: ld   e,a]
+	move.b	d0,d3                           	| [$2930: ld   e,a]
 	add.w	d3,d5                            	| [$2931: add  hl,de]
 	lsl.w	#3,d5                            	| [$2932: add  hl,hl]
 	                            	| [$2933: add  hl,hl]
@@ -7857,7 +7856,7 @@ l_2921:
  	STORE_WORD	d5,l_8028(a6)            	| [$293c: ld   ($8028),hl]
 	rts                                    	| [$293f: ret]
 l_2940:
-	jbsr	l_295f                            	| [$2940: call $295F]
+	jbsr	display_insert_coin_screen_295f      	| [$2940: call $295F]
 l_2943:
 	jbsr	l_73cf                            	| [$2943: call $73CF]
 	move.b	nb_credits_80A2(a6),d0          	| [$2946: ld   a,(nb_credits_80A2)]
@@ -7877,10 +7876,13 @@ l_2943:
 	tst.w	d5                             	| [$295b: or   l]
 	jne	l_2943                             	| [$295c: jr   nz,$2943]
 	rts                                    	| [$295e: ret]
-l_295f:
+	
+	
+display_insert_coin_screen_295f:
 	clr.b	d0                               	| [$295f: xor  a]
 	move.b	d0,l_80AB(a6)                   	| [$2960: ld   ($80AB),a]
 	move.b	d0,video_mode_d600              	| [$2963: ld   (video_mode_d600),a]
+	* clear all video memory of all layers
 	lea	videoram_layer_1_C400(a6),a0       	| [$2966: ld   hl,videoram_layer_1_C400]
 	move.b	#0x0C,d2                        	| [$2969: ld   c,$0C]
 	move.b	#0x00,d1                        	| [$2969: ld   c,$0C]
@@ -7896,7 +7898,7 @@ l_296c:
 	jbsr	display_status_bars_5839                            	| [$2973: call $5839]
 	jbsr	update_upper_status_bar_57C6      	| [$2976: call update_upper_status_bar_57C6]
 	jbsr	display_credit_info_10b0                            	| [$2979: call $10B0]
-	jbsr	l_298e                            	| [$297c: call $298E]
+	jbsr	display_insert_coin_298e                            	| [$297c: call $298E]
 	move.w	#0x012C,d5                          	| [$297f: ld   hl,$012C]
 	STORE_WORD	d5,a_16bit_timer_822F(a6)            	| [$2982: ld   ($822F),hl]
 	move.b	#GS_INSERT_COIN_09,d0           	| [$2985: ld   a,GS_INSERT_COIN_09]
@@ -7904,7 +7906,7 @@ l_296c:
 	jbsr	reload_8bit_timer_26C2           	| [$298a: call reload_8bit_timer_26C2]
 	rts                                    	| [$298d: ret]
 
-l_298e:
+display_insert_coin_298e:
 	lea	insert_coin_string_2A02,a0         	| [$298e: ld   hl,insert_coin_string_2A02]
 	lea	l_C589(a6),a1                      	| [$2991: ld   de,$C589]
 	jbsr	copy_string_to_screen_29F9        	| [$2994: call copy_string_to_screen_29F9]
@@ -7915,14 +7917,14 @@ l_298e:
 0:
 	btst.b	#7,d0                           	| [$299d: bit  7,a]
 	jne	l_29c6                             	| [$299f: jr   nz,$29C6]
-	lea	left_coin_shot_string_2A13,a0      	| [$29a1: ld   hl,left_coin_shot_string_2A13]
+	lea	left_coin_slot_string_2A13,a0      	| [$29a1: ld   hl,left_coin_slot_string_2A13]
 	lea	l_C5EA(a6),a1                      	| [$29a4: ld   de,$C5EA]
 	jbsr	copy_string_to_screen_29F9        	| [$29a7: call copy_string_to_screen_29F9]
 	move.b	coin_dsw_copy_80A5(a6),d6               	| [$29aa: ld   hl,(coin_dsw_copy_80A5)]
     move.b	coin_dsw_copy_80A5+1(a6),d5
 	lea	l_C628(a6),a1                      	| [$29ad: ld   de,$C628]
 	jbsr	display_coin_credit_text_29d0                            	| [$29b0: call $29D0]
-	lea	right_coin_shot_string_2A22,a0     	| [$29b3: ld   hl,right_coin_shot_string_2A22]
+	lea	right_coin_slot_string_2A22,a0     	| [$29b3: ld   hl,right_coin_slot_string_2A22]
 	lea	l_C689(a6),a1                      	| [$29b6: ld   de,$C689]
 	jbsr	copy_string_to_screen_29F9        	| [$29b9: call copy_string_to_screen_29F9]
 	move.b	coin_slot_2_dsw_copy_80A7(a6),d6             	| [$29bc: ld   hl,($80A7)]
@@ -7969,16 +7971,17 @@ l_29e4:
 
 copy_string_to_screen_29F9:
 	exg	a0,a1
+0:
 	move.b	(a1),d0                         	| [$29f9: ld   a,(hl)]
 	cmp.b	#0xFF,d0                         	| [$29fa: cp   $FF]
-	bne.b	0f                               	| [...]
+	bne.b	1f                               	| [...]
 	exg	a0,a1
 	rts                                    	| [$29fc: ret  z] [...]
-0:
+1:
 	jbsr	osd_w_videoram                         	| [$29fd: ld   (de),a]
 	addq.w	#1,a0                           	| [$29fe: inc  hl]
 	addq.w	#1,a1                           	| [$29ff: inc  de]
-	jra	copy_string_to_screen_29F9         	| [$2a00: jr   copy_string_to_screen_29F9]
+	jra	0b         	| [$2a00: jr   copy_string_to_screen_29F9]
 
 * "INSERT COIN (S)"
 insert_coin_string_2A02:
@@ -7996,8 +7999,8 @@ insert_coin_string_2A02:
 	.byte	0x08
 	.byte	0xFF
 
-* "LEFT COIN SHOT"
-left_coin_shot_string_2A13:
+* "LEFT COIN SLOT"
+left_coin_slot_string_2A13:
 	.byte	0x1B
 	.byte	0x1E,0x27
 	.byte	0x31,0x00,0x2E
@@ -8010,8 +8013,8 @@ left_coin_shot_string_2A13:
 	.byte	0x2F
 	.byte	0x31,0xFF
 
-* "RIGHT COIN SHOT"
-right_coin_shot_string_2A22:
+* "RIGHT COIN SLOT"
+right_coin_slot_string_2A22:
 	.byte	0x1F
 	.byte	0x2C
 	.byte	0x28,0x2B
@@ -8687,6 +8690,7 @@ l_2e2a:
 	move.b	d0,l_8236(a6)                   	| [$2e2e: ld   ($8236),a]
 	jbsr	l_71e1                            	| [$2e31: call $71E1]
 	move.b	#0x01,d0                        	| [$2e34: ld   a,$01]
+	* set menu/title tiles
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$2e36: ld   (menu_or_game_tiles_81D9),a]
 	jbsr	init_hw_scroll_and_charset_260C                            	| [$2e39: call $260C]
 	move.b	#GS_PUSH_START_03,d0            	| [$2e3c: ld   a,GS_PUSH_START_03]
@@ -19204,7 +19208,7 @@ l_772c:
 	subq.b	#1,d0                           	| [$7735: dec  a]
 	jne	l_774d                             	| [$7736: jr   nz,$774D]
 l_7738:
-	lea	string_7765,a0                     	| [$7738: ld   hl,string_7765]
+	lea	game_over_string_7765,a0                     	| [$7738: ld   hl,game_over_string_7765]
 	lea	l_C5AB(a6),a1                      	| [$773b: ld   de,$C5AB]
 	jbsr	copy_string_to_screen_29F9        	| [$773e: call copy_string_to_screen_29F9]
 	move.b	#0xCA,d0                        	| [$7741: ld   a,$CA]
@@ -19213,7 +19217,7 @@ l_7738:
 	STORE_WORD	d5,a_16bit_value_8643(a6)            	| [$7749: ld   ($8643),hl]
  	rts                                    	| [$774c: ret]
 l_774d:
-	lea	string_776F,a0                     	| [$774d: ld   hl,string_776F]
+	lea	player_x_game_over_string_776F,a0                     	| [$774d: ld   hl,player_x_game_over_string_776F]
 	lea	l_C627(a6),a1                      	| [$7750: ld   de,$C627]
 	jbsr	copy_string_to_screen_29F9        	| [$7753: call copy_string_to_screen_29F9]
 	move.b	l_8236(a6),d0                   	| [$7756: ld   a,($8236)]
@@ -19223,7 +19227,7 @@ l_774d:
 	STORE_POINTER	d5,a_16bit_value_8643(a6)            	| [$7761: ld   ($8643),hl]
 	rts                                    	| [$7764: ret]
 
-string_7765:
+game_over_string_7765:
 	.byte	0x28,0x1C
 	.byte	0x20,0x1E
 	.byte	0x00
@@ -19232,7 +19236,7 @@ string_7765:
 	.byte	0x1E,0x1F
 	.byte	0xFF
 
-string_776F:
+player_x_game_over_string_776F:
 	.byte	0x1A
 	.byte	0x1B
 	.byte	0x1C

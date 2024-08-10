@@ -1576,22 +1576,24 @@ platform_init:
 *	move.w	#0x1FE,intreq_block+4
 *0:
 
+ 	*         VVHH
+    move.w #0x1C99,diwstrt(a5)
+    move.w #0x3081-8,diwstop(a5)
+    move.w #0x0038,ddfstrt(a5)
+    move.w #0x00D0,ddfstop(a5)
+
 	* restrict borders: we don't see bobs on the borders!
-    move.w #0x1CB0,diwstrt(a5)
-	*         VVHH
-    move.w #0x18A0,diwstop(a5)
 	* try to hide color 0 on the border (except on OCS)
     move.w #BASE_BPLCON2_VALUE,bplcon2(a5)
 	* AGA-compatible ECS default values
 	*move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
 	move.w	#0x22,bplcon4(a5)	| sprites palette start at color 32, keep coupling for now
     move.w #0xF,fmode(a5)
-    move.w #0x0038,ddfstrt(a5)
-    move.w #0x00B0,ddfstop(a5)
 
 	move.w	#0,bplcon1(a5)
-    move.w #-8,bpl1mod(a5)
-    move.w #-8,bpl2mod(a5)
+	moveq	#-8,d0
+    move.w d0,bpl1mod(a5)
+    move.w d0,bpl2mod(a5)
 
 	* set bank 0: title screen mode
 	moveq	#0,d0
@@ -1711,7 +1713,6 @@ decode_sprite_data:
 
 osd_set_gfx_bank:
 	movem.l	d0-a6,-(a7)
-
 	cmp.b	current_gfx_bank,d0
 	jeq		0f
 	move.b	d0,current_gfx_bank
@@ -1844,13 +1845,15 @@ compute_tile_xy:
 	and.b	#0x1F,d0	| x
 	move.w	d7,d1
 	lsr.w	#5,d1		| Y
+	lsl.w	#3,d1
 	rts
 
 * < D7: 0-0x400 address
 * < D0: tile code
 	
 update_bg_tile:
-	and.w	#0xFF,d0	| mask up to 255
+	moveq	#0,d2	| mask up to 255
+	move.b	d0,d2
 	bsr		compute_tile_xy
 	move.l	bg_screen_ptr,a1
 	add.w	d0,a1
@@ -1868,7 +1871,7 @@ update_bg_tile:
 	* ATM first layer
 	move.l	(a0),a0
 	
-	move.l	(a0,d0.w*4),d0
+	move.l	(a0,d2.w*4),d0
 	jeq		11f		| 0: clear
 	
 	* just copy
