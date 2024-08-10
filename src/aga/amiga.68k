@@ -65,16 +65,19 @@ _custom = 0xDFF000
 
 OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 
+* background scrolls (in-game)
+* foreground is static and contains bobs
+
 NB_PLAYFIELD_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
-STATIC_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
-STATIC_SCREEN_SIZE =  STATIC_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
-PF_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
-PF_SCREEN_SIZE =  PF_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
+BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
+BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
+FG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
+FG_SCREEN_SIZE =  FG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 
 NB_HOST_SPRITES = 8
 
@@ -303,29 +306,29 @@ _user:
 
 .no_forbid:
 	* align bitplanes
-	lea		pf_screen_buffer_1,a0
+	lea		fg_screen_buffer_1,a0
 	bsr		align_for_fmode
-	move.l	a0,pf_screen_data_1
-	move.l	a0,pf_drawed_screen_ptr
-	move.l	a0,pf_displayed_screen_ptr
+	move.l	a0,fg_screen_data_1
+	move.l	a0,fg_drawed_screen_ptr
+	move.l	a0,fg_displayed_screen_ptr
 	
-	lea		static_screen_buffer,a0
+	lea		bg_screen_buffer,a0
 	bsr		align_for_fmode
-	move.l	a0,static_panel_screen_ptr
+	move.l	a0,bg_screen_ptr
 
 
 	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	lea		pf_screen_buffer_2,a0
+	lea		fg_screen_buffer_2,a0
 	bsr		align_for_fmode
-	move.l	a0,pf_screen_data_2
-	move.l	a0,pf_displayed_screen_ptr
+	move.l	a0,fg_screen_data_2
+	move.l	a0,fg_displayed_screen_ptr
 	.endif
 		
 	* set them even if reset by game afterwards
 	* avoiding ugly stripe bitplane effect at startup
 	movem.l	a0/a1,-(a7)
-    move.l	static_screen_ptr(pc),a1
+    move.l	bg_screen_ptr(pc),a1
 	lea	title_bitplanes+2,a0
 	bsr		set_static_bitplanes
 	movem.l	(a7)+,a0/a1
@@ -805,7 +808,7 @@ update_bobs:
 	move.w	(a4),d0
 	and.w	#0x1F0,d0		| align on 16 lower bound
 	* clear area where the sprite was
-	move.l	pf_drawed_screen_ptr(pc),a1
+	move.l	fg_drawed_screen_ptr(pc),a1
 	move.w	#4,d2
 	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+ 			| ack deletion
@@ -892,7 +895,7 @@ update_bobs:
 	move.l	(a7)+,a0
 	bra.b	2f
 12:
-	move.l		pf_drawed_screen_ptr(pc),a1
+	move.l		fg_drawed_screen_ptr(pc),a1
 	* D0 and D1 are already set
 	move.l	d4,a0	| plane list (+ mask)
 	move.l	(NB_PLAYFIELD_PLANES*4,a0),d2
@@ -955,7 +958,7 @@ clear_fg_planes_any_blitter_internal:
 	* null or negative height after clipping: out
 	rts
 0:
-    lea mulFG_NB_BYTES_PER_ROW_table(pc),a2
+    lea mulNB_BYTES_PER_ROW_table(pc),a2
     add.w   d1,d1
     move.w  (a2,d1.w),d1
 1:
@@ -975,7 +978,7 @@ clear_fg_planes_any_blitter_internal:
 2:   
     add.w   d1,a1       | plane position (always even)
 
-	move.w #FG_NB_BYTES_PER_ROW,d0
+	move.w #NB_BYTES_PER_ROW,d0
     sub.w   d2,d0       | blit width
 
     lsl.w   #6,d4
@@ -1042,7 +1045,7 @@ clear_bg_planes_any_blitter_internal:
 	* null or negative height after clipping: out
 	rts
 0:
-    lea mulBG_NB_BYTES_PER_ROW_table(pc),a2
+    lea mulNB_BYTES_PER_ROW_table(pc),a2
     move.w  (a2,d1.w*2),d1
 1:
     move.l  #0x01000000,d5   | minterm useD & rect clear (0xA) 
@@ -1061,7 +1064,7 @@ clear_bg_planes_any_blitter_internal:
 2:   
     add.w   d1,a1       | plane position (always even)
 
-	move.w #BG_NB_BYTES_PER_ROW,d0
+	move.w #NB_BYTES_PER_ROW,d0
     sub.w   d2,d0       | blit width
 
     lsl.w   #6,d4
@@ -1151,7 +1154,7 @@ blit_planes_any_internal_cookie_cut:
 1:	
 	tst	d1
     beq.b   2f    | optim
-    lea		mulFG_NB_BYTES_PER_ROW_table,a4
+    lea		mulNB_BYTES_PER_ROW_table,a4
 	.ifdef	NO68020
 	add.w	d1,d1
     move.w  (a4,d1.w),d1	| y times 40
@@ -1182,7 +1185,7 @@ blit_planes_any_internal_cookie_cut:
     * but a 68000 CPU doesn't and since we RETURN A1...
     bclr    #0,d1
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
-	move.w	#FG_NB_BYTES_PER_ROW,d0
+	move.w	#NB_BYTES_PER_ROW,d0
 	tst.w	d4
 	bpl.b	5f
 	neg.w	d0
@@ -1413,7 +1416,7 @@ switch_screen_buffers:
 	* let's switch screen buffers, background (chars)
 	* toggle fg planes (double buffering)
 	* also toggle previous sprite positions
-	lea		pf_drawed_screen_ptr(pc),a0
+	lea		fg_drawed_screen_ptr(pc),a0
 	lea		bob_previous_positions_1(pc),a2
 	lea		bob_previous_positions_2(pc),a3
 	move.l	fg_screen_data_1,a1
@@ -1579,7 +1582,6 @@ platform_init:
 	*         VVHH
     move.w #0x18A0,diwstop(a5)
 	* try to hide color 0 on the border (except on OCS)
-    move.w #0x200+BORDERBLANK,bplcon0(a5) | 4 bitplanes, borderblank
     move.w #BASE_BPLCON2_VALUE,bplcon2(a5)
 	* AGA-compatible ECS default values
 	*move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
@@ -1592,6 +1594,10 @@ platform_init:
     move.w #-8,bpl1mod(a5)
     move.w #-8,bpl2mod(a5)
 
+	* set bank 0: title screen mode
+	moveq	#0,d0
+	jbsr	osd_set_gfx_bank
+	
 	* set sprite registers in copperlist
 	lea		game_sprites,a0
 	lea		blank_sprite_table,a1
@@ -1600,11 +1606,6 @@ platform_init:
 	lea		blank_sprite_table,a1
 	bsr		init_sprite_bank
 	
-	bsr		set_fg_bitplanes
-	
-	
-	* set copperlist
-	move.l	#title_copperlist,cop1lc(a5)
 
 	* wait 300 lines
 	move.w	#100,d0
@@ -1651,25 +1652,6 @@ platform_init:
 	
     rts
 	
-load_palette_in_copperlist:
-	movem.l	d0-d1/a0-a1,-(a7)
-	lea		tiles_palette(pc),a0
-
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		panel_tiles_colors,a1
-	bsr		load_palette
-
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		bobs_palette(pc),a0
-	lea		playfield_colors,a1
-	bsr		load_palette
-	movem.l	(a7)+,d0-d1/a0-a1
-	
-	
-	rts
-	
-
-
 	
 
 * < A0: palette
@@ -1729,22 +1711,58 @@ decode_sprite_data:
 	rts
 
 osd_set_gfx_bank:
+	movem.l	d0-d1/a0-a1/a5,-(a7)
+
 	cmp.b	current_gfx_bank,d0
 	jeq		0f
 	move.b	d0,current_gfx_bank
 	
+	lea		_custom,a5
+	
 	tst.b	d0
 	bne		1f
 	* title gfx bank, set title palette
-	lea		title_palette,a0
+    move.w #0x200+(NB_PLAYFIELD_PLANES<<12)+BORDERBLANK,bplcon0(a5)
+	
+
+	lea		title_palette(pc),a0
+
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
 	
+
+	*bsr		set_fg_bitplanes
 	
+	* set copperlist
+	move.l	#title_copperlist,cop1lc(a5)
+
+	lea		title_palette,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		title_colors,a1
+	bsr		load_palette
+	
+	jra		0f
 1:
 	* game gfx bank
+    move.w #0x0610+BORDERBLANK,bplcon0(a5) | 8 bitplanes, dual playfield, borderblank
+
+	* set copperlist
+	move.l	#game_copperlist,cop1lc(a5)
+
+	lea		level_palettes,a0
+	* TODO which level
+	moveq	#0,d0
+	move.l	(a0,d0.w*4),a0
+	
+	* TODO bobs palette
+	*move.w	#TOTAL_NB_COLORS,d0
+	*lea		bobs_palette(pc),a0
+	*lea		playfield_colors,a1
+	*bsr		load_palette
+	
 0:
+	movem.l	(a7)+,d0-d1/a0-a1/a5
 	rts
 	
 * D0: scroll value
@@ -1792,128 +1810,84 @@ osd_w_videoram:
 3:
 	move.b	d0,(a1)	| update logical grid
 
-	
-
+	cmp.w	#0x400,d7
+	jcc		1f
 	jbsr		update_bg_tile
+	
+1:
+	* ATM do nothing
 0:
 	movem.l	(a7)+,d0-d7/a0-a3
     .endif | OPT_DISABLE_BG_LAYER
 	rts
 
-* a0: screen offset
-* d0: tile code
-*
-* very straightforward linear tile layout
-* thanks to landscape unrotated display for once!
 
+* < D7: 0-0x400
+* > D0: 
+compute_tile_xy:
+	moveq	#0,d0
+	move.b	d7,d0
+	and.b	#0x1F,d0	| x
+	move.w	d7,d1
+	lsr.w	#5,d1		| Y
+	rts
+
+* < D7: 0-0x400 address
+* < D0: tile code
+	
 update_bg_tile:
 	and.w	#0xFF,d0	| mask up to 255
-	and.w	#0xFF,d1	| mask up to 255
-
+	bsr		compute_tile_xy
+	move.l	bg_screen_ptr,a1
+	add.w	d0,a1
+	lea		mulNB_BYTES_PER_ROW_table,A0
+	add.w	(a0,d1.w*2),a1
 	
-	* is it upper part of bank ?
-	btst	#7,D1
+	lea		character_tables,a0
+	tst.b	current_gfx_bank
 	beq.b	0f
-	* second part of tiles ("moon patrol" title...)
-	add.w	#0x100,d0
+	addq.w	#4,a0		| game characters
 0:
-
-
-	* color tile
-	cmp.w	#22,d1
-	bcs.b	111f
-	moveq	#0,d1		| wrong but default
-111:
-	move.w	d7,d3
-	lsr.w	#5,d3		| this is Y (tile)
-	
-	
-
-	tst		d0
-	bne.b	112f
-	cmp.w	#PLAYFIELD_TILE_Y_MIN,d3	
-	bcs.b	112f
-	* playfield: some hacks are necessary for the clearing
-	* character with some cluts (1: blue,0xC: pink)
-	tst		d0
-	bne.b	112f
-	cmp.b	#1,d1
-	bne.b	1112f
-	clr.b	d1
-	bra.b	112f
-1112:
-	cmp.b	#0xC,d1
-	bne.b	112f
-	clr.b	d1
-112:
-
-	move.w	d7,d6
-	and.w	#0x1F,d7	| this is X (tile)
-	addq.w	#2,d7
-
-	lea		mulBG_NB_BYTES_PER_ROW_table(pc),a0
-
-	moveq	#NB_PLAYFIELD_PLANES-1,d4		| 4 bitplanes for all layers
-	*cmp.w	#SCROLL_MIN_Y/8,d3
-	*bcc		update_ground_strip_character
-	
-* right now not necessary as bitplanes written by CPU & blitter don't collide
-*	cmp.w	#PANEL_MAX_Y/8,d3
-*	bcs.b	23f
-*	* always wait for blitter operation before writing to chip with CPU
-*	WAIT_BLIT
-*23:
-
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.l	(a0),a0		| char table
 	
-	move.l	bg_panel_screen_ptr(pc),a1
+	* ATM first layer
+	move.l	(a0),a0
 	
-	* D3 = Y
-
-	move.w	(a0,d3.w*2),d6
-	lsl.w	#3,d6		| times 8
-	add.w	d6,a1		| add Y offset
-	add.w	d7,a1		| add X offset
-
-
-	* optimization when a well-known
-	* empty character is passed (standard charset)
-	tst.b	d1
-	bne.b	23f
-	tst.w	d0	| empty character
-	jeq	11f
-	cmp.w	#0x20,d0
-	jeq	11f		| space
-23:
-	move.b	d0,d2		| store character
-
-	lea		character_table,a0
-
 	move.l	(a0,d0.w*4),d0
-	jeq	2f
-	move.l	d0,a0		| pointer on clut table
-	* now we use d1 (attribute)
-	add.w	(a0,d1.w*2),a0
-	cmp.l	d0,a0
-	jeq		12f		| should not happen
-
+	jeq		11f		| 0: clear
 	
+	move.w	#NB_PLAYFIELD_PLANES-1,d0
 	* just copy
+	move.l	d0,a2
 4:
+	move.l	(a2)+,d0
+	jeq		5f
+	move.l	d0,a0
 	.set	offset,0
 	.rept	8
 	move.b	(a0)+,(offset,a1)
 
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
+41:
 	add.l	d5,a1
 	dbf		d4,4b
 0:
 	rts
-
+5:
+	.set	offset,0
+	.rept	8
+	clr.b	(offset,a1)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+	jra		41b
+	
 	* clear tile
 
 11:
+	move.w	#NB_PLAYFIELD_PLANES-1,d0
+111:
 	.set	offset,0
 	.rept	8
 	clr.b	(offset,a1)
@@ -2001,7 +1975,7 @@ set_static_bitplanes:
 	movem.l	d0-d2,-(a7)
     moveq #NB_PLAYFIELD_PLANES-1,d1
 	move.l	a1,d0
- 	move.l	#STATIC_SCREEN_PLANE_SIZE,d2
+ 	move.l	#BG_SCREEN_PLANE_SIZE,d2
 1:
     swap d0
     move.w d0,(a0)
@@ -2505,17 +2479,17 @@ delay_timer:
 	.word	0
 one_out_of_five:
 	.word	0
-pf_screen_data_1:
+fg_screen_data_1:
 	.long	0
-pf_screen_data_2:
+fg_screen_data_2:
 	.long	0
 	
-bg_panel_screen_ptr:
+bg_screen_ptr:
 	.long	0
 
-pf_drawed_screen_ptr:
+fg_drawed_screen_ptr:
 	.long	0
-pf_displayed_screen_ptr:
+fg_displayed_screen_ptr:
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	.long	0
 	.else
@@ -2586,13 +2560,24 @@ tile_log_table:
 
 
 	.section	.datachip
-	
+
+* title
 .macro	DECL_BITPLANES	bpoff_start,nb_planes
 	.set	bpoff,\bpoff_start
 	.rept	\nb_planes
 	dc.w  0xe0+bpoff,0
 	dc.w  0xe2+bpoff,0
 	.set	bpoff,bpoff+4
+	.endr
+	.endm
+
+* game	
+.macro	DECL_EVEN_BITPLANES	bpoff_start,nb_planes
+	.set	bpoff,\bpoff_start
+	.rept	\nb_planes
+	dc.w  bplpt+bpoff,0
+	dc.w  bplpt+bpoff+2,0
+	.set	bpoff,bpoff+8
 	.endr
 	.endm
 
@@ -2657,17 +2642,19 @@ title_sprites:
 game_copperlist:
     *.word   0x1801,0xFFFE
 	* reset scrolling to default (panel)
-	.word	bplcon1,0
 
-panel_bitplanes:
-	DECL_BITPLANES	0,4
+bobs_bitplanes:
+	DECL_EVEN_BITPLANES	0,4
+playfield_bitplanes:
+	DECL_EVEN_BITPLANES	4,4
 	* default color bank
 	DECL_COLOR_BANK	0
 panel_tiles_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
-playfield_bitplanes:
-	DECL_BITPLANES	0,4
-playfield_colors:
+	.word		0x800*3,0xFFFE		| wait 3 rows, then change palette
+playfield_tiles_colors:
+	DECL_COLORS	0,TOTAL_NB_COLORS
+bob_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
 
 	* sprites color bank
@@ -2720,23 +2707,18 @@ post_pal_copper_rows:
 	.align	8
 	
 		.section .bsschip
-static_screen_buffer:
-	.skip	STATIC_SCREEN_SIZE
+bg_screen_buffer:
+	.skip	BG_SCREEN_SIZE
 	.skip	8
 	.skip	8
 	
-pf_store_buffer:
-	.skip	PF_SCREEN_SIZE
-	.skip	NB_BYTES_PER_ROW*12*3
-	.skip	8
-
-pf_screen_buffer_1:
-	.skip	PF_SCREEN_SIZE
+fg_screen_buffer_1:
+	.skip	FG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 	.skip	8
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING
-pf_screen_buffer_2:
-	.skip	PF_SCREEN_SIZE
+fg_screen_buffer_2:
+	.skip	FG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 	.skip	8
 	.endif
