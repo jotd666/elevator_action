@@ -28,6 +28,8 @@ figure 8002 and 800E pointers? values?
 dig out problematic*.py script with d3/d4/a1, d5/d6/a0
 
 
+title_sequence_11F0: debug not reached????
+
 red doors position tables: l_278b
 
 intro "elevator" letters python mockup

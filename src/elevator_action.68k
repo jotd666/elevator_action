@@ -3658,7 +3658,7 @@ l_11CF:
 											| [$11ed: jp   finish_irq_123E]
 
 title_sequence_11F0:
-	jbsr	l_7430                            	| [$11f0: call $7430]
+	jbsr	title_animation_7430                            	| [$11f0: call $7430]
 	jra	finish_irq_123E                    	| [$11f3: jp   finish_irq_123E]
 
 	                    	| [$11f6: jp   finish_irq_123E]
@@ -18432,7 +18432,7 @@ l_72a8:
 	rts                                    	| [$72ae: ret]
 
 update_title_y_scroll_value_72af:
-	move.b	l_8640(a6),d0                   	| [$72af: ld   a,($8640)]
+	move.b	action_letter_timer_8640(a6),d0                   	| [$72af: ld   a,($8640)]
 	move.b	d0,d2                           	| [$72b2: ld   c,a]
 	lea	title_letters_y_scroll_values_862F(a6),a1                      	| [$72b3: ld   de,$862F]
 	lea	table_72D4-2,a0                    	| [$72b6: ld   hl,table_72D4-2]
@@ -18449,12 +18449,12 @@ l_72be:
 	jcc	l_72be                             	| [$72c1: jr   nc,$72BE]
 	addq.w	#1,a0                           	| [$72c3: inc  hl]
 	move.b	(a0),d0                         	| [$72c4: ld   a,(hl)]
-	move.b	d0,(a1)                         	| [$72c5: ld   (de),a]
-	addq.w	#1,a1                           	| [$72c6: inc  de]
+	move.b	d0,(a1)+                         	| [$72c5: ld   (de),a]
+	                           	| [$72c6: inc  de]
 	move.b	(a1),d0                         	| [$72c7: ld   a,(de)]
 	add.b	(a0),d0                          	| [$72c8: add  a,(hl)]
-	move.b	d0,(a1)                         	| [$72c9: ld   (de),a]
-	addq.w	#1,a1                           	| [$72ca: inc  de]
+	move.b	d0,(a1)+                         	| [$72c9: ld   (de),a]
+	                           	| [$72ca: inc  de]
 	move.l	(sp)+,a0                        	| [$72cb: pop  hl]
 	move.w	#0x000C,d1                      	| [$72cc: ld   bc,$000C] 12
 	add.w	d1,a0                            	| [$72cf: add  hl,bc]
@@ -18688,9 +18688,9 @@ l_7400:
    	| [$742c: pop  ix]
   	| [$742e: jp   (ix)] indirect call!! looks like a protection!
 
-l_7430:
+title_animation_7430:
 	jbsr	update_title_elevator_scroll_7437                            	| [$7430: call $7437]
-	jbsr	l_7475                            	| [$7433: call $7475]
+	jbsr	display_action_title_7475                            	| [$7433: call $7475]
 	rts                                    	| [$7436: ret]
 
 
@@ -18755,9 +18755,9 @@ l_7462:
 	jne	l_7462                             	| [$7472: djnz $7462]
 	rts                                    	| [$7474: ret]
 
-l_7475:
-	move.b	l_8640(a6),d0                   	| [$7475: ld   a,($8640)]
-	lea	table_7498,a0                      	| [$7478: ld   hl,table_7498]
+display_action_title_7475:
+	move.b	action_letter_timer_8640(a6),d0                   	| [$7475: ld   a,($8640)]
+	lea	action_letter_appear_table_7498,a0                      	| [$7478: ld   hl,action_letter_appear_table_7498]
 	cmp.b	(a0),d0                          	| [$747b: cp   (hl)]
 	jeq	l_7503                             	| [$747c: jp   z,$7503]
 	addq.w	#1,a0                           	| [$747f: inc  hl]
@@ -18781,7 +18781,7 @@ l_7475:
 	rts                                    	| [$7497: ret]
 
 
-table_7498:
+action_letter_appear_table_7498:
 	.byte	0x30,0x32
 	.byte	0x36,0x3A
 	.byte	0x3E,0x42
