@@ -268,7 +268,7 @@ play_sound:
 	rts
 0:	
 	* sound not linked to our sound engine
-	jbsr	osd_break
+	**jbsr	osd_break
 	jra	1b
 
 sound_table:
@@ -564,38 +564,46 @@ rst_08:
 	jbsr	rst_20                            	| [$000e: rst  $20]
 	rts                                    	| [$000f: ret]
 
-rst_10:
-	rol.b	#1,d0                            	| [$0010: rlca]
-	scs		d7
-	lea	l_8647(a6),a0                      	| [$0011: ld   hl,$8647]
-	move.b	(a0),d0                         	| [$0014: ld   a,(hl)]
-	tst.b	d7
-	jne	l_001b                             	| [$0015: jr   c,$001B]
-	add.b	#0xF3,d0                         	| [$0017: add  a,$F3]
-	asr.b	#1,d0                            	| [$0019: sra  a]
-l_001b:
-	add.b	#0x17,d0                         	| [$001b: add  a,$17]
-	move.b	d0,(a0)                         	| [$001d: ld   (hl),a]
-	rts                                    	| [$001e: ret]
+* < D0:
+* updates protection_random_variable_8647 pseudo-randomly (it seems)
+
+| [$0010: rlca]
+
+                    	| [$0011: ld   hl,$8647]
+| [$0014: ld   a,(hl)]
+
+| [$0015: jr   c,$001B]
+| [$0017: add  a,$F3]
+| [$0019: sra  a]
+
+| [$001b: add  a,$17]
+| [$001d: ld   (hl),a]
+                                    	| [$001e: ret]
 
 
 
 rst_20:
-	move.l	a0,-(sp)                        	| [$0020: push hl]
-	jbsr	mcu_comm_routine_77CF             	| [$0021: call mcu_comm_routine_77CF]
-	jbsr	rst_10                            	| [$0024: rst  $10]
-	move.l	(sp)+,a0                        	| [$0025: pop  hl]
+* part of protection? probably used to install code put in RAM
+* from alternate bank
+* useless with bootleg
+	       	| [$0020: push hl]
+	         	| [$0021: call mcu_comm_routine_77CF]
+	                      	| [$0024: rst  $10]
+	       	| [$0025: pop  hl]
 	rts                                    	| [$0026: ret]
 
-* part of protection? probably used to decrypt code put in RAM
+* part of protection? probably used to install code put in RAM
+* from alternate bank
+* useless with bootleg
 rst_28:
-	and.b	#0x1F,d0                         	| [$0028: and  $1F]
-	jbsr	rst_20                            	| [$002a: rst  $20]
-	lea	protection_variable_8648(a6),a0    	| [$002b: ld   hl,protection_variable_8648]
-	or.b	(a0),d0                           	| [$002e: or   (hl)]
-	move.b	d0,(a0)                         	| [$002f: ld   (hl),a]
-	jbsr	mcu_comm_routine_77BD             	| [$0030: call mcu_comm_routine_77BD]
-	rts                                    	| [$0033: ret]
+	rts
+	      	| [$0028: and  $1F]
+	       	| [$002a: rst  $20]
+	    	| [$002b: ld   hl,protection_variable_8648]
+	       	| [$002e: or   (hl)]
+	     	| [$002f: ld   (hl),a]
+	       	| [$0030: call mcu_comm_routine_77BD]
+	    	| [$0033: ret]
 
 elevator_irq_0038:
 	jra	elevator_irq_1199                  	| [$0038: jp   elevator_irq_1199]
@@ -3183,7 +3191,7 @@ l_0f0f:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$0f1e: ret  nz] [...]
 0:
-	jbsr	l_77dd                            	| [$0f1f: call $77DD]
+	*jbsr	protection_related_77dd                            	| [$0f1f: call $77DD]
 	move.b	(a0),d0                         	| [$0f22: ld   a,(hl)]
 	addq.b	#1,(a0)                         	| [$0f23: inc  (hl)]
 	jbsr	rst_28                            	| [$0f24: rst  $28]
@@ -9568,9 +9576,9 @@ l_3399:
 	                           	| [$339b: bit  3,h]
 	dbf	d5,l_3399                             	| [$339d: jr   z,$3399] until 8800
 	clr.b	coin_counter_lock_82EA(a6)   	| [$339f: ld   (coin_counter_lock_82EA),a]
-	jbsr	l_3417                            	| [$33a2: call $3417]
+	jbsr	read_dip_switches_3417             	| [$33a2: call $3417]
 	lea	table_171E,a0                          	| [$33a5: ld   hl,table_171E]
-	lea	l_81C9(a6),a1                      	| [$33a8: ld   de,$81C9]
+	lea	l_81C9(a6),a1                      	    | [$33a8: ld   de,$81C9]
 	move.w	#0x0005,d1                      	| [$33ab: ld   bc,$0005] 5
 	jbsr	ldir                              	| [$33ae: ldir]
 	clr.b	d0                               	| [$33b0: xor  a]
@@ -9624,23 +9632,23 @@ l_3401:
 	clr.b	(a0)                             	| [$3413: ld   (hl),$00]
 	jra	l_33d2                             	| [$3415: jr   $33D2]
 
-l_3417:
+read_dip_switches_3417:
 	jbsr	cache_dip_switches_3503           	| [$3417: call cache_dip_switches_3503]
 	lea	l_8350(a6),a0                      	| [$341a: ld   hl,$8350]
 	clr.b	d0                               	| [$341d: xor  a]
-	move.b	d0,(a0)                         	| [$341e: ld   (hl),a]
-	addq.w	#1,a0                           	| [$341f: inc  hl]
-	move.b	d0,(a0)                         	| [$3420: ld   (hl),a]
-	addq.w	#1,a0                           	| [$3421: inc  hl]
+	move.b	d0,(a0)+                         	| [$341e: ld   (hl),a]
+	                           	| [$341f: inc  hl]
+	move.b	d0,(a0)+                         	| [$3420: ld   (hl),a]
+	                           	| [$3421: inc  hl]
 	move.b	#0x01,(a0)                      	| [$3422: ld   (hl),$01]
 	lea	l_834D(a6),a0                      	| [$3424: ld   hl,$834D]
 	lea	l_8254(a6),a1                      	| [$3427: ld   de,$8254]
 	move.b	#0x03,d1                        	| [$342a: ld   b,$03]
 l_342c:
-	move.b	d0,(a0)                         	| [$342c: ld   (hl),a]
-	move.b	d0,(a1)                         	| [$342d: ld   (de),a]
-	addq.w	#1,a0                           	| [$342e: inc  hl]
-	addq.w	#1,a1                           	| [$342f: inc  de]
+	move.b	d0,(a0)+                         	| [$342c: ld   (hl),a]
+	move.b	d0,(a1)+                         	| [$342d: ld   (de),a]
+											| [$342e: inc  hl]
+											| [$342f: inc  de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_342c                             	| [$3430: djnz $342C]
 	jbsr	l_0fb1                            	| [$3432: call $0FB1]
@@ -18607,16 +18615,18 @@ l_73de:
 	jeq	l_73e6                             	| [$73e2: jr   z,$73E6]
 	move.b	#0x03,d0                        	| [$73e4: ld   a,$03]
 l_73e6:
-	jbsr	l_77dd                            	| [$73e6: call $77DD]
+	*jbsr	protection_related_77dd                            	| [$73e6: call $77DD]
 	move.b	(a0),d0                         	| [$73e9: ld   a,(hl)]
 	addq.b	#1,(a0)                         	| [$73ea: inc  (hl)]
 	jbsr	rst_28                            	| [$73eb: rst  $28]
-* bootleg: code below replaced by alternate
+	* this part performs a bank switch and other stuff which installs
+	* part of game code in RAM
+	* now fuck this, RAM code in 85cf/85ef is already present
 											| [$73ec: ld   hl,$85C6]
 											| [$73ef: ld   c,(hl)]
 												| [$73f0: add  hl,bc]
 * bootleg: end original code, replacement code below
-	jra	l_34e4                             	| [$73ec: jp   $34E4]
+	                             	| [$73ec: jp   $34E4]
        	| [$73ef: pop  af]
        	| [$73f0: pop  hl]
 
@@ -18646,7 +18656,7 @@ l_7400:
 	btst.b	#6,(a0)                         	| [$740b: bit  6,(hl)]
 	jeq	l_73de                             	| [$740d: jr   z,$73DE]
 	move.b	#0x09,d0                        	| [$740f: ld   a,$09]
-	jbsr	l_77dd                            	| [$7411: call $77DD]
+	*jbsr	protection_related_77dd                            	| [$7411: call $77DD]
 	move.b	l_80AB(a6),d0                   	| [$7414: ld   a,($80AB)]
 	                             	| [$7417: or   a]
 	bne.b	0f                               	| [...]
@@ -19271,60 +19281,69 @@ table_7FF8:
 * this sets important variables. Can't be skipped properly
 * else game sets itself in a strange mode (title screen but
 * nothing happening on screen)
+* if disabled runs OK (on bootleg, as long as extra routines are
+* installed properly in RAM)
 hardware_test_779F:
-	move.b	mcu_read_8800(a6),d0            	| [$779f: ld   a,(mcu_read_8800)]
-	move.b	l_7FF4,d0                       	| [$77a2: ld   a,($7FF4)]
-	lea	l_8647(a6),a0                      	| [$77a5: ld   hl,$8647]
-	clr.b	(a0)                             	| [$77a8: ld   (hl),$00]
-
-	move.l	a0,-(sp)                        	| [$77aa: push hl]
-	jbsr	mcu_comm_routine_77CF             	| [$77ab: call mcu_comm_routine_77CF]
-	jbsr	mcu_comm_routine_77BD             	| [$77ae: call mcu_comm_routine_77BD]
-	move.l	(sp)+,a0                        	| [$77b1: pop  hl]
-	cmp.b	#0x17,d0                         	| [$77b2: cp   $17] must be 0x17 else fails check
-	move.b	#0x58,d0                        	| [$77b4: ld   a,$58]
-	move.b	d0,(a0)                         	| [$77b6: ld   (hl),a]
+	rts
+	
+									| [$779f: ld   a,(mcu_read_8800)]
+									| [$77a2: ld   a,($7FF4)]
+									| [$77a5: ld   hl,$8647]
+									| [$77a8: ld   (hl),$00]
+									
+									| [$77aa: push hl]
+									| [$77ab: call mcu_comm_routine_77CF]
+									| [$77ae: call mcu_comm_routine_77BD]
+									| [$77b1: pop  hl]
+									| [$77b2: cp   $17] must be 0x17 else fails check
+									| [$77b4: ld   a,$58]
+									| [$77b6: ld   (hl),a]
 * bootleg: original code
 												| [$77b7: set  0,a]
 												| [$77b9: ld   (protection_variable_8648),a]
 * bootleg: replacement code: seems to do the same
-	lea	protection_variable_8648(a6),a0    	| [$77b7: ld   hl,protection_variable_8648] useless patch
-	move.b	#0x59,(a0)                      	| [$77ba: ld   (hl),$59]
+								| [$77b7: ld   hl,protection_variable_8648] useless patch
+									| [$77ba: ld   (hl),$59]
 * bootleg: end replacement code
 	rts                                    	| [$77bc: ret]
 
 * communicates with MC68705 MCU for protection
+* can be disabled on bootleg
 mcu_comm_routine_77BD:
-	move.b	l_8647(a6),d0                   	| [$77bd: ld   a,($8647)]
-	lea	mcu_status_8801(a6),a0             	| [$77c0: ld   hl,mcu_status_8801]
-l_77c3:
-	btst.b	#1,(a0)                         	| [$77c3: bit  1,(hl)]
-	jeq	l_77c3                             	| [$77c5: jr   z,$77C3]
-	subq.w	#1,a0                           	| [$77c7: dec  hl]
-	move.b	(a0),d6                         	| [$77c8: ld   l,(hl)]
-	add.b	d6,d0                            	| [$77c9: add  a,l]
-	move.w	d0,-(sp)                        	| [$77ca: push af]
-	move.b	d6,d0                           	| [$77cb: ld   a,l]
-	jbsr	rst_10                            	| [$77cc: rst  $10]
-	move.w	(sp)+,d0                        	| [$77cd: pop  af]
-	rts                                    	| [$77ce: ret]
+	rts
+	
+	                  	| [$77bd: ld   a,($8647)]
+	  	| [$77c0: ld   hl,mcu_status_8801]
+	   	| [$77c3: bit  1,(hl)]
+	  	| [$77c5: jr   z,$77C3]
+	   	| [$77c7: dec  hl]
+	   	| [$77c8: ld   l,(hl)]
+	    	| [$77c9: add  a,l]
+	   	| [$77ca: push af]
+	   	| [$77cb: ld   a,l]
+	                  	| [$77cc: rst  $10]
+	   	| [$77cd: pop  af]
+	  	| [$77ce: ret]
 
 mcu_comm_routine_77CF:
-	lea	l_8647(a6),a0                      	| [$77cf: ld   hl,$8647]
-	sub.b	(a0),d0                          	| [$77d2: sub  (hl)]
-	lea	mcu_status_8801(a6),a0             	| [$77d3: ld   hl,mcu_status_8801]
-l_77d6:
-	btst.b	#0,(a0)                         	| [$77d6: bit  0,(hl)]
-	jeq	l_77d6                             	| [$77d8: jr   z,$77D6]
-	subq.w	#1,a0                           	| [$77da: dec  hl]
-	move.b	d0,(a0)                         	| [$77db: ld   (hl),a]
-	rts                                    	| [$77dc: ret]
+* can be disabled on bootleg
+	rts
+	
+	                      	| [$77cf: ld   hl,$8647]
+           	| [$77d2: sub  (hl)]
+         	| [$77d3: ld   hl,mcu_status_8801]
 
-l_77dd:
-	and.b	#0x7F,d0                         	| [$77dd: and  $7F]
-	or.b	#0x40,d0                          	| [$77df: or   $40]
-	jbsr	rst_20                            	| [$77e1: rst  $20]
-	rts                                    	| [$77e2: ret]
+          	| [$77d6: bit  0,(hl)]
+         	| [$77d8: jr   z,$77D6]
+          	| [$77da: dec  hl]
+          	| [$77db: ld   (hl),a]
+         	| [$77dc: ret]
+
+
+           	| [$77dd: and  $7F]
+            	| [$77df: or   $40]
+            	| [$77e1: rst  $20]
+         	| [$77e2: ret]
 
 
 

@@ -48,7 +48,7 @@ WHDASM = vasmm68k_mot -DDATETIME -I$(HDBASE)/amiga39_JFF_OS/include -I$(WHDBASE)
 OBJS_OCS = $(OCS_MAIN_OBJ) gfxrom.o sound_engine.o sounds_ocs.o $(PROGNAME).o vbr.o graphics_ocs.o ReadJoyPad.o ptplayer.o 
 OBJS_AGA = $(AGA_MAIN_OBJ) gfxrom.o sound_engine.o sounds_aga.o $(PROGNAME).o vbr.o graphics_aga.o ReadJoyPad.o ptplayer.o 
 #all: $(MAIN_AGA) $(MAIN_ECS) $(MAIN_OCS) $(AMIGA_SHELL) $(WHDLOADER) $(WHDLOADER_CHIP) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) 
-all: $(MAIN_AGA)
+all: $(MAIN_AGA) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) 
 
 $(AMIGA_SHELL): shell.o
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o

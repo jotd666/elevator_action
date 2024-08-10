@@ -97,7 +97,8 @@ rst_08:
 000E: E7          rst  $20
 000F: C9          ret
 
-rst_10:
+; updates protection_random_variable_8647 pseudo-randomly (it seems)
+randomize_8647_0010:
 0010: 07          rlca
 0011: 21 47 86    ld   hl,$8647
 0014: 7E          ld   a,(hl)
@@ -108,7 +109,7 @@ rst_10:
 001D: 77          ld   (hl),a
 001E: C9          ret
 
-
+; part of protection, RET it on bootleg
 rst_20:
 0020: E5          push hl
 0021: CD CF 77    call mcu_comm_routine_77CF
@@ -116,7 +117,7 @@ rst_20:
 0025: E1          pop  hl
 0026: C9          ret
 
-; part of protection?
+; part of protection?, RET it on bootleg as it's not useful
 0028: E6 1F       and  $1F
 002A: E7          rst  $20
 002B: 21 48 86    ld   hl,protection_variable_8648

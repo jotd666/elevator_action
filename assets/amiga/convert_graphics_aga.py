@@ -215,22 +215,27 @@ sprites_palette_3,sprites_set_3 = load_tileset(sprites_3_sheet,True,16,set(range
 full_sprite_set = sprites_set + sprites_set_2 + sprites_set_3
 
 # playfield+status+sprites
-game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0]) |
- set(sprites_palette) |
+game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0])))
+
+sprites_palette = tuple(sorted(set(sprites_palette) |
   set(sprites_palette_2) |
   set(sprites_palette_3)))
 # elevators
 game_background_palette = tuple(sorted(game_layer[2][0]))
 
 nb_game_colors = len(game_playfield_palette)
-print(f"nb colors in-game: {nb_game_colors}")
+print(f"nb tiles colors in-game: {nb_game_colors}")
+nb_sprites_colors = len(sprites_palette)
+print(f"nb sprites colors in-game: {nb_sprites_colors}")
 # with elevator colors as sprites, the number of colors is around 14
 # we could go down using dynamic color change between status & main
 # we'll sort that out later
 if nb_game_colors > 16:
-    raise Exception("max 16 colors allowed")
+    raise Exception("game tiles: max 16 colors allowed")
+if nb_sprites_colors > 16:
+    raise Exception("sprites: max 16 colors allowed")
 game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
-
+sprites_palette = sprites_palette + (16-len(sprites_palette)) * (dummy,)
 
 current_plane_idx = 0
 
@@ -291,7 +296,7 @@ current_plane_idx = 0
 
 for tile in full_sprite_set:
     if tile:
-        planes = bitplanelib.palette_image2raw(tile,None,game_playfield_palette,forced_nb_planes=nb_planes,
+        planes = bitplanelib.palette_image2raw(tile,None,sprites_palette,forced_nb_planes=nb_planes,
         generate_mask=True,blit_pad=True,
         mask_color=transparent)
         plane_list = []
@@ -323,6 +328,8 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     for i in range(4):
         f.write(f"level_palette_{i}:\n")
         bitplanelib.palette_dump(game_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+    f.write("sprites_palette:\n")
+    bitplanelib.palette_dump(sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
