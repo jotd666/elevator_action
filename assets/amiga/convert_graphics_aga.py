@@ -44,7 +44,7 @@ used_game_tiles = {"status":set(range(16,52)),"building":set(range(64,94)) | {14
   169,
   197},"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
-used_title_tiles = {"status":set(range(16,50)) | {51},
+used_title_tiles = {"status":set(range(16,50)) | {7,8,51},
 "big_letters": set(range(80,128)) | {158} | set(range(181,256)),
 "elevator_letters": set(range(128,181)) | {248, 249}}
 

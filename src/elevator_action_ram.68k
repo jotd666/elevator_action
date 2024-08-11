@@ -15,6 +15,8 @@
 	.global bank_switch_d50e
 	.global	regscopy
 	.global	ram_buffer
+	.global vbl_sync_counter
+	.global vbl_sync_flag
 	.ifndef	RELEASE
 	.global ram_start_8000
 	.endif
@@ -40,10 +42,9 @@ ram_buffer:
 ram_start_8000:
 	.long	0
 	.endif
+
 	
 
-vbl_sync_counter_start_screen:
-	.word	0
 high_score_beaten:
 	.word	0
 stack_top:

@@ -589,6 +589,8 @@ _vblank:
 	btst	#5,d0
 	beq.b		1f
 
+	clr.b	vbl_sync_flag
+	
 	move.l	_joypad_state(pc),d1
 	moveq	#1,d0
 	jsr	_read_joystick
@@ -1825,7 +1827,7 @@ osd_w_videoram:
 3:
 	move.b	d0,(a0)	| update logical grid
 
-	cmp.w	#0x400,d7
+	cmp.w	#0x800,d7
 	jcc		1f
 	jbsr		update_bg_tile
 	
@@ -1844,11 +1846,12 @@ compute_tile_xy:
 	move.b	d7,d0
 	and.b	#0x1F,d0	| x
 	move.w	d7,d1
+	and.w	#0x3FF,d1
 	lsr.w	#5,d1		| Y
 	lsl.w	#3,d1
 	rts
 
-* < D7: 0-0x400 address
+* < D7: 0-0x800 address
 * < D0: tile code
 	
 update_bg_tile:
@@ -1868,7 +1871,10 @@ update_bg_tile:
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.l	(a0),a0		| char table
 	
-	* ATM first layer
+	btst	#11,d7		| second layer?
+	jeq	0f
+	addq.w	#4,a0		| second layer ATM title = same bitplanes
+0:
 	move.l	(a0),a0
 	
 	move.l	(a0,d2.w*4),d0
@@ -2053,7 +2059,7 @@ osd_get_random:
 seed:
 	dc.l	0x12345678
 
-	
+
 * d7=screen address
 
 osd_set_main_scroll:
@@ -2066,11 +2072,11 @@ osd_read_inputs_2:
 	* misc control keys
 	tst.b	(6,a0)		| "6" key like in MAME
 	beq.b	0f
-	bclr	#1,d0
+	bclr	#BIT_INSERT_COIN_2,d0
 0:	
 	tst.b	(5,a0)		| "5" key like in MAME
 	beq.b	0f
-	bclr	#0,d0
+	bclr	#BIT_INSERT_COIN_1,d0
 0:
 	tst.b	(1,a0)		| "1" key like in MAME
 	beq.b	0f
@@ -2166,9 +2172,10 @@ osd_read_inputs_1:
 	movem.l	(a7)+,a0/d1
 	rts
 	
-BIT_INSERT_COIN = 3
-BIT_START_1P = 0
-BIT_START_2P = 1
+BIT_INSERT_COIN_1 = 5
+BIT_INSERT_COIN_2 = 4
+BIT_START_1P = 0  | wrong
+BIT_START_2P = 1  | wrong
 
 osd_read_inputs_1__:
 
@@ -2200,7 +2207,7 @@ osd_read_inputs_1__:
 	btst	#JPB_BTN_RED,d1
 	beq.b	1f
 	* game not in play, accept insert coin with fire
-	bclr	#BIT_INSERT_COIN,d0
+	bclr	#BIT_INSERT_COIN_1,d0
 1:
 2:
 
@@ -2208,7 +2215,7 @@ osd_read_inputs_1__:
 	* misc control keys
 	tst.b	(5,a0)		| "5" key like in MAME
 	beq.b	0f
-	bclr	#BIT_INSERT_COIN,d0		| insert coin
+	bclr	#BIT_INSERT_COIN_1,d0		| insert coin
 0:
 	tst.b	(1,a0)		| "1" key like in MAME
 	beq.b	0f

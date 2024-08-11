@@ -208,6 +208,26 @@ get_recorded_input:
 	move.l		d5,a0
 	add.l	#recorded_inputs_7A63,a0
 	rts
+	
+regulate_speed:
+	movem.w	d0/d1,-(a7)
+	st.b	vbl_sync_flag
+	* added to regulate speed, else it's really too fast
+	* each nth loop, we sync on vertical blank
+	moveq	#1,d0    | jbsr	osd_get_sync_period
+	move.b	vbl_sync_counter,d1
+	addq.b	#1,d1
+	cmp.b	d1,d0
+	bne.b	1f
+0:
+	tst.b	vbl_sync_flag
+	bne.b	0b
+	moveq	#0,d1
+1:
+	move.b	d1,vbl_sync_counter
+	movem.w	(a7)+,d0/d1
+	rts
+
 
 load_d3d4_address_from_6bdc_in_a1:
 	LOAD_D3_16_FROM_D3D4
@@ -3311,8 +3331,8 @@ l_0fb1:
 	jbsr	decode_dip_switches_0fd2                            	| [$0fc4: call $0FD2]
 	clr.b	d0                               	| [$0fc7: xor  a]
 	move.b	d0,nb_credits_80A2(a6)          	| [$0fc8: ld   (nb_credits_80A2),a]
-	move.b	d0,l_80A3(a6)                   	| [$0fcb: ld   ($80A3),a]
-	move.b	d0,l_80A4(a6)                   	| [$0fce: ld   ($80A4),a]
+	move.b	d0,coin_slot_1_activated_80A3(a6)                   	| [$0fcb: ld   ($80A3),a]
+	move.b	d0,coin_slot_2_activated_80A4(a6)                   	| [$0fce: ld   ($80A4),a]
 	rts                                    	| [$0fd1: ret]
 
 decode_dip_switches_0fd2:
@@ -3335,28 +3355,28 @@ l_0fe1:
 
 l_0fea:
 	move.b	game_state_80AC(a6),d0          	| [$0fea: ld   a,(game_state_80AC)]
-	tst.b	d0                             	| [$0fed: or   a]
+												| [$0fed: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0fee: ret  z] [...]
 0:
-	jbsr	l_1036                            	| [$0fef: call $1036]
-	move.b	l_80A3(a6),d0                   	| [$0ff2: ld   a,($80A3)]
+	jbsr	switch_bank_on_9_credits_1036                            	| [$0fef: call $1036]
+	move.b	coin_slot_1_activated_80A3(a6),d0                   	| [$0ff2: ld   a,($80A3)]
 	lea	coin_dsw_copy_80A5(a6),a0                      	| [$0ff5: ld   hl,coin_dsw_copy_80A5]
 	jbsr	l_1019                            	| [$0ff8: call $1019]
 	move.b	d1,d0                           	| [$0ffb: ld   a,b]
-	move.b	d0,l_80A3(a6)                   	| [$0ffc: ld   ($80A3),a]
-	jbsr	l_1036                            	| [$0fff: call $1036]
+	move.b	d0,coin_slot_1_activated_80A3(a6)                   	| [$0ffc: ld   ($80A3),a]
+	jbsr	switch_bank_on_9_credits_1036                            	| [$0fff: call $1036]
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$1002: ld   a,(copy_of_dip_switches_3_8250)]
 	btst.b	#7,d0                           	| [$1005: bit  7,a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$1007: ret  nz] [...]
 0:
-	move.b	l_80A4(a6),d0                   	| [$1008: ld   a,($80A4)]
+	move.b	coin_slot_2_activated_80A4(a6),d0                   	| [$1008: ld   a,($80A4)]
 	lea	coin_slot_2_dsw_copy_80A7(a6),a0                      	| [$100b: ld   hl,$80A7]
 	jbsr	l_1019                            	| [$100e: call $1019]
 	move.b	d1,d0                           	| [$1011: ld   a,b]
-	move.b	d0,l_80A4(a6)                   	| [$1012: ld   ($80A4),a]
-	jbsr	l_1036                            	| [$1015: call $1036]
+	move.b	d0,coin_slot_2_activated_80A4(a6)                   	| [$1012: ld   ($80A4),a]
+	jbsr	switch_bank_on_9_credits_1036                            	| [$1015: call $1036]
 	rts                                    	| [$1018: ret]
 
 l_1019:
@@ -3384,7 +3404,8 @@ l_1031:
 	move.b	d0,nb_credits_80A2(a6)          	| [$1032: ld   (nb_credits_80A2),a]
 	rts                                    	| [$1035: ret]
 
-l_1036:
+* WTF???
+switch_bank_on_9_credits_1036:
 	move.b	nb_credits_80A2(a6),d0          	| [$1036: ld   a,(nb_credits_80A2)]
 	cmp.b	#0x09,d0                         	| [$1039: cp   $09]
 	jcc	over_9_credits_104D                	| [$103b: jr   nc,over_9_credits_104D]
@@ -3403,8 +3424,8 @@ over_9_credits_104D:
 	move.b	d0,bank_switch_d50e             	| [$1055: ld   (bank_switch_d50e),a]
 	rts                                    	| [$1058: ret]
 
-l_1059:
-	lea	l_80A3(a6),a0                      	| [$1059: ld   hl,$80A3]
+check_coin_inserted_1059:
+	lea	coin_slot_1_activated_80A3(a6),a0                      	| [$1059: ld   hl,$80A3]
 	move.b	copy_of_port_in2_824B(a6),d0                   	| [$105c: ld   a,($824B)]
 	move.b	d0,d1                           	| [$105f: ld   b,a]
 	jbsr	osd_read_inputs_2                       	| [$1060: ld   a,($D40B)]
@@ -3639,14 +3660,14 @@ elevator_irq_1199:
 	                            	| [$11c6: add  a,b] times 3 to adjust to jump table
 	                               	| [$11c8: ld   d,$00]
 	                           	| [$11c7: ld   e,a]
-	lea	l_11CF(pc),a0                          	| [$11ca: ld   hl,$11CF]
+	lea	game_screen_jump_table_11CF(pc),a0                          	| [$11ca: ld   hl,$11CF]
 	move.l	(a0,d0.w),a0                        	| [$11cd: add  hl,de]
 	jra	(a0)                               	| [$11ce: jp   (hl)]
 
-l_11CF:
-	.long	finish_irq_123E                             	|0???| [$11cf: jp   $11ED| 0 ???]
+game_screen_jump_table_11CF:
+	.long	finish_irq_123E                     |0???| [$11cf: jp   $11ED| 0 ???]
 	.long	title_sequence_11F0                	|1| [$11d2: jp   title_sequence_11F0| 1]
-	.long	finish_irq_123E                             	|2???| [$11d5: jp   $11F6| 2 ???]
+	.long	finish_irq_123E                     |2???| [$11d5: jp   $11F6| 2 ???]
 	.long	push_start_screen_11F9             	|3| [$11d8: jp   push_start_screen_11F9| 3]
 	.long	game_intro_1202                    	|4| [$11db: jp   game_intro_1202| 4]
 	.long	game_running_1211                  	|5| [$11de: jp   game_running_1211| 5]
@@ -3708,9 +3729,9 @@ finish_irq_123E:
 	move.b	d0,l_80AB(a6)                   	| [$1246: ld   ($80AB),a]
 l_1249:
 	move.b	coin_counter_lock_82EA(a6),d0   	| [$1249: ld   a,(coin_counter_lock_82EA)]
-	tst.b	d0                             	| [$124c: or   a]
+											| [$124c: or   a]
 	jne	l_125a                             	| [$124d: jr   nz,$125A]
-	jbsr	l_1059                            	| [$124f: call $1059]
+	jbsr	check_coin_inserted_1059                            	| [$124f: call $1059]
 	           	| [$1252: ld   a,(service_mode_D40C)]
 	           	| [$1255: bit  5,a]
 	          	| [$1257: jp   z,run_in_service_mode_70EB]
@@ -7855,7 +7876,7 @@ l_2921:
 	add.w	d3,d5                            	| [$293b: add  hl,de]
  	STORE_WORD	d5,l_8028(a6)            	| [$293c: ld   ($8028),hl]
 	rts                                    	| [$293f: ret]
-l_2940:
+goto_next_screen_2940:
 	jbsr	display_insert_coin_screen_295f      	| [$2940: call $295F]
 l_2943:
 	jbsr	l_73cf                            	| [$2943: call $73CF]
@@ -7864,7 +7885,7 @@ l_2943:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$294a: ret  nz] [...]
 0:
-	lea	l_80A3(a6),a0                      	| [$294b: ld   hl,$80A3]
+	lea	coin_slot_1_activated_80A3(a6),a0                      	| [$294b: ld   hl,$80A3]
 	move.b	(a0)+,d0                         	| [$294e: ld   a,(hl)]
 	                           	| [$294f: inc  hl]
 	or.b	(a0),d0                           	| [$2950: or   (hl)]
@@ -18254,40 +18275,49 @@ end_table_6BDC:
 
 
 title_and_insert_coin_sequence_715F:
-	jbsr	l_719a                            	| [$715f: call $719A]
+	jbsr	init_title_state_719a                            	| [$715f: call $719A]
 	jbsr	init_title_screen_7250           | [$7162: call $7250]
-	lea	l_80A3(a6),a0                      	| [$7165: ld   hl,$80A3]
+	* check both coin slot flags
+	lea	coin_slot_1_activated_80A3(a6),a0                      	| [$7165: ld   hl,$80A3]
 	move.b	(a0)+,d0                         	| [$7168: ld   a,(hl)]
 	                           	| [$7169: inc  hl]
 	or.b	(a0),d0                           	| [$716a: or   (hl)]
-	jne	l_2940                             	| [$716b: jp   nz,$2940]
+	jne	goto_next_screen_2940                             	| [$716b: jp   nz,$2940]
 	jbsr	reload_8bit_timer_26C2           	| [$716e: call reload_8bit_timer_26C2]
-l_7171:
+title_screen_loop_7171:
+	* this loop is not regulated by vblank, so it's
+	* extremely fast. We have to slow it down or else
+	* the title screen won't show
+	jbsr	regulate_speed
+	
 	jbsr	l_7261                            	| [$7171: call $7261]
 	jbsr	l_7400                            	| [$7174: call $7400]
-	move.b	nb_credits_80A2(a6),d0          	| [$7177: ld   a,(nb_credits_80A2)]
+	tst.b	nb_credits_80A2(a6)          	| [$7177: ld   a,(nb_credits_80A2)]
 	                             	| [$717a: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$717b: ret  nz] [...]
 0:
-	lea	l_80A3(a6),a0                      	| [$717c: ld   hl,$80A3]
+	* check both coin slot flags
+	lea	coin_slot_1_activated_80A3(a6),a0                      	| [$717c: ld   hl,$80A3]
 	move.b	(a0)+,d0                         	| [$717f: ld   a,(hl)]
 	                           	| [$7180: inc  hl]
 	or.b	(a0),d0                           	| [$7181: or   (hl)]
-	jne	l_2940                             	| [$7182: jp   nz,$2940]
-	lea	a_16bit_value_836F(a6),a0                      	| [$7185: ld   hl,$863F]
+	jne	goto_next_screen_2940     | goto next screen if coin inserted                           	| [$7182: jp   nz,$2940]
+	* increase timer for title screen
+	lea	title_screen_16bit_timer_836F(a6),a0    | [$7185: ld   hl,$863F]
 	addq.b	#1,(a0)                         	| [$7188: inc  (hl)]
 	move.b	(a0),d0                         	| [$7189: ld   a,(hl)]
 	cmp.b	#0x08,d0                         	| [$718a: cp   $08]
-	jcs	l_7171                             	| [$718c: jr   c,$7171]
+	jcs	title_screen_loop_7171                  | [$718c: jr   c,$7171]
 	clr.b	(a0)+                             	| [$718e: ld   (hl),$00]
-	                           	| [$7190: inc  hl]
+	                           	                | [$7190: inc  hl]
 	addq.b	#1,(a0)                         	| [$7191: inc  (hl)]
 	move.b	(a0),d0                         	| [$7192: ld   a,(hl)]
 	cmp.b	#0x5A,d0                         	| [$7193: cp   $5A]
-	jcs	l_7171                             	| [$7195: jr   c,$7171]
-	jra	l_2940                             	| [$7197: jp   $2940]
-l_719a:
+	jcs	title_screen_loop_7171                  | [$7195: jr   c,$7171]
+	* timeout for title screen
+	jra	goto_next_screen_2940                             	| [$7197: jp   $2940]
+init_title_state_719a:
 	clr.b	d0                               	| [$719a: xor  a]
 	move.b	d0,l_8236(a6)                   	| [$719b: ld   ($8236),a]
 	jbsr	l_71e1                            	| [$719e: call $71E1]
@@ -18373,7 +18403,7 @@ table_7238:
 	
 init_title_screen_7250:
 	move.w	#0x0000,d5                      	| [$7250: ld   hl,$0000] 0
-	STORE_WORD	d5,a_16bit_value_836F(a6)            	| [$7253: ld   ($863F),hl]
+	STORE_WORD	d5,title_screen_16bit_timer_836F(a6)            	| [$7253: ld   ($863F),hl]
 
 	lea	title_letters_y_scroll_values_862F(a6),a0                      	| [$7256: ld   hl,$862F]
 	move.b	#0x10,d1                        	| [$7259: ld   b,$10]
@@ -18432,10 +18462,10 @@ l_72a8:
 	rts                                    	| [$72ae: ret]
 
 update_title_y_scroll_value_72af:
-	move.b	action_letter_timer_8640(a6),d0                   	| [$72af: ld   a,($8640)]
+	move.b	action_letter_timer_8640(a6),d0     | [$72af: ld   a,($8640)]
 	move.b	d0,d2                           	| [$72b2: ld   c,a]
 	lea	title_letters_y_scroll_values_862F(a6),a1                      	| [$72b3: ld   de,$862F]
-	lea	table_72D4-2,a0                    	| [$72b6: ld   hl,table_72D4-2]
+	lea	table_72D4-2(pc),a0                    	| [$72b6: ld   hl,table_72D4-2]
 	move.b	#0x08,d1                        	| [$72b9: ld   b,$08]
 l_72bb:
 	movem.w	d1/d2,-(sp)                    	| [$72bb: push bc]
@@ -18444,9 +18474,9 @@ l_72bb:
 	move.b	d2,d0                           	| [$72bd: ld   a,c]
 l_72be:
 	addq.w	#2,a0                           	| [$72be: inc  hl]
-	                          	| [$72bf: inc  hl]
+	                          	                | [$72bf: inc  hl]
 	cmp.b	(a0),d0                          	| [$72c0: cp   (hl)]
-	jcc	l_72be                             	| [$72c1: jr   nc,$72BE]
+	jcc	l_72be                             	    | [$72c1: jr   nc,$72BE]
 	addq.w	#1,a0                           	| [$72c3: inc  hl]
 	move.b	(a0),d0                         	| [$72c4: ld   a,(hl)]
 	move.b	d0,(a1)+                         	| [$72c5: ld   (de),a]
@@ -18464,26 +18494,20 @@ l_72be:
 	rts                                    	| [$72d3: ret]
 
 table_72D4:
-	.byte	0x01,0x00,0x15
-	.byte	0xFF
-	.byte	0x1F
-	.byte	0x02
+	.byte	0x01,0x00
+	.byte	0x15,0xFF
+	.byte	0x1F,0x02
 	.byte	0x26,0x00
-	.byte	0x31,0xFF,0xFF
-	.byte	0x00
-	.byte	0x02
-	.byte	0x00
+	.byte	0x31,0xFF
+	.byte	0xFF,0x00
+	.byte	0x02,0x00
 	.byte	0x16,0xFF
-	.byte	0x1F
-	.byte	0x01,0xFF,0x00
-	.byte	0xFF
-	.byte	0x00
-	.byte	0xFF
-	.byte	0x00
-	.byte	0x03
-	.byte	0x00
-	.byte	0x17
-	.byte	0xFF
+	.byte	0x1F,0x01
+	.byte	0xFF,0x00
+	.byte	0xFF,0x00
+	.byte	0xFF,0x00
+	.byte	0x03,0x00
+	.byte	0x17,0xFF
 	.byte	0x21,0x02,0x26
 	.byte	0x00
 	.byte	0x31,0xFF,0xFF
@@ -18757,27 +18781,27 @@ l_7462:
 
 display_action_title_7475:
 	move.b	action_letter_timer_8640(a6),d0                   	| [$7475: ld   a,($8640)]
-	lea	action_letter_appear_table_7498,a0                      	| [$7478: ld   hl,action_letter_appear_table_7498]
+	lea	action_letter_appear_table_7498(pc),a0                      	| [$7478: ld   hl,action_letter_appear_table_7498]
 	cmp.b	(a0),d0                          	| [$747b: cp   (hl)]
-	jeq	l_7503                             	| [$747c: jp   z,$7503]
+	jeq	clear_screen_block_7503                             	| [$747c: jp   z,$7503]
 	addq.w	#1,a0                           	| [$747f: inc  hl]
 	cmp.b	(a0),d0                          	| [$7480: cp   (hl)]
-	jeq	l_749f                             	| [$7481: jr   z,$749F]
+	jeq	draw_action_a_749f                             	| [$7481: jr   z,$749F]
 	addq.w	#1,a0                           	| [$7483: inc  hl]
 	cmp.b	(a0),d0                          	| [$7484: cp   (hl)]
-	jeq	l_74a7                             	| [$7485: jr   z,$74A7]
+	jeq	draw_action_c_74a7                             	| [$7485: jr   z,$74A7]
 	addq.w	#1,a0                           	| [$7487: inc  hl]
 	cmp.b	(a0),d0                          	| [$7488: cp   (hl)]
-	jeq	l_74af                             	| [$7489: jr   z,$74AF]
+	jeq	draw_action_t_74af                             	| [$7489: jr   z,$74AF]
 	addq.w	#1,a0                           	| [$748b: inc  hl]
 	cmp.b	(a0),d0                          	| [$748c: cp   (hl)]
-	jeq	l_74cf                             	| [$748d: jr   z,$74CF]
+	jeq	draw_action_i_74cf                             	| [$748d: jr   z,$74CF]
 	addq.w	#1,a0                           	| [$748f: inc  hl]
 	cmp.b	(a0),d0                          	| [$7490: cp   (hl)]
-	jeq	l_74b7                             	| [$7491: jr   z,$74B7]
+	jeq	draw_action_o_74b7                             	| [$7491: jr   z,$74B7]
 	addq.w	#1,a0                           	| [$7493: inc  hl]
 	cmp.b	(a0),d0                          	| [$7494: cp   (hl)]
-	jeq	l_74e5                             	| [$7495: jr   z,$74E5]
+	jeq	draw_action_n_74e5                             	| [$7495: jr   z,$74E5]
 	rts                                    	| [$7497: ret]
 
 
@@ -18788,54 +18812,55 @@ action_letter_appear_table_7498:
 	.byte	0x46
 	.align 	2
 	
-l_749f:
+draw_action_a_749f:
+	jbsr	osd_break
 	lea	table_7517,a0                      	| [$749f: ld   hl,table_7517]
 	lea	l_C9E6(a6),a1                      	| [$74a2: ld   de,$C9E6]
 	jra	l_74bd                             	| [$74a5: jr   $74BD]
-l_74a7:
+draw_action_c_74a7:
 	lea	table_7529,a0                      	| [$74a7: ld   hl,table_7529]
 	lea	l_C9E9(a6),a1                      	| [$74aa: ld   de,$C9E9]
 	jra	l_74bd                             	| [$74ad: jr   $74BD]
-l_74af:
+draw_action_t_74af:
 	lea	table_753B,a0                      	| [$74af: ld   hl,table_753B]
 	lea	l_C9EC(a6),a1                      	| [$74b2: ld   de,$C9EC]
 	jra	l_74bd                             	| [$74b5: jr   $74BD]
-l_74b7:
+draw_action_o_74b7:
 	lea	table_7559,a0                      	| [$74b7: ld   hl,table_7559]
 	lea	l_C9F1(a6),a1                      	| [$74ba: ld   de,$C9F1] screen address, first layer
 l_74bd:
-	move.b	#0x06,d0                        	| [$74bd: ld   a,$06]
+	move.b	#0x06,d1                        	| [$74bd: ld   a,$06]
 l_74bf:
 	jbsr	ldi_video                               	| [$74bf: ldi]
 	jbsr	ldi_video                               	| [$74c1: ldi]
 	jbsr	ldi_video                               	| [$74c3: ldi]
-	exg	a1,a0                              	| [$74c5: ex   de,hl]
-	move.w	#0x001D,d1                      	| [$74c6: ld   bc,$001D] 29
-	add.w	d1,a0                            	| [$74c9: add  hl,bc]
-	exg	a1,a0                              	| [$74ca: ex   de,hl]
-	subq.b	#1,d0                           	| [$74cb: dec  a]
+	                              	| [$74c5: ex   de,hl]
+	                      	| [$74c6: ld   bc,$001D] 29
+	add.w	#0x001D,a1                            	| [$74c9: add  hl,bc]
+	                              	| [$74ca: ex   de,hl]
+	subq.b	#1,d1                           	| [$74cb: dec  a]
 	jne	l_74bf                             	| [$74cc: jr   nz,$74BF]
 	rts                                    	| [$74ce: ret]
 
-l_74cf:
+draw_action_i_74cf:
 	lea	table_754D,a0                      	| [$74cf: ld   hl,table_754D]
 	lea	l_C9EF(a6),a1                      	| [$74d2: ld   de,$C9EF]
-	move.b	#0x06,d0                        	| [$74d5: ld   a,$06]
+	move.b	#0x06,d1                        	| [$74d5: ld   a,$06]
 l_74d7:
 	jbsr	ldi_video                               	| [$74d7: ldi]
 	jbsr	ldi_video                               	| [$74d9: ldi]
-	exg	a1,a0                              	| [$74db: ex   de,hl]
-	move.w	#0x001E,d1                      	| [$74dc: ld   bc,$001E] 30
-	add.w	d1,a0                            	| [$74df: add  hl,bc]
-	exg	a1,a0                              	| [$74e0: ex   de,hl]
-	subq.b	#1,d0                           	| [$74e1: dec  a]
+	                              	| [$74db: ex   de,hl]
+									| [$74dc: ld   bc,$001E] 30
+	add.w	#0x1E,a1                            	| [$74df: add  hl,bc]
+	                              	| [$74e0: ex   de,hl]
+	subq.b	#1,d1                           	| [$74e1: dec  a]
 	jne	l_74d7                             	| [$74e2: jr   nz,$74D7]
 	rts                                    	| [$74e4: ret]
 
-l_74e5:
+draw_action_n_74e5:
 	lea	table_756B,a0                      	| [$74e5: ld   hl,table_756B]
 	lea	l_C9B4(a6),a1                      	| [$74e8: ld   de,$C9B4]
-	move.b	#0x08,d0                        	| [$74eb: ld   a,$08]
+	move.b	#0x08,d1                        	| [$74eb: ld   a,$08]
 l_74ed:
 	jbsr	ldi_video                               	| [$74ed: ldi]
 	jbsr	ldi_video                               	| [$74ef: ldi]
@@ -18843,18 +18868,17 @@ l_74ed:
 	jbsr	ldi_video                               	| [$74f3: ldi]
 	jbsr	ldi_video                               	| [$74f5: ldi]
 	jbsr	ldi_video                               	| [$74f7: ldi]
-	exg	a1,a0                              	| [$74f9: ex   de,hl]
-	move.w	#0x001A,d1                      	| [$74fa: ld   bc,$001A] 26
-	add.w	d1,a0                            	| [$74fd: add  hl,bc]
-	exg	a1,a0                              	| [$74fe: ex   de,hl]
-	subq.b	#1,d0                           	| [$74ff: dec  a]
+	                              	| [$74f9: ex   de,hl]
+	                      	| [$74fa: ld   bc,$001A] 26
+	add.w	#0x001A,a1                            	| [$74fd: add  hl,bc]
+	                              	| [$74fe: ex   de,hl]
+	subq.b	#1,d1                           	| [$74ff: dec  a]
 	jne	l_74ed                             	| [$7500: jr   nz,$74ED]
 	rts                                    	| [$7502: ret]
 
-l_7503:
+clear_screen_block_7503:
 	lea	l_CFA8(a6),a0                      	| [$7503: ld   hl,$CFA8]
 	move.w	#0xFFD0,d3                          	| [$7506: ld   de,$FFD0]
-	CLEAR_XC_FLAGS                         	| [$7509: xor  a]
 	clr.b	d0                               	| [$7509: xor  a]
 	move.b	#0x07,d2                        	| [$750a: ld   c,$07]
 l_750c:

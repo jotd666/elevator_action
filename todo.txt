@@ -47,3 +47,9 @@ l_74e5
 l_7503
 
 
+draw_action_a_749f: not called... debug/code ELEVATOR letters? times? debug display_action_title_7475
+71ae <= state:title
+298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
+
+
+
