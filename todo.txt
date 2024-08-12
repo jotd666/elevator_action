@@ -51,5 +51,5 @@ draw_action_a_749f: not called... debug/code ELEVATOR letters? times? debug disp
 71ae <= state:title
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
-
+merge with Galaga more optimized blit routines (blit/clear)
 

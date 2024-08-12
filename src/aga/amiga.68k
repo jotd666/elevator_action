@@ -74,6 +74,9 @@ NB_BYTES_PER_ROW = 40
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
+* sprite band: 64 bit * 2 planes * 2*screen size
+SPRITE_SIZE = 8*NB_LINES*2*2
+
 BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 FG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
@@ -1155,7 +1158,7 @@ blit_planes_any_internal_cookie_cut:
 1:	
 	tst	d1
     beq.b   2f    | optim
-    lea		mulNB_BYTES_PER_ROW_table,a4
+    lea		mulNB_BYTES_PER_ROW_table(pc),a4
 	.ifdef	NO68020
 	add.w	d1,d1
     move.w  (a4,d1.w),d1	| y times 40
@@ -1170,7 +1173,7 @@ blit_planes_any_internal_cookie_cut:
     move    d0,d6
     beq.b   4f
     lsr.w   #3,d0
-	bclr	#0,d0
+	*bclr	#0,d0
     and.w   #0xF,d6
 	beq.b	3f
     lsl.l   #8,d6
@@ -1184,7 +1187,7 @@ blit_planes_any_internal_cookie_cut:
 4:
     * make offset even. Blitter will ignore odd address
     * but a 68000 CPU doesn't and since we RETURN A1...
-    bclr    #0,d1
+    *bclr    #0,d1
     add.w   d1,a1       | plane position (D1 < 0x7FFF, 288*40=0x2D00)
 	move.w	#NB_BYTES_PER_ROW,d0
 	tst.w	d4
@@ -1255,143 +1258,11 @@ start_process_1_plane:
 	move.l	a4,bltbpt(a5)	|source graphic top left corner
 	rts
 
-
 	
 * 2 words: first shift (as bplcon value), then
 * offset in bytes
 
-	
-* < D0: sprite X
-* < D1: sprite Y
-* < D2: sprite code & flags
-* < D3: sprite color (clut index, no flip information)
-* > D6: allocated sprite index
-alloc_sprite:
-	* first pass: find a free sprite next to a sprite with
-	* same clut
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-0:
-	cmp.b	(SPRITE_CLUT,a2),d3
-	bne.b	10f
-	* allocated (else would be -1/invalid) + same clut
-	* check even/odd index
-	btst	#0,d6
-	beq.b	1f
-	* odd: check if previous entry is free
-	tst.b	(SPRITE_X-SPRITE_SIZEOF,a2)
-	beq.b	8f
-	tst.b	(SPRITE_Y-SPRITE_SIZEOF,a2)
-	bne.b	10f
-8:
-	* previous entry is free, same clut: we can use that
-	* entry, no color conflict
-	lea		(-SPRITE_SIZEOF,a2),a2
-9:
-	move.b	d0,(a2)+		| X
-	move.b	d1,(a2)+		| Y
-	move.b	d2,(a2)+		| code
-	move.b	d3,(a2)+		| clut (no flip information)
-	rts						| done
-1:
-	* even: check if next entry is free
-	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	beq.b	2f
-	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
-	bne.b	10f
-2:
-	* next entry is free, same clut: we can use that
-	* entry, no color conflict
-	lea		(SPRITE_SIZEOF,a2),a2
-	bra.b	9b
-10:
-	* next entry
-	addq.w	#SPRITE_SIZEOF,a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	0b
-	* second pass if first pass failed (could not match
-	* a pair with one occupied slot with compatible clut,
-	* which happens when there are very few sprites
-	* displayed): we have to find 2 consecutive free slots
 
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-11:
-	* we consider that a sprite is not allocated
-	* if one of the coordinates is zero (real game
-	* doesn't care and sets X to 255, and Y to 0 at times
-	tst.b	(SPRITE_Y,a2)
-	beq.b	12f
-	tst.b	(SPRITE_X,a2)
-	bne.b	20f
-12:
-	* not allocated: test odd sprite
-	tst.b	(SPRITE_Y+SPRITE_SIZEOF,a2)
-	jeq	9b
-	tst.b	(SPRITE_X+SPRITE_SIZEOF,a2)
-	jeq	9b		| ok, both slots are free, allocate the first one
-20:
-	* next sprite pair
-	lea		(2*SPRITE_SIZEOF,a2),a2
-	addq	#2,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	11b
-	
-	* third pass: last chance/emergency: there ARE free slots
-	* but maybe too many different cluts so we can't find a suitable slot.
-	* In that case, pick the first free slot
-	*
-	lea		host_sprites(pc),a2
-	moveq	#0,d6
-21:
-	tst.b	(SPRITE_X,a2)
-	beq.b	9b		| ok, a slot is free, allocate it
-	tst.b	(SPRITE_Y,a2)
-	beq.b	9b		| ok, a slot is free, allocate it
-30:
-	* next sprite
-	lea		(SPRITE_SIZEOF,a2),a2
-	addq	#1,d6
-	cmp.w	#NB_HOST_SPRITES,d6
-	bne.b	21b
-	* just cannot happen
-	* if we reach that point there's a big problem, break if dev mode
-	* hopefully if we save buffer in A1 we can reproduce the issue at will!
-	.ifndef	RELEASE
-	lea			sprite_allocation_error,a0
-	lea		sprite_registers,a1
-	lea		host_sprites(pc),a2
-	
-	jbsr	osd_break
-	.endif
-	* in release mode, just discard this sprite, maybe we'll get away with it!
-	rts
-	
-
-	
-	
-	
-	
-	.ifndef		RELEASE
-test_sprites:
-.byte  0xad,0x07,0x42,0x78,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0000
-.byte  0x7d,0x01,0x4d,0x49,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0010
-.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0020
-.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0030
-.byte  0x00,0x00,0x00,0x00,0xad,0x07,0x42,0x54,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0040
-.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0050
-.byte  0xad,0x07,0x42,0x78,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0060
-.byte  0x7d,0x01,0x4d,0x49,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0070
-.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0080
-.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x26,0x04,0x00,0x90	|	0x0090
-.byte  0x26,0x01,0x00,0x7d,0x20,0x00,0x06,0x47,0x21,0x00,0x05,0x50,0x1e,0x00,0x07,0x5d	|	0x00a0
-.byte  0x31,0x00,0x01,0x46,0x21,0x00,0x03,0x46,0x31,0x00,0x02,0x56,0x21,0x00,0x04,0x56	|	0x00b0
-.byte  0x72,0x8b,0xc6,0x94,0x72,0xfb,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x02,0x00,0x18	|	0x00c0
-.byte  0x18,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xdf,0x83,0x00,0x05,0x05,0x02	|	0x00d0
-.byte  0x00,0xbc,0x8d,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x00e0
-.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x00f0
-	.endif
 	
 bob_previous_positions_1:
 	ds.b	NB_TARGET_SPRITES*PREVIOUS_SPRITE_SIZE
@@ -1540,8 +1411,7 @@ quit_to_os:
 	addq.l	#resload_Abort,(a7)
 	rts
 
-* set sprite pointers on chipmem zone, with sprites all
-* pointing to blank
+* set sprite pointers on chipmem zone
 
 init_sprite_bank:
 	move.w	#sprpt,d0
@@ -1601,12 +1471,21 @@ platform_init:
 	moveq	#0,d0
 	jbsr	osd_set_gfx_bank
 	
+	lea		sprite_buffer,a0
+	bsr		align_for_fmode
+	lea		sprite_table,a1
+	moveq	#7,d0
+0:
+	move.l	a0,(a1)+
+	add.w	#SPRITE_SIZE,a0
+	dbf		d0,0b
+	
 	* set sprite registers in copperlist
 	lea		game_sprites,a0
-	lea		blank_sprite_table,a1
+	lea		sprite_table,a1
 	bsr		init_sprite_bank
 	lea		title_sprites,a0
-	lea		blank_sprite_table,a1
+	lea		sprite_table,a1
 	bsr		init_sprite_bank
 	
 
@@ -1726,7 +1605,9 @@ osd_set_gfx_bank:
 	* title gfx bank, set title palette
     move.w #0x200+(NB_PLAYFIELD_PLANES<<12)+BORDERBLANK,bplcon0(a5)
 	
-
+	lea		update_bg_tile_title(pc),a0
+	move.l	a0,update_tile_function
+	
 	lea		title_palette(pc),a0
 
 	move.w	#TOTAL_NB_COLORS,d0
@@ -1773,6 +1654,9 @@ osd_set_gfx_bank:
 
 	* set copperlist
 	move.l	#game_copperlist,cop1lc(a5)
+
+	lea		update_bg_tile_game(pc),a0
+	move.l	a0,update_tile_function
 
 	lea		level_palettes,a0
 	* TODO which level
@@ -1827,12 +1711,8 @@ osd_w_videoram:
 3:
 	move.b	d0,(a0)	| update logical grid
 
-	cmp.w	#0x800,d7
-	jcc		1f
-	jbsr		update_bg_tile
-	
-1:
-	* ATM do nothing
+	move.l	update_tile_function(pc),a1
+	jsr		(a1)
 0:
 	movem.l	(a7)+,d0-d7/a0-a3
     .endif | OPT_DISABLE_BG_LAYER
@@ -1851,10 +1731,9 @@ compute_tile_xy:
 	lsl.w	#3,d1
 	rts
 
-* < D7: 0-0x800 address
+* < D7: 0-0xC00 address
 * < D0: tile code
-	
-update_bg_tile:
+update_bg_tile_title:
 	moveq	#0,d2	| mask up to 255
 	move.b	d0,d2
 	bsr		compute_tile_xy
@@ -1863,13 +1742,9 @@ update_bg_tile:
 	lea		mulNB_BYTES_PER_ROW_table,A0
 	add.w	(a0,d1.w*2),a1
 	
-	lea		character_tables,a0
-	tst.b	current_gfx_bank
-	beq.b	0f
-	addq.w	#4,a0		| game characters
-0:
+	move.l		character_tables,a0
+
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
-	move.l	(a0),a0		| char table
 	
 	btst	#11,d7		| second layer?
 	jeq	0f
@@ -1877,6 +1752,28 @@ update_bg_tile:
 0:
 	move.l	(a0),a0
 	
+	jra		end_update_bg_tile
+	
+update_bg_tile_game:
+	moveq	#0,d2	| mask up to 255
+	move.b	d0,d2
+	bsr		compute_tile_xy
+	move.l	bg_screen_ptr,a1
+	add.w	d0,a1
+	lea		mulNB_BYTES_PER_ROW_table,A0
+	add.w	(a0,d1.w*2),a1
+	
+	move.l		character_tables+4,a0
+
+	move.l	#FG_SCREEN_PLANE_SIZE,d5
+	
+	btst	#11,d7		| second layer?
+	jeq	0f
+	addq.w	#4,a0		| second layer ATM title = same bitplanes
+0:
+	move.l	(a0),a0
+	
+end_update_bg_tile:
 	move.l	(a0,d2.w*4),d0
 	jeq		11f		| 0: clear
 	
@@ -2523,12 +2420,8 @@ fg_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
-blue_y_end:
-	.word	0
-green_y_end:
-	.word	0
-green_height:
-	.word	0
+update_tile_function:
+	.long	0
 _keyexit:
 	.byte	0x45	| ESC by default unless whdload overwrites it
 
@@ -2553,12 +2446,8 @@ temp_filename_buffer:
 _end_of_ng_code:
 		
 	.align 2
-blank_sprite_table:
-	.set	offset,0
-	.rept	16
-	.long	blank_sprite_0+offset
-	.set	offset,offset+64+8
-	.endr
+sprite_table:
+	.skip	8*4
 	
 	.include "palettes.68k"
 
@@ -2633,10 +2522,6 @@ debug_color:
 	dc.w	0
 	dc.l	-2
 	
-blank_sprite_0:
-	.rept	(64+8)*16
-	.long	0
-	.endr
 
 title_copperlist:
 title_bitplanes:
@@ -2730,6 +2615,12 @@ post_pal_copper_rows:
 	.align	8
 	
 		.section .bsschip
+		
+sprite_buffer:
+	.skip	SPRITE_SIZE*8
+	.skip	8
+	.skip	8
+	
 bg_screen_buffer:
 	.skip	BG_SCREEN_SIZE
 	.skip	8
