@@ -71,6 +71,7 @@ OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 NB_PLAYFIELD_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
+NB_BYTES_PER_SPRITE_ROW = 8
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
@@ -1741,11 +1742,6 @@ osd_set_column_scroll:
 	swap	d0
 	move.w	d0,(a3)
 	
-	.set	f,16
-	.rept	100
-	move.l	#0x55AA5500,(f,a3)
-	.set	f,f+16
-	.endr
 	
 	move.l	a3,d1
 	lsl.w	#3,d2		| nb col * 8
@@ -1811,22 +1807,91 @@ update_bg_tile_title:
 	moveq	#0,d2	| mask up to 255
 	move.b	d0,d2
 	bsr		compute_tile_xy
-	move.l	bg_screen_ptr,a1
-	add.w	d0,a1
-	lea		mulNB_BYTES_PER_ROW_table,A0
-	add.w	(a0,d1.w*2),a1
 	
 	move.l		character_tables,a0
 
-	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	
+	btst	#11,d7		| third layer? sprites
+	jne	update_title_letters
+
 	btst	#10,d7		| second layer?
 	jeq	0f
 	addq.w	#4,a0		| second layer ATM title = same bitplanes
 0:
 	move.l	(a0),a0
 	
+	* updating bitplanes
+	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.l	bg_screen_ptr,a1
+	add.w	d0,a1
+	lea		mulNB_BYTES_PER_ROW_table,A2
+	add.w	(a2,d1.w*2),a1
+	
 	jra		end_update_bg_tile
+	
+update_title_letters:
+	* updating sprite data
+	sub.w	#0xC,d0		| min X letter
+	jcs		0f
+	cmp.w	#0x10,d0	| max X letter
+	jcc		0f
+	* compute sprite Y offset: 16 bytes per row, starting at 16
+	addq	#1,d1
+	lsl.w	#4,d1
+	* compute sprite X offset: 1 byte per pixel
+	add.w	d0,d1
+	* d0: 2*sprite number
+	lsr.w	#1,d0
+	lsl.w	#6,d0	| times SPRITE_STRUCT_SIZE
+	lea		sprite_table,a2
+	add.w	d0,a2		| select proper sprite structure
+	move.l	(a2),a2		| sprite data
+	add.w	#16,a2		| skip control word
+	add.w	d1,a2		| add X/Y offset
+	
+	tst.b	d2
+	jeq		1f		| code 0: clear sprite area
+	* copy character data into sprite
+	move.l	(8,a0),a0
+	move.l	(a0,d2.w*4),d0
+	jeq		1f		| 0: not registered: clear
+	* sprites are only 4 colors, palette is so only 2 first planes
+	* can contain data
+	move.l	d0,a3
+	move.w	#1,d4
+
+	move.l	(a3)+,d0
+	jne		2f
+	move.l	#blank_row,d0
+2:
+	move.l	(a3),d1
+	jne		2f
+	move.l	#blank_row,d1
+2:
+	move.l	d0,a0
+	move.l	d1,a1
+
+	.set	offset,0
+	.rept	8
+	move.b	(a0)+,(offset,a2)
+	move.b	(a1)+,(NB_BYTES_PER_SPRITE_ROW+offset,a2)
+	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2
+	.endr	
+0:
+	rts
+5:
+	.set	offset,0
+	.rept	16
+	clr.b	(offset,a2)
+	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW
+	.endr
+	rts
+
+1:
+	rts
+	
+blank_row:
+	.skip	8
 	
 update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
