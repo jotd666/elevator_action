@@ -569,7 +569,25 @@ execute_dynamic_ram_code_8246:
 	illegal
 	rts
 	
+MOCKUP=  1
+
 elevator_reset:
+	.ifdef	MOCKUP
+	moveq	#0,d0
+	jbsr	osd_set_gfx_bank
+	lea 	tv+0x400,a1
+	lea		videoram_layer_1_C400(a6),a0
+	move.w	#0x7FF,d1
+0:
+	move.b	(a1)+,d0
+	jbsr	osd_w_videoram
+	addq	#1,a0
+	dbf		d1,0b
+1:
+	bra.b 1b
+tv:
+	.include	"title_video.s"
+	.endif
 	jra	bootup_338f                        	| [$0000: jp   bootup_338f]
 
     	| [$0003: ld   hl,$8649]

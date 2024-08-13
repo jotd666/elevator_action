@@ -74,8 +74,11 @@ NB_BYTES_PER_ROW = 40
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
+SPRITE_HEIGHT = NB_LINES
 * sprite band: 64 bit * 2 planes * 2*screen size
-SPRITE_SIZE = 8*NB_LINES*2*2
+SPRITE_SIZE = 8*2*SPRITE_HEIGHT
+
+SPRITE_STRUCT_SIZE = 64
 
 BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
@@ -1417,7 +1420,7 @@ init_sprite_bank:
 	move.w	#sprpt,d0
 	move.w	#NB_HOST_SPRITES-1,d2		| 7
 0:
-	move.l	(a1)+,d1
+	move.l	(a1),d1
 	move.w	d0,(a0)+
 	swap	d1
 	move.w	d1,(a0)+
@@ -1426,6 +1429,7 @@ init_sprite_bank:
 	move.w	d0,(a0)+
 	move.w	d1,(a0)+
 	
+	add.w	#SPRITE_STRUCT_SIZE,a1
 	addq	#2,d0
 	dbf		d2,0b
 	rts
@@ -1450,7 +1454,7 @@ platform_init:
 
  	*         VVHH
     move.w #0x1C99,diwstrt(a5)
-    move.w #0x3081-8,diwstop(a5)
+    move.w #0x3089+8,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -1458,8 +1462,8 @@ platform_init:
 	* try to hide color 0 on the border (except on OCS)
     move.w #BASE_BPLCON2_VALUE,bplcon2(a5)
 	* AGA-compatible ECS default values
-	*move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
-	move.w	#0x22,bplcon4(a5)	| sprites palette start at color 32, keep coupling for now
+	move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
+	*move.w	#0x22,bplcon4(a5)	| sprites palette start at color 32, keep coupling for now
     move.w #0xF,fmode(a5)
 
 	move.w	#0,bplcon1(a5)
@@ -1467,16 +1471,14 @@ platform_init:
     move.w d0,bpl1mod(a5)
     move.w d0,bpl2mod(a5)
 
-	* set bank 0: title screen mode
-	moveq	#0,d0
-	jbsr	osd_set_gfx_bank
 	
 	lea		sprite_buffer,a0
 	bsr		align_for_fmode
 	lea		sprite_table,a1
 	moveq	#7,d0
 0:
-	move.l	a0,(a1)+
+	move.l	a0,(a1)
+	add.w	#SPRITE_STRUCT_SIZE,a1
 	add.w	#SPRITE_SIZE,a0
 	dbf		d0,0b
 	
@@ -1487,7 +1489,30 @@ platform_init:
 	lea		title_sprites,a0
 	lea		sprite_table,a1
 	bsr		init_sprite_bank
+
+	* set title sprite colors, 8 times the same 4 colors
+	lea		title_sprite_colors+2,a1
+	moveq	#7,d0
+0:
+	lea		title_palette,a0
+	moveq	#3,d1
+1:
+	move.w	(a0)+,d2
+	move.w	d2,(a1)
+	addq	#4,a1
+	dbf		d1,1b
 	
+	dbf		d0,0b
+	
+	* set bank 0: title screen mode
+	moveq	#0,d0
+	jbsr	osd_set_gfx_bank
+	* all column scrolls at 0
+	moveq	#0,d0
+	moveq	#7,d1
+0:
+	jbsr	osd_set_column_scroll
+	dbf		d1,0b
 
 	* wait 300 lines
 	move.w	#100,d0
@@ -1680,8 +1705,57 @@ osd_set_gfx_bank:
 * if title gfx bank, index is letter index
 * if game gfx bank, index is elevator index
 osd_set_column_scroll:
-	rts
+	movem.l	d0-d2/a0-a3,-(a7)
+	lea	HW_SpriteYTable_SPRITE_HEIGHT,a1
+	and.w	#0x7,d1
+	move.w	d1,d2
+	lsl.w	#6,d1		| times 64: SPRITE_STRUCT_SIZE
+	lea		sprite_table,a0
+	lea		(a0,d1.w),a2		| select proper sprite struct
 	
+	tst.b	current_gfx_bank
+	jeq		10f
+	
+11:
+	movem.l	(a7)+,d0-d2/a0-a3
+	rts
+
+10:
+	* title column scroll
+	* we have to set/change the sprite start here
+	* if D0 > 0: change sprite position, if D0 < 0 (>0x7F) then clip sprite
+	* ATM D0=0
+	moveq	#0x20,d0
+	
+	move.w	d0,d1		| Y
+	move.w	d2,d0		| X
+	lsl.w	#4,d0		| column times 16
+	add.w	#32,d0		| add offset
+	bsr		store_sprite_pos
+	
+	* if Y start is negative, we have to save data behind the control word
+	* so we can set X/Y pos (clipping)
+	* and the data behind the end word so we can zero it
+	move.l	(a2),a3
+	move.w	d0,(8,a3)
+	swap	d0
+	move.w	d0,(a3)
+	
+	.set	f,16
+	.rept	100
+	move.l	#0x55AA5500,(f,a3)
+	.set	f,f+16
+	.endr
+	
+	move.l	a3,d1
+	lsl.w	#3,d2		| nb col * 8
+	lea		title_sprites+2,a1
+	move.w	d1,(4,a1,d2.w)
+	swap	d1
+	move.w	d1,(a1,d2.w)
+	jra		11b
+
+
 * a0=screen address (preserved), d0=tile (preserved)
 * a6=ram base
 * should preserve all registers
@@ -1746,7 +1820,7 @@ update_bg_tile_title:
 
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	
-	btst	#11,d7		| second layer?
+	btst	#10,d7		| second layer?
 	jeq	0f
 	addq.w	#4,a0		| second layer ATM title = same bitplanes
 0:
@@ -1767,7 +1841,7 @@ update_bg_tile_game:
 
 	move.l	#FG_SCREEN_PLANE_SIZE,d5
 	
-	btst	#11,d7		| second layer?
+	btst	#10,d7		| second layer?
 	jeq	0f
 	addq.w	#4,a0		| second layer ATM title = same bitplanes
 0:
@@ -1824,18 +1898,6 @@ end_update_bg_tile:
 	rts
 
 
-store_sprite_pos_16:
-	move.l	a1,-(a7)
-	lea		HW_SpriteYTable_16,a1
-	bsr		store_sprite_pos
-	move.l	(a7)+,a1
-	rts
-store_sprite_pos_32:
-	move.l	a1,-(a7)
-	lea		HW_SpriteYTable_32,a1
-	bsr		store_sprite_pos
-	move.l	(a7)+,a1
-	rts
 	
 * < d0.w: x
 * < d1.w: y
@@ -1882,8 +1944,8 @@ HW_SpriteYTable_\height:
 	.endm
 
 
-	DEF_HW_SPRITE_Y_TABLE	16
-	DEF_HW_SPRITE_Y_TABLE	32
+	DEF_HW_SPRITE_Y_TABLE	SPRITE_HEIGHT
+
 
 	
 * set_bg_bitplanes
@@ -2278,34 +2340,13 @@ read_args_string_end:
 	.align	2
 
 
-* 8 slots (indexed with the target sprite index, not
-* the amiga sprite index) with
-* - 4 bytes for the sprite actual address
-* - 2 bytes amiga sprite index
-* - 2 bytes??
-hw_sprite_slots:
-	ds.b	8*8
-* 8 slots (indexed with the amiga sprite index)
-amiga_sprite_slots:
-	ds.b	8
-
 	.ifndef	RELEASE
-sprite_allocation_error:
-	.asciz	"sprite allocation error"
-sprite_doesnt_exist_error:
-	.asciz	"sprite doesn't exist"
-sprite_buffer_doesnt_exist_error:
-	.asciz	"sprite buffer doesn't exist"
-read_videoram_out_of_range_error:
-	.asciz	"read videoram out of range"
+
 write_videoram_out_of_range_error:
 	.asciz	"write videoram out of range"
-write_colorram_out_of_range_error:
-	.asciz	"write colorram out of range"
+	
 	.align	2
-
 	.endif
-
 
 old_intena:
 	.long	0
@@ -2447,7 +2488,13 @@ _end_of_ng_code:
 		
 	.align 2
 sprite_table:
-	.skip	8*4
+	.rept	8
+	.skip	4			| sprite chip data (control word first)
+	.skip	2           | sprite Y clip (0 if no clip)
+	.skip	8*2			| control word row save
+	.skip	8*2			| end word row save
+	.skip	64-34		| padding
+	.endr
 	
 	.include "palettes.68k"
 
@@ -2527,11 +2574,17 @@ title_copperlist:
 title_bitplanes:
 	DECL_BITPLANES	0,4
 	* default color bank
+	* all sprites have the same palette no need to specify odd or even
+	* on color bank 1
+	DECL_COLOR_BANK	1
+title_sprite_colors:
+	DECL_COLORS	0,32
+title_sprites:
+	DECL_SPRITES
+	* back to color bank 0
 	DECL_COLOR_BANK	0
 title_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
-title_sprites:
-	DECL_SPRITES
 
     .word  0x100*120,0xFFFE	| mid screen wait
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
@@ -2617,7 +2670,7 @@ post_pal_copper_rows:
 		.section .bsschip
 		
 sprite_buffer:
-	.skip	SPRITE_SIZE*8
+	.skip	(SPRITE_SIZE+4)*8		| 32 more bytes for control word and end zeroes
 	.skip	8
 	.skip	8
 	

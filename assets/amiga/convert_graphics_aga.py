@@ -116,11 +116,13 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,nam
 
 dump_it = True
 
-title_layer = [load_tileset("tiles_{}.png".format(i if i<2 else 1),False,side,used_title_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(title_layer_names)]
+title_layer = [load_tileset("tiles_{}.png".format(i if i<2 else 1),False,side,
+                used_title_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(title_layer_names)]
 
-title_playfield_palette = tuple(sorted(set(x for tl in title_layer for x in tl[0])))
+title_letters_palette = tuple(title_layer[2][0])
+# title playfield starts with letters palette (sprites) then continues with regular tiles
+title_playfield_palette = title_letters_palette + tuple(sorted(set(x for tl in title_layer[0:2] for x in tl[0])))[1:]
 title_playfield_palette = title_playfield_palette + (16-len(title_playfield_palette)) * (dummy,)
-
 
 
 game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(game_layer_names)]
@@ -332,6 +334,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     bitplanelib.palette_dump(sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_tables\n")
