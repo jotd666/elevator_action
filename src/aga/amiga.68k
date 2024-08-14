@@ -75,7 +75,7 @@ NB_BYTES_PER_SPRITE_ROW = 8
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
-SPRITE_HEIGHT = NB_LINES
+SPRITE_HEIGHT = NB_LINES*2
 * sprite band: 64 bit * 2 planes * 2*screen size
 SPRITE_SIZE = 8*2*SPRITE_HEIGHT
 
@@ -1707,7 +1707,7 @@ osd_set_gfx_bank:
 * if game gfx bank, index is elevator index
 osd_set_column_scroll:
 	movem.l	d0-d2/a0-a3,-(a7)
-	lea	HW_SpriteYTable_SPRITE_HEIGHT,a1
+	lea	HW_SpriteYTable_NB_LINES,a1
 	and.w	#0x7,d1
 	move.w	d1,d2
 	lsl.w	#6,d1		| times 64: SPRITE_STRUCT_SIZE
@@ -1727,7 +1727,6 @@ osd_set_column_scroll:
 	* if D0 > 0: change sprite position, if D0 < 0 (>0x7F) then clip sprite
 	* ATM D0=0
 	moveq	#0x20,d0
-	
 	move.w	d0,d1		| Y
 	move.w	d2,d0		| X
 	lsl.w	#4,d0		| column times 16
@@ -1838,8 +1837,11 @@ update_title_letters:
 	* compute sprite Y offset: 16 bytes per row, starting at 16
 	addq	#1,d1
 	lsl.w	#4,d1
-	* compute sprite X offset: 1 byte per pixel
-	add.w	d0,d1
+	* compute sprite X offset: 1 byte per pixel, 16 pixels per letter
+	btst	#0,d0
+	jeq	1f
+	addq	#1,d1	| 2 modulo
+1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
 	lsl.w	#6,d0	| times SPRITE_STRUCT_SIZE
@@ -2009,7 +2011,7 @@ HW_SpriteYTable_\height:
 	.endm
 
 
-	DEF_HW_SPRITE_Y_TABLE	SPRITE_HEIGHT
+	DEF_HW_SPRITE_Y_TABLE	NB_LINES
 
 
 	
