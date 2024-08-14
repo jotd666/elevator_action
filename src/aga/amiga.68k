@@ -96,16 +96,14 @@ SPRITE_CODE = 2
 SPRITE_CLUT = 3
 SPRITE_SIZEOF = 4
 
+_STRUCT  | sprite_table
+  _DS  _chip_data                        4
+  _DS  _previous_y_position              2
+  _DS  _saved_control_word_address       4
+  _DS  _saved_end_word_address           4
+  _DS  _control_word_row_save            16      
+  _DS  _end_word_row_save                16      
 
-| write current PC value to some address
-.macro LOGPC	address
-	.ifndef	RELEASE
-     bsr    .next_\@
-.next_\@:
-      addq.l    #6,(a7) | skip this & next instruction
-      move.l    (a7)+,0x\address
-	.endif
-.endm
 
 .macro	WAIT_BLIT
 	move.w	#0x8400,(dmacon,a5)		| blitter high priority
@@ -1415,13 +1413,15 @@ quit_to_os:
 	addq.l	#resload_Abort,(a7)
 	rts
 
+
+
 * set sprite pointers on chipmem zone
 
 init_sprite_bank:
 	move.w	#sprpt,d0
 	move.w	#NB_HOST_SPRITES-1,d2		| 7
 0:
-	move.l	(a1),d1
+	move.l	(_chip_data,a1),d1
 	move.w	d0,(a0)+
 	swap	d1
 	move.w	d1,(a0)+
@@ -1478,7 +1478,8 @@ platform_init:
 	lea		sprite_table,a1
 	moveq	#7,d0
 0:
-	move.l	a0,(a1)
+	move.l	a0,(_chip_data,a1)
+	st.b	(_previous_y_position,a1)	| invalidate
 	add.w	#SPRITE_STRUCT_SIZE,a1
 	add.w	#SPRITE_SIZE,a0
 	dbf		d0,0b
@@ -1699,6 +1700,11 @@ osd_set_gfx_bank:
 	movem.l	(a7)+,d0-a6
 	rts
 	
+	.macro	COPY_SPRITE_ROW
+	.rept	(_end_word_row_save-_control_word_row_save)/4
+	move.l	(a3)+,(a4)+
+	.endr	
+	.endm
 * D0: scroll value
 * D1: column index 0-xx
 *
@@ -1706,41 +1712,80 @@ osd_set_gfx_bank:
 * if title gfx bank, index is letter index
 * if game gfx bank, index is elevator index
 osd_set_column_scroll:
-	movem.l	d0-d2/a0-a3,-(a7)
+	movem.l	d0-d2/a0-a4,-(a7)
 	lea	HW_SpriteYTable_NB_LINES,a1
 	and.w	#0x7,d1
+	and.w	#0xFF,d0
+	neg.w	d0
+	add.w	#0x100,d0
+	
 	move.w	d1,d2
 	lsl.w	#6,d1		| times 64: SPRITE_STRUCT_SIZE
 	lea		sprite_table,a0
 	lea		(a0,d1.w),a2		| select proper sprite struct
-	
+	cmp.w	(_previous_y_position,a2),d0
+	jeq		100f		| no need to do anything: column scroll did not change
+	move.w	d0,(_previous_y_position,a2)  | store for later
+
 	tst.b	current_gfx_bank
 	jeq		10f
 	
-11:
-	movem.l	(a7)+,d0-d2/a0-a3
+100:
+	movem.l	(a7)+,d0-d2/a0-a4
 	rts
+    
 
 10:
 	* title column scroll
-	* we have to set/change the sprite start here
-	* if D0 > 0: change sprite position, if D0 < 0 (>0x7F) then clip sprite
-	* ATM D0=0
-	moveq	#0x20,d0
-	move.w	d0,d1		| Y
+	* Y start is always the same, but sprite is more or
+	* less clipped depending on D0 value
+	
+	* first restore data where control word/end word were written
+	* unless no save data is available (first time, no clipping...)
+	move.l	(_saved_control_word_address,a2),d1
+	jeq		11f         | nothing to restore
+	move.l	d1,a4
+	lea		(_control_word_row_save,a2),a3
+	COPY_SPRITE_ROW
+	move.l	(_saved_end_word_address,a2),a4
+	lea		(_end_word_row_save,a2),a3
+	COPY_SPRITE_ROW
+11:
+	
+	* now compute where the control word / end word will be
+	* depending on scroll value
+	move.l	(_chip_data,a2),a3
+	lsl.w	#4,d1	| times 16 for fmode=3
+	add.w	d1,a3
+	move.l	a3,(_saved_control_word_address,a2)
+	* now save the rows
+	lea		(_control_word_row_save,a2),a4
+	COPY_SPRITE_ROW
+	move.l	(_saved_control_word_address,a2),a3
+	add.w	#(NB_LINES+1)*(_end_word_row_save-_control_word_row_save),a3
+	move.l	a3,(_saved_end_word_address,a2)
+	lea		(_end_word_row_save,a2),a4
+	COPY_SPRITE_ROW
+	move.l	(_saved_control_word_address,a2),a3
+
+	
+	* now compute the control word
+	moveq	#0,d1		| Y
 	move.w	d2,d0		| X
 	lsl.w	#4,d0		| column times 16
-	add.w	#32,d0		| add offset
+	add.w	#64,d0		| add offset
 	bsr		store_sprite_pos
 	
-	* if Y start is negative, we have to save data behind the control word
-	* so we can set X/Y pos (clipping)
-	* and the data behind the end word so we can zero it
-	move.l	(a2),a3
-	move.w	d0,(8,a3)
+	move.w	d0,(8,a3)   | fmode=3
 	swap	d0
 	move.w	d0,(a3)
+	lea		((NB_LINES+1)*(_end_word_row_save-_control_word_row_save),a3),a4
 	
+	* end word
+	clr.l	(a4)+
+	clr.l	(a4)+
+	clr.l	(a4)+
+	clr.l	(a4)
 	
 	move.l	a3,d1
 	lsl.w	#3,d2		| nb col * 8
@@ -1748,7 +1793,7 @@ osd_set_column_scroll:
 	move.w	d1,(4,a1,d2.w)
 	swap	d1
 	move.w	d1,(a1,d2.w)
-	jra		11b
+	jra		100b
 
 
 * a0=screen address (preserved), d0=tile (preserved)
@@ -1822,6 +1867,7 @@ update_bg_tile_title:
 	* updating bitplanes
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.l	bg_screen_ptr,a1
+	subq	#2,d0 | not sure??
 	add.w	d0,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2
 	add.w	(a2,d1.w*2),a1
@@ -1847,7 +1893,7 @@ update_title_letters:
 	lsl.w	#6,d0	| times SPRITE_STRUCT_SIZE
 	lea		sprite_table,a2
 	add.w	d0,a2		| select proper sprite structure
-	move.l	(a2),a2		| sprite data
+	move.l	(_chip_data,a2),a2		| sprite data
 	add.w	#16,a2		| skip control word
 	add.w	d1,a2		| add X/Y offset
 	
@@ -1875,8 +1921,12 @@ update_title_letters:
 
 	.set	offset,0
 	.rept	8
-	move.b	(a0)+,(offset,a2)
-	move.b	(a1)+,(NB_BYTES_PER_SPRITE_ROW+offset,a2)
+	move.b	(a0)+,d0
+	move.b	d0,(offset,a2)
+	move.b	d0,(offset+(NB_LINES*16),a2)
+	move.b	(a1)+,d0
+	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a2)
+	move.b	d0,((NB_LINES*16)+NB_BYTES_PER_SPRITE_ROW+offset,a2)
 	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2
 	.endr	
 0:
@@ -2553,15 +2603,11 @@ temp_filename_buffer:
 	ds.b	255
 _end_of_ng_code:
 		
+  
+
 	.align 2
 sprite_table:
-	.rept	8
-	.skip	4			| sprite chip data (control word first)
-	.skip	2           | sprite Y clip (0 if no clip)
-	.skip	8*2			| control word row save
-	.skip	8*2			| end word row save
-	.skip	64-34		| padding
-	.endr
+	.skip	SPRITE_STRUCT_SIZE*8
 	
 	.include "palettes.68k"
 

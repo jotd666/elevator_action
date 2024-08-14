@@ -46,6 +46,16 @@ l_74cf
 l_74e5
 l_7503
 
+scroll
+EF  0 top
+CF  +32
+A8  title stop
+
+scroll:
+- missing/shifted Y line
+- end sprite wrong computation
+- first "E" letter missing
+- maybe scroll values should be complemented
 
 draw_action_a_749f: not called... debug/code ELEVATOR letters? times? debug display_action_title_7475
 71ae <= state:title
