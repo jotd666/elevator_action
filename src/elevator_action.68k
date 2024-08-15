@@ -1,6 +1,29 @@
 	.global	elevator_reset
 	.global	elevator_irq
 
+
+amiga_break:
+	* sends a WinUAE command to enter WinUAE debugger
+	.ifndef	RELEASE
+	move.l	D0,-(a7)
+	pea     0.w
+	* Normally it would point to where the result of the command is written, but since the last parameter (first pushed)
+	* indicating the number of bytes to write is 0, nothing is written.
+	pea     0.w	
+	pea     1003f-1002f
+	pea     1002f(pc)
+	pea     -1.w
+	pea     82.w
+	jsr     0xf0ff60
+	lea     24(sp),sp
+	move.l	(a7)+,d0
+	.endif
+    rts
+		
+1002: .asciz    "AKS_ENTERDEBUGGER 1"
+1003:
+        .align	2
+		
 	.macro	LOAD_D1_16_FROM_D1D2
 	and.l	#0xFFFF,d1
 	lsl.w	#8,d1
@@ -236,7 +259,7 @@ load_d3d4_address_from_6bdc_in_a1:
 	.ifndef	RELEASE
 	cmp.l	#end_table_6BDC,a1
 	jcs		0f
-	jbsr	osd_break
+	jbsr	amiga_break
 	tst		d3
 	illegal
 0:
@@ -250,7 +273,7 @@ load_d5d6_address_from_6bdc_in_a0:
 	.ifndef	RELEASE
 	cmp.l	#end_table_6BDC,a0
 	jcs		0f
-	jbsr	osd_break
+	jbsr	amiga_break
 	tst		d5
 	illegal
 0:
@@ -258,19 +281,6 @@ load_d5d6_address_from_6bdc_in_a0:
 	rts
 	
 
-load_d1d2_address_from_6bdc_in_a4:
-	LOAD_D1_16_FROM_D1D2
-	lea		table_6BDC,A4
-	add.w	d1,a4
-	.ifndef	RELEASE
-	cmp.l	#end_table_6BDC,a4
-	jcs		0f
-	jbsr	osd_break
-	tst		d1
-	illegal
-0:
-	.endif
-	rts
 	
 play_sound:
 	move.l	a0,-(a7)
@@ -288,7 +298,7 @@ play_sound:
 	rts
 0:	
 	* sound not linked to our sound engine
-	**jbsr	osd_break
+	**jbsr	amiga_break
 	jra	1b
 
 sound_table:
@@ -563,13 +573,13 @@ execute_dynamic_ram_code_8246:
 	jbra	l_2f1f		| would execute jmp (ix), ix = $2F1F
 0:
 	* undiscovered cases (are there some?? don't think so)
-	jbsr	osd_break
+	jbsr	amiga_break
 	illegal
 	NOP
 	illegal
 	rts
 	
-MOCKUP=  1
+*MOCKUP=  1
 
 elevator_reset:
 	.ifdef	MOCKUP
@@ -2657,7 +2667,7 @@ l_0b98:
 	cmp.w	#21,d3
 	jcs		0f
 	* out of bounds!
-	jbsr	osd_break
+	jbsr	amiga_break
 	illegal
 0:
 	.endif
@@ -3763,7 +3773,7 @@ l_1249:
 l_125a:
 	                	| [$125a: ld   (watchdog_d50d),a]
 	jbsr	handle_music_6500                 	| [$125d: call handle_music_6500]
-	jbsr	l_656a                            	| [$1260: call $656A]
+	jbsr	handle_music_656a                            	| [$1260: call $656A]
 	jbsr	l_65df                            	| [$1263: call $65DF]
 	lea	protection_variable_8648(a6),a0    	| [$1266: ld   hl,protection_variable_8648]
 	move.b	(a0),d0                         	| [$1269: ld   a,(hl)]
@@ -17232,93 +17242,97 @@ handle_music_6500:
 	| [$6567: jr   c,$6554]
 	| [$6569: ret]
 
-l_656a:
-	move.b	l_8760(a6),d0                   	| [$656a: ld   a,($8760)]
-	move.b	d0,d1                           	| [$656d: ld   b,a]
-	move.b	l_8761(a6),d0                   	| [$656e: ld   a,($8761)]
-	cmp.b	d1,d0                            	| [$6571: cp   b]
-	jeq	l_6590                             	| [$6572: jr   z,$6590]
-	addq.b	#1,d0                           	| [$6574: inc  a]
-	and.b	#0x0F,d0                         	| [$6575: and  $0F]
-	move.b	d0,l_8761(a6)                   	| [$6577: ld   ($8761),a]
-	lea	l_8762(a6),a0                      	| [$657a: ld   hl,$8762]
-	moveq	#0,d1                               	| [$657d: ld   b,$00]
-	move.b	d0,d1                           	| [$657f: ld   c,a]
-	add.w	d1,a0                            	| [$6580: add  hl,bc]
- 	move.b	(a0),d0                         	| [$6581: ld   a,(hl)]
-	cmp.b	#0xFF,d0                         	| [$6582: cp   $FF]
-	jne	l_658d                             	| [$6584: jr   nz,$658D]
-	move.b	#0x01,d0                        	| [$6586: ld   a,$01]
-	move.b	d0,l_8773(a6)                   	| [$6588: ld   ($8773),a]
-	jra	l_6590                             	| [$658b: jr   $6590]
-l_658d:
-	jbsr	l_6591                            	| [$658d: call $6591]
-l_6590:
-	rts                                    	| [$6590: ret]
+* comment this and music doesn't play anymore
+handle_music_656a:
+	rts
+	
+       	| [$656a: ld   a,($8760)]
+       	| [$656d: ld   b,a]
+       	| [$656e: ld   a,($8761)]
+        	| [$6571: cp   b]
+      	| [$6572: jr   z,$6590]
+       	| [$6574: inc  a]
+        	| [$6575: and  $0F]
+       	| [$6577: ld   ($8761),a]
+      	| [$657a: ld   hl,$8762]
+           	| [$657d: ld   b,$00]
+       	| [$657f: ld   c,a]
+        	| [$6580: add  hl,bc]
+       	| [$6581: ld   a,(hl)]
+        	| [$6582: cp   $FF]
+      	| [$6584: jr   nz,$658D]
+       	| [$6586: ld   a,$01]
+       	| [$6588: ld   ($8773),a]
+      	| [$658b: jr   $6590]
 
-l_6591:
-	move.w	#0x0006,d1                      	| [$6591: ld   bc,$0006] 6
-	lea	table_6BDC-6(pc),a0						| [$6594: ld   hl,$6BD6]
-	* search for "key" in table, 6 per 6 values
-l_6597:
-	add.w	d1,a0                            	| [$6597: add  hl,bc]
-	cmp.b	(a0),d0                          	| [$6598: cp   (hl)]
-	jcc	l_6597                             	| [$6599: jr   nc,$6597]
-	* found a satisfactory entry
-	* back to previous entry											| [$659b: ccf]
-	sub.w	d1,a0                            	| [$659c: sbc  hl,bc]
-	move.b	(a0)+,d1                         	| [$659e: ld   b,(hl)]
-	sub.b	d1,d0                            	| [$659f: sub  b]
-	move.b	d0,d1                           	| [$65a0: ld   b,a]
-	                           	| [$65a1: inc  hl]
-	move.b	(a0)+,d0                         	| [$65a2: ld   a,(hl)]
-	cmp.b	d1,d0                            	| [$65a3: cp   b]
-	jcc	l_65a8                             	| [$65a4: jr   nc,$65A8]
-	moveq	#0,d1                               	| [$65a6: ld   b,$00]
-l_65a8:
+         	| [$658d: call $6591]
+
+      	| [$6590: ret]
+
+
+             	| [$6591: ld   bc,$0006] 6
+				| [$6594: ld   hl,$6BD6]
+
+
+              	| [$6597: add  hl,bc]
+              	| [$6598: cp   (hl)]
+            	| [$6599: jr   nc,$6597]
+
+										| [$659b: ccf]
+              	| [$659c: sbc  hl,bc]
+              	| [$659e: ld   b,(hl)]
+              	| [$659f: sub  b]
+             	| [$65a0: ld   b,a]
+	| [$65a1: inc  hl]
+              	| [$65a2: ld   a,(hl)]
+              	| [$65a3: cp   b]
+            	| [$65a4: jr   nc,$65A8]
+                 	| [$65a6: ld   b,$00]
+
 	                           	| [$65a8: inc  hl]
-	move.b	(a0)+,d4                         	| [$65a9: ld   e,(hl)]
-	                           	| [$65aa: inc  hl]
-	move.b	(a0),d3                         	| [$65ab: ld   d,(hl)]
-	* save this address for later
-	movem.w	d3/d4,-(sp)                    	| [$65ac: push de]
-	addq.w	#1,a0                           	| [$65ad: inc  hl]
-	move.b	(a0)+,d4                         	| [$65ae: ld   e,(hl)]
-	jbsr		load_d3d4_address_from_6bdc_in_a1
-												| [$65af: inc  hl]
-	move.b	(a0),d3                         	| [$65b0: ld   d,(hl)]
-												| [$65b1: ld   a,d]  ??? not used
+             	| [$65a9: ld   e,(hl)]
+| [$65aa: inc  hl]
+            	| [$65ab: ld   d,(hl)]
+
+           	| [$65ac: push de]
+            	| [$65ad: inc  hl]
+             	| [$65ae: ld   e,(hl)]
+				| [$65af: inc  hl]
+            	| [$65b0: ld   d,(hl)]
+
+
+				| [$65b1: ld   a,d]  ??? not used
 	
-	move.l	a1,a2                        	| [$65b2: push de]
+                      	| [$65b2: push de]
 											| [$65b3: pop  ix]
-	movem.w	(sp)+,d3/d4                    	| [$65b5: pop  de]
-	* restored address, now compute it
-	jbsr		load_d3d4_address_from_6bdc_in_a1
+  	| [$65b5: pop  de]
+
+
 	
-	clr.w	d5                               	| [$65b6: ld   h,$00]
-	move.b	d1,d5                           	| [$65b8: ld   l,b]
-	add.w	d5,d5                            	| [$65b9: add  hl,hl]
-	lea		(a1,d5.w),a0                     	| [$65ba: add  hl,de]
-	move.b	(a0)+,d2                         	| [$65bb: ld   c,(hl)]
-	                          	| [$65bc: inc  hl]
-	move.b	(a0),d1                         	| [$65bd: ld   b,(hl)]
-	jbsr		load_d1d2_address_from_6bdc_in_a4
-	move.b	(a4),d0                         	| [$65be: ld   a,(bc)]
-	and.b	#0x1F,d0                         	| [$65bf: and  $1F]
-	move.b	d0,d3                           	| [$65c1: ld   d,a]
-	move.b	(0x03,a2),d0   	| [$65c2: ld   a,(ix+character_y_offset_03)]
-	and.b	#0x1F,d0                         	| [$65c5: and  $1F]
-	cmp.b	d3,d0                            	| [$65c7: cp   d]
-	jcc	l_65d0                             	| [$65c8: jr   nc,$65D0]
-	btst.b	#1,(a2)          	| [$65ca: bit  1,(ix+character_x_00)]
-	jne	l_65de                             	| [$65ce: jr   nz,$65DE]
-l_65d0:
-	bset.b	#0,(a2)          	| [$65d0: set  0,(ix+character_x_00)]
-	bclr.b	#1,(a2)          	| [$65d4: res  1,(ix+character_x_00)]
-	move.b	d2,(0x01,a2)    	| [$65d8: ld   (ix+character_x_right_01),c]
-	move.b	d1,(0x02,a2)                    	| [$65db: ld   (ix+$02),b]
-l_65de:
-	rts                                    	| [$65de: ret]
+                    	| [$65b6: ld   h,$00]
+                   	| [$65b8: ld   l,b]
+                    	| [$65b9: add  hl,hl]
+                    	| [$65ba: add  hl,de]
+                    	| [$65bb: ld   c,(hl)]
+     	| [$65bc: inc  hl]
+                   	| [$65bd: ld   b,(hl)]
+
+                   	| [$65be: ld   a,(bc)]
+                    	| [$65bf: and  $1F]
+                   	| [$65c1: ld   d,a]
+  	| [$65c2: ld   a,(ix+character_y_offset_03)]
+                    	| [$65c5: and  $1F]
+                    	| [$65c7: cp   d]
+                  	| [$65c8: jr   nc,$65D0]
+    	| [$65ca: bit  1,(ix+character_x_00)]
+                  	| [$65ce: jr   nz,$65DE]
+
+    	| [$65d0: set  0,(ix+character_x_00)]
+    	| [$65d4: res  1,(ix+character_x_00)]
+   	| [$65d8: ld   (ix+character_x_right_01),c]
+                   	| [$65db: ld   (ix+$02),b]
+
+                  	| [$65de: ret]
 
 l_65df:
 	lea	l_8700(a6),a2                      	| [$65df: ld   ix,$8700]
@@ -18461,8 +18475,8 @@ l_727b:
 	movem.w	d3/d4,-(sp)                    	| [$7285: push de]
 	move.l	a1,-(sp)                        	| [$7285: push de]
 	movem.w	d1/d2,-(sp)                    	| [$7286: push bc]
-	jbsr	l_7334                            	| [$7287: call $7334]
-	jbsr	l_73a5                            	| [$728a: call $73A5]
+	jbsr	animate_elevator_letters_7334     	| [$7287: call $7334]
+	jbsr	feed_scroll_with_elevator_letters_73a5                            	| [$728a: call $73A5]
 	LOAD_POINTER	screen_address_8609(a6),a0             	| [$728d: ld   hl,($8609)]
 	addq.w	#2,a0                           	| [$7290: inc  hl] * 2
 	STORE_POINTER	a0,screen_address_8609(a6)            	| [$7292: ld   ($8609),hl]
@@ -18586,7 +18600,7 @@ table_72D4:
 	.align	2
 
 
-l_7334:
+animate_elevator_letters_7334:
 	move.b	l_8608(a6),d0                   	| [$7334: ld   a,($8608)]
 	move.w	#0x73A1,d3                          	| [$7338: ld   de,$73A1]
 	subq.b	#1,d0                           	| [$7337: dec  a]
@@ -18617,7 +18631,7 @@ l_7356:
 	rts                                    	| [$7360: ret]
 
 
-l_73a5:
+feed_scroll_with_elevator_letters_73a5:
 	move.b	l_8607(a6),d0                   	| [$73a5: ld   a,($8607)]
 	and.b	#0xF8,d0                         	| [$73a8: and  $F8]
 	moveq	#0,d5                               	| [$73ab: ld   h,$00]
@@ -18633,12 +18647,13 @@ l_73a5:
 	and.w	#0x03FF,d5                         	| [$73bb: and  $03]
 	                           	| [$73bd: ld   h,a]
 l_73be:
-	LOAD_POINTER	screen_address_8609(a6),a1             	| [$73be: ld   de,($8609)]
+	LOAD_WORD	screen_address_8609(a6),d3             	| [$73be: ld   de,($8609)]
 
-	add.w	d5,a1                            	| [$73c2: add  hl,de]
+	add.w	d5,d3                            	| [$73c2: add  hl,de]
 	                              	| [$73c3: ex   de,hl]
 	LOAD_POINTER	ram_pointer_860D(a6),a0             	| [$73c4: ld   hl,($860D)]
 	LOAD_D3D4_FROM_D3_16
+	* store address of elevator letter table here
 	move.b	d4,(a0)+                         	| [$73c7: ld   (hl),e]
 	                           	| [$73c8: inc  hl]
 	move.b	d3,(a0)+                         	| [$73c9: ld   (hl),d]
@@ -18647,7 +18662,7 @@ l_73be:
 	rts                                    	| [$73ce: ret]
 
 
-table_7361:
+elevator_letter_table_7361:
 	.byte	0x86,0x87,0x84,0x85,0x82,0x83,0x80,0x81,0x8D,0x8E,0x8B,0x8C,0x8B,0x00,0x89,0x8A
 	.byte	0x86,0x87,0x84,0x85,0x82,0x83,0x80,0x81,0x95,0x96,0x93,0x94,0x91,0x92,0x8F,0x90
 	.byte	0x9D,0x9D,0x9B,0x9C,0x99,0x9A,0x97,0x98,0xA5,0xA6,0xA3,0xA4,0xA1,0xA2,0x9F,0xA0
@@ -18778,28 +18793,41 @@ update_title_elevator_scroll_7437:
 	
 									| [$7459: ldi]
 									| [$745b: ldi]
+								
+	* copy letter to video (feed "elevator" letter columns)
 	lea	l_860F(a6),a0                      	| [$745d: ld   hl,$860F]
 	move.b	#0x08,d1                        	| [$7460: ld   b,$08]
 l_7462:
-	.warning  "debug addresses here"
 	movem.w	d1/d2,-(sp)                    	| [$7462: push bc]
 	move.l	a4,-(sp)                        	| [$7462: push bc]
-	move.b	(a0)+,d2                         	| [$7463: ld   c,(hl)]
+	* load pointer on elevator_letter_table_7361+offset in A4 (source)
+	move.b	(a0)+,d2            | [$7463: ld   c,(hl)]
 	                           	| [$7464: inc  hl]
-	move.b	(a0)+,d1                         	| [$7465: ld   b,(hl)]
+	move.b	(a0)+,d1            | [$7465: ld   b,(hl)]
+	LOAD_D1_16_FROM_D1D2
+
+	lea		elevator_letter_table_7361,a4
+	add.w	d1,a4
+	
+	* load destination (on screen)
 	                           	| [$7466: inc  hl]
 	move.b	(a0)+,d4                         	| [$7467: ld   e,(hl)]
 	                           	| [$7468: inc  hl]
 	move.b	(a0)+,d3                         	| [$7469: ld   d,(hl)]
+	LOAD_D3_16_FROM_D3D4
+	sub.w	#0xC800,d3
+	lea		videoram_layer_1_C400(a6),a1
+	exg		a1,a0
+	
 	                           	| [$746a: inc  hl]
-	move.b	(a4)+,(a1)+                         	| [$746b: ld   a,(bc)]
-	                        	| [$746c: ld   (de),a]
+	move.b	(a4)+,d0           	| [$746b: ld   a,(bc)]
+	jbsr	osd_w_videoram     	| [$746c: ld   (de),a]
 	                           	| [$746d: inc  bc]
-	                           	| [$746e: inc  de]
-	move.b	(a4),(a1)                         	| [$746f: ld   a,(bc)]
-	move.b	d0,(a1)                         	| [$7470: ld   (de),a]
-	move.l	(sp)+,a4                        	| [$7471: pop  bc]
-	movem.w	(sp)+,d1/d2                    	| [$7471: pop  bc]
+	addq	#1,a0             	| [$746e: inc  de]
+	move.b	(a4)+,d0            | [$746f: ld   a,(bc)]
+	jbsr	osd_w_videoram      | [$7470: ld   (de),a]
+	move.l	(sp)+,a4            | [$7471: pop  bc]
+	movem.w	(sp)+,d1/d2         | [$7471: pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_7462                             	| [$7472: djnz $7462]
 	rts                                    	| [$7474: ret]
@@ -18838,7 +18866,7 @@ action_letter_appear_table_7498:
 	.align 	2
 	
 draw_action_a_749f:
-	jbsr	osd_break
+	jbsr	amiga_break
 	lea	table_7517,a0                      	| [$749f: ld   hl,table_7517]
 	lea	l_C9E6(a6),a1                      	| [$74a2: ld   de,$C9E6]
 	jra	l_74bd                             	| [$74a5: jr   $74BD]
@@ -19523,6 +19551,7 @@ ldir_video:
 *: note regscopy must be defined somewhere in RAM
 *: with a size of 56
 exx:
+	move.l	a6,-(a7)
     lea     regscopy+28,a6
     * save current regs in region 1
     movem.l d1-d4/a0/a1/a4,-(a6)
@@ -19535,6 +19564,7 @@ exx:
     movem.l (a6)+,d1-d4/a0/a1/a4
     movem.l d1-d4/a0/a1/a4,(a6)
     movem.l (a7)+,d1-d4/a0/a1/a4
+	move.l	(a7)+,a6
     rts
 
 * the following code is installed in RAM by the protection process

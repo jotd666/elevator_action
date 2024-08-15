@@ -282,7 +282,7 @@ _user:
 	jsr	_LVOWaitTOF(a6)
 	jsr	_LVOWaitTOF(a6)
 	
-	bsr		load_highscores
+	jbsr		load_highscores
     * check if "floppy" file is here
     move.l  _dosbase(pc),a6
     move.l   #floppy_file,d1
@@ -2703,13 +2703,13 @@ title_sprites:
 title_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
-    .word  0x100*120,0xFFFE	| mid screen wait
-	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
+    .word  0x100*120+1,0xFFFE	| mid screen wait
+	*.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait
 
-	.word	0x1000,0xFFFE
+	.word	0x1001,0xFFFE
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
 
  	.word	beampos,0xFFFE
