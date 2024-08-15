@@ -55,8 +55,8 @@ scroll:
 - missing/shifted Y line
 - end sprite wrong computation
 - first "E" letter missing
-- maybe scroll values should be complemented but seems to do NOTHING
 - reduce sprite width to 32 to save DMA 
+- l_7462 debug letters not in columns
 
 draw_action_a_749f: not called... debug/code ELEVATOR letters? times? debug display_action_title_7475
 71ae <= state:title

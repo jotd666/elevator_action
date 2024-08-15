@@ -97,9 +97,10 @@ amiga_break:
 	move.l	d7,-(a7)
 	move.l	\src,d7
 	sub.l	a6,d7
-	move.b	d7,1+\dest
-	rol.w	#8,d7
+	add.l	#0x8000,d7 
 	move.b	d7,\dest
+	rol.w	#8,d7
+	move.b	d7,1+\dest
 	move.l	(a7)+,d7
 	.endm
 
@@ -109,15 +110,21 @@ amiga_break:
 	move.b	1+\src,d7
 	rol.w	#8,d7
 	move.b	\src,d7
+	sub.l	#0x8000,d7
+	.ifndef	RELEASE
+	bcc		ok\@
+	illegal
+ok\@:
+	.endc
 	add.l	a6,d7
 	move.l	d7,\dest
 	move.l	(a7)+,d7
 	.endm
 
 	.macro	STORE_WORD  src,dest
-	move.b	\src,1+\dest
-	rol.w	#8,\src
 	move.b	\src,\dest
+	rol.w	#8,\src
+	move.b	\src,1+\dest
 	rol.w	#8,\src
 	.endm
 
@@ -3388,7 +3395,7 @@ l_0fe1:
 	move.b	d0,(a0)                         	| [$0fe8: ld   (hl),a]
 	rts                                    	| [$0fe9: ret]
 
-l_0fea:
+check_credits_0fea:
 	move.b	game_state_80AC(a6),d0          	| [$0fea: ld   a,(game_state_80AC)]
 												| [$0fed: or   a]
 	bne.b	0f                               	| [...]
@@ -3397,7 +3404,7 @@ l_0fea:
 	jbsr	switch_bank_on_9_credits_1036                            	| [$0fef: call $1036]
 	move.b	coin_slot_1_activated_80A3(a6),d0                   	| [$0ff2: ld   a,($80A3)]
 	lea	coin_dsw_copy_80A5(a6),a0                      	| [$0ff5: ld   hl,coin_dsw_copy_80A5]
-	jbsr	l_1019                            	| [$0ff8: call $1019]
+	jbsr	increase_credits_if_required_1019                            	| [$0ff8: call $1019]
 	move.b	d1,d0                           	| [$0ffb: ld   a,b]
 	move.b	d0,coin_slot_1_activated_80A3(a6)                   	| [$0ffc: ld   ($80A3),a]
 	jbsr	switch_bank_on_9_credits_1036                            	| [$0fff: call $1036]
@@ -3408,13 +3415,13 @@ l_0fea:
 0:
 	move.b	coin_slot_2_activated_80A4(a6),d0                   	| [$1008: ld   a,($80A4)]
 	lea	coin_slot_2_dsw_copy_80A7(a6),a0                      	| [$100b: ld   hl,$80A7]
-	jbsr	l_1019                            	| [$100e: call $1019]
+	jbsr	increase_credits_if_required_1019                            	| [$100e: call $1019]
 	move.b	d1,d0                           	| [$1011: ld   a,b]
 	move.b	d0,coin_slot_2_activated_80A4(a6)                   	| [$1012: ld   ($80A4),a]
 	jbsr	switch_bank_on_9_credits_1036                            	| [$1015: call $1036]
 	rts                                    	| [$1018: ret]
 
-l_1019:
+increase_credits_if_required_1019:
 	move.b	d0,d1                           	| [$1019: ld   b,a]
 	move.b	nb_credits_80A2(a6),d0          	| [$101a: ld   a,(nb_credits_80A2)]
 	move.b	d0,d2                           	| [$101d: ld   c,a]
@@ -18329,8 +18336,8 @@ title_screen_loop_7171:
 	* the title screen won't show
 	jbsr	regulate_speed
 	
-	jbsr	l_7261                            	| [$7171: call $7261]
-	jbsr	l_7400                            	| [$7174: call $7400]
+	jbsr	title_animation_7261              	| [$7171: call $7261]
+	jbsr	protection_check_7400              	| [$7174: call $7400]
 	tst.b	nb_credits_80A2(a6)          	| [$7177: ld   a,(nb_credits_80A2)]
 	                             	| [$717a: or   a]
 	beq.b	0f                               	| [...]
@@ -18453,15 +18460,15 @@ l_725b:
 	jne	l_725b                             	| [$725e: djnz $725B]
 	rts                                    	| [$7260: ret]
 
-l_7261:
+title_animation_7261:
 	jbsr	update_title_y_scroll_value_72af                            	| [$7261: call $72AF]
 	lea	l_CC08(a6),a0                      	| [$7264: ld   hl,$CC08]
-	STORE_POINTER	a0,screen_address_8609(a6)            	| [$7267: ld   ($8609),hl]
+	STORE_POINTER	a0,letter_screen_address_8609(a6)            	| [$7267: ld   ($8609),hl]
 
 	moveq	#0,d0                          	| [$726a: ld   hl,$7361]
-	STORE_WORD	d0,rom_offset_7361_860B(a6)            	| [$726d: ld   ($860B),hl]
-	lea	l_860F(a6),a0                      	| [$7270: ld   hl,$860F]
-	STORE_POINTER	a0,ram_pointer_860D(a6)            	| [$7273: ld   ($860D),hl]
+	STORE_WORD	d0,rom_offset_7361_860B(a6)       	| [$726d: ld   ($860B),hl]
+	lea	source_dest_letter_pointers_860F(a6),a0    	| [$7270: ld   hl,$860F]
+	STORE_POINTER	a0,ram_pointer_860D(a6)        	| [$7273: ld   ($860D),hl]
 
 	lea	title_letters_y_scroll_values_862F(a6),a1                      	| [$7276: ld   de,$862F]
 	move.b	#0x08,d1                        	| [$7279: ld   b,$08]
@@ -18476,13 +18483,14 @@ l_727b:
 	move.l	a1,-(sp)                        	| [$7285: push de]
 	movem.w	d1/d2,-(sp)                    	| [$7286: push bc]
 	jbsr	animate_elevator_letters_7334     	| [$7287: call $7334]
-	jbsr	feed_scroll_with_elevator_letters_73a5                            	| [$728a: call $73A5]
-	LOAD_POINTER	screen_address_8609(a6),a0             	| [$728d: ld   hl,($8609)]
+	jbsr	feed_scroll_with_elevator_letters_73a5 	| [$728a: call $73A5]
+	* next letter (2 bytes to the right)
+	LOAD_POINTER	letter_screen_address_8609(a6),a0             	| [$728d: ld   hl,($8609)]
 	addq.w	#2,a0                           	| [$7290: inc  hl] * 2
-	STORE_POINTER	a0,screen_address_8609(a6)            	| [$7292: ld   ($8609),hl]
+	STORE_POINTER	a0,letter_screen_address_8609(a6)            	| [$7292: ld   ($8609),hl]
 	LOAD_WORD	rom_offset_7361_860B(a6),d5             	| [$7295: ld   hl,($860B)]
-	move.w	#0x0008,d3                      	| [$7298: ld   de,$0008] 8
-	add.w	d3,d5                            	| [$729b: add  hl,de]
+	                      	| [$7298: ld   de,$0008] 8
+	addq.w	#8,d5                            	| [$729b: add  hl,de]
 	STORE_WORD	d5,rom_offset_7361_860B(a6)            	| [$729c: ld   ($860B),hl]
 	movem.w	(sp)+,d1/d2                    	| [$729f: pop  bc]
 	move.l	(sp)+,a1                        	| [$72a0: pop  de]
@@ -18507,7 +18515,7 @@ update_title_y_scroll_value_72af:
 	lea	table_72D4-2(pc),a0                    	| [$72b6: ld   hl,table_72D4-2]
 	move.b	#0x08,d1                        	| [$72b9: ld   b,$08]
 l_72bb:
-	movem.w	d1/d2,-(sp)                    	| [$72bb: push bc]
+	                    	| [$72bb: push bc]
 
 	move.l	a0,-(sp)                        	| [$72bc: push hl]
 	move.b	d2,d0                           	| [$72bd: ld   a,c]
@@ -18525,9 +18533,9 @@ l_72be:
 	move.b	d0,(a1)+                         	| [$72c9: ld   (de),a]
 	                           	| [$72ca: inc  de]
 	move.l	(sp)+,a0                        	| [$72cb: pop  hl]
-	move.w	#0x000C,d1                      	| [$72cc: ld   bc,$000C] 12
-	add.w	d1,a0                            	| [$72cf: add  hl,bc]
-	movem.w	(sp)+,d1/d2                    	| [$72d0: pop  bc]
+	                      	| [$72cc: ld   bc,$000C] 12
+	add.w	#0xC,a0                            	| [$72cf: add  hl,bc]
+	                    	| [$72d0: pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_72bb                             	| [$72d1: djnz $72BB]
 	rts                                    	| [$72d3: ret]
@@ -18614,13 +18622,12 @@ animate_elevator_letters_7334:
 	ror.b	#2,d0                            	| [$734c: rrca] * 2
 	moveq   #0,d3                               	| [$734f: ld   d,$00]
 	move.b	d0,d3                           	| [$734e: ld   e,a]
-	LOAD_WORD	rom_offset_7361_860B(a6),d5             	| [$7351: ld   hl,($860B)]
+	LOAD_WORD	rom_offset_7361_860B(a6),d5    | [$7351: ld   hl,($860B)]
 	add.w	d3,d5                            	| [$7354: add  hl,de]
 	exg	d3,d5                              	| [$7355: ex   de,hl]
 	add.w	#0x7361,d3
 l_7356:
-	
-	LOAD_POINTER	ram_pointer_860D(a6),a0             	| [$7356: ld   hl,($860D)]
+	LOAD_POINTER	ram_pointer_860D(a6),a0   | [$7356: ld   hl,($860D)]
 	LOAD_D3D4_FROM_D3_16
 	
 	move.b	d4,(a0)+                         	| [$7359: ld   (hl),e]
@@ -18647,7 +18654,7 @@ feed_scroll_with_elevator_letters_73a5:
 	and.w	#0x03FF,d5                         	| [$73bb: and  $03]
 	                           	| [$73bd: ld   h,a]
 l_73be:
-	LOAD_WORD	screen_address_8609(a6),d3             	| [$73be: ld   de,($8609)]
+	LOAD_WORD	letter_screen_address_8609(a6),d3             	| [$73be: ld   de,($8609)]
 
 	add.w	d5,d3                            	| [$73c2: add  hl,de]
 	                              	| [$73c3: ex   de,hl]
@@ -18671,7 +18678,7 @@ elevator_letter_table_7361:
 	.align	2
 	
 l_73cf:
-	jbsr	l_0fea                            	| [$73cf: call $0FEA]
+	jbsr	check_credits_0fea                            	| [$73cf: call $0FEA]
 	move.b	#0x01,d0                        	| [$73d2: ld   a,$01]
 	move.b	d0,l_80AB(a6)                   	| [$73d4: ld   ($80AB),a]
 	lea	l_85C6(a6),a0                      	| [$73d7: ld   hl,$85C6]
@@ -18716,8 +18723,9 @@ table_73F9:
 	.align	2
 	
 
-l_7400:
-	jbsr	l_0fea                            	| [$7400: call $0FEA]
+* cannot be skipped, as it does other things
+protection_check_7400:
+	jbsr	check_credits_0fea                            	| [$7400: call $0FEA]
 	move.b	#0x01,d0                        	| [$7403: ld   a,$01]
 	move.b	d0,l_80AB(a6)                   	| [$7405: ld   ($80AB),a]
 	lea	l_85C6(a6),a0                      	| [$7408: ld   hl,$85C6]
@@ -18795,18 +18803,19 @@ update_title_elevator_scroll_7437:
 									| [$745b: ldi]
 								
 	* copy letter to video (feed "elevator" letter columns)
-	lea	l_860F(a6),a0                      	| [$745d: ld   hl,$860F]
+	lea	source_dest_letter_pointers_860F(a6),a0                      	| [$745d: ld   hl,$860F]
 	move.b	#0x08,d1                        	| [$7460: ld   b,$08]
 l_7462:
 	movem.w	d1/d2,-(sp)                    	| [$7462: push bc]
-	move.l	a4,-(sp)                        	| [$7462: push bc]
 	* load pointer on elevator_letter_table_7361+offset in A4 (source)
 	move.b	(a0)+,d2            | [$7463: ld   c,(hl)]
 	                           	| [$7464: inc  hl]
 	move.b	(a0)+,d1            | [$7465: ld   b,(hl)]
 	LOAD_D1_16_FROM_D1D2
-
+	tst		d1
+	jeq		0f				| jotd: race condition between irq and non-irq code?
 	lea		elevator_letter_table_7361,a4
+	sub.w	#0x7361,d1
 	add.w	d1,a4
 	
 	* load destination (on screen)
@@ -18815,8 +18824,9 @@ l_7462:
 	                           	| [$7468: inc  hl]
 	move.b	(a0)+,d3                         	| [$7469: ld   d,(hl)]
 	LOAD_D3_16_FROM_D3D4
-	sub.w	#0xC800,d3
+	sub.w	#0xC400,d3
 	lea		videoram_layer_1_C400(a6),a1
+	add.w	d3,a1
 	exg		a1,a0
 	
 	                           	| [$746a: inc  hl]
@@ -18826,10 +18836,12 @@ l_7462:
 	addq	#1,a0             	| [$746e: inc  de]
 	move.b	(a4)+,d0            | [$746f: ld   a,(bc)]
 	jbsr	osd_w_videoram      | [$7470: ld   (de),a]
-	move.l	(sp)+,a4            | [$7471: pop  bc]
+	exg		a1,a0
+0:
 	movem.w	(sp)+,d1/d2         | [$7471: pop  bc]
 	subq.b	#1,d1                           	| [...]
 	jne	l_7462                             	| [$7472: djnz $7462]
+
 	rts                                    	| [$7474: ret]
 
 display_action_title_7475:
@@ -18866,7 +18878,6 @@ action_letter_appear_table_7498:
 	.align 	2
 	
 draw_action_a_749f:
-	jbsr	amiga_break
 	lea	table_7517,a0                      	| [$749f: ld   hl,table_7517]
 	lea	l_C9E6(a6),a1                      	| [$74a2: ld   de,$C9E6]
 	jra	l_74bd                             	| [$74a5: jr   $74BD]
@@ -18882,7 +18893,7 @@ draw_action_o_74b7:
 	lea	table_7559,a0                      	| [$74b7: ld   hl,table_7559]
 	lea	l_C9F1(a6),a1                      	| [$74ba: ld   de,$C9F1] screen address, first layer
 l_74bd:
-	move.b	#0x06,d1                        	| [$74bd: ld   a,$06]
+	move.b	#0x06,d0                        	| [$74bd: ld   a,$06]
 l_74bf:
 	jbsr	ldi_video                               	| [$74bf: ldi]
 	jbsr	ldi_video                               	| [$74c1: ldi]
@@ -18891,14 +18902,14 @@ l_74bf:
 	                      	| [$74c6: ld   bc,$001D] 29
 	add.w	#0x001D,a1                            	| [$74c9: add  hl,bc]
 	                              	| [$74ca: ex   de,hl]
-	subq.b	#1,d1                           	| [$74cb: dec  a]
+	subq.b	#1,d0                           	| [$74cb: dec  a]
 	jne	l_74bf                             	| [$74cc: jr   nz,$74BF]
 	rts                                    	| [$74ce: ret]
 
 draw_action_i_74cf:
 	lea	table_754D,a0                      	| [$74cf: ld   hl,table_754D]
 	lea	l_C9EF(a6),a1                      	| [$74d2: ld   de,$C9EF]
-	move.b	#0x06,d1                        	| [$74d5: ld   a,$06]
+	move.b	#0x06,d0                        	| [$74d5: ld   a,$06]
 l_74d7:
 	jbsr	ldi_video                               	| [$74d7: ldi]
 	jbsr	ldi_video                               	| [$74d9: ldi]
@@ -18906,14 +18917,14 @@ l_74d7:
 									| [$74dc: ld   bc,$001E] 30
 	add.w	#0x1E,a1                            	| [$74df: add  hl,bc]
 	                              	| [$74e0: ex   de,hl]
-	subq.b	#1,d1                           	| [$74e1: dec  a]
+	subq.b	#1,d0                           	| [$74e1: dec  a]
 	jne	l_74d7                             	| [$74e2: jr   nz,$74D7]
 	rts                                    	| [$74e4: ret]
 
 draw_action_n_74e5:
 	lea	table_756B,a0                      	| [$74e5: ld   hl,table_756B]
 	lea	l_C9B4(a6),a1                      	| [$74e8: ld   de,$C9B4]
-	move.b	#0x08,d1                        	| [$74eb: ld   a,$08]
+	move.b	#0x08,d0                        	| [$74eb: ld   a,$08]
 l_74ed:
 	jbsr	ldi_video                               	| [$74ed: ldi]
 	jbsr	ldi_video                               	| [$74ef: ldi]
@@ -18925,7 +18936,7 @@ l_74ed:
 	                      	| [$74fa: ld   bc,$001A] 26
 	add.w	#0x001A,a1                            	| [$74fd: add  hl,bc]
 	                              	| [$74fe: ex   de,hl]
-	subq.b	#1,d1                           	| [$74ff: dec  a]
+	subq.b	#1,d0                           	| [$74ff: dec  a]
 	jne	l_74ed                             	| [$7500: jr   nz,$74ED]
 	rts                                    	| [$7502: ret]
 
