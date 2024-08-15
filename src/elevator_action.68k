@@ -585,9 +585,10 @@ elevator_reset:
 	dbf		d1,0b
 	
 	moveq	#7,d1
-	move.w	#0xA8,d0
+	move.w	#0x50,d0
 0:
 	jbsr	osd_set_column_scroll
+	*sub.w	#0x1,d0
 	dbf	d1,0b
 1:
 	bra.b 1b

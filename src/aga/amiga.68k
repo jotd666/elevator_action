@@ -1454,7 +1454,7 @@ platform_init:
 *0:
 
  	*         VVHH
-    move.w #0x1C99,diwstrt(a5)
+    move.w #0x1C81,diwstrt(a5)
     move.w #0x3089+8,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
@@ -1739,7 +1739,7 @@ osd_set_column_scroll:
 	* title column scroll
 	* Y start is always the same, but sprite is more or
 	* less clipped depending on D0 value
-	
+
 	* first restore data where control word/end word were written
 	* unless no save data is available (first time, no clipping...)
 	move.l	(_saved_control_word_address,a2),d1
@@ -1755,8 +1755,8 @@ osd_set_column_scroll:
 	* now compute where the control word / end word will be
 	* depending on scroll value
 	move.l	(_chip_data,a2),a3
-	lsl.w	#4,d1	| times 16 for fmode=3
-	add.w	d1,a3
+	lsl.w	#4,d0	| times 16 for fmode=3
+	add.w	d0,a3
 	move.l	a3,(_saved_control_word_address,a2)
 	* now save the rows
 	lea		(_control_word_row_save,a2),a4
@@ -1774,11 +1774,15 @@ osd_set_column_scroll:
 	move.w	d2,d0		| X
 	lsl.w	#4,d0		| column times 16
 	add.w	#64,d0		| add offset
+
+
 	bsr		store_sprite_pos
 	
 	move.w	d0,(8,a3)   | fmode=3
 	swap	d0
 	move.w	d0,(a3)
+	move.l	#0x55AA55AA,(16,a3)
+	move.l	#0x55AA55AA,(24,a3)
 	lea		((NB_LINES+1)*(_end_word_row_save-_control_word_row_save),a3),a4
 	
 	* end word
