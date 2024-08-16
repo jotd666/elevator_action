@@ -1708,6 +1708,12 @@ osd_set_gfx_bank:
 	
 	* BOB palettes already set at startup
 	
+    moveq #NB_PLAYFIELD_PLANES-1,d1
+    move.l	panel_screen_ptr(pc),a0
+	move.l	a0,d0
+    lea	panel_bitplanes+2,a0
+	move.l	#FG_SCREEN_PLANE_SIZE,d2
+	bsr		20f
 	* set bitplanes
     moveq #NB_PLAYFIELD_PLANES-1,d1
     move.l	bg_screen_ptr(pc),a0
@@ -1724,6 +1730,13 @@ osd_set_gfx_bank:
 	bsr		20f
 
 	
+    moveq #NB_PLAYFIELD_PLANES-1,d1
+    move.l	panel_screen_ptr(pc),a0
+	add.w	#NB_BYTES_PER_ROW*PANEL_Y_GAP,a0
+	move.l	a0,d0
+    lea	panel_end_bitplanes+2,a0
+	move.l	#FG_SCREEN_PLANE_SIZE,d2
+	bsr		20f
 	
 100:
 	movem.l	(a7)+,d0-a6
@@ -1993,9 +2006,9 @@ update_bg_tile_game:
 	move.b	d0,d2
 	bsr		compute_tile_xy
 	move.l	bg_screen_ptr,a1
-	add.w	d0,a1
 	lea		mulNB_BYTES_PER_ROW_table,A0
-	add.w	(a0,d1.w*2),a1
+	move.w	(a0,d1.w*2),d1
+	add.w	d0,d1
 	
 	move.l		character_tables+4,a0
 
@@ -2006,6 +2019,8 @@ update_bg_tile_game:
 	addq.w	#4,a0
 0:
 	move.l	(a0),a0
+	
+	add.w	d1,a1
 	
 end_update_bg_tile:
 	move.l	(a0,d2.w*4),d0
@@ -2760,13 +2775,16 @@ title_colors:
 
 	* main copperlist
 game_copperlist:
-    *.word   0x1801,0xFFFE
 	* reset scrolling to default (panel)
 
 panel_tiles_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
+panel_bitplanes:
+	DECL_EVEN_BITPLANES	4,4
+	* wait 16 lines
+	.word	0x100*16+1,0xFFFE
 playfield_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 	* default color bank
