@@ -1999,11 +1999,11 @@ update_bg_tile_game:
 	
 	move.l		character_tables+4,a0
 
-	move.l	#FG_SCREEN_PLANE_SIZE,d5
+	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	
 	btst	#10,d7		| second layer?
 	jeq	0f
-	addq.w	#4,a0		| second layer ATM title = same bitplanes
+	addq.w	#4,a0
 0:
 	move.l	(a0),a0
 	

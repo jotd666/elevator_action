@@ -620,6 +620,8 @@ tv:
 	lea 	tv,a1
 	lea		videoram_layer_1_C400(a6),a0
 	move.w	#0xBFF,d1
+	move.w	#0x3FF,d1
+	move.w	#0x7FF,d1
 0:
 	move.b	(a1)+,d0
 	jbsr	osd_w_videoram
