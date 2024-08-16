@@ -1464,7 +1464,6 @@ platform_init:
     move.w #BASE_BPLCON2_VALUE,bplcon2(a5)
 	* AGA-compatible ECS default values
 	move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
-	*move.w	#0x22,bplcon4(a5)	| sprites palette start at color 32, keep coupling for now
     move.w #0xF,fmode(a5)
 
 	move.w	#0,bplcon1(a5)
@@ -1622,13 +1621,13 @@ decode_sprite_data:
 osd_set_gfx_bank:
 	movem.l	d0-a6,-(a7)
 	cmp.b	current_gfx_bank,d0
-	jeq		0f
+	jeq		100f
 	move.b	d0,current_gfx_bank
 	
 	lea		_custom,a5
 	
 	tst.b	d0
-	bne		1f
+	bne		10f
 	* title gfx bank, set title palette
     move.w #0x200+(NB_PLAYFIELD_PLANES<<12)+BORDERBLANK,bplcon0(a5)
 	
@@ -1640,10 +1639,7 @@ osd_set_gfx_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
-	
-
-	*bsr		set_fg_bitplanes
-	
+		
 	* set copperlist
 	move.l	#title_copperlist,cop1lc(a5)
 
@@ -1674,8 +1670,8 @@ osd_set_gfx_bank:
     add.l d2,d0		| LONG!
     dbf d1,1b
 
-	jra		0f
-1:
+	jra		100f
+10:
 	* game gfx bank
     move.w #0x0610+BORDERBLANK,bplcon0(a5) | 8 bitplanes, dual playfield, borderblank
 
@@ -1685,18 +1681,61 @@ osd_set_gfx_bank:
 	lea		update_bg_tile_game(pc),a0
 	move.l	a0,update_tile_function
 
+
+*	lea		title_palette,a0
+*	move.w	#TOTAL_NB_COLORS,d0
+*	lea		panel_tiles_colors,a1
+*	bsr		load_palette
+
+
 	lea		level_palettes,a0
-	* TODO which level
+	* TODO which level ATM 1
 	moveq	#0,d0
 	move.l	(a0,d0.w*4),a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		playfield_tiles_colors,a1
+	bsr		load_palette
 	
-	* TODO bobs palette
-	*move.w	#TOTAL_NB_COLORS,d0
-	*lea		bobs_palette(pc),a0
-	*lea		playfield_colors,a1
-	*bsr		load_palette
+	* BOB palettes already set at startup
 	
+	* set bitplanes (non-dual)
+    moveq #NB_PLAYFIELD_PLANES-1,d1
+    move.l	bg_screen_ptr(pc),a0
+	move.l	a0,d0
+    lea	playfield_bitplanes+2,a0
+	moveq	#0,d2
+	move.w	#BG_SCREEN_PLANE_SIZE,d2
+1:
+    swap d0
+    move.w d0,(a0)
+    swap d0
+    move.w d0,(4,a0)    
+    addq.w  #8,a0
+    add.l d2,d0		| LONG!
+    dbf d1,1b
+	
+    moveq #NB_PLAYFIELD_PLANES-1,d1
 0:
+    move.l	fg_drawed_screen_ptr(pc),a0
+	move.l	a0,d0
+    lea	bobs_bitplanes+2,a0
+	moveq	#0,d2
+	move.w	#FG_SCREEN_PLANE_SIZE,d2
+1:
+    swap d0
+    move.w d0,(a0)
+    swap d0
+    move.w d0,(4,a0)    
+    addq.w  #8,a0
+    add.l d2,d0		| LONG!
+    dbf d1,1b
+	
+*panel_bitplanes!!
+*panel_tiles_colors
+
+	
+	
+100:
 	movem.l	(a7)+,d0-a6
 	rts
 	
@@ -2716,6 +2755,12 @@ title_colors:
     .long    -2					
 	.ascii	"ENDCPLST"
 
+panel_tiles_colors:
+	DECL_COLORS	0,TOTAL_NB_COLORS
+	.word		0x800*3+1,0xFFFE		| wait 3 rows, then change palette
+
+
+
 	* main copperlist
 game_copperlist:
     *.word   0x1801,0xFFFE
@@ -2727,13 +2772,10 @@ playfield_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 	* default color bank
 	DECL_COLOR_BANK	0
-panel_tiles_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
-	.word		0x800*3,0xFFFE		| wait 3 rows, then change palette
 playfield_tiles_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
-bob_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
+bob_colors:
+	DECL_COLORS	0,TOTAL_NB_COLORS
 
 	* sprites color bank
 	*DECL_COLOR_BANK	1
