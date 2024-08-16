@@ -2005,18 +2005,20 @@ update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
 	move.b	d0,d2
 	bsr		compute_tile_xy
-	move.l	bg_screen_ptr,a1
+	move.l	panel_screen_ptr,a1
 	lea		mulNB_BYTES_PER_ROW_table,A0
 	move.w	(a0,d1.w*2),d1
 	add.w	d0,d1
 	
 	move.l		character_tables+4,a0
 
-	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.l	#FG_SCREEN_PLANE_SIZE,d5
 	
 	btst	#10,d7		| second layer?
 	jeq	0f
 	addq.w	#4,a0
+	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.l	bg_screen_ptr,a1
 0:
 	move.l	(a0),a0
 	
@@ -2783,8 +2785,8 @@ bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-	* wait 16 lines
-	.word	0x100*16+1,0xFFFE
+	* let the panel display!
+	.word	0x3C01,0xFFFE
 playfield_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 	* default color bank
