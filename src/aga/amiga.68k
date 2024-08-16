@@ -1675,7 +1675,9 @@ osd_set_gfx_bank:
 
 	jra		100f
 10:
-	* game gfx bank
+	*****************
+	* game gfx bank *
+	*****************
     move.w #0x0610+BORDERBLANK,bplcon0(a5) | 8 bitplanes, dual playfield, borderblank
 
 	* set copperlist
@@ -1685,10 +1687,15 @@ osd_set_gfx_bank:
 	move.l	a0,update_tile_function
 
 
-*	lea		title_palette,a0
-*	move.w	#TOTAL_NB_COLORS,d0
-*	lea		panel_tiles_colors,a1
-*	bsr		load_palette
+	* set panel palette (top & bottom)
+	move.l		level_palettes,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		panel_tiles_colors,a1
+	bsr		load_palette
+	move.l		level_palettes,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		panel_end_tiles_colors,a1
+	bsr		load_palette
 
 
 	lea		level_palettes,a0
@@ -1701,47 +1708,37 @@ osd_set_gfx_bank:
 	
 	* BOB palettes already set at startup
 	
-	* set bitplanes (non-dual)
+	* set bitplanes
     moveq #NB_PLAYFIELD_PLANES-1,d1
     move.l	bg_screen_ptr(pc),a0
 	move.l	a0,d0
     lea	playfield_bitplanes+2,a0
-	moveq	#0,d2
-	move.w	#BG_SCREEN_PLANE_SIZE,d2
-1:
-    swap d0
-    move.w d0,(a0)
-    swap d0
-    move.w d0,(4,a0)    
-    addq.w  #8,a0
-    add.l d2,d0		| LONG!
-    dbf d1,1b
+	move.l	#BG_SCREEN_PLANE_SIZE,d2
+	bsr		20f
 	
     moveq #NB_PLAYFIELD_PLANES-1,d1
-0:
     move.l	fg_drawed_screen_ptr(pc),a0
 	move.l	a0,d0
     lea	bobs_bitplanes+2,a0
-	moveq	#0,d2
-	move.w	#FG_SCREEN_PLANE_SIZE,d2
-1:
-    swap d0
-    move.w d0,(a0)
-    swap d0
-    move.w d0,(4,a0)    
-    addq.w  #8,a0
-    add.l d2,d0		| LONG!
-    dbf d1,1b
-	
-*panel_bitplanes!!
-*panel_tiles_colors
+	move.l	#FG_SCREEN_PLANE_SIZE,d2
+	bsr		20f
 
 	
 	
 100:
 	movem.l	(a7)+,d0-a6
 	rts
-	
+
+20:
+    swap d0
+    move.w d0,(a0)
+    swap d0
+    move.w d0,(4,a0)    
+    addq.w  #8,a0
+    add.l d2,d0		| LONG!
+    dbf d1,20b
+    rts
+		
 	.macro	COPY_SPRITE_ROW
 	.rept	(_end_word_row_save-_control_word_row_save)/4
 	move.l	(a3)+,(a4)+
