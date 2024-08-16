@@ -25,7 +25,7 @@ SPRITE_Y_CORRECTION = 0
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 0
 
-PANEL_Y_GAP = 224
+PANEL_Y_GAP = 208
 Y_MAX = 260
 
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
@@ -2814,16 +2814,14 @@ intreq_block:
 	* non-black: we can set color 0 to light blue now
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
-
-	* then we should wait a bit, and set palette to tiles palette definitely
-	* so scrolling letters have the proper colors TODO
+	.word	0xF801,0xFFFE
+panel_end_bitplanes:
+	DECL_EVEN_BITPLANES	4,4
+panel_end_tiles_colors:
+	DECL_COLORS	0,TOTAL_NB_COLORS
 	
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait
-panel_end_tiles_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
-panel_end_bitplanes:
-	DECL_EVEN_BITPLANES	4,4
 post_pal_copper_rows:
 	.set    beampos,0x0001
 	.rept	0x15
