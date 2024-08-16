@@ -7670,7 +7670,6 @@ l_27dc:
 * loop
 l_27e7:
 	movem.w	d3/d4,-(sp)                    	| [$27e7: push de]
-	move.l	a1,-(sp)                        	| [$27e7: push de]
 l_27e8:
 	jbsr	l_1e3e                            	| [$27e8: call $1E3E]
 	add.b	d2,d0                            	| [$27eb: add  a,c]
@@ -7692,10 +7691,8 @@ l_27e8:
 	addq.w	#1,a0                           	| [$2805: inc  hl]
 l_2806:
 	move.l	(sp)+,a1                        	| [$2806: pop  de]
-	movem.w	(sp)+,d3/d4                    	| [$2806: pop  de]
 	move.b	(a0),d0                         	| [$2807: ld   a,(hl)]
 	move.b	d0,(a1)                         	| [$2808: ld   (de),a]
-	move.l	(sp)+,a1                        	| [$2809: pop  de]
 	movem.w	(sp)+,d3/d4                    	| [$2809: pop  de]
 	subq.b	#1,d3                           	| [$280a: dec  d]
 	jne	l_27e7                             	| [$280b: jr   nz,$27E7]
@@ -8915,6 +8912,11 @@ l_2f1f:
 	move.b	(0x1a,a2),d5                    	| [$2f2e: ld   h,(ix+$1a)]
 	LOAD_D5_16_FROM_D5D6
 	.warning	"debug in MAME 2f31"
+	illegal
+	NOP
+	cmp.l	a0,a0
+	cmp.l	a0,a0
+	cmp.l	a0,a0
 	* TODO: jump depending on known values of ROM addresses in D5
 	move.l	a0,a2                        	| [$2f31: push hl]
 	                        	            | [$2f32: pop  ix]
@@ -13161,6 +13163,10 @@ l_4c11:
 	move.b	#0x10,d1                        	| [$4c18: ld   b,$10]
 l_4c1a:
 	ILLEGAL
+	cmp.l	a1,a1
+	cmp.l	a1,a1
+	cmp.l	a1,a1
+	cmp.l	a1,a1
 	.warning  "debug this!!!"
 	movem.w	d1/d2,-(sp)                    	| [$4c1a: push bc]
 	move.b	l_82F4(a6),d0                   	| [$4c1b: ld   a,($82F4)]
@@ -14922,35 +14928,61 @@ l_57ba:
 	rts                                    	| [$57c5: ret]
 
 update_upper_status_bar_57C6:
-	lea	l_8353(a6),a0                      	| [$57c6: ld   hl,$8353]
-	lea	l_C463(a6),a1                      	| [$57c9: ld   de,$C463] screen address of status bar
-	jbsr	ldi                               	| [$57cc: ldi]
-	jbsr	ldi                               	| [$57ce: ldi]
-	jbsr	ldi                               	| [$57d0: ldi]
-	jbsr	ldi                               	| [$57d2: ldi]
-	jbsr	ldi                               	| [$57d4: ldi]
-	jbsr	ldi                               	| [$57d6: ldi]
-	jbsr	ldi                               	| [$57d8: ldi]
-	jbsr	ldi                               	| [$57da: ldi]
-	jbsr	ldi                               	| [$57dc: ldi]
-	jbsr	ldi                               	| [$57de: ldi]
-	jbsr	ldi                               	| [$57e0: ldi]
-	jbsr	ldi                               	| [$57e2: ldi]
-	jbsr	ldi                               	| [$57e4: ldi]
-	jbsr	ldi                               	| [$57e6: ldi]
-	jbsr	ldi                               	| [$57e8: ldi]
- 	jbsr	ldi                               	| [$57ea: ldi]
- 	jbsr	ldi                               	| [$57ec: ldi]
-	jbsr	ldi                               	| [$57ee: ldi]
-	jbsr	ldi                               	| [$57f0: ldi]
-	jbsr	ldi                               	| [$57f2: ldi]
-	jbsr	ldi                               	| [$57f4: ldi]
-	jbsr	ldi                               	| [$57f6: ldi]
- 	jbsr	ldi                               	| [$57f8: ldi]
-	jbsr	ldi                               	| [$57fa: ldi]
-	jbsr	ldi                               	| [$57fc: ldi]
-	jbsr	ldi                               	| [$57fe: ldi]
-	rts                                    	    | [$5800: ret]
+	* completely rewritten for efficiency
+	lea	l_8353(a6),a1                      	| [$57c6: ld   hl,$8353]
+	lea	l_C463(a6),a0                      	| [$57c9: ld   de,$C463] screen address of status bar
+	moveq	#26-1,d1
+0:
+    move.b    (a1)+,d0
+	jbsr	osd_w_videoram
+	addq.w	#1,a0
+	dbf		d1,0b
+	rts
+	
+
+	jbsr	ldi_video                               	| [$57cc: ldi]
+	                               	| [$57ce: ldi]					
+	                               	| [$57d0: ldi]					
+	                               	| [$57d2: ldi]					
+	                               	| [$57d4: ldi]					
+	                               	| [$57d6: ldi]				
+	                               	| [$57d8: ldi]				
+	                               	| [$57da: ldi]				
+	                               	| [$57dc: ldi]				
+	                               	| [$57de: ldi]
+					
+	                               	| [$57e0: ldi]
+					
+	                               	| [$57e2: ldi]
+					
+	                               	| [$57e4: ldi]
+					
+	                               	| [$57e6: ldi]
+					
+	                               	| [$57e8: ldi]
+					
+ 	                               	| [$57ea: ldi]
+					
+ 	                               	| [$57ec: ldi]
+					
+	                               	| [$57ee: ldi]
+					
+	                               	| [$57f0: ldi]
+					
+	                               	| [$57f2: ldi]
+					
+	                               	| [$57f4: ldi]
+					
+	                               	| [$57f6: ldi]
+					
+ 	                               	| [$57f8: ldi]
+					
+	                               	| [$57fa: ldi]
+					
+	                               	| [$57fc: ldi]
+					
+	                               	| [$57fe: ldi]
+	                                    	    | [$5800: ret]
 
 display_nb_lives_5801:
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$5801: ld   a,(copy_of_dip_switches_3_8250)]
@@ -18059,7 +18091,6 @@ l_6aca:
 	rts                                    	| [$6aca: ret]
 
 l_6acb:
-	.warning 	"d3.w as input"
 	exg	d3,d5                              	| [$6acb: ex   de,hl]
 	moveq	#0,d1                               	| [$6acf: ld   b,$00]
 	move.b	(0x01,a3),d1                    	| [$6acc: ld   c,(iy+$01)]
@@ -18768,8 +18799,7 @@ title_animation_7430:
 
 update_title_elevator_scroll_7437:
 	lea	title_letters_y_scroll_values_862F(a6),a0	| [$7437: ld   hl,title_letters_y_scroll_values_862F]
-	.warning	"column scroll for letters"
-	*lea	l_D048,a1                          	| [$743a: ld   de,$D048]
+	                          	| [$743a: ld   de,$D048]
 	moveq 	#0,d1
 0:
 	move.b	(a0)+,d0
