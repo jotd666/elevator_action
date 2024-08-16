@@ -25,6 +25,7 @@ SPRITE_Y_CORRECTION = 0
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 0
 
+PANEL_Y_GAP = 224
 Y_MAX = 260
 
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
@@ -320,7 +321,9 @@ _user:
 	bsr		align_for_fmode
 	move.l	a0,bg_screen_ptr
 
-
+	lea		panel_screen_buffer,a0
+	bsr		align_for_fmode
+	move.l	a0,panel_screen_ptr
 	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	lea		fg_screen_buffer_2,a0
@@ -2608,6 +2611,8 @@ fg_screen_data_2:
 	
 bg_screen_ptr:
 	.long	0
+panel_screen_ptr:
+	.long	0
 
 fg_drawed_screen_ptr:
 	.long	0
@@ -2755,17 +2760,14 @@ title_colors:
     .long    -2					
 	.ascii	"ENDCPLST"
 
-panel_tiles_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
-	.word		0x800*3+1,0xFFFE		| wait 3 rows, then change palette
-
-
 
 	* main copperlist
 game_copperlist:
     *.word   0x1801,0xFFFE
 	* reset scrolling to default (panel)
 
+panel_tiles_colors:
+	DECL_COLORS	16,TOTAL_NB_COLORS
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 playfield_bitplanes:
@@ -2801,6 +2803,10 @@ intreq_block:
 	
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait
+panel_end_tiles_colors:
+	DECL_COLORS	0,TOTAL_NB_COLORS
+panel_end_bitplanes:
+	DECL_EVEN_BITPLANES	4,4
 post_pal_copper_rows:
 	.set    beampos,0x0001
 	.rept	0x15
@@ -2835,6 +2841,10 @@ sprite_buffer:
 	
 bg_screen_buffer:
 	.skip	BG_SCREEN_SIZE
+	.skip	8
+	.skip	8
+panel_screen_buffer:
+	.skip	FG_SCREEN_SIZE
 	.skip	8
 	.skip	8
 	
