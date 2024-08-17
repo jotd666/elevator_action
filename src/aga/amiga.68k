@@ -1714,13 +1714,8 @@ osd_set_gfx_bank:
     lea	panel_bitplanes+2,a0
 	move.l	#FG_SCREEN_PLANE_SIZE,d2
 	bsr		20f
-	* set bitplanes
-    moveq #NB_PLAYFIELD_PLANES-1,d1
-    move.l	bg_screen_ptr(pc),a0
-	move.l	a0,d0
-    lea	playfield_bitplanes+2,a0
-	move.l	#BG_SCREEN_PLANE_SIZE,d2
-	bsr		20f
+
+	bsr		set_playfield_bitplanes
 	
     moveq #NB_PLAYFIELD_PLANES-1,d1
     move.l	fg_drawed_screen_ptr(pc),a0
@@ -1741,6 +1736,18 @@ osd_set_gfx_bank:
 100:
 	movem.l	(a7)+,d0-a6
 	rts
+
+set_playfield_bitplanes:
+	* set bitplanes
+    moveq #NB_PLAYFIELD_PLANES-1,d1
+	moveq	#0,d0
+	move.b	main_scroll_value(pc),d0
+	lea		mulNB_BYTES_PER_ROW_table(pc),a0
+	move.w	(a0,d0.w*2),d0
+    add.l	bg_screen_ptr(pc),d0
+	
+    lea	playfield_bitplanes+2,a0
+	move.l	#BG_SCREEN_PLANE_SIZE,d2
 
 20:
     swap d0
@@ -1894,6 +1901,7 @@ osd_w_videoram:
 compute_tile_xy:
 	moveq	#0,d0
 	move.b	d7,d0
+	
 	and.b	#0x1F,d0	| x
 	move.w	d7,d1
 	and.w	#0x3FF,d1
@@ -2016,12 +2024,13 @@ update_bg_tile_game:
 	
 	btst	#10,d7		| second layer?
 	jeq	0f
-	addq.w	#4,a0
+	move.l	(4,a0),a0	
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.l	bg_screen_ptr,a1
+	add.w	d1,a1
+	jra		end_update_playfield_tile
 0:
-	move.l	(a0),a0
-	
+	move.l	(a0),a0	
 	add.w	d1,a1
 	
 end_update_bg_tile:
@@ -2065,6 +2074,58 @@ end_update_bg_tile:
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 	add.w	d5,a1
+	dbf		d4,111b
+2:
+	rts
+	
+* almost the same but we need to write at 2 locations (barrel scroll)
+end_update_playfield_tile:
+	move.l	(a0,d2.w*4),d0
+	jeq		11f		| 0: clear
+	
+	* just copy
+	move.l	d0,a2
+	move.w	#NB_PLAYFIELD_PLANES-1,d4
+	lea		(BG_SCREEN_PLANE_SIZE/2,a1),a3
+4:
+	move.l	(a2)+,d0
+	jeq		5f
+	move.l	d0,a0
+	.set	offset,0
+	.rept	8
+	move.b	(a0)+,d0
+	move.b	d0,(offset,a1)
+	move.b	d0,(offset,a3)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+41:
+	add.l	d5,a1
+	add.l	d5,a3
+	dbf		d4,4b
+0:
+	rts
+5:
+	.set	offset,0
+	.rept	8
+	clr.b	(offset,a1)
+	clr.b	(offset,a3)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+	jra		41b
+	
+	* clear tile
+
+11:
+	move.w	#NB_PLAYFIELD_PLANES-1,d4
+111:
+	.set	offset,0
+	.rept	8
+	clr.b	(offset,a1)
+	clr.b	(offset,a3)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+	add.w	d5,a1
+	add.w	d5,a3
 	dbf		d4,111b
 2:
 	rts
@@ -2196,9 +2257,16 @@ seed:
 	dc.l	0x12345678
 
 
-* d7=screen address
+* d0=scroll value
 
 osd_set_main_scroll:
+	cmp.b	main_scroll_value,d0
+	jeq		0f
+	movem.l	d0-d2/a0,-(a7)
+	move.b	d0,main_scroll_value
+	jbsr	set_playfield_bitplanes 
+	movem.l	(a7)+,a0/d0-d2
+0:
 	rts
 	
 osd_read_inputs_2:
@@ -2645,10 +2713,9 @@ update_tile_function:
 _keyexit:
 	.byte	0x45	| ESC by default unless whdload overwrites it
 
-
-
-sprite_y_split_limit:
+main_scroll_value:
 	.byte	0
+
 	
 cheat_used:
 	.byte	0
@@ -2779,12 +2846,12 @@ title_colors:
 game_copperlist:
 	* reset scrolling to default (panel)
 
-panel_tiles_colors:
-	DECL_COLORS	16,TOTAL_NB_COLORS
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
+panel_tiles_colors:
+	DECL_COLORS	16,TOTAL_NB_COLORS
 	* let the panel display!
 	.word	0x3C01,0xFFFE
 playfield_bitplanes:
