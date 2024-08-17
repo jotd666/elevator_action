@@ -1856,7 +1856,8 @@ osd_set_column_scroll:
 	* TEMP TEMP to test!
 	move.l	#0x55AA55AA,(NB_BYTES_PER_SPRITE_ROW*2,a3)
 	move.l	#0x55AA55AA,(NB_BYTES_PER_SPRITE_ROW*3,a3)
-	lea		((NB_LINES+1)*(_end_word_row_save-_control_word_row_save),a3),a4
+	
+	move.l	(_saved_end_word_address,a2),a4
 	
 	* end word
 	.rept	NB_BYTES_PER_SPRITE_ROW/2
@@ -1961,12 +1962,12 @@ update_title_letters:
 	cmp.w	#0x10,d0	| max X letter
 	jcc		0f
 	* compute sprite Y offset: x bytes per row, starting at x
-	addq	#1,d1
+	addq	#1,d1		| skip control words row
 	lsl.w	#SPRITE_POWER_OF_2+1,d1
 	* compute sprite X offset: 1 byte per pixel, 16 pixels per letter
 	btst	#0,d0
 	jeq	1f
-	addq	#1,d1	| 2 modulo
+	addq	#1,d1	| right part of the letter
 1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0

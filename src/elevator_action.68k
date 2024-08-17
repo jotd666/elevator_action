@@ -19146,6 +19146,12 @@ l_759e:
 	move.b	d0,l_8641(a6)                   	| [$75a2: ld   ($8641),a]
 
 mainloop_75A5:
+	jbsr	osd_break
+	cmp		a5,A5
+	cmp		a5,A5
+	cmp		a5,A5
+	cmp		a5,A5
+
 	jbsr	perform_all_in_game_tasks_76A2    	| [$75a5: call perform_all_in_game_tasks_76A2]
 	jbsr	l_73cf                            	| [$75a8: call $73CF]
 	move.b	game_in_play_flag_823B(a6),d0   	| [$75ab: ld   a,(game_in_play_flag_823B)]
