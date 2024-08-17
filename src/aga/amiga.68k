@@ -1924,6 +1924,9 @@ compute_tile_xy:
 
 * < D7: 0-0xC00 address
 * < D0: tile code
+* ex:
+* C402: PLAYER (top left)
+* C7BE: number of credits (bottom right)
 update_bg_tile_title:
 	moveq	#0,d2	| mask up to 255
 	move.b	d0,d2
@@ -1957,9 +1960,9 @@ update_title_letters:
 	jcs		0f
 	cmp.w	#0x10,d0	| max X letter
 	jcc		0f
-	* compute sprite Y offset: 16 bytes per row, starting at 16
+	* compute sprite Y offset: x bytes per row, starting at x
 	addq	#1,d1
-	lsl.w	#4,d1
+	lsl.w	#SPRITE_POWER_OF_2+1,d1
 	* compute sprite X offset: 1 byte per pixel, 16 pixels per letter
 	btst	#0,d0
 	jeq	1f

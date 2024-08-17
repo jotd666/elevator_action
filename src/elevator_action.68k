@@ -586,8 +586,8 @@ execute_dynamic_ram_code_8246:
 	illegal
 	rts
 	
-TITLE_MOCKUP=  1
-GAME_MOCKUP = 1
+*TITLE_MOCKUP=  1
+*GAME_MOCKUP = 1
 
 elevator_reset:
 	.ifdef	TITLE_MOCKUP
@@ -1028,12 +1028,12 @@ l_0215:
 	subq.b	#1,(a0)                         	| [$023b: dec  (hl)]
 	jpl	l_0244                             	| [$023c: jp   p,$0244]
 	move.b	#0x05,(a0)                      	| [$023f: ld   (hl),$05]
-	addq.w	#1,a0                           	| [$0241: inc  hl]
-	subq.b	#1,(a0)                         	| [$0242: dec  (hl)]
-	subq.w	#1,a0                           	| [$0243: dec  hl]
+	                           	| [$0241: inc  hl]
+	subq.b	#1,(1,a0)                         	| [$0242: dec  (hl)]
+	                           	| [$0243: dec  hl]
 l_0244:
-	move.b	(a0),d2                         	| [$0244: ld   c,(hl)]
-	addq.w	#1,a0                           	| [$0245: inc  hl]
+	move.b	(a0)+,d2                         	| [$0244: ld   c,(hl)]
+	                           	| [$0245: inc  hl]
 	move.b	(a0),d1                         	| [$0246: ld   b,(hl)]
 l_0247:
 	move.b	#0x66,d0                        	| [$0247: ld   a,$66]
@@ -1073,7 +1073,6 @@ l_0267:
 	add.b	#0xC8,d0                         	| [$0270: add  a,$C8]
 	move.b	d0,d5                           	| [$0272: ld   h,a]
 	rol.w	#8,d5
-	illegal		| TODO debug this in MAME
 	STORE_WORD	d5,scroll_tile_pointer_8006(a6)	| [$0273: ld   (scroll_tile_pointer_8006),hl]
 	jbsr	l_029c                            	| [$0276: call $029C]
 	jbsr	l_0387                            	| [$0279: call $0387]
@@ -1357,72 +1356,74 @@ update_main_scrolling_03C3:
 	bne.b	0f                               	| [...]
 	rts                                    	| [$03d9: ret  z] [...]
 0:
-	exg	d3,d5                              	| [$03da: ex   de,hl]
+	sub.w	#0x8000,d5
+	add.l	a6,d5					| add ram base
+	exg	a1,d5                              	| [$03da: ex   de,hl]
 * set top row with new tiles
 	lea	scroll_row_8008(a6),a0             	| [$03db: ld   hl,scroll_row_8008]
-	jbsr	ldi                               	| [$03de: ldi]
-         
-	jbsr	ldi                               	| [$03e0: ldi]
-         
-	jbsr	ldi                               	| [$03e2: ldi]
-         
-	jbsr	ldi                               	| [$03e4: ldi]
-         
-	jbsr	ldi                               	| [$03e6: ldi]
-         
-	jbsr	ldi                               	| [$03e8: ldi]
-         
-	jbsr	ldi                               	| [$03ea: ldi]
-         
-	jbsr	ldi                               	| [$03ec: ldi]
-         
-	jbsr	ldi                               	| [$03ee: ldi]
-         
-	jbsr	ldi                               	| [$03f0: ldi]
-         
-	jbsr	ldi                               	| [$03f2: ldi]
-         
-	jbsr	ldi                               	| [$03f4: ldi]
-         
-	jbsr	ldi                               	| [$03f6: ldi]
-         
-	jbsr	ldi                               	| [$03f8: ldi]
-         
-	jbsr	ldi                               	| [$03fa: ldi]
-         
-	jbsr	ldi                               	| [$03fc: ldi]
-         
-	jbsr	ldi                               	| [$03fe: ldi]
-         
-	jbsr	ldi                               	| [$0400: ldi]
-         
-	jbsr	ldi                               	| [$0402: ldi]
-         
-	jbsr	ldi                               	| [$0404: ldi]
-         
-	jbsr	ldi                               	| [$0406: ldi]
-         
-	jbsr	ldi                               	| [$0408: ldi]
-         
-	jbsr	ldi                               	| [$040a: ldi]
-         
-	jbsr	ldi                               	| [$040c: ldi]
-         
-	jbsr	ldi                               	| [$040e: ldi]
-         
-	jbsr	ldi                               	| [$0410: ldi]
-         
-	jbsr	ldi                               	| [$0412: ldi]
-         
-	jbsr	ldi                               	| [$0414: ldi]
-         
-	jbsr	ldi                               	| [$0416: ldi]
-         
-	jbsr	ldi                               	| [$0418: ldi]
-         
-	jbsr	ldi                               	| [$041a: ldi]
-         
-	jbsr	ldi                               	| [$041c: ldi]
+	.warning	"optimize this crap"
+	.rept	32
+	jbsr	ldi_video                               	| [$03de: ldi]
+    .endr
+	                	| [$03e0: ldi]
+    
+	                	| [$03e2: ldi]
+    
+	                	| [$03e4: ldi]
+    
+	                	| [$03e6: ldi]
+    
+	                	| [$03e8: ldi]
+    
+	                	| [$03ea: ldi]
+    
+	                	| [$03ec: ldi]
+    
+	                	| [$03ee: ldi]
+    
+	                	| [$03f0: ldi]
+    
+	                	| [$03f2: ldi]
+    
+	                	| [$03f4: ldi]
+    
+	                	| [$03f6: ldi]
+    
+	                	| [$03f8: ldi]
+    
+	                	| [$03fa: ldi]
+    
+	                	| [$03fc: ldi]
+    
+	                	| [$03fe: ldi]
+    
+	                	| [$0400: ldi]
+    
+	                	| [$0402: ldi]
+    
+	                	| [$0404: ldi]
+    
+	                	| [$0406: ldi]
+    
+	                	| [$0408: ldi]
+    
+	                	| [$040a: ldi]
+    
+	                	| [$040c: ldi]
+    
+	                	| [$040e: ldi]
+    
+	                	| [$0410: ldi]
+    
+	                	| [$0412: ldi]
+    
+	                	| [$0414: ldi]
+    
+	                	| [$0416: ldi]
+    
+	                	| [$0418: ldi]
+	                	| [$041a: ldi]
+	                	| [$041c: ldi]
          
 	rts                                    	| [$041e: ret]
 
@@ -7899,12 +7900,14 @@ l_28e9:
 	move.w	d5,d1                           	| [$28ed: ld   b,h]
 	LOAD_D1D2_FROM_D1_16                           	| [$28ee: ld   c,l]
 	jbsr	l_0247                            	| [$28ef: call $0247]
-	LOAD_POINTER	scroll_tile_pointer_8006(a6),a0	| [$28f2: ld   hl,(scroll_tile_pointer_8006)]
- 
-	exg	a1,a0                              	| [$28f5: ex   de,hl]
+	LOAD_WORD	scroll_tile_pointer_8006(a6),d5	| [$28f2: ld   hl,(scroll_tile_pointer_8006)]
+	sub.w	#0x8000,d5
+	add.l	a6,d5								| add ram base
+
+	exg	a1,d5                              	| [$28f5: ex   de,hl]
 	lea	scroll_row_8008(a6),a0             	| [$28f6: ld   hl,scroll_row_8008]
 	move.w	#0x0020,d1                      	| [$28f9: ld   bc,$0020] 32
-	jbsr	ldir                              	| [$28fc: ldir]
+	jbsr	ldir_video                          	| [$28fc: ldir]
 	move.w	(sp)+,d1                    	| [$28fe: pop  bc]
 	LOAD_WORD	scroll_related_value_8002(a6),d5             	| [$28ff: ld   hl,($8002)]
 	addq.w	#0x1,d5                           	| [$2902: inc  l]
