@@ -609,7 +609,9 @@ elevator_reset:
 	*sub.w	#0x1,d0
 	dbf	d1,0b
 1:
-	bra.b 1b
+	btst	#6,0xBFE001
+	bne		1b
+	illegal
 tv:
 	.include	"title_video.s"
 	.endif

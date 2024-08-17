@@ -72,15 +72,17 @@ OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 NB_PLAYFIELD_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
-NB_BYTES_PER_SPRITE_ROW = 8
+
+SPRITE_POWER_OF_2 = 3
+NB_BYTES_PER_SPRITE_ROW = 1<<SPRITE_POWER_OF_2
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
 SPRITE_HEIGHT = NB_LINES*2
 * sprite band: 64 bit * 2 planes * 2*screen size
-SPRITE_SIZE = 8*2*SPRITE_HEIGHT
+SPRITE_SIZE = NB_BYTES_PER_SPRITE_ROW*2*SPRITE_HEIGHT
 
-SPRITE_STRUCT_SIZE = 64
+SPRITE_STRUCT_SIZE = 1<<(SPRITE_POWER_OF_2+3)
 
 BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
@@ -102,8 +104,8 @@ _STRUCT  | sprite_table
   _DS  _previous_y_position              2
   _DS  _saved_control_word_address       4
   _DS  _saved_end_word_address           4
-  _DS  _control_word_row_save            16      
-  _DS  _end_word_row_save                16      
+  _DS  _control_word_row_save            1<<(SPRITE_POWER_OF_2+1)      
+  _DS  _end_word_row_save                1<<(SPRITE_POWER_OF_2+1)      
 
 
 .macro	WAIT_BLIT
@@ -1779,7 +1781,7 @@ osd_set_column_scroll:
 	add.w	#0x100,d0
 	
 	move.w	d1,d2
-	lsl.w	#6,d1		| times 64: SPRITE_STRUCT_SIZE
+	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 64: SPRITE_STRUCT_SIZE
 	lea		sprite_table,a0
 	lea		(a0,d1.w),a2		| select proper sprite struct
 	cmp.w	(_previous_y_position,a2),d0
@@ -1814,7 +1816,7 @@ osd_set_column_scroll:
 	* now compute where the control word / end word will be
 	* depending on scroll value
 	move.l	(_chip_data,a2),a3
-	lsl.w	#4,d0	| times 16 for fmode=3
+	lsl.w	#SPRITE_POWER_OF_2+1,d0	| times 16 for fmode=3
 	add.w	d0,a3
 	move.l	a3,(_saved_control_word_address,a2)
 	* now save the rows
@@ -1831,27 +1833,27 @@ osd_set_column_scroll:
 	* now compute the control word
 	moveq	#0,d1		| Y
 	move.w	d2,d0		| X
-	lsl.w	#4,d0		| column times 16
-	add.w	#64,d0		| add offset
+	lsl.w	#4,d0		| column times 16 (2 chars per column)
+	add.w	#64,d0		| add X offset (probably wrong)
 
 
 	bsr		store_sprite_pos
 	
-	move.w	d0,(8,a3)   | fmode=3
+	move.w	d0,(NB_BYTES_PER_SPRITE_ROW,a3)   | fmode=3
 	swap	d0
 	move.w	d0,(a3)
-	move.l	#0x55AA55AA,(16,a3)
-	move.l	#0x55AA55AA,(24,a3)
+	* TEMP TEMP to test!
+	move.l	#0x55AA55AA,(NB_BYTES_PER_SPRITE_ROW*2,a3)
+	move.l	#0x55AA55AA,(NB_BYTES_PER_SPRITE_ROW*3,a3)
 	lea		((NB_LINES+1)*(_end_word_row_save-_control_word_row_save),a3),a4
 	
 	* end word
+	.rept	NB_BYTES_PER_SPRITE_ROW/2
 	clr.l	(a4)+
-	clr.l	(a4)+
-	clr.l	(a4)+
-	clr.l	(a4)
+	.endr
 	
 	move.l	a3,d1
-	lsl.w	#3,d2		| nb col * 8
+	lsl.w	#3,d2		| nb col * 8 (copperlist entry)
 	lea		title_sprites+2,a1
 	move.w	d1,(4,a1,d2.w)
 	swap	d1
@@ -1954,11 +1956,11 @@ update_title_letters:
 1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
-	lsl.w	#6,d0	| times SPRITE_STRUCT_SIZE
+	lsl.w	#SPRITE_POWER_OF_2+3,d0	| times SPRITE_STRUCT_SIZE
 	lea		sprite_table,a2
 	add.w	d0,a2		| select proper sprite structure
 	move.l	(_chip_data,a2),a2		| sprite data
-	add.w	#16,a2		| skip control word
+	add.w	#NB_BYTES_PER_SPRITE_ROW*2,a2		| skip control word
 	add.w	d1,a2		| add X/Y offset
 	
 	tst.b	d2
@@ -2007,7 +2009,7 @@ update_title_letters:
 	rts
 	
 blank_row:
-	.skip	8
+	.skip	NB_BYTES_PER_SPRITE_ROW
 	
 update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
