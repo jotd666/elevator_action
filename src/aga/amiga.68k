@@ -73,7 +73,18 @@ NB_PLAYFIELD_PLANES = 4
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
 
+* fmode=0b11xx => 3, 0b01xx => 2
+SPRITE_FMODE = 1
+	.ifeq	SPRITE_FMODE-3
 SPRITE_POWER_OF_2 = 3
+	.else
+	.ifeq	SPRITE_FMODE-1
+SPRITE_POWER_OF_2 = 2
+	.else
+	.error	"invalid SPRITE_FMODE value"
+	.endif
+	.endif
+	
 NB_BYTES_PER_SPRITE_ROW = 1<<SPRITE_POWER_OF_2
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
@@ -1469,7 +1480,7 @@ platform_init:
     move.w #BASE_BPLCON2_VALUE,bplcon2(a5)
 	* AGA-compatible ECS default values
 	move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
-    move.w #0xF,fmode(a5)
+    move.w #(SPRITE_FMODE<<2)+0x3,fmode(a5)
 
 	move.w	#0,bplcon1(a5)
 	moveq	#-8,d0
@@ -1989,10 +2000,10 @@ update_title_letters:
 	.rept	8
 	move.b	(a0)+,d0
 	move.b	d0,(offset,a2)
-	move.b	d0,(offset+(NB_LINES*16),a2)
+	move.b	d0,(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a2)
 	move.b	(a1)+,d0
 	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a2)
-	move.b	d0,((NB_LINES*16)+NB_BYTES_PER_SPRITE_ROW+offset,a2)
+	move.b	d0,((NB_LINES*NB_BYTES_PER_SPRITE_ROW*2)+NB_BYTES_PER_SPRITE_ROW+offset,a2)
 	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2
 	.endr	
 0:
