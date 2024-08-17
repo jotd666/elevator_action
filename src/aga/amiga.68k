@@ -1977,7 +1977,7 @@ update_title_letters:
 	tst.b	d2
 	jeq		1f		| code 0: clear sprite area
 	* copy character data into sprite
-	move.l	(8,a0),a0
+	move.l	(8,a0),a0		| third set: letters
 	move.l	(a0,d2.w*4),d0
 	jeq		1f		| 0: not registered: clear
 	* sprites are only 4 colors, palette is so only 2 first planes
@@ -2012,6 +2012,7 @@ update_title_letters:
 	.set	offset,0
 	.rept	16
 	clr.b	(offset,a2)
+	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a2)
 	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW
 	.endr
 	rts
@@ -2020,7 +2021,7 @@ update_title_letters:
 	rts
 	
 blank_row:
-	.skip	NB_BYTES_PER_SPRITE_ROW
+	.skip	8
 	
 update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
