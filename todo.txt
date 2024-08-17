@@ -56,10 +56,9 @@ scroll:
 - end sprite wrong computation
 - first "E" letter missing
 - reduce sprite width to 32 to save DMA 
-- l_7462 debug letters not in columns
 
-draw_action_a_749f: not called... debug/code ELEVATOR letters? times? debug display_action_title_7475
-71ae <= state:title
+- X shift by 6 on title & game
+
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
 merge with Galaga more optimized blit routines (blit/clear)

@@ -586,7 +586,7 @@ execute_dynamic_ram_code_8246:
 	illegal
 	rts
 	
-*TITLE_MOCKUP=  1
+TITLE_MOCKUP=  1
 GAME_MOCKUP = 1
 
 elevator_reset:
@@ -620,7 +620,7 @@ tv:
 	
 	move.b	#0x80,D0
 	jbsr	osd_set_main_scroll 
-	lea 	tv,a1
+	lea 	tvg,a1
 	lea		videoram_layer_1_C400(a6),a0
 	move.w	#0xBFF,d1
 	move.w	#0x3FF,d1
@@ -641,7 +641,7 @@ tv:
 	btst	#6,0xBFE001
 	bne		1b
 	illegal
-tv:
+tvg:
 	.include	"game_video.s"
 	.endif
 	
