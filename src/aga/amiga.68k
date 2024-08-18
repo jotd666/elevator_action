@@ -29,7 +29,7 @@ PANEL_Y_GAP = 208
 Y_MAX = 260
 
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
-BASE_BPLCON2_VALUE = 0x0064
+BASE_BPLCON2_VALUE = 0x0044
 SCREEN_ADDRESS = 0xC400
 
 
@@ -1788,8 +1788,6 @@ osd_set_column_scroll:
 	lea	HW_SpriteYTable_NB_LINES,a1
 	and.w	#0x7,d1
 	and.w	#0xFF,d0
-	neg.w	d0
-	add.w	#0x100,d0
 	
 	move.w	d1,d2
 	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 64: SPRITE_STRUCT_SIZE
@@ -1845,7 +1843,7 @@ osd_set_column_scroll:
 	moveq	#0,d1		| Y
 	move.w	d2,d0		| X
 	lsl.w	#4,d0		| column times 16 (2 chars per column)
-	add.w	#64,d0		| add X offset (probably wrong)
+	add.w	#48,d0		| add X offset (probably wrong)
 
 
 	bsr		store_sprite_pos
@@ -2850,7 +2848,7 @@ title_bitplanes:
 	* all sprites have the same palette no need to specify odd or even
 	* on color bank 1
 	DECL_COLOR_BANK	1
-title_sprite_colors:
+	* black color sprites
 	DECL_COLORS	0,32
 title_sprites:
 	DECL_SPRITES
@@ -2859,13 +2857,23 @@ title_sprites:
 title_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
+	.word	0x3C01,0xFFFE
+	DECL_COLOR_BANK	1
+title_sprite_colors:
+	DECL_COLORS	0,32
+	DECL_COLOR_BANK	0
+	
     .word  0x100*120+1,0xFFFE	| mid screen wait
 	*.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 	* pal limit
     .word  0xFFDF,0xFFFE       | PAL wait
+	DECL_COLOR_BANK	1
+	* black color sprites
+	DECL_COLORS	0,32
 
 	.word	0x1001,0xFFFE
+	
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
 
  	.word	beampos,0xFFFE
