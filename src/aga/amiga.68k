@@ -1853,9 +1853,13 @@ osd_set_column_scroll:
 	move.w	d0,(NB_BYTES_PER_SPRITE_ROW,a3)   | fmode=3
 	swap	d0
 	move.w	d0,(a3)
-	* TEMP TEMP to test!
-	move.l	#0x55AA55AA,(NB_BYTES_PER_SPRITE_ROW*2,a3)
-	move.l	#0x55AA55AA,(NB_BYTES_PER_SPRITE_ROW*3,a3)
+	
+	* mark sprite columns (debug), d2 is the column
+	*lea		 pattern_debug_table(pc),A1
+	*move.l	(a1,d2.w*4),(NB_BYTES_PER_SPRITE_ROW*2,a3)
+	*move.l	(a1,d2.w*4),(NB_BYTES_PER_SPRITE_ROW*3,a3)
+	*move.l	(a1,d2.w*4),(NB_BYTES_PER_SPRITE_ROW*4,a3)
+
 	
 	move.l	(_saved_end_word_address,a2),a4
 	
@@ -1909,7 +1913,16 @@ osd_w_videoram:
     .endif | OPT_DISABLE_BG_LAYER
 	rts
 
-
+pattern_debug_table:
+	.long	3   | I
+	.long	51	| II
+	.long	819 | III
+	.long	13107 | IIII
+	.long	209715 | IIIII
+	.long	3355443 | IIIIII
+	.long	53687091 | 
+	.long	858993459 | 
+	
 * < D7: 0-0x400
 * > D0: 
 compute_tile_xy:
@@ -1957,9 +1970,9 @@ update_bg_tile_title:
 	
 update_title_letters:
 	* updating sprite data
-	sub.w	#0xC,d0		| min X letter
+	sub.w	#0x8,d0		| min X letter
 	jcs		0f
-	cmp.w	#0x10,d0	| max X letter
+	cmp.w	#0x18,d0	| max X letter
 	jcc		0f
 	* compute sprite Y offset: x bytes per row, starting at x
 	addq	#1,d1		| skip control words row
