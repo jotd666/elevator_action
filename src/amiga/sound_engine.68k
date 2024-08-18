@@ -5,7 +5,7 @@
 		.global osd_write_high_scores
 		.global	load_highscores
 		.global	save_highscores
-		.global	lives_table
+
 * sound engine and also highscore management, common to all versions
 	
 .include "dos_lvos.i"
@@ -181,7 +181,8 @@ osd_sound_start:
 	bsr		osd_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
-    lea	mpatrol_tunes,a0
+    *lea	mpatrol_tunes,a0
+	illegal
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
     sub.l   a1,a1		| samples are in the module
@@ -240,8 +241,6 @@ highscore_needs_saving:
 highscore_loaded:
 	.byte	0
 normal_hiscorename:
-	.asciz	"mpatrol.high"
+	.asciz	"elevator.high"
 
-lives_table:
-	.byte	0,0xFC,0xFD,0xFE,0xFF,0xFF
-	.align	2
+

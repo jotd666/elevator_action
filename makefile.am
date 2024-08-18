@@ -67,17 +67,17 @@ $(AMIGA_OCS_SRC)/graphics.68k: $(ASSETS)/convert_graphics_ecs.py $(ASSETS)/share
 $(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py
 	cmd /c $(ASSETS)\convert_graphics_aga.py
 
-$(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/moon_patrol_conv.mod
+$(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
-#$(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/moon_patrol_conv.mod
-#	cmd /c $(ASSETS)\convert_sounds.py
+$(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py
+	cmd /c $(ASSETS)\convert_sounds.py
 	
 $(MAIN_OCS): $(OBJS_OCS)
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN_OCS) $(OBJS_OCS)
 $(MAIN_AGA): $(OBJS_AGA)
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(MAIN_AGA) $(OBJS_AGA)
 
-$(PROGNAME).o: $(PROGNAME).68k $(PROGNAME).inc data_offsets.inc $(PROGNAME)_ram.68k
+$(PROGNAME).o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc data_offsets.inc $(PROGNAME)_ram.68k
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME).o
 sound_engine.o: $(AMIGA_SHARED_SRC)/sound_engine.68k
 	$(ASM) -Iamiga $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o

@@ -1,6 +1,6 @@
 
 - AGA: 16+16 dual playfield
-- ECS: 16 colors, possible blit of elevator edges & stairs
+- ECS: 16 colors
 
 reverse stuff:
 
@@ -46,20 +46,15 @@ l_74cf
 l_74e5
 l_7503
 
-scroll
-EF  0 top
-CF  +32
-A8  title stop
+
 
 scroll:
-- missing/shifted Y line
-- end sprite wrong computation
-- first "E" letter missing
-- reduce sprite width to 32 to save DMA 
 
-- X shift by 6 on title & game
 
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
 merge with Galaga more optimized blit routines (blit/clear)
 
+remove speed regulation code
+insert coin credit missing coinage info
+locks up at startup

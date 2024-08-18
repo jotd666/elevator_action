@@ -355,6 +355,7 @@ _user:
 
 
 
+* ALL DIP SWITCHES ARE WRONG ATM
 
 *	move.l	dip_switch_start_course(pc),d0
 *	move.b	d0,start_level_flag
@@ -365,15 +366,14 @@ _user:
 	moveq	#3,d1	| 3 lives is default
 1:
 	* DSW 0 = 2 lives
-	lea		lives_table,a0
-	move.b	(a0,d1.w),d0
-	not.b	d0
-	move.b	d0,dip_switches_1
+*	move.b	(a0,d1.w),d0
+*	not.b	d0
+*	move.b	d0,dip_switches_1
 	
 	
 	move.l	misc_options,d1
 	btst	#0,d1
-	*sne		hard_bags_flag
+	
 	btst	#1,d1
 	beq.b	0f
 	bset	#5,d0
@@ -387,7 +387,7 @@ _user:
 	sne		break_at_startup_flag
 	.endif
 	
-	move.b	d0,dip_switches_2
+	**move.b	d0,dip_switches_2
 
 
 	
@@ -1990,7 +1990,7 @@ update_title_letters:
 	add.w	d1,a2		| add X/Y offset
 	
 	tst.b	d2
-	jeq		1f		| code 0: clear sprite area
+	jeq		5f		| code 0: clear sprite area
 	* copy character data into sprite
 	move.l	(8,a0),a0		| third set: letters
 	move.l	(a0,d2.w*4),d0
@@ -2109,13 +2109,13 @@ end_update_bg_tile:
 	
 * almost the same but we need to write at 2 locations (barrel scroll)
 end_update_playfield_tile:
+	lea		(BG_SCREEN_PLANE_SIZE/2,a1),a3
 	move.l	(a0,d2.w*4),d0
 	jeq		11f		| 0: clear
 	
 	* just copy
 	move.l	d0,a2
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
-	lea		(BG_SCREEN_PLANE_SIZE/2,a1),a3
 4:
 	move.l	(a2)+,d0
 	jeq		5f
@@ -2313,11 +2313,11 @@ osd_read_inputs_2:
 0:
 	tst.b	(1,a0)		| "1" key like in MAME
 	beq.b	0f
-	bclr	#2,d0
+	bclr	#BIT_START_1P,d0
 0:
 	tst.b	(2,a0)		| "2" key like in MAME
 	beq.b	0f
-	bclr	#10,d0
+	bclr	#BIT_START_2P,d0
 0:	
 
 
@@ -2407,8 +2407,8 @@ osd_read_inputs_1:
 	
 BIT_INSERT_COIN_1 = 5
 BIT_INSERT_COIN_2 = 4
-BIT_START_1P = 0  | wrong
-BIT_START_2P = 1  | wrong
+BIT_START_1P = 6
+BIT_START_2P = 7
 
 osd_read_inputs_1__:
 
@@ -2470,7 +2470,7 @@ osd_read_dsw1:
 osd_read_dsw2:
 	* actual dipswitches
 	move.b	dip_switches_2(pc),d0
-	not.b	d0		| active low
+	moveq	#0,d0		| ATM cleared, related to coinage
 	rts
 osd_read_dsw3:
 	* actual dipswitches
