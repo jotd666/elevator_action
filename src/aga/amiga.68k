@@ -1405,15 +1405,27 @@ platform_init:
 	lea		title_sprites,a0
 	lea		sprite_table,a1
 	bsr		init_sprite_bank
-	lea		game_sprites,a0
-	lea		sprite_table,a1
-	bsr		init_sprite_bank
+
 
 	* set title sprite colors, 8 times the same 4 colors
 	lea		title_sprite_colors+2,a1
 	moveq	#7,d0
 0:
 	lea		title_palette,a0
+	moveq	#3,d1
+1:
+	move.w	(a0)+,d2
+	move.w	d2,(a1)
+	addq	#4,a1
+	dbf		d1,1b
+	
+	dbf		d0,0b
+	
+	* TEMP set title sprite colors, 8 times the same 4 colors
+	lea		game_sprite_colors+2,a1
+	moveq	#7,d0
+0:
+	move.l		level_palettes,a0
 	moveq	#3,d1
 1:
 	move.w	(a0)+,d2
@@ -1853,7 +1865,6 @@ update_bg_tile_title:
 	
 	move.l		character_tables,a0
 
-	
 	btst	#11,d7		| third layer? sprites
 	jne	update_title_letters
 
@@ -1889,6 +1900,29 @@ update_title_letters:
 1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
+	jra		update_sprite_bitmap
+update_game_elevators:
+	* updating sprite data
+	sub.w	#0x2,d0		| min X elevator (first elevator first col)
+	jcs		0f
+	cmp.w	#0x1D-2,d0	| max X elevator (7th elevator last col.)
+	jcc		0f
+	* 0 <= D0 < 27
+	* compute sprite Y offset: x bytes per row, starting at x
+	addq	#1,d1		| skip control words row
+	lsl.w	#SPRITE_POWER_OF_2+1,d1
+	* compute sprite X offset: 1 byte per pixel, 32 pixels per elevator
+	move.w	d0,d3
+	and.b	#3,d3
+	add.w	d3,d1	| proper part of the elevator
+	* d0: 4*sprite number
+	lsr.w	#2,d0	| divide by 4 to get elevator number
+	* TODO: for elevators, we need to store positions of elevator
+	* pink area start so we can change colors dynamically
+	* there can be 2 elevators per column
+* < D0: sprite number
+* < D1: X/Y offset to apply to data
+update_sprite_bitmap:
 	lsl.w	#SPRITE_POWER_OF_2+3,d0	| times SPRITE_STRUCT_SIZE
 	lea		sprite_table,a2
 	add.w	d0,a2		| select proper sprite structure
@@ -1899,7 +1933,7 @@ update_title_letters:
 	tst.b	d2
 	jeq		5f		| code 0: clear sprite area
 	* copy character data into sprite
-	move.l	(8,a0),a0		| third set: letters
+	move.l	(8,a0),a0		| third set: elevators/letters
 	move.l	(a0,d2.w*4),d0
 	jeq		1f		| 0: not registered: clear
 	* sprites are only 4 colors, palette is so only 2 first planes
@@ -1949,13 +1983,16 @@ update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
 	move.b	d0,d2
 	bsr		compute_tile_xy
-	move.l	panel_screen_ptr,a1
-	lea		mulNB_BYTES_PER_ROW_table,A0
-	move.w	(a0,d1.w*2),d1
-	add.w	d0,d1
 	
 	move.l		character_tables+4,a0
 
+	btst	#11,d7		| third layer? sprites
+	jne	update_game_elevators
+	
+	move.l	panel_screen_ptr,a1
+	lea		mulNB_BYTES_PER_ROW_table,A2
+	move.w	(a2,d1.w*2),d1
+	add.w	d0,d1
 	move.l	#FG_SCREEN_PLANE_SIZE,d5
 	
 	btst	#10,d7		| second layer?
@@ -2802,6 +2839,9 @@ panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 panel_tiles_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
+	DECL_COLOR_BANK	1
+game_sprite_colors:
+	DECL_COLORS	0,32
 	* let the panel display!
 	.word	0x3C01,0xFFFE
 playfield_bitplanes:
@@ -2814,11 +2854,6 @@ playfield_tiles_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
 bob_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
-
-	
-
-
-	
 	* now set color bank 1
 	DECL_COLOR_BANK	1
 
@@ -2865,7 +2900,7 @@ post_pal_copper_rows:
 		.section .bsschip
 		
 sprite_buffer:
-	.skip	(SPRITE_SIZE+4)*8		| 32 more bytes for control word and end zeroes
+	.skip	(SPRITE_SIZE+(1<<SPRITE_POWER_OF_2))*8		| 32 more bytes for control word and end zeroes
 	.skip	8
 	.skip	8
 	

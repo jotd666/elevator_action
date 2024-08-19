@@ -569,7 +569,7 @@ execute_dynamic_ram_code_8246:
 	rts
 	
 *TITLE_MOCKUP=  1
-*GAME_MOCKUP = 1
+GAME_MOCKUP = 1
 
 elevator_reset:
 	.ifdef	TITLE_MOCKUP
@@ -616,7 +616,7 @@ tv:
 	dbf		d1,0b
 	
 	moveq	#7,d1
-	move.w	#0x50,d0
+	move.w	#0x20,d0
 0:
 	jbsr	osd_set_column_scroll
 	dbf	d1,0b
