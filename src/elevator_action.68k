@@ -13402,7 +13402,7 @@ l_4d83:
 	clr.b	d0                               	| [$4d95: xor  a]
 	move.b	d0,l_833C(a6)                   	| [$4d96: ld   ($833C),a]
 l_4d99:
-	jbsr	l_4eac                            	| [$4d99: call $4EAC]
+	jbsr	update_grappling_hook_tiles_4eac                            	| [$4d99: call $4EAC]
 	jbsr	game_tick_73cf                            	| [$4d9c: call $73CF]
 	lea	l_833C(a6),a0                      	| [$4d9f: ld   hl,$833C]
 	addq.b	#1,(a0)                         	| [$4da2: inc  (hl)]
@@ -13534,7 +13534,7 @@ l_4e74:
 	jbsr	reload_8bit_timer_26C2           	| [$4ea8: call reload_8bit_timer_26C2]
 	rts                                    	| [$4eab: ret]
 
-l_4eac:
+update_grappling_hook_tiles_4eac:
 	move.b	l_833C(a6),d0                   	| [$4eac: ld   a,($833C)]
 	move.b	d0,d1                           	| [$4eaf: ld   b,a]
 	and.b	#0xFE,d0                         	| [$4eb0: and  $FE]
@@ -13548,7 +13548,8 @@ l_4eac:
 	lea	l_C8C0(a6),a0                      	| [$4eba: ld   hl,$C8C0]
 	add.w	d3,a0                            	| [$4ebd: add  hl,de]
 	STORE_POINTER	a0,ram_pointer_8346(a6)            	| [$4ebe: ld   ($8346),hl]
-	lea	l_98FE(a6),a1                      	| [$4ec1: ld   de,$98FE]
+	move.b	#0x98,d3
+	move.b	#0xFE,d4                      	| [$4ec1: ld   de,$98FE]
 	addq.w	#1,a0                           	| [$4ec4: inc  hl]
 	btst.b	#0,d1                           	| [$4ec5: bit  0,b]
 	jeq	l_4ed1                             	| [$4ec7: jp   z,$4ED1]

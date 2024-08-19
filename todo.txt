@@ -44,8 +44,19 @@ l_74cf
 l_74e5
 l_7503
 
+
+TODO:
+
+- render sprites
+- mockup elevator colums reuse scroll letter code
+
+ISSUES:
+
 - grappling hook missing tiles??
 - player I score: 10000 at start!!
+- locks up at startup
+- insert coin credit missing coinage info
+- mainloop seems too slow
 
 scroll:
 
@@ -55,5 +66,4 @@ scroll:
 merge with Galaga more optimized blit routines (blit/clear)
 
 
-insert coin credit missing coinage info
-locks up at startup
+
