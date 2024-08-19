@@ -1689,21 +1689,24 @@ set_playfield_bitplanes:
 * if game gfx bank, index is elevator index
 osd_set_column_scroll:
 	movem.l	d0-d3/a0-a4,-(a7)
-	lea	HW_SpriteYTable_NB_LINES,a1
 	and.w	#0x7,d1
 	and.w	#0xFF,d0
 	
 	move.w	d1,d2
-	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 64: SPRITE_STRUCT_SIZE
+	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 32: SPRITE_STRUCT_SIZE
 	lea		sprite_table,a0
 	lea		(a0,d1.w),a2		| select proper sprite struct
 	cmp.w	(_previous_y_position,a2),d0
 	jeq		100f		| no need to do anything: column scroll did not change
 	move.w	d0,(_previous_y_position,a2)  | store for later
 
+	move.w	#48,d3
+	lea		title_sprites+2,a0
 	tst.b	current_gfx_bank
 	jeq		10f
-	
+	lea		game_sprites+2,a0
+	move.w	#16,d3
+	jra		10f
 100:
 	movem.l	(a7)+,d0-d3/a0-a4
 	rts
@@ -1747,9 +1750,10 @@ osd_set_column_scroll:
 	moveq	#0,d1		| Y
 	move.w	d2,d0		| X
 	lsl.w	#4,d0		| column times 16 (2 chars per column)
-	add.w	#48,d0		| add X offset (probably wrong)
+	add.w	d3,d0		| add X offset
 
 
+	lea	HW_SpriteYTable_NB_LINES,a1
 	bsr		store_sprite_pos
 	
 	move.w	d0,(NB_BYTES_PER_SPRITE_ROW,a3)   | fmode=3
@@ -1772,10 +1776,9 @@ osd_set_column_scroll:
 	
 	move.l	a3,d1
 	lsl.w	#3,d2		| nb col * 8 (copperlist entry)
-	lea		title_sprites+2,a1
-	move.w	d1,(4,a1,d2.w)
+	move.w	d1,(4,a0,d2.w)
 	swap	d1
-	move.w	d1,(a1,d2.w)
+	move.w	d1,(a0,d2.w)
 	jra		100b
 
 
