@@ -302,24 +302,28 @@ current_plane_idx = 0
 
 for tile in full_sprite_set:
     if tile:
-        planes = bitplanelib.palette_image2raw(tile,None,sprites_palette,forced_nb_planes=nb_planes,
-        generate_mask=True,blit_pad=True,
-        mask_color=transparent)
         plane_list = []
-        planesize = len(planes)//(nb_planes+1)
-        for sl in range(0,len(planes),planesize):
-            plane = planes[sl:sl+planesize]
-            if any(plane):
-                plane_idx = bob_bitplane_cache.get(plane)
-                if plane_idx is None:
-                    # create entry
-                    plane_idx = current_plane_idx
-                    bob_bitplane_cache[plane] = current_plane_idx
-                    current_plane_idx += 1
-                plane_list.append(plane_idx)
-            else:
-                # empty plane: use index -1
-                plane_list.append(-1)
+        for sym in range(2):
+            if sym:
+                tile = ImageOps.mirror(tile)
+            planes = bitplanelib.palette_image2raw(tile,None,sprites_palette,forced_nb_planes=nb_planes,
+            generate_mask=True,blit_pad=True,
+            mask_color=transparent)
+            planesize = len(planes)//(nb_planes+1)
+            for sl in range(0,len(planes),planesize):
+                plane = planes[sl:sl+planesize]
+                if any(plane):
+                    plane_idx = bob_bitplane_cache.get(plane)
+                    if plane_idx is None:
+                        # create entry
+                        plane_idx = current_plane_idx
+                        bob_bitplane_cache[plane] = current_plane_idx
+                        current_plane_idx += 1
+                    plane_list.append(plane_idx)
+                else:
+                    # empty plane: use index -1
+                    plane_list.append(-1)
+
         bob_list.append(plane_list)
     else:
         bob_list.append(None)

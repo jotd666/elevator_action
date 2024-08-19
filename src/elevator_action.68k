@@ -608,25 +608,44 @@ tv:
 	lea		videoram_layer_1_C400(a6),a0
 	move.w	#0xBFF,d1
 	move.w	#0x3FF,d1
-	move.w	#0x7FF,d1
+	move.w	#0xBFF,d1
 0:
 	move.b	(a1)+,d0
 	jbsr	osd_w_videoram
 	addq	#1,a0
 	dbf		d1,0b
 	
-*	moveq	#7,d1
-*	move.w	#0x50,d0
-*0:
-*	jbsr	osd_set_column_scroll
-*	*sub.w	#0x1,d0
-*	dbf	d1,0b
+	moveq	#7,d1
+	move.w	#0x50,d0
+0:
+	jbsr	osd_set_column_scroll
+	dbf	d1,0b
+
+	lea		sprite_mockup,a0
+	lea		sprite_ram_d100,a1
+	moveq	#0x1F,D0
+0:
+	move.l	(a0)+,(a1)+
+	dbf		d0,0b
+	*jbsr	osd_update_sprites
 1:
 	btst	#6,0xBFE001
 	bne		1b
 	illegal
 tvg:
 	.include	"game_video.s"
+
+sprite_mockup:
+.byte  0x70,0x86,0x00,0x4e,0x39,0x93,0x01,0x51,0x3a,0xa3,0x01,0x5e,0x84,0x62,0x00,0x50	|	0x0000
+.byte  0x84,0x72,0x00,0x5e,0x3a,0x30,0x04,0x66,0x3a,0x40,0x04,0x67,0x36,0x33,0x00,0x51	|	0x0010
+.byte  0x35,0x43,0x00,0x5e,0x7c,0x69,0x00,0x72,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0020
+.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0030
+.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0040
+.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0050
+.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0060
+.byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x70,0x76,0x00,0x40	|	0x0070
+
+
 	.endif
 	
 	
@@ -4415,168 +4434,25 @@ l_15d4:
 
 update_sprites_15F0:
 	lea	sprites_shadow_ram_8169(a6),a0     	| [$15f0: ld   hl,sprites_shadow_ram_8169]
-* that's one hell of a loop unrolling!!
+	* jotd: simplified/faster code
 	lea	sprite_ram_d100+0x7C,a1            	| [$15f3: ld   de,sprite_ram_d100+$7C]
-	jbsr	ldi                               	| [$15f6: ldi]
-	jbsr	ldi                               	| [$15f8: ldi]
-	jbsr	ldi                               	| [$15fa: ldi]
-	jbsr	ldi                               	| [$15fc: ldi]
+	.rept	4											
+	move.b	(a0)+,(a1)+                               	| [$15f6: ldi]
+												| [$15f8: ldi]
+												
+												| [$15fa: ldi]
+	.endr										| [$15fc: ldi]
+												
 	lea	sprite_ram_d100,a1                 	| [$15fe: ld   de,sprite_ram_d100]
-	jbsr	ldi                               	| [$1601: ldi]
-	jbsr	ldi                               	| [$1603: ldi]
-	jbsr	ldi                               	| [$1605: ldi]
-	jbsr	ldi                               	| [$1607: ldi]
-	jbsr	ldi                               	| [$1609: ldi]
-	jbsr	ldi                               	| [$160b: ldi]
-	jbsr	ldi                               	| [$160d: ldi]
-	jbsr	ldi                               	| [$160f: ldi]
-	jbsr	ldi                               	| [$1611: ldi]
-	jbsr	ldi                               	| [$1613: ldi]
-	jbsr	ldi                               	| [$1615: ldi]
-	jbsr	ldi                               	| [$1617: ldi]
-	jbsr	ldi                               	| [$1619: ldi]
-	jbsr	ldi                               	| [$161b: ldi]
-	jbsr	ldi                               	| [$161d: ldi]
-	jbsr	ldi                               	| [$161f: ldi]
-	jbsr	ldi                               	| [$1621: ldi]
-	jbsr	ldi                               	| [$1623: ldi]
-	jbsr	ldi                               	| [$1625: ldi]
-	jbsr	ldi                               	| [$1627: ldi]
-	jbsr	ldi                               	| [$1629: ldi]
-	jbsr	ldi                               	| [$162b: ldi]
- 	jbsr	ldi                               	| [$162d: ldi]
- 	jbsr	ldi                               	| [$162f: ldi]
- 	jbsr	ldi                               	| [$1631: ldi]
-	jbsr	ldi                               	| [$1633: ldi]
-	jbsr	ldi                               	| [$1635: ldi]
- 	jbsr	ldi                               	| [$1637: ldi]
-	jbsr	ldi                               	| [$1639: ldi]
-	jbsr	ldi                               	| [$163b: ldi]
-
-	jbsr	ldi                               	| [$163d: ldi]
-
-	jbsr	ldi                               	| [$163f: ldi]
-
-	jbsr	ldi                               	| [$1641: ldi]
-
-	jbsr	ldi                               	| [$1643: ldi]
-
-	jbsr	ldi                               	| [$1645: ldi]
-
-	jbsr	ldi                               	| [$1647: ldi]
-
-	jbsr	ldi                               	| [$1649: ldi]
-
-	jbsr	ldi                               	| [$164b: ldi]
-
-	jbsr	ldi                               	| [$164d: ldi]
-
-	jbsr	ldi                               	| [$164f: ldi]
-
-	jbsr	ldi                               	| [$1651: ldi]
-
-	jbsr	ldi                               	| [$1653: ldi]
-
-	jbsr	ldi                               	| [$1655: ldi]
-
-	jbsr	ldi                               	| [$1657: ldi]
-
-	jbsr	ldi                               	| [$1659: ldi]
-
-	jbsr	ldi                               	| [$165b: ldi]
-
-	jbsr	ldi                               	| [$165d: ldi]
-
-	jbsr	ldi                               	| [$165f: ldi]
-
-	jbsr	ldi                               	| [$1661: ldi]
-
-	jbsr	ldi                               	| [$1663: ldi]
-
-	jbsr	ldi                               	| [$1665: ldi]
-
-	jbsr	ldi                               	| [$1667: ldi]
-
-	jbsr	ldi                               	| [$1669: ldi]
-
-	jbsr	ldi                               	| [$166b: ldi]
-
-	jbsr	ldi                               	| [$166d: ldi]
-
-	jbsr	ldi                               	| [$166f: ldi]
-
-	jbsr	ldi                               	| [$1671: ldi]
-
-	jbsr	ldi                               	| [$1673: ldi]
-
-	jbsr	ldi                               	| [$1675: ldi]
-
-	jbsr	ldi                               	| [$1677: ldi]
-
-	jbsr	ldi                               	| [$1679: ldi]
-
-	jbsr	ldi                               	| [$167b: ldi]
-
-	jbsr	ldi                               	| [$167d: ldi]
-
-	jbsr	ldi                               	| [$167f: ldi]
+	.rept	0x40/4										| [$1601: ldi]
+	move.l	(a0)+,(a1)+									| [...]
+	.endr										| [$167f: ldi]
 
 	lea	sprite_ram_d100+0x60,a1            	| [$1681: ld   de,sprite_ram_d100+$60]
-	jbsr	ldi                               	| [$1684: ldi]
-
-	jbsr	ldi                               	| [$1686: ldi]
-
-	jbsr	ldi                               	| [$1688: ldi]
-
-	jbsr	ldi                               	| [$168a: ldi]
-
-	jbsr	ldi                               	| [$168c: ldi]
-
-	jbsr	ldi                               	| [$168e: ldi]
-
-	jbsr	ldi                               	| [$1690: ldi]
-
-	jbsr	ldi                               	| [$1692: ldi]
-
-	jbsr	ldi                               	| [$1694: ldi]
-
-	jbsr	ldi                               	| [$1696: ldi]
-
-	jbsr	ldi                               	| [$1698: ldi]
-
-	jbsr	ldi                               	| [$169a: ldi]
-
-	jbsr	ldi                               	| [$169c: ldi]
-
-	jbsr	ldi                               	| [$169e: ldi]
-
-	jbsr	ldi                               	| [$16a0: ldi]
-
-	jbsr	ldi                               	| [$16a2: ldi]
-
-	jbsr	ldi                               	| [$16a4: ldi]
-
-	jbsr	ldi                               	| [$16a6: ldi]
-
-	jbsr	ldi                               	| [$16a8: ldi]
-
-	jbsr	ldi                               	| [$16aa: ldi]
-
-	jbsr	ldi                               	| [$16ac: ldi]
-
-	jbsr	ldi                               	| [$16ae: ldi]
-
-	jbsr	ldi                               	| [$16b0: ldi]
-
-	jbsr	ldi                               	| [$16b2: ldi]
-
-	jbsr	ldi                               	| [$16b4: ldi]
-
-	jbsr	ldi                               	| [$16b6: ldi]
-
-	jbsr	ldi                               	| [$16b8: ldi]
-
-	jbsr	ldi                               	| [$16ba: ldi]
+	.rept	0x1C/4                               	| [$1684: ldi]
+	move.l	(a0)+,(a1)+                               	| [$1686: ldi]
+	.endr								| [...]
+	                               	| [$16ba: ldi]
 
 	rts                                    	| [$16bc: ret]
 
@@ -7486,10 +7362,11 @@ l_26a4:
 	jne	l_26a4                             	| [$26a7: djnz $26A4]
 	subq.w	#1,d2                           	| [$26a9: dec  c]
  	jne	l_26a4                             	| [$26aa: jp   nz,$26A4]
+	* clear sprites
 	lea	sprite_ram_d100,a0                 	| [$26ad: ld   hl,sprite_ram_d100]
-	move.b	#0x80,d1                        	| [$26b0: ld   b,$80]
+	move.b	#0x20,d1                        	| [$26b0: ld   b,$80]
 l_26b2:
-	clr.b	(a0)+                             	| [$26b2: ld   (hl),$00]
+	clr.l	(a0)+                             	| [$26b2: ld   (hl),$00]
 												| [$26b4: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_26b2                             	| [$26b5: djnz $26B2]
@@ -9962,7 +9839,7 @@ l_3531:
 	tst.b	d0                             	| [$3534: or   a]
 	jne	l_3547                             	| [$3535: jr   nz,$3547]
 	jbsr	l_76d5                            	| [$3537: call $76D5]
-	jbsr	l_4d70                            	| [$353a: call $4D70]
+	jbsr	player_arriving_on_roof_anim_4d70          	| [$353a: call $4D70]
 	move.b	#0x01,d0                        	| [$353d: ld   a,$01]
 	move.b	d0,l_824A(a6)                   	| [$353f: ld   ($824A),a]
 	jbsr	l_759e                            	| [$3542: call $759E]
@@ -13381,7 +13258,7 @@ l_4d58:
 	move.b	d0,(a0)                         	| [$4d6e: ld   (hl),a]
 	rts                                    	| [$4d6f: ret]
 
-l_4d70:
+player_arriving_on_roof_anim_4d70:
 	clr.b	d0                               	| [$4d70: xor  a]
 	move.b	d0,sync_flag_80AB(a6)                   	| [$4d71: ld   ($80AB),a]
 	move.b	#0x1F,d0                        	| [$4d74: ld   a,$1F]
@@ -13390,6 +13267,7 @@ l_4d70:
 	clr.b	d0                               	| [$4d7c: xor  a]
 	move.b	d0,l_833C(a6)                   	| [$4d7d: ld   ($833C),a]
 	move.b	d0,l_833D(a6)                   	| [$4d80: ld   ($833D),a]
+	* various stages of animation
 l_4d83:
 	jbsr	game_tick_73cf                            	| [$4d83: call $73CF]
 	lea	l_833C(a6),a0                      	| [$4d86: ld   hl,$833C]
@@ -13401,6 +13279,7 @@ l_4d83:
 	jbsr	play_sound             	| [$4d92: ld   (sound_latch_D50B),a]
 	clr.b	d0                               	| [$4d95: xor  a]
 	move.b	d0,l_833C(a6)                   	| [$4d96: ld   ($833C),a]
+	* wire launched
 l_4d99:
 	jbsr	update_grappling_hook_tiles_4eac                            	| [$4d99: call $4EAC]
 	jbsr	game_tick_73cf                            	| [$4d9c: call $73CF]
@@ -13442,7 +13321,7 @@ l_4dd5:
 	clr.b	d0                               	| [$4de5: xor  a]
 	move.b	d0,l_833C(a6)                   	| [$4de6: ld   ($833C),a]
 l_4de9:
-	jbsr	l_4f5d                            	| [$4de9: call $4F5D]
+	jbsr	player_releases_wire_4f5d        	| [$4de9: call $4F5D]
 	jbsr	game_tick_73cf                            	| [$4dec: call $73CF]
 	lea	l_833C(a6),a0                      	| [$4def: ld   hl,$833C]
 	addq.b	#1,(a0)                         	| [$4df2: inc  (hl)]
@@ -13598,6 +13477,7 @@ l_4ee7:
 	move.b	#0x9C,d0                        	| [$4f0d: ld   a,$9C]
 	move.b	d0,grappling_hook_tile_834b(a6)                   	| [$4f0f: ld   ($834B),a]
 	rts                                    	| [$4f12: ret]
+
 l_4f13:
 	move.b	l_833C(a6),d0                   	| [$4f13: ld   a,($833C)]
 	add.b	d0,d0                            	| [$4f16: add  a,a]
@@ -13609,40 +13489,40 @@ l_4f13:
 	sub.b	d1,d0                            	| [$4f1e: sub  b]
 	move.b	d0,d1                           	| [$4f1f: ld   b,a]
 	lea	l_833E(a6),a0                      	| [$4f20: ld   hl,$833E]
-	move.b	#0xF0,(a0)                      	| [$4f23: ld   (hl),$F0]
-	addq.w	#1,a0                           	| [$4f25: inc  hl]
-	move.b	d1,(a0)                         	| [$4f26: ld   (hl),b]
-	addq.w	#1,a0                           	| [$4f27: inc  hl]
-	move.b	#0x04,(a0)                      	| [$4f28: ld   (hl),$04]
-	addq.w	#1,a0                           	| [$4f2a: inc  hl]
-	move.b	#0x02,(a0)                      	| [$4f2b: ld   (hl),$02]
-	addq.w	#1,a0                           	| [$4f2d: inc  hl]
-	move.b	d2,(a0)                         	| [$4f2e: ld   (hl),c]
-	addq.w	#1,a0                           	| [$4f2f: inc  hl]
-	move.b	d1,(a0)                         	| [$4f30: ld   (hl),b]
-	addq.w	#1,a0                           	| [$4f31: inc  hl]
-	clr.b	(a0)                             	| [$4f32: ld   (hl),$00]
-	addq.w	#1,a0                           	| [$4f34: inc  hl]
+	move.b	#0xF0,(a0)+                      	| [$4f23: ld   (hl),$F0]
+	                           	| [$4f25: inc  hl]
+	move.b	d1,(a0)+                         	| [$4f26: ld   (hl),b]
+	                           	| [$4f27: inc  hl]
+	move.b	#0x04,(a0)+                      	| [$4f28: ld   (hl),$04]
+	                           	| [$4f2a: inc  hl]
+	move.b	#0x02,(a0)+                      	| [$4f2b: ld   (hl),$02]
+	                           	| [$4f2d: inc  hl]
+	move.b	d2,(a0)+                         	| [$4f2e: ld   (hl),c]
+	                           	| [$4f2f: inc  hl]
+	move.b	d1,(a0)+                         	| [$4f30: ld   (hl),b]
+	                           	| [$4f31: inc  hl]
+	clr.b	(a0)+                             	| [$4f32: ld   (hl),$00]
+	                           	| [$4f34: inc  hl]
 	move.b	#0x4D,(a0)                      	| [$4f35: ld   (hl),$4D]
 	lea	l_833E(a6),a0                      	| [$4f37: ld   hl,$833E]
 	jbsr	l_4f40                            	| [$4f3a: call $4F40]
 	lea	l_8342(a6),a0                      	| [$4f3d: ld   hl,$8342]
 l_4f40:
 	move.b	current_player_81D8(a6),d0                   	| [$4f40: ld   a,($81D8)]
-	tst.b	d0                             	| [$4f43: or   a]
+	                             	| [$4f43: or   a]
 	jne	l_4f4a                             	| [$4f44: jp   nz,$4F4A]
 	addq.b	#2,(a0)                         	| [$4f47: inc  (hl)] * 2
 	rts                                    	| [$4f49: ret]
 l_4f4a:
-	subq.b	#1,(a0)                         	| [$4f4a: dec  (hl)]
-	addq.w	#1,a0                           	| [$4f4b: inc  hl]
+	subq.b	#1,(a0)+                         	| [$4f4a: dec  (hl)]
+	                           	| [$4f4b: inc  hl]
 	subq.b	#2,(a0)                         	| [$4f4c: dec  (hl)] * 2
 	rts                                    	| [$4f4e: ret]
 
 l_4f4f:
 	lea	l_8342(a6),a0                      	| [$4f4f: ld   hl,$8342]
-	addq.b	#2,(a0)                         	| [$4f52: inc  (hl)] * 2
-	addq.w	#1,a0                           	| [$4f54: inc  hl]
+	addq.b	#2,(a0)+                         	| [$4f52: inc  (hl)] * 2
+	                           	| [$4f54: inc  hl]
 	subq.b	#1,(a0)                         	| [$4f55: dec  (hl)]
 	addq.w	#2,a0                           	| [$4f56: inc  hl] * 2
 	move.b	#0x99,d0                        	| [$4f58: ld   a,$99]
@@ -13650,7 +13530,7 @@ l_4f4f:
 	move.b	d0,(a0)                         	| [$4f5b: ld   (hl),a]
 	rts                                    	| [$4f5c: ret]
 
-l_4f5d:
+player_releases_wire_4f5d:
 	move.b	l_833C(a6),d0                   	| [$4f5d: ld   a,($833C)]
 	add.b	d0,d0                            	| [$4f60: add  a,a]
 	add.b	d0,d0                            	| [$4f61: add  a,a]
@@ -13766,8 +13646,9 @@ l_500b:
 	lea	l_833E(a6),a0                      	| [$500b: ld   hl,$833E]
 	move.b	#0x83,d0                        	| [$500c: ld   a,$83] why??
 	lea	sprite_ram_d100,a1                 	| [$500e: ld   de,sprite_ram_d100]
-	move.w	#0x0008,d1                      	| [$5011: ld   bc,$0008] 8
-	jbsr	ldir                              	| [$5014: ldir]
+											| [$5011: ld   bc,$0008] 8
+	move.l	(a0)+,(a1)+                              	| [$5014: ldir]
+	move.l	(a0)+,(a1)+                              	| [$5014: ldir]
 	move.b	l_833D(a6),d0                   	| [$5016: ld   a,($833D)]
 	                             	| [$5019: or   a]
 	jeq	display_grappling_wire_5026                             	| [$501a: jp   z,$5026]

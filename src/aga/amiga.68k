@@ -39,10 +39,10 @@ SCREEN_ADDRESS = 0xC400
 * RAMs have 4 bytes per sprite, only the order
 * and some bits differ
 
-TARGET_SPRITE_ATTRIBUTES = 1
-TARGET_SPRITE_CODE = 2
-TARGET_SPRITE_Y = 0
-TARGET_SPRITE_X = 3
+TARGET_SPRITE_Y = 1
+TARGET_SPRITE_X = 0
+TARGET_SPRITE_ATTRIBUTES = 2
+TARGET_SPRITE_CODE = 3
 ACTIVE_BITPLANE_MASK = 4   | for optimized bitplane erase
 
 
@@ -713,7 +713,6 @@ _vblank:
 
 23:
 	* don't blit, but update hw sprites as it doesn't cost a lot
-	bsr		really_update_hardware_sprites
 
 
 3:
@@ -789,16 +788,16 @@ osd_wait:
 	
 osd_update_sprites:
 	movem.l	a0-a6/d0-d7,-(a7)
-
-
+	lea		sprite_ram_d100,a0
+	bsr		update_bobs
 
 	movem.l	(a7)+,a0-a6/d0-d7
 	rts
 	
 
 
-really_update_hardware_sprites:
-
+really_update_sprites:
+	bsr		update_bobs
 
 	rts
 	
@@ -807,12 +806,8 @@ is_game_playing:
 	rts
 	
 
-really_update_sprites:
-	lea		sprite_registers,a0
-	bsr		update_bobs
 	
 
-	rts
 	
 
 
@@ -851,7 +846,7 @@ update_bobs:
 	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
-	* code = 0 and clut = 0 => disabled
+	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
@@ -893,10 +888,7 @@ update_bobs:
 	and.b	#0x0F,d3	| get attributes
 
 	* < D2: sprite code & flags
-	* < D3: sprite color (clut index)
 	
-	add.w	d3,d3
-	add.w	d3,d3
 	move.l	a0,-(a7)
 	move.l	d4,a0
 	move.l	(8,a0,d3.w),d4	| bitplane pointer list
@@ -904,19 +896,7 @@ update_bobs:
 	move.w	(a0)+,d5		| width
 	add.w	(a0)+,d1		| add offset to Y
 	addq	#2,a0			| reserved
-	bne.b	12f
-	* bob is valid but wrong clut
-	.ifndef	RELEASE
-	* not known/registered: we should log that!
-	move.l	(a7),a0
-	move.b	(TARGET_SPRITE_CODE,a0),d2
-	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
-	and.b	#0xF,d3	| get attributes
-	move.w	#0xFF0,0xDFF180
-	.endif
-	move.l	(a7)+,a0
-	bra.b	2f
-12:
+
 	move.l		fg_drawed_screen_ptr(pc),a1
 	* D0 and D1 are already set
 	move.l	d4,a0	| plane list (+ mask)
@@ -940,7 +920,7 @@ update_bobs:
 2:
 	addq.w	#8,a6
 3:
-	subq.w	#4,a0
+	addq.w	#4,a0
 	dbf		d7,1b
 	
 	rts
@@ -984,23 +964,18 @@ clear_fg_planes_any_blitter_internal:
     add.w   d1,d1
     move.w  (a2,d1.w),d1
 1:
-    move.l  #0x01000000,d5   | minterm useD & rect clear (0xA) 
-    move    d0,d6
-    beq.b   2f
-    MOVEQ #15,D6
-    AND.W D0,D6
+	moveq	#1,d5
+	ror.l	#8,d5     | AKA move.l  #0x01000000,d5   | minterm useD & rect clear (0xA) 
     and.w   #0x1F0,d0
+    beq.b   2f				| zero X optimization
     lsr.w   #3,d0
     add.w   d0,d1
-    LSL.W #8,D6
-    LSL.W #4,D6
 
-    swap    d6
-    or.l    d6,d5            | add shift
 2:   
     add.w   d1,a1       | plane position (always even)
 
 	move.w #NB_BYTES_PER_ROW,d0
+	bclr	#0,d2		| make sure D2 is even (else strange things occur!)
     sub.w   d2,d0       | blit width
 
     lsl.w   #6,d4
@@ -1033,91 +1008,6 @@ clear_fg_planes_any_blitter_internal:
 	
     rts
 
-* < A5: custom
-* < D0,D1: x,y
-* < A1: plane pointer
-* < D2: width in bytes (inc. 2 extra for shifting)
-* < D4: blit height
-* trashes D0-D6
-* > A1: even address where blit was done
-clear_bg_plane_any_blitter_internal:
-	moveq	#1,d3
-* < A5: custom
-* < D0,D1: x,y
-* < A1: foreground plane pointer (often first plane!)
-* < D2: width in bytes (inc. 2 extra for shifting)
-* < D3: number of planes to clear
-* < D4: blit height
-* < D7: mask (disabled, -1 set at start)
-* trashes D0-D6
-clear_bg_planes_any_blitter_internal:
-    * pre-compute the maximum of shit here
-	move.w	d1,d6
-    beq.b   1f    | optim
-	* check if y start + height > Y_MAX
-	* (ignores case where y = 0, no risk)
-	add.w	d4,d6
-	sub.w	#Y_MAX,d6
-	bmi.b	0f
-	* y start + height > Y_MAX: clip height
-	sub.w	d6,d4
-	beq.b	10f
-	bpl.b	0f
-10:
-	* null or negative height after clipping: out
-	rts
-0:
-    lea mulNB_BYTES_PER_ROW_table(pc),a2
-    move.w  (a2,d1.w*2),d1
-1:
-    move.l  #0x01000000,d5   | minterm useD & rect clear (0xA) 
-    move    d0,d6
-    beq.b   2f
-    MOVEQ #15,D6
-    AND.W D0,D6
-    and.w   #0x1F0,d0
-    lsr.w   #3,d0
-    add.w   d0,d1
-    LSL.W #8,D6
-    LSL.W #4,D6
-
-    swap    d6
-    or.l    d6,d5            | add shift
-2:   
-    add.w   d1,a1       | plane position (always even)
-
-	move.w #NB_BYTES_PER_ROW,d0
-    sub.w   d2,d0       | blit width
-
-    lsl.w   #6,d4
-    lsr.w   #1,d2
-    add.w   d2,d4       | blit height
-
-    * now just wait for blitter ready to write all registers
-	WAIT_BLIT
-    
-    * blitter registers set
-	.ifdef	VARIABLE_BLITTER_MASKS_AND_MODS
-    move.l  d7,bltafwm(a5)
-	.endif
-	
-	move.l d5,bltcon0(a5)	
-    move.w  d0,bltdmod(a5)	|D modulo
-	
-	subq	#1,d3
-	beq.b	4f
-	subq	#1,d3
-3:
-	move.l a1,bltdpt(a5)	|destination top left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	add.w		#BG_SCREEN_PLANE_SIZE,a1
-	WAIT_BLIT
-	dbf		d3,3b
-4:
-	move.l a1,bltdpt(a5)	|destination top left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	
-    rts
 
 
 * what: blits 16x? data on one plane, cookie cut
@@ -1276,7 +1166,16 @@ start_process_1_plane:
 	move.l	a4,bltbpt(a5)	|source graphic top left corner
 	rts
 
+	.macro	GEN_MINTERM_TABLE	name,value
+\name\()_table:
+	.set	shift,0
+	.rept	16
+	.long	(shift<<28)+(shift<<12)+\value
+	.set	shift,shift+1
+	.endr
+	.endm
 	
+	GEN_MINTERM_TABLE	cookie_cut_blit,0x0FCA0000
 * 2 words: first shift (as bplcon value), then
 * offset in bytes
 
@@ -1504,6 +1403,9 @@ platform_init:
 	lea		sprite_table,a1
 	bsr		init_sprite_bank
 	lea		title_sprites,a0
+	lea		sprite_table,a1
+	bsr		init_sprite_bank
+	lea		game_sprites,a0
 	lea		sprite_table,a1
 	bsr		init_sprite_bank
 
@@ -1786,7 +1688,7 @@ set_playfield_bitplanes:
 * if title gfx bank, index is letter index
 * if game gfx bank, index is elevator index
 osd_set_column_scroll:
-	movem.l	d0-d2/a0-a4,-(a7)
+	movem.l	d0-d3/a0-a4,-(a7)
 	lea	HW_SpriteYTable_NB_LINES,a1
 	and.w	#0x7,d1
 	and.w	#0xFF,d0
@@ -1803,7 +1705,7 @@ osd_set_column_scroll:
 	jeq		10f
 	
 100:
-	movem.l	(a7)+,d0-d2/a0-a4
+	movem.l	(a7)+,d0-d3/a0-a4
 	rts
     
 
@@ -2885,7 +2787,11 @@ title_sprite_colors:
 
 	* main copperlist
 game_copperlist:
-	* reset scrolling to default (panel)
+	* all sprites have the same palette no need to specify odd or even
+	* on color bank 1
+	DECL_COLOR_BANK	1
+	* black color sprites
+	DECL_COLORS	0,32
 
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
@@ -2897,6 +2803,8 @@ panel_tiles_colors:
 	.word	0x3C01,0xFFFE
 playfield_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
+game_sprites:
+	DECL_SPRITES
 	* default color bank
 	DECL_COLOR_BANK	0
 playfield_tiles_colors:
@@ -2904,19 +2812,15 @@ playfield_tiles_colors:
 bob_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 
-	* sprites color bank
-	*DECL_COLOR_BANK	1
 	
-game_sprites:
-	DECL_SPRITES
-	* default color bank again
-	*DECL_COLOR_BANK	0
 
 
 	
 	* now set color bank 1
 	DECL_COLOR_BANK	1
 
+	* TODO: each line has 7 slots to change 1 sprite color
+	.word	0x8001,0xFFFE
 intreq_block:
 	* now wait some lines until we're sure bitmap only contains
 	* non-black: we can set color 0 to light blue now

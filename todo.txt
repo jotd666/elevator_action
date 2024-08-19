@@ -52,7 +52,6 @@ TODO:
 
 ISSUES:
 
-- grappling hook missing tiles??
 - player I score: 10000 at start!!
 - locks up at startup
 - insert coin credit missing coinage info
