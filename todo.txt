@@ -32,8 +32,6 @@ title_sequence_11F0: debug not reached????
 
 red doors position tables: l_278b
 
-intro "elevator" letters python mockup
-elevator letters scroll: addresses 7462 ???
 0e9f called when??? reset charset???
 
 
@@ -46,7 +44,8 @@ l_74cf
 l_74e5
 l_7503
 
-
+- grappling hook missing tiles??
+- player I score: 10000 at start!!
 
 scroll:
 
@@ -55,6 +54,6 @@ scroll:
 
 merge with Galaga more optimized blit routines (blit/clear)
 
-remove speed regulation code
+
 insert coin credit missing coinage info
 locks up at startup

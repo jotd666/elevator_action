@@ -1755,6 +1755,8 @@ set_playfield_bitplanes:
     moveq #NB_PLAYFIELD_PLANES-1,d1
 	moveq	#0,d0
 	move.b	main_scroll_value(pc),d0
+	add.w	#60,d0			| offset
+	and.w	#0xFF,d0		| wrap just in case
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 	move.w	(a0,d0.w*2),d0
     add.l	bg_screen_ptr(pc),d0

@@ -36,13 +36,17 @@ def dump_asm_bytes(*args,**kwargs):
 # for each layer, very few tiles are used. Don't generate all tiles with the given colors,
 # just the ones that are used
 # lists below may be incomplete
-used_game_tiles = {"status":set(range(16,52)),"building":set(range(64,94)) | {148,157,
+used_game_tiles = {"status":set(range(16,52)) | {0xFF},
+  "building":set(range(64,94)) | {148,157,
   160,
   166,
   167,
   168,
   169,
-  197},"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
+  197,
+  0x98,0x99,0x9A,0x9B,0x9C,0xFD,0xFE,  # grappling hook
+
+  },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
 used_title_tiles = {"status":set(range(16,50)) | {7,8,51},
 "big_letters": set(range(80,128)) | {158} | set(range(181,256)),

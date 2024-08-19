@@ -240,27 +240,6 @@ get_recorded_input:
 	add.l	#recorded_inputs_7A63,a0
 	rts
 	
-regulate_speed:
-	rts
-	
-	movem.w	d0/d1,-(a7)
-	st.b	vbl_sync_flag
-	* added to regulate speed, else it's really too fast
-	* each nth loop, we sync on vertical blank
-	moveq	#1,d0    | jbsr	osd_get_sync_period
-	move.b	vbl_sync_counter,d1
-	addq.b	#1,d1
-	cmp.b	d1,d0
-	bne.b	1f
-0:
-	tst.b	vbl_sync_flag
-	bne.b	0b
-	moveq	#0,d1
-1:
-	move.b	d1,vbl_sync_counter
-	movem.w	(a7)+,d0/d1
-	rts
-
 
 load_d3d4_address_from_6bdc_in_a1:
 	LOAD_D3_16_FROM_D3D4
@@ -1364,7 +1343,7 @@ update_main_scrolling_03C3:
 	exg	a1,d5                              	| [$03da: ex   de,hl]
 * set top row with new tiles
 	lea	scroll_row_8008(a6),a0             	| [$03db: ld   hl,scroll_row_8008]
-	.warning	"optimize this crap"
+	.warning	"optimize this crap when scrolling works"
 	.rept	32
 	jbsr	ldi_video                               	| [$03de: ldi]
     .endr
@@ -13535,7 +13514,7 @@ l_4e74:
 	                           	| [$4e76: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_4e74                             	| [$4e77: djnz $4E74]
-	lea	l_834B(a6),a0                      	| [$4e79: ld   hl,$834B]
+	lea	grappling_hook_tile_834b(a6),a0                      	| [$4e79: ld   hl,$834B]
 	STORE_POINTER	a0,ram_pointer_8346(a6)            	| [$4e7c: ld   ($8346),hl]
 	STORE_POINTER	a0,ram_pointer_8349(a6)            	| [$4e7f: ld   ($8349),hl]
 	jbsr	l_71e1                            	| [$4e82: call $71E1]
@@ -13575,7 +13554,8 @@ l_4eac:
 	jeq	l_4ed1                             	| [$4ec7: jp   z,$4ED1]
 	move.w	#0x0020,d1                      	| [$4eca: ld   bc,$0020] 32
 	add.w	d1,a0                            	| [$4ecd: add  hl,bc]
-	lea	l_99FD(a6),a1                      	| [$4ece: ld   de,$99FD]
+	move.b	#0x99,d3
+	move.b	#0xFD,d4                      	| [$4ece: ld   de,$99FD]
 l_4ed1:
 	move.b	l_833C(a6),d0                   	| [$4ed1: ld   a,($833C)]
 	cmp.b	#0x0C,d0                         	| [$4ed4: cp   $0C]
@@ -13583,10 +13563,10 @@ l_4ed1:
 	move.b	#0x9C,d4                        	| [$4ed9: ld   e,$9C]
 l_4edb:
 	STORE_POINTER	a0,ram_pointer_8349(a6)            	| [$4edb: ld   ($8349),hl]
-	move.b	d3,d0                           	| [$4ede: ld   a,d]
-	move.b	d0,l_8348(a6)                   	| [$4edf: ld   ($8348),a]
-	move.b	d4,d0                           	| [$4ee2: ld   a,e]
-	move.b	d0,l_834B(a6)                   	| [$4ee3: ld   ($834B),a]
+	                           	| [$4ede: ld   a,d]
+	move.b	d3,grappling_hook_tile_8348(a6)                   	| [$4edf: ld   ($8348),a]
+	                           	| [$4ee2: ld   a,e]
+	move.b	d4,grappling_hook_tile_834b(a6)                   	| [$4ee3: ld   ($834B),a]
 	rts                                    	| [$4ee6: ret]
 l_4ee7:
 	move.b	l_833C(a6),d0                   	| [$4ee7: ld   a,($833C)]
@@ -13606,16 +13586,16 @@ l_4ee7:
 	addq.w	#1,a0                           	| [$4efc: inc  hl]
 	STORE_POINTER	a0,ram_pointer_8349(a6)            	| [$4efd: ld   ($8349),hl]
 	move.b	#0x9A,d0                        	| [$4f00: ld   a,$9A]
-	move.b	d0,l_8348(a6)                   	| [$4f02: ld   ($8348),a]
+	move.b	d0,grappling_hook_tile_8348(a6)                   	| [$4f02: ld   ($8348),a]
 	addq.b	#1,d0                           	| [$4f05: inc  a]
-	move.b	d0,l_834B(a6)                   	| [$4f06: ld   ($834B),a]
+	move.b	d0,grappling_hook_tile_834b(a6)                   	| [$4f06: ld   ($834B),a]
 	move.b	d1,d0                           	| [$4f09: ld   a,b]
 	cmp.b	#0x06,d0                         	| [$4f0a: cp   $06]
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$4f0c: ret  c] [...]
 0:
 	move.b	#0x9C,d0                        	| [$4f0d: ld   a,$9C]
-	move.b	d0,l_834B(a6)                   	| [$4f0f: ld   ($834B),a]
+	move.b	d0,grappling_hook_tile_834b(a6)                   	| [$4f0f: ld   ($834B),a]
 	rts                                    	| [$4f12: ret]
 l_4f13:
 	move.b	l_833C(a6),d0                   	| [$4f13: ld   a,($833C)]
@@ -13789,26 +13769,43 @@ l_500b:
 	jbsr	ldir                              	| [$5014: ldir]
 	move.b	l_833D(a6),d0                   	| [$5016: ld   a,($833D)]
 	                             	| [$5019: or   a]
-	jeq	l_5026                             	| [$501a: jp   z,$5026]
+	jeq	display_grappling_wire_5026                             	| [$501a: jp   z,$5026]
 	subq.b	#1,d0                           	| [$501d: dec  a]
 	jeq	l_5035                             	| [$501e: jp   z,$5035]
 	subq.b	#1,d0                           	| [$5021: dec  a]
 	jeq	l_5043                             	| [$5022: jp   z,$5043]
 	rts                                    	| [$5025: ret]
-l_5026:
+	
+display_grappling_wire_5026:
+	move.b	ram_pointer_8346+1(a6),d0
+	cmp.b	#0xC8,d0
+	jcs		0f
+	* video ram pointer
 	LOAD_POINTER	ram_pointer_8346(a6),a0             	| [$5026: ld   hl,($8346)]
-	move.b	l_8348(a6),d0                   	| [$5029: ld   a,($8348)]
+	move.b	grappling_hook_tile_8348(a6),d0                   	| [$5029: ld   a,($8348)]
+	jbsr	osd_w_videoram                         	| [$502c: ld   (hl),a]
+	LOAD_POINTER	ram_pointer_8349(a6),a0             	| [$502d: ld   hl,($8349)]
+	move.b	grappling_hook_tile_834b(a6),d0                   	| [$5030: ld   a,($834B)]
+	jbsr	osd_w_videoram                         	| [$5033: ld   (hl),a]
+	rts                                    	| [$5034: ret]
+0:
+	* regular ram
+	LOAD_POINTER	ram_pointer_8346(a6),a0             	| [$5026: ld   hl,($8346)]
+	move.b	grappling_hook_tile_8348(a6),d0                   	| [$5029: ld   a,($8348)]
 	move.b	d0,(a0)                         	| [$502c: ld   (hl),a]
 	LOAD_POINTER	ram_pointer_8349(a6),a0             	| [$502d: ld   hl,($8349)]
-	move.b	l_834B(a6),d0                   	| [$5030: ld   a,($834B)]
+	move.b	grappling_hook_tile_834b(a6),d0                   	| [$5030: ld   a,($834B)]
 	move.b	d0,(a0)                         	| [$5033: ld   (hl),a]
 	rts                                    	| [$5034: ret]
+	
+	
 l_5035:
 	lea	l_C8C0(a6),a0                      	| [$5035: ld   hl,$C8C0]
 	move.w	#0x0022,d3                      	| [$5038: ld   de,$0022] 34
 	move.b	#0x07,d1                        	| [$503b: ld   b,$07]
+	move.b	#0x40,d0
 l_503d:
-	move.b	#0x40,(a0)                      	| [$503d: ld   (hl),$40]
+	jbsr	osd_w_videoram                    	| [$503d: ld   (hl),$40]
 	add.w	d3,a0                            	| [$503f: add  hl,de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_503d                             	| [$5040: djnz $503D]
@@ -14989,7 +14986,7 @@ update_upper_status_bar_57C6:
 	rts
 	
 
-	jbsr	ldi_video                               	| [$57cc: ldi]
+	                               	| [$57cc: ldi]
 	                               	| [$57ce: ldi]					
 	                               	| [$57d0: ldi]					
 	                               	| [$57d2: ldi]					
@@ -15031,7 +15028,7 @@ update_upper_status_bar_57C6:
 	                               	| [$57fc: ldi]
 					
 	                               	| [$57fe: ldi]
-	                                    	    | [$5800: ret]
+	                                | [$5800: ret]
 
 display_nb_lives_5801:
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$5801: ld   a,(copy_of_dip_switches_3_8250)]
@@ -15043,14 +15040,17 @@ display_nb_lives_5801:
 	jeq	l_581a                             	| [$580f: jr   z,$581A]
 	jmi	l_581a                             	| [$5811: jp   m,$581A]
 	move.b	d0,d1                           	| [$5814: ld   b,a]
+	st	d0
 l_5815:
-	move.b	#0xFF,(a0)+                      	| [$5815: ld   (hl),$FF]
-												| [$5817: inc  hl]
+	jbsr	osd_w_videoram                      	| [$5815: ld   (hl),$FF]
+	addq	#1,a0											| [$5817: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_5815                             	| [$5818: djnz $5815]
 l_581a:
-	move.b	#0x33,(a0)                      	| [$581a: ld   (hl),$33]
+	move.b	#0x33,d0                      	| [$581a: ld   (hl),$33]
+	jbsr	osd_w_videoram
 	rts                                    	| [$581c: ret]
+	
 no_hit_dsw_set_581d:
 	lea	no_hit_string_5827,a0                     	| [$581d: ld   hl,no_hit_string_5827]
 	lea	l_C7A1(a6),a1                      	| [$5820: ld   de,$C7A1]
@@ -18413,11 +18413,6 @@ title_and_insert_coin_sequence_715F:
 	jne	goto_next_screen_2940                             	| [$716b: jp   nz,$2940]
 	jbsr	reload_8bit_timer_26C2           	| [$716e: call reload_8bit_timer_26C2]
 title_screen_loop_7171:
-	* this loop is not regulated by vblank, so it's
-	* extremely fast. We have to slow it down or else
-	* the title screen won't show
-	jbsr	regulate_speed
-	
 	jbsr	title_animation_7261              	| [$7171: call $7261]
 	jbsr	protection_check_7400              	| [$7174: call $7400]
 	tst.b	nb_credits_80A2(a6)          	| [$7177: ld   a,(nb_credits_80A2)]
