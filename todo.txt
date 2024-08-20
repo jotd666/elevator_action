@@ -47,14 +47,15 @@ l_7503
 
 TODO:
 
-- render sprites
+- adjust MAME/amiga screenshots at start (with grappling)
+- render sprites wrong locations
 - mockup elevator colums reuse scroll letter code
 
 ISSUES:
 
 - player I score: 10000 at start!!
 - locks up at startup
-- mainloop seems too slow
+
 
 scroll:
 

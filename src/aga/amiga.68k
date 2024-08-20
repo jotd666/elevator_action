@@ -2819,7 +2819,7 @@ title_sprite_colors:
 	
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
 
- 	.word	beampos,0xFFFE
+
     .long    -2					
 	.ascii	"ENDCPLST"
 
@@ -2870,25 +2870,15 @@ panel_end_tiles_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 	
 	* pal limit
-    .word  0xFFDF,0xFFFE       | PAL wait
-post_pal_copper_rows:
-	.set    beampos,0x0001
-	.rept	0x15
-	* room for 3 color registers to change dynamically each line
-	.word	0x1FE,0
-	.word	0x1FE,0
-	.word	0x1FE,0
-	.set    beampos,beampos+0x100
-	.word	beampos,0xFFFE
-	.endr
+    .word  0xFFCF,0xFFFE       | PAL wait
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
-	.word	color,0
+
 	
     *.word  0x1401,0xFFFE		| wait more lines to set to black (big holes!)
 	
     *.word   0x1C01,0xFFFE
 	
- 	.word	beampos,0xFFFE
+ 	*.word	beampos,0xFFFE
     .long    -2					
 	.ascii	"ENDCPLST"
 
