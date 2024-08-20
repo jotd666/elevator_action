@@ -797,6 +797,7 @@ osd_update_sprites:
 
 
 really_update_sprites:
+	lea		sprite_ram_d100,a0
 	bsr		update_bobs
 
 	rts
@@ -810,9 +811,10 @@ is_game_playing:
 
 	
 
+* drawing order is a bit strange. The last sprite has to be moved at the start of the list.
+* if ((which >= 0x10) && (which <= 0x17)) no sprites!
 
 update_bobs:
-
 	move.l	bob_previous_drawed_sprites(pc),a4
 	lea		_custom,a5
 	
@@ -849,9 +851,14 @@ update_bobs:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
-	
+	and.b	#0x3F,d2
+*int color = 2 * ((m_colorbank[1] >> 4) & 0x03) + ((m_spriteram[offs + 2] >> 2) & 0x01);
+*int flip_x = m_spriteram[offs + 2] & 0x01;
+*int flip_y = m_spriteram[ offs + 2] & 0x02;
 
-*	btst.b	#6,(TARGET_SPRITE_ATTRIBUTES,a0)
+* alt color:  #2,(TARGET_SPRITE_ATTRIBUTES,a0)
+* flipy:  #1,(TARGET_SPRITE_ATTRIBUTES,a0)
+*	btst.b	#1,(TARGET_SPRITE_ATTRIBUTES,a0)
 *	beq.b	0f
 *	add.w	#(NB_BOBS_PLANES+1)*4+6,a0
 *0:
