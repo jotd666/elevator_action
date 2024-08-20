@@ -21,7 +21,7 @@ PREVIOUS_SPRITE_SIZE = 8
 BORDERBLANK = 1
 
 SPRITE_X_CORRECTION = 0
-SPRITE_Y_CORRECTION = 0
+SPRITE_Y_CORRECTION = -14
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 0
 
@@ -1369,7 +1369,7 @@ platform_init:
 
  	*         VVHH
     move.w #0x1C81,diwstrt(a5)
-    move.w #0x3089+8,diwstop(a5)
+    move.w #0x2889+8,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -1668,7 +1668,7 @@ set_playfield_bitplanes:
     moveq #NB_PLAYFIELD_PLANES-1,d1
 	moveq	#0,d0
 	move.b	main_scroll_value(pc),d0
-	add.w	#60,d0			| offset
+	add.w	#32,d0			| offset
 	and.w	#0xFF,d0		| wrap just in case
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 	move.w	(a0,d0.w*2),d0
@@ -2863,7 +2863,7 @@ intreq_block:
 	* non-black: we can set color 0 to light blue now
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
-	.word	0xF801,0xFFFE
+	.word	0xEC01,0xFFFE
 panel_end_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 panel_end_tiles_colors:
