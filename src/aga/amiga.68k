@@ -118,7 +118,14 @@ _STRUCT  | sprite_table
   _DS  _control_word_row_save            1<<(SPRITE_POWER_OF_2+1)      
   _DS  _end_word_row_save                1<<(SPRITE_POWER_OF_2+1)      
 
-
+.macro	GET_RAM_START_IN_A6	
+	.ifdef	RELEASE
+	lea		ram_buffer,a6
+	.else
+	move.l		ram_start_8000,a6
+	.endif
+	.endm
+	
 .macro	WAIT_BLIT
 	move.w	#0x8400,(dmacon,a5)		| blitter high priority
 wait\@:
@@ -653,11 +660,7 @@ _vblank:
 	move.w	#0x14,(intreq,a5)
 
 	* set base for RAM
-	.ifdef	RELEASE
-	lea		ram_buffer,a6
-	.else
-	move.l		ram_start_8000,a6
-	.endif
+	GET_RAM_START_IN_A6
 	btst	#2,d0
 	beq.b	2f
 	* mid-screen copper interrupt, must occur once every 5 times
@@ -803,7 +806,11 @@ really_update_sprites:
 	rts
 	
 is_game_playing:
-	moveq	#0,d0
+	movem.l	d0/a6,-(a7)
+	GET_RAM_START_IN_A6
+	move.b	game_in_play_flag_823B(a6),d0
+	not.b	d0
+	movem.l	(a7)+,d0/a6
 	rts
 	
 
@@ -860,7 +867,6 @@ update_bobs:
 * flipy:  #1,(TARGET_SPRITE_ATTRIBUTES,a0)
 *	btst.b	#1,(TARGET_SPRITE_ATTRIBUTES,a0)
 *	beq.b	0f
-*	add.w	#(NB_BOBS_PLANES+1)*4+6,a0
 *0:
 	move.l	(a4,d2.w*4),d4	| test pointer
 	jmi		2f			| legal but skipped
@@ -872,6 +878,12 @@ update_bobs:
 	.endif
 	bra.b	2f
 11:
+	move.b  (TARGET_SPRITE_ATTRIBUTES,a0),d3
+	btst	#0,d3
+	jeq		0f
+	add.w	#(NB_PLAYFIELD_PLANES+1)*4+6,d4
+0:
+
 	moveq	#0,d0
 	moveq	#0,d1
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
