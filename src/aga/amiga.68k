@@ -1077,8 +1077,11 @@ blit_planes_any_internal_cookie_cut:
 	add.w	d6,d6
 	add.w	d6,d6
 	move.l	(a4,d6.w),d7
+	move.l	(a4,d6.w),d6
 	.else
 	move.l	(a4,d6.w*4),d7
+	lea		cookie_cut_mask_blit_table(pc),a4
+	move.l	(a4,d6.w*4),d6
 	.endif
 3:   
     add.w   d0,d1
@@ -1098,14 +1101,15 @@ blit_planes_any_internal_cookie_cut:
     lsr.w   #1,d2
     add.w   d2,d4       | blit height
     * always the same settings (ATM)
-
+	moveq	#0,d2
+	
     * now just wait for blitter ready to write all registers
 	WAIT_BLIT
     
     * blitter registers set
 
-	clr.w bltamod(a5)		|A modulo=bytes to skip between lines
-	clr.w bltbmod(a5)		|B modulo=bytes to skip between lines
+	move.w d2,bltamod(a5)		|A modulo=bytes to skip between lines
+	move.w d2,bltbmod(a5)		|B modulo=bytes to skip between lines
 	move.l d7,bltcon0(a5)	| sets con0 and con1: full cookie cut 2 sources & 1 mask
 	
     move.w  d0,bltcmod(a5)	|C modulo
@@ -1143,10 +1147,8 @@ start_process_1_plane:
 	bra.b	61f
 60:
 	* source is 0: just apply mask (less bandwidth lost) and change bltcon
-	move.l	#0x0BCA0000,d1
-	or.l	d6,d1
-	move.l	d1,bltcon0(a5)	| sets con0 and con1: C-A->D cookie cut, B fixed
- 	clr.w	bltbdat(a5)	|B word is zero
+	move.l	d6,bltcon0(a5)	| sets con0 and con1: C-A->D cookie cut, B fixed
+ 	move.w	d2,bltbdat(a5)	|B word is zero
 	rts
 61:
 	* non-zero: set data source & bltcon
@@ -1164,6 +1166,8 @@ start_process_1_plane:
 	.endm
 	
 	GEN_MINTERM_TABLE	cookie_cut_blit,0x0FCA0000
+	GEN_MINTERM_TABLE	cookie_cut_mask_blit,0x0BCA0000
+
 * 2 words: first shift (as bplcon value), then
 * offset in bytes
 
