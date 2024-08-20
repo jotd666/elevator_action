@@ -381,7 +381,7 @@ character_tables:
     for i,tile in enumerate(bob_list):
         f.write("\t.long\t")
         if tile:
-            f.write(f"bob_planes_{i}")
+            f.write(f"bob_info_{i}")
         else:
             f.write("0")
 
@@ -389,8 +389,10 @@ character_tables:
 
     for i,tile in enumerate(bob_list):
         if tile:
-            f.write(f"bob_planes_{i}:\n")
-            for p in tile:
+            f.write(f"bob_info_{i}:\n")
+            for i,p in enumerate(tile):
+                if i%(len(tile)//2) == 0:
+                    f.write("\t.word\t16,4,0\n") # TODO optimize later (shots, small characters)
                 f.write("\t.long\t")
                 if p==-1:
                     f.write("0")

@@ -15,7 +15,7 @@
 AttnFlags = 0x128
 AFB_68010 = 0
 AFB_68020 = 1
-NO68020 = 0
+
 
 PREVIOUS_SPRITE_SIZE = 8
 BORDERBLANK = 1
@@ -29,7 +29,7 @@ PANEL_Y_GAP = 208
 Y_MAX = 260
 
 BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
-BASE_BPLCON2_VALUE = 0x0044
+BASE_BPLCON2_VALUE = 0x0000
 SCREEN_ADDRESS = 0xC400
 
 
@@ -839,11 +839,10 @@ update_bobs:
 12:
 	dbf		d7,1b
 	
-	
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
-	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
+	*add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
 	* code = 0 and clut = 0 => disabled ?? to check
@@ -851,17 +850,12 @@ update_bobs:
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
 	
-	moveq	#0,d1
-	moveq	#0,d3
-	moveq	#0,d0
 
-	move.w	d2,d4
-	lsl.w	#3,d4		| left+right
-	btst.b	#6,(TARGET_SPRITE_ATTRIBUTES,a0)
-	beq.b	0f
-	addq	#4,d4		| right bob
-0:
-	move.l	(a4,d4.w),d4	| test pointer
+*	btst.b	#6,(TARGET_SPRITE_ATTRIBUTES,a0)
+*	beq.b	0f
+*	add.w	#(NB_BOBS_PLANES+1)*4+6,a0
+*0:
+	move.l	(a4,d2.w*4),d4	| test pointer
 	jmi		2f			| legal but skipped
 	bne.b	11f
 	.ifndef	RELEASE
@@ -871,9 +865,12 @@ update_bobs:
 	.endif
 	bra.b	2f
 11:
+	moveq	#0,d0
+	moveq	#0,d1
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
 	beq.b	2f			| Y set to 0: not shown
 	not.b	d1
+	
 	
 	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
 	.ifne	SPRITE_Y_CORRECTION
@@ -887,19 +884,16 @@ update_bobs:
 	* todo yflip
 	and.b	#0x0F,d3	| get attributes
 
-	* < D2: sprite code & flags
 	
 	move.l	a0,-(a7)
 	move.l	d4,a0
-	move.l	(8,a0,d3.w),d4	| bitplane pointer list
-	move.w	(a0)+,d3		| height
+	move.w	(a0)+,d4		| height
 	move.w	(a0)+,d5		| width
 	add.w	(a0)+,d1		| add offset to Y
-	addq	#2,a0			| reserved
+	* A0 points on the first bitplane of the bob
 
 	move.l		fg_drawed_screen_ptr(pc),a1
 	* D0 and D1 are already set
-	move.l	d4,a0	| plane list (+ mask)
 	move.l	(NB_PLAYFIELD_PLANES*4,a0),d2
 	beq.b	2f		| mask is zero: blank tile => skip
 	move.l	d2,a3
@@ -908,11 +902,10 @@ update_bobs:
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
 	move.w	d5,(a6)+			| store width
-	move.w	d3,(a6)+			| store height
+	move.w	d4,(a6)+			| store height
 	
-	move.w	d5,d2			| width
+	move.w	d5,d2			| width in bytes, 4 for 16 pixels+shift
 	moveq	#0,d5			| Y-offset
-	move.w	d3,d4			| height
 	moveq	#NB_PLAYFIELD_PLANES,d3		| 4 planes
 	bsr		blit_planes_any_internal_cookie_cut
 	move.l	(a7)+,a0
@@ -970,7 +963,7 @@ clear_fg_planes_any_blitter_internal:
     beq.b   2f				| zero X optimization
     lsr.w   #3,d0
     add.w   d0,d1
-
+	bclr	#0,d1
 2:   
     add.w   d1,a1       | plane position (always even)
 
@@ -1074,22 +1067,19 @@ blit_planes_any_internal_cookie_cut:
     move.w  (a4,d1.w*2),d1	| y times 40
 	.endif
 2:
-	move.w	d5,-(a7)
-	moveq	#0,d5
-    move.w  #0x0fca,d5    | B+C-A->D cookie cut   
-	swap	d5
-    move    d0,d6
-    beq.b   4f
-    lsr.w   #3,d0
-	*bclr	#0,d0
+	lea		cookie_cut_blit_table(pc),a4
+	
+    move.w  d0,d6
+    lsr.w   #3,d0			| X displacement in bytes
+	*bclr	#0,d0			| no need, it will be even
     and.w   #0xF,d6
-	beq.b	3f
-    lsl.l   #8,d6
-    lsl.l   #4,d6
-    or.w    d6,d5            | add shift to mask (bltcon1)
-    swap    d6
-    clr.w   d6
-    or.l    d6,d5            | add shift
+	.ifdef	NO68020
+	add.w	d6,d6
+	add.w	d6,d6
+	move.l	(a4,d6.w),d7
+	.else
+	move.l	(a4,d6.w*4),d7
+	.endif
 3:   
     add.w   d0,d1
 4:
@@ -1116,9 +1106,7 @@ blit_planes_any_internal_cookie_cut:
 
 	clr.w bltamod(a5)		|A modulo=bytes to skip between lines
 	clr.w bltbmod(a5)		|B modulo=bytes to skip between lines
-	move.l d5,bltcon0(a5)	| sets con0 and con1: full cookie cut 2 sources & 1 mask
-	move.l	d5,d7			| save bltcon
-	move.w	(a7)+,d5
+	move.l d7,bltcon0(a5)	| sets con0 and con1: full cookie cut 2 sources & 1 mask
 	
     move.w  d0,bltcmod(a5)	|C modulo
     move.w  d0,bltdmod(a5)	|D modulo
