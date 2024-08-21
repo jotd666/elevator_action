@@ -607,18 +607,34 @@ tv:
 	lea 	tvg,a1
 	lea		videoram_layer_1_C400(a6),a0
 	move.w	#0xBFF,d1
-	move.w	#0x3FF,d1
-	move.w	#0xBFF,d1
+	add.w #0x800,a0
+	add.w #0x800,a1
+	move.w	#0x2FF,d1
 0:
 	move.b	(a1)+,d0
-	jbsr	osd_w_videoram
+	*jbsr	osd_w_videoram
 	addq	#1,a0
 	dbf		d1,0b
+	
+	
+	lea		videoram_layer_1_C400+0x806(a6),a0
+	move.b	#0x3f,d0
+	jbsr	osd_w_videoram
+*	addq	#1,a0
+*	move.b	#0x37,d0
+*	jbsr	osd_w_videoram
+*	addq	#1,a0
+*	move.b  #0x3f,d0
+*	jbsr	osd_w_videoram
+*	addq	#1,a0
+*	move.b  #0x00,d0
+*	jbsr	osd_w_videoram
+*	addq	#1,a0
 	
 	moveq	#7,d1
 	move.w	#0x20,d0
 0:
-	jbsr	osd_set_column_scroll
+	*jbsr	osd_set_column_scroll
 	dbf	d1,0b
 
 	lea		sprite_mockup,a0

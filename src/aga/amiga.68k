@@ -17,6 +17,7 @@ AFB_68010 = 0
 AFB_68020 = 1
 
 
+
 PREVIOUS_SPRITE_SIZE = 8
 BORDERBLANK = 1
 
@@ -89,9 +90,10 @@ NB_BYTES_PER_SPRITE_ROW = 1<<SPRITE_POWER_OF_2
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
+SPRITE_DISPLAYED_HEIGHT = 240
 SPRITE_HEIGHT = NB_LINES*2
-* sprite band: 64 bit * 2 planes * 2*screen size
-SPRITE_SIZE = NB_BYTES_PER_SPRITE_ROW*2*SPRITE_HEIGHT
+* sprite band: 64 bit * 2 planes * 2*screen size + control words
+SPRITE_SIZE = NB_BYTES_PER_SPRITE_ROW*(2*SPRITE_HEIGHT+2)
 
 SPRITE_STRUCT_SIZE = 1<<(SPRITE_POWER_OF_2+3)
 
@@ -1549,15 +1551,6 @@ osd_disable_interrupts:
 	
 
 
-* < D4: sprite properties
-*     Y code+attrs clut X
-* > D0,D1: X,Y.B
-* > D5: clut index
-* > D6: sprite index + attributes
-* 
-decode_sprite_data:
-
-	rts
 
 osd_set_gfx_bank:
 	movem.l	d0-a6,-(a7)
@@ -1755,6 +1748,7 @@ osd_set_column_scroll:
 	* now compute where the control word / end word will be
 	* depending on scroll value
 	move.l	(_chip_data,a2),a3
+	
 	lsl.w	#SPRITE_POWER_OF_2+1,d0	| times 16 for fmode=3
 	add.w	d0,a3
 	move.l	a3,(_saved_control_word_address,a2)
@@ -1770,18 +1764,24 @@ osd_set_column_scroll:
 
 	
 	* now compute the control word
-	moveq	#0,d1		| Y
 	move.w	d2,d0		| X
 	lsl.w	#4,d0		| column times 16 (2 chars per column)
 	add.w	d3,d0		| add X offset
 
 
-	lea	HW_SpriteYTable_NB_LINES,a1
-	bsr		store_sprite_pos
+	bsr		store_column_sprite_pos
 	
 	move.w	d0,(NB_BYTES_PER_SPRITE_ROW,a3)   | fmode=3
 	swap	d0
 	move.w	d0,(a3)
+	moveq	#0,d0
+	* clear remaining data
+	move.w	d0,(2,a3)
+	move.w	d0,(NB_BYTES_PER_SPRITE_ROW+2,a3)
+	.ifeq	SPRITE_FMODE-3
+	move.l	d0,(4,a3)
+	move.l	d0,(NB_BYTES_PER_SPRITE_ROW+4,a3)
+	.endif
 	
 	* mark sprite columns (debug), d2 is the column
 	*lea		 pattern_debug_table(pc),A1
@@ -1912,12 +1912,15 @@ update_title_letters:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
 	jra		update_sprite_bitmap
+	
 update_game_elevators:
 	* updating sprite data
 	sub.w	#0x2,d0		| min X elevator (first elevator first col)
 	jcs		0f
 	cmp.w	#0x1D-2,d0	| max X elevator (7th elevator last col.)
 	jcc		0f
+	
+	*jbsr	osd_break
 	* 0 <= D0 < 27
 	* compute sprite Y offset: x bytes per row, starting at x
 	addq	#1,d1		| skip control words row
@@ -1938,19 +1941,18 @@ update_sprite_bitmap:
 	lea		sprite_table,a2
 	add.w	d0,a2		| select proper sprite structure
 	move.l	(_chip_data,a2),a2		| sprite data
-	add.w	#NB_BYTES_PER_SPRITE_ROW*2,a2		| skip control word
+	add.w	#NB_BYTES_PER_SPRITE_ROW*2,a2		| skip control word (done twice???)
 	add.w	d1,a2		| add X/Y offset
 	
-	tst.b	d2
+	lsl.w	#2,d2
 	jeq		5f		| code 0: clear sprite area
 	* copy character data into sprite
 	move.l	(8,a0),a0		| third set: elevators/letters
-	move.l	(a0,d2.w*4),d0
+	move.l	(a0,d2.w),d0
 	jeq		1f		| 0: not registered: clear
 	* sprites are only 4 colors, palette is so only 2 first planes
 	* can contain data
 	move.l	d0,a3
-	move.w	#1,d4
 
 	move.l	(a3)+,d0
 	jne		2f
@@ -2018,8 +2020,21 @@ update_bg_tile_game:
 	add.w	d1,a1
 	
 end_update_bg_tile:
-	move.l	(a0,d2.w*4),d0
+	tst.b	d2
 	jeq		11f		| 0: clear
+	move.l	(a0,d2.w*4),d0
+	.ifndef	RELEASE
+	jne		12f
+	add.w	#0xC400,d7
+	lea		title_tile_not_registered_error,a0
+	tst.b	current_gfx_bank
+	jeq		111f
+	lea		game_tile_not_registered_error,a0	
+111:
+	jbsr	osd_break
+	jra		11f
+12:
+	.endif
 	
 	* just copy
 	move.l	d0,a2
@@ -2122,10 +2137,8 @@ end_update_playfield_tile:
 
 	
 * < d0.w: x
-* < d1.w: y
-* < a1: sprite pos table (depending on height)
 * > d0.L: control word
-store_sprite_pos:
+store_column_sprite_pos:
     move.l  a0,-(a7)
 
     lea	HW_SpriteXTable(pc),a0
@@ -2134,17 +2147,21 @@ store_sprite_pos:
     add.w	d0,d0
     add.w	d0,d0
     move.l	(a0,d0.w),d0
-	move.w	d1,-(a7)
-    add.w	d1,d1
-    add.w	d1,d1
-    or.l	(a1,d1.w),d0
-	move.w	(a7)+,d1
 	.else
     move.l	(a0,d0.w*4),d0
-    or.l	(a1,d1.w*4),d0	
-	.endif
+	.endif 
+	
+    or.l	y_pos(pc),d0
+
     move.l  (a7)+,a0
     rts
+
+
+* Y start = 0, Y end = 240
+	.set	ys,0x1c
+	.set	ye,ys+SPRITE_DISPLAYED_HEIGHT
+y_pos:
+    .byte  ys&255, 0, ye&255, ((ys>>6)&4)+((ye>>7)&2)
 	
 HW_SpriteXTable:
 	.set	reptn,0
@@ -2166,7 +2183,6 @@ HW_SpriteYTable_\height:
 	.endm
 
 
-	DEF_HW_SPRITE_Y_TABLE	NB_LINES
 
 
 	
@@ -2573,6 +2589,10 @@ read_args_string_end:
 
 write_videoram_out_of_range_error:
 	.asciz	"write videoram out of range"
+game_tile_not_registered_error:
+	.asciz	"game tile (in D2) not registered"
+title_tile_not_registered_error:
+	.asciz	"title tile (in D2) not registered"
 	
 	.align	2
 	.endif
@@ -2840,6 +2860,9 @@ title_sprite_colors:
 game_copperlist:
 	* all sprites have the same palette no need to specify odd or even
 	* on color bank 1
+	
+	DECL_COLOR_BANK	0
+	.word	color,0xF00
 	DECL_COLOR_BANK	1
 	* black color sprites
 	DECL_COLORS	0,32

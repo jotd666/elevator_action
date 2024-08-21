@@ -47,8 +47,13 @@ l_7503
 
 TODO:
 
-- render sprites wrong locations
-- mockup elevator colums reuse scroll letter code <=====
+- render sprites: don't render sprites on the hard right (parasite/wrong
+  plus useless as nothing sane is drawn here)
+- sprites: pattern issue??
+  0000 FFE7 0000 0018 0000 FFE7 0000 0018
+  wrong start sprite selected (2 should be 1)
+  
+
 
 ISSUES:
 

@@ -58,6 +58,8 @@ def create_layer(tileset,address):
     for addr in range(address,address+0x400):
         c = contents[addr-0x8000]
         if c:
+            if layer_number==3:
+                print(c,hex(addr))
             used_tiles.add(c)
             img = tileset[c]
             layer_1.paste(img,(current_x,current_y))
@@ -108,23 +110,24 @@ if True:
 
     all_layers.save("in_game_layers.png")
 
-with open(os.path.join(this_dir,"ram_title"),"rb") as f:
-    contents = f.read()
+if False:
+    with open(os.path.join(this_dir,"ram_title"),"rb") as f:
+        contents = f.read()
 
-title_layer = []
-title_used_tiles = []
+    title_layer = []
+    title_used_tiles = []
 
-for i in range(0,2):
-    tileset = load_tileset(f"tiles_{i}.png",False,side)
-    ut,layer = create_layer(tileset,0xC400+(0x400*i))
+    for i in range(0,2):
+        tileset = load_tileset(f"tiles_{i}.png",False,side)
+        ut,layer = create_layer(tileset,0xC400+(0x400*i))
+        title_layer.append(layer)
+        title_used_tiles.append(ut)
+        layer.save(f"title_layer_{i+1}.png")
+
+    ut,layer = create_layer(tileset,0xCC00)
     title_layer.append(layer)
+    layer.save(f"title_layer_3.png")
     title_used_tiles.append(ut)
-    layer.save(f"title_layer_{i+1}.png")
 
-ut,layer = create_layer(tileset,0xCC00)
-title_layer.append(layer)
-layer.save(f"title_layer_3.png")
-title_used_tiles.append(ut)
-
-all_layers = Image.new("RGBA",layer.size)
+    all_layers = Image.new("RGBA",layer.size)
 
