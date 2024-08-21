@@ -1756,7 +1756,7 @@ osd_set_column_scroll:
 	lea		(_control_word_row_save,a2),a4
 	COPY_SPRITE_ROW
 	move.l	(_saved_control_word_address,a2),a3
-	add.w	#(NB_LINES+1)*(_end_word_row_save-_control_word_row_save),a3
+	add.w	#(SPRITE_DISPLAYED_HEIGHT+1)*(_end_word_row_save-_control_word_row_save),a3
 	move.l	a3,(_saved_end_word_address,a2)
 	lea		(_end_word_row_save,a2),a4
 	COPY_SPRITE_ROW
@@ -2861,8 +2861,6 @@ game_copperlist:
 	* all sprites have the same palette no need to specify odd or even
 	* on color bank 1
 	
-	DECL_COLOR_BANK	0
-	.word	color,0xF00
 	DECL_COLOR_BANK	1
 	* black color sprites
 	DECL_COLORS	0,32
@@ -2876,12 +2874,12 @@ panel_tiles_colors:
 	DECL_COLOR_BANK	1
 game_sprite_colors:
 	DECL_COLORS	0,32
+game_sprites:
+	DECL_SPRITES
 	* let the panel display!
 	.word	0x3C01,0xFFFE
 playfield_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-game_sprites:
-	DECL_SPRITES
 	* default color bank
 	DECL_COLOR_BANK	0
 playfield_tiles_colors:

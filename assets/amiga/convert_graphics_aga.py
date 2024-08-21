@@ -26,6 +26,35 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 ##;    map(0xd100, 0xd1ff).ram().share(m_spriteram);
 ##;    map(0xd200, 0xd27f).mirror(0x0080).ram().share(m_paletteram);
 
+varying_palettes = [
+# level 1
+((255,176,218),  # pink, inside elevator
+(37,176,176),  # blue, walls
+(37,117,117),  # elevator background (around wire)
+),
+# level 2
+((167,242,242),  # cyan, inside elevator
+(207,231,207),   # pink, walls
+(242,207,242)),  # light pink, elevator background
+# level 3
+((242,131,167),  # pink, inside elevator
+(207,242,242),   # light gray, walls
+(0,167,207)),  # light blue, elevator background
+# level 4
+((35,207,207),  # pink, inside elevator
+(131,131,131),   # light gray, walls
+(1,1,1)),  # black, elevator background
+]
+
+elevator_colors = [(176,176,176),(217,217,217),(37,37,37),(255,176,218)]
+varying_palettes_rgb4 = [
+[bitplanelib.to_rgb4_color(x) for x in lst] for lst in varying_palettes]
+
+#varying_palettes_rgb4_str = [
+#["{:03x}".format(bitplanelib.to_rgb4_color(x)) for x in lst] for lst in varying_palettes]
+
+# 167,131,242: color behind the doors (when doors are opening)
+
 side = 8
 transparent = (254,0,254)  # not possible to get it in the game
 dummy = (1,1,1)  # not possible to get it in the game
