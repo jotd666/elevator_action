@@ -66,7 +66,7 @@ def dump_asm_bytes(*args,**kwargs):
 # just the ones that are used
 # lists below may be incomplete
 used_game_tiles = {"status":set(range(16,52)) | {1} | set(range(0xE0,0x100)),
-  "building":set(range(64,94)) | {148,157,
+  "building":set(range(64,94)) | set(range(0xB0,0xBB)) | {148,157,
   160,
   166,
   167,
@@ -74,7 +74,7 @@ used_game_tiles = {"status":set(range(16,52)) | {1} | set(range(0xE0,0x100)),
   169,
   197,
   0x98,0x99,0x9A,0x9B,0x9C,0xFD,0xFE,  # grappling hook
-
+  0x81,0x8C,0x88,0x89,0x85,0x8A,0x8B,
   },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
 used_title_tiles = {"status":set(range(16,50)) | {6,7,8,51},

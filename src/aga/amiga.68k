@@ -1722,6 +1722,8 @@ osd_set_column_scroll:
 	tst.b	current_gfx_bank
 	jeq		10f
 	lea		game_sprites+2,a0
+	add.w	#0x40,d0
+	and.w	#0xFF,d0
 	move.w	#16,d3
 	moveq	#5,d4
 	jra		10f
@@ -1731,7 +1733,6 @@ osd_set_column_scroll:
     
 
 10:
-	* title column scroll
 	* Y start is always the same, but sprite is more or
 	* less clipped depending on D0 value
 

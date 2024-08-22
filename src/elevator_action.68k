@@ -598,7 +598,7 @@ execute_dynamic_ram_code_8246:
 	rts
 	
 *TITLE_MOCKUP=  1
-*GAME_MOCKUP = 1
+GAME_MOCKUP = 1
 
 elevator_reset:
 	.ifdef	TITLE_MOCKUP
@@ -635,27 +635,26 @@ tv:
 	jbsr	osd_set_main_scroll 
 	lea 	tvg,a1
 	lea		videoram_layer_1_C400(a6),a0
-	move.w	#0x7FF,d1
+	lea		level_end(pc),a1
+	move.w	#0xBFF,d1
 0:
 	move.b	(a1)+,d0
 	jbsr	osd_w_videoram
 	addq	#1,a0
 	dbf		d1,0b
 	
-	lea		start_elev_mockup(pc),a1
-	move.w	#0x3FF,d1
-0:
-	move.b	(a1)+,d0
-	jbsr	osd_w_videoram
-	addq	#1,a0
-	dbf		d1,0b
+	move.b	#0xA0,D0
+	jbsr	osd_set_main_scroll
 	
-	moveq	#7,d1
-	move.w	#0x20,d0
-	jbsr	osd_break
+	moveq	#0,d1
+	lea		level_end+0xC42,a0
 0:
+	move.b	(a0),d0
+	addq	#1,a0
 	jbsr	osd_set_column_scroll
-	dbf	d1,0b
+	addq	#1,d1
+	cmp		#7,d1
+	bne		0b
 
 	lea		sprite_mockup,a0
 	lea		sprite_ram_d100,a1
@@ -671,6 +670,9 @@ tv:
 tvg:
 	.include	"game_video.s"
 
+level_end:
+	.include	"level_end.s"
+	
 start_elev_mockup:
 .byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0000
 .byte  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00	|	0x0010
@@ -1451,9 +1453,9 @@ update_main_scrolling_03C3:
 * set main scroll value for main view (building stories)
 	move.b	main_scroll_value_8005(a6),d0   	| [$03c8: ld   a,(main_scroll_value_8005)]
 	        	| [$03cb: ld   hl,main_scroll_columns_D020]
-	                        	| [$03ce: ld   b,$20]
+	            | [$03ce: ld   b,$20]
 	* all columns set to the same value, different scroll values not used for building
-	jbsr   osd_set_main_scroll                        	| [$03d0: ld   (hl),a]
+	jbsr   osd_set_main_scroll        | [$03d0: ld   (hl),a]
 										| [$03d1: inc  hl]
 	                           	| [...]
 	                             	| [$03d2: djnz $03D0]

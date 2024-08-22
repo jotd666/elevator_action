@@ -44,6 +44,7 @@ l_74cf
 l_74e5
 l_7503
 
+0xd000, 0xd05f
 
 TODO:
 
@@ -55,7 +56,8 @@ TODO:
 ISSUES:
 
 - player I score: 10000 at start!!
-- elevators not properly initialized: debug 2b21 with traces?
+- calibrate elevator with snapshot MAME
+- NTSC version
 
 
 scroll:
@@ -63,7 +65,6 @@ scroll:
 
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
-merge with Galaga more optimized blit routines (blit/clear)
 DK check issues????
 
 
