@@ -46,6 +46,7 @@ l_7503
 
 0xd000, 0xd05f
 
+
 TODO:
 
 - render sprites: don't render sprites on the hard right (parasite/wrong
@@ -55,9 +56,12 @@ TODO:
 
 ISSUES:
 
-- player I score: 10000 at start!!
-- calibrate elevator with snapshot MAME
-- NTSC version
+- player I score: 10000 at start!! debug around l_5895
+- 0xD04E-50: 3 columns of central elevator: debug values
+- calibrate elevator with snapshot MAME: not easy. Is elevator
+  drawn twice properly???
+- column sprites: off by 1 (double skip of control word)
+- NTSC version: remove brick wall, bottom status higher
 
 
 scroll:
