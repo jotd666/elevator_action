@@ -54,8 +54,7 @@ sprite_ram_d100:
 	
 regscopy:
 	.skip	56
-log_ptr:
-	dc.l	0x100
+
 
 invincible_flag:
 	.byte	0
@@ -64,6 +63,11 @@ infinite_lives_flag:
 infinite_time_flag:
 	.byte	0
 
+	.ifndef	RELEASE
+log_ptr:
+	.long	0x100
+	.endif
+	
 highscore_needs_saving_flag:
 	.byte	0
 vb_ticks_count:
