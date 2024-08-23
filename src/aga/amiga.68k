@@ -1722,7 +1722,6 @@ osd_set_column_scroll:
 	tst.b	current_gfx_bank
 	jeq		10f
 	lea		game_sprites+2,a0
-	add.w	#0x40,d0
 	and.w	#0xFF,d0
 	move.w	#16,d3
 	moveq	#5,d4
@@ -2894,6 +2893,7 @@ bob_colors:
 	
 	DECL_COLOR_BANK	0
 
+	.ifeq	1
 	* elevator dynamic color (0-6)
 	.word	0x4451,0xFFFE
 	.word	color,0xF00
@@ -2905,8 +2905,8 @@ bob_colors:
 	.word	color,0xF
 	.word	0x44F1,0xFFFE
 	.word	color,0x0
+	.endif
 	
-	* TODO: each line has 7 slots to change 1 sprite color
 	.word	0x8001,0xFFFE
 intreq_block:
 	* now wait some lines until we're sure bitmap only contains

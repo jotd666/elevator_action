@@ -598,7 +598,7 @@ execute_dynamic_ram_code_8246:
 	rts
 	
 *TITLE_MOCKUP=  1
-GAME_MOCKUP = 1
+*GAME_MOCKUP = 1
 
 elevator_reset:
 	.ifdef	TITLE_MOCKUP
@@ -8685,6 +8685,7 @@ return_a_times_48_in_hl_2D84:
 	lsl.w	#3,d5                            	| [$2d8b: add  hl,hl]
 	                            	| [$2d8c: add  hl,hl]
                             	| [$2d8d: add  hl,hl]
+	LOAD_D5D6_FROM_D5_16
 	rts                                    	| [$2d8e: ret]
 
 l_2d8f:

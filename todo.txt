@@ -56,8 +56,11 @@ TODO:
 
 ISSUES:
 
+- player disappears instead of entering elevator at start
+- once entered in mainloop: game over!!
+
 - player I score: 10000 at start!! debug around l_5895
-- 0xD04E-50: 3 columns of central elevator: debug values
+- 0xD04E-50: 3 columns of central elevator: debug values: set_elevator_column_scroll_6163
 - calibrate elevator with snapshot MAME: not easy. Is elevator
   drawn twice properly???
 - column sprites: off by 1 (double skip of control word)
