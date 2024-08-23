@@ -2890,7 +2890,22 @@ bob_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 	* now set color bank 1
 	DECL_COLOR_BANK	1
+	
+	
+	DECL_COLOR_BANK	0
 
+	* elevator dynamic color (0-6)
+	.word	0x4451,0xFFFE
+	.word	color,0xF00
+	.word	0x4463,0xFFFE
+	.word	color,0xF0
+	.word	0x4473,0xFFFE
+	.word	color,0x0
+	.word	0x4479,0xFFFE
+	.word	color,0xF
+	.word	0x44F1,0xFFFE
+	.word	color,0x0
+	
 	* TODO: each line has 7 slots to change 1 sprite color
 	.word	0x8001,0xFFFE
 intreq_block:

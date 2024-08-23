@@ -598,7 +598,7 @@ execute_dynamic_ram_code_8246:
 	rts
 	
 *TITLE_MOCKUP=  1
-*GAME_MOCKUP = 1
+GAME_MOCKUP = 1
 
 elevator_reset:
 	.ifdef	TITLE_MOCKUP

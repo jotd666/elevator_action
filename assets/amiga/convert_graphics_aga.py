@@ -46,7 +46,14 @@ varying_palettes = [
 (1,1,1)),  # black, elevator background
 ]
 
-elevator_colors = [(176,176,176),(217,217,217),(37,37,37),(255,176,218)]
+for v in varying_palettes:
+    inside_elevator = v[0]   # dynamic => change to existing gray, change on Y
+    outside_elevator = v[2]  # background => change to black, change background on Y
+    elevator_shade = (37,37,37)
+    elevator_cable_gray = (176,176,176)
+    elevator_floor_gray = (218,218,218)
+
+
 varying_palettes_rgb4 = [
 [bitplanelib.to_rgb4_color(x) for x in lst] for lst in varying_palettes]
 
