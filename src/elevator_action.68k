@@ -15434,7 +15434,7 @@ l_59ef:
 	rts                                    	| [$59f3: ret]
 
 l_59f4:
-	move.b	player_structure_851A+character_situation_06,d0	| [$59f4: ld   a,(player_structure_851A+character_situation_06)]
+	move.b	player_structure_851A+character_situation_06(a6),d0	| [$59f4: ld   a,(player_structure_851A+character_situation_06)]
 	                             	| [$59f7: or   a]
 	jeq	l_59ff                             	| [$59f8: jp   z,$59FF]
 	jbsr	player_hit_by_enemy_shots_test_5A0D	| [$59fb: call player_hit_by_enemy_shots_test_5A0D]
@@ -15544,7 +15544,7 @@ spawn_enemy_5A86:
 	move.b	d0,(0x0f,a2)                    	| [$5a91: ld   (ix+$0f),a]
 	move.b	d0,(0x10,a2)                    	| [$5a94: ld   (ix+$10),a]
 	move.b	#CS_IN_ROOM_05,(character_situation_06,a2)	| [$5a97: ld   (ix+character_situation_06),CS_IN_ROOM_05]
-	move.b	#0xFF,(0x04,a2)                 	| [$5a9b: ld   (ix+$04),$FF]
+	st.b	(0x04,a2)                 	| [$5a9b: ld   (ix+$04),$FF]
 	move.b	#0xE0,(0x0a,a2)                 	| [$5a9f: ld   (ix+$0a),$E0]
 	addq.b	#1,(a0)                         	| [$5aa3: inc  (hl)]
 	move.b	instant_difficulty_level_8374(a6),d0	| [$5aa4: ld   a,(instant_difficulty_level_8374)]
@@ -15555,7 +15555,7 @@ must_spawn_enemy_5AAB:
 	movem.w	d1/d2,-(sp)                    	| [$5aab: push bc]
 	move.b	(current_floor_07,a2),d0        	| [$5aac: ld   a,(ix+current_floor_07)]
 * probably never happens, floor range is 0-31
-	tst.b	d0                             	| [$5aaf: or   a]
+											| [$5aaf: or   a]
 	jcs	l_5adc                             	| [$5ab0: jp   c,$5ADC]
 	cmp.b	#0x1F,d0                         	| [$5ab3: cp   $1F]
 	jcc	l_5adc                             	| [$5ab5: jp   nc,$5ADC]
@@ -15574,6 +15574,7 @@ l_5abc:
  	move.b	(a0),d0                         	| [$5acf: ld   a,(hl)]
 	move.b	(spawning_door_08,a2),d1        	| [$5ad0: ld   b,(ix+spawning_door_08)]
 l_5ad3:
+	.warning 	"optimize this rol"
 	rol.b	#1,d0                            	| [$5ad3: rlca]
 	subq.b	#1,d1                           	| [$5ad4: dec  b]
 	jpl	l_5ad3                             	| [$5ad5: jp   p,$5AD3]
@@ -15608,7 +15609,7 @@ special_enemy_cheat_20th_floor_5ADF:
 
 l_5afc:
 	move.b	level_timer_16bit_8231(a6),d0   	| [$5afc: ld   a,(level_timer_16bit_8231)]
-	and.b	#0xFF,d0                         	| [$5aff: and  $FF]
+	                         	| [$5aff: and  $FF]   useless!!
 	cmp.b	#0xFF,d0                         	| [$5b01: cp   $FF]
 	jne	l_5b16                             	| [$5b03: jr   nz,$5B16]
 	lea	l_854D(a6),a0                      	| [$5b05: ld   hl,$854D]
@@ -15634,7 +15635,7 @@ l_5b25:
 	move.b	#0x04,d1                        	| [$5b28: ld   b,$04]
 l_5b2a:
 	move.b	(a0),d0                         	| [$5b2a: ld   a,(hl)]
-	tst.b	d0                             	| [$5b2b: or   a]
+	                             	| [$5b2b: or   a]
 	jeq	l_5b2f                             	| [$5b2c: jr   z,$5B2F]
 	subq.b	#1,(a0)                         	| [$5b2e: dec  (hl)]
 l_5b2f:
@@ -15801,11 +15802,11 @@ l_5c35:
 
 l_5c44:
 	move.b	l_802D(a6),d0                   	| [$5c44: ld   a,($802D)]
-	add.b	d0,d0                            	| [$5c47: add  a,a]
-	add.b	d0,d0                            	| [$5c48: add  a,a]
-	add.b	d0,d0                            	| [$5c49: add  a,a]
-	add.b	d0,d0                            	| [$5c4a: add  a,a]
-	add.b	d0,d0                            	| [$5c4b: add  a,a] times 32
+	lsl.b	#5,d0                            	| [$5c47: add  a,a]
+												| [$5c48: add  a,a]
+												| [$5c49: add  a,a]
+												| [$5c4a: add  a,a]
+												| [$5c4b: add  a,a] times 32
 	add.b	#0x38,d0                         	| [$5c4c: add  a,$38]
 	move.b	d0,(0x1a,a2)                    	| [$5c4e: ld   (ix+$1a),a]
 	rts                                    	| [$5c51: ret]
