@@ -856,6 +856,9 @@ update_bobs:
 	*add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
+	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
+	cmp.b	#230,d0
+	jcc		2f 						| don't draw sprites too far right
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
@@ -1924,7 +1927,6 @@ update_game_elevators:
 
 	* 0 <= D0 < 27
 	* compute sprite Y offset: x bytes per row, starting at x
-	addq	#1,d1		| skip control words row
 	lsl.w	#SPRITE_POWER_OF_2+1,d1
 	* compute sprite X offset: 1 byte per pixel, 32 pixels per elevator
 	move.w	d0,d3
@@ -2696,6 +2698,33 @@ fg_screen_data_1:
 fg_screen_data_2:
 	.long	0
 	
+	* macro to define a color0 change, synced with elevator shafts
+	* thanks to ross for finetuning this part, it was tricky!
+	.macro	 DYN_COLOR_ROW	hpos
+    .word    0x35+(\hpos<<8),0xFFFE
+    .word    color,0
+    .word    0x55+(\hpos<<8),0xFFFE
+    .word    color,0
+    .word    0x01fe,0xFFFE
+    .word    color,0
+    .word    0x75+(\hpos<<8),0xFFFE
+    .word    color,0
+    .word    0x01fe,0xFFFE
+    .word    color,0
+    .word    0x95+(\hpos<<8),0xFFFE
+    .word    color,0
+    .word    0x01fe,0xFFFE
+    .word    color,0
+    .word    0xB5+(\hpos<<8),0xFFFE
+    .word    color,0
+ 	.word	 0x01+((\hpos+1)<<8),0xFFFE
+  	.endm
+	
+	* just to get the size of the color row
+color_row_start:
+	DYN_COLOR_ROW	0
+color_row_end:
+
 bg_screen_ptr:
 	.long	0
 panel_screen_ptr:
@@ -2857,6 +2886,7 @@ title_sprite_colors:
 	.ascii	"ENDCPLST"
 
 
+	
 	* main copperlist
 game_copperlist:
 	* all sprites have the same palette no need to specify odd or even
@@ -2877,6 +2907,7 @@ game_sprite_colors:
 	DECL_COLORS	0,32
 game_sprites:
 	DECL_SPRITES
+
 	* let the panel display!
 	.word	0x3C01,0xFFFE
 playfield_bitplanes:
@@ -2888,30 +2919,31 @@ playfield_tiles_colors:
 bob_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
 	* now set color bank 1
-	DECL_COLOR_BANK	1
-	
-	
+
 	DECL_COLOR_BANK	0
 
-	.ifeq	1
-	* elevator dynamic color (0-6)
-	.word	0x4451,0xFFFE
-	.word	color,0xF00
-	.word	0x4463,0xFFFE
-	.word	color,0xF0
-	.word	0x4473,0xFFFE
-	.word	color,0x0
-	.word	0x4479,0xFFFE
-	.word	color,0xF
-	.word	0x44F1,0xFFFE
-	.word	color,0x0
-	.endif
+upper_dynamic_row_00:
+	.set	dynrow,0x3D
+	.rept	0x43
+	* elevator dynamic color per row (0-6)
+	DYN_COLOR_ROW	dynrow
+	.set		dynrow,dynrow+1
+	.endr
 	
+	* mid-line wait & extra interrupt
 	.word	0x8001,0xFFFE
 intreq_block:
 	* now wait some lines until we're sure bitmap only contains
 	* non-black: we can set color 0 to light blue now
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
+
+upper_dynamic_row_43:
+	.rept	0x43+40
+	* elevator dynamic color per row (0-6)
+	DYN_COLOR_ROW	dynrow
+	.set		dynrow,dynrow+1
+	.endr
+	
 
 	.word	0xEC01,0xFFFE
 panel_end_bitplanes:

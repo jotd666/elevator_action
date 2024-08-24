@@ -84,7 +84,7 @@ used_game_tiles = {"status":set(range(16,52)) | {1} | set(range(0xE0,0x100)),
   0x81,0x8C,0x88,0x89,0x85,0x8A,0x8B,
   },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
-used_title_tiles = {"status":set(range(16,50)) | {6,7,8,51},
+used_title_tiles = {"status":set(range(16,50)) | {6,7,8,51,0x4F},
 "big_letters": set(range(80,128)) | {64,0x4B,0x4C,0x4D,0x4E,0x94} | set(range(158,256)),
 "elevator_letters": set(range(128,181)) | {248, 249}}
 

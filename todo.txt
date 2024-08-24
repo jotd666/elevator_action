@@ -49,24 +49,19 @@ l_7503
 
 TODO:
 
-- render sprites: don't render sprites on the hard right (parasite/wrong
-  plus useless as nothing sane is drawn here)
-  
-
+- elevator dynamic colors
 
 ISSUES:
 
 - player disappears instead of entering elevator at start
-- once entered in mainloop: game over!!
-
+- main scrolling not updated, enemies/player not drawn at all
 - player I score: 10000 at start!! debug around l_5895
-- 0xD04E-50: 3 columns of central elevator: debug values: set_elevator_column_scroll_6163
-- calibrate elevator with snapshot MAME: not easy. Is elevator
-  drawn twice properly???
-- column sprites: off by 1 (double skip of control word)
+- Is elevator drawn twice properly???
 - NTSC version: remove brick wall, bottom status higher
 
-
+	jeq	player_died_75fe                             	| [$75c2: jp  
+	=> called when playing at once:
+	
 scroll:
 
 
