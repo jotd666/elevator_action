@@ -50,6 +50,7 @@ l_7503
 TODO:
 
 - elevator dynamic colors
+- remove some colors (pink/green) in elevator tiles to black
 
 ISSUES:
 
@@ -57,6 +58,8 @@ ISSUES:
 - main scrolling not updated, enemies/player not drawn at all
 - player I score: 10000 at start!! debug around l_5895
 - Is elevator drawn twice properly???
+- monitor player params (x, floor, y offset) at each mainloop PC
+
 - NTSC version: remove brick wall, bottom status higher
 
 	jeq	player_died_75fe                             	| [$75c2: jp  

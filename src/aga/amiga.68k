@@ -1437,11 +1437,11 @@ platform_init:
 	
 	dbf		d0,0b
 	
-	* TEMP set title sprite colors, 8 times the same 4 colors
+	* set title sprite colors, 8 times the same 4 colors
 	lea		game_sprite_colors+2,a1
 	moveq	#7,d0
 0:
-	move.l		level_palettes,a0
+	move.l		elevators_palette,a0
 	moveq	#3,d1
 1:
 	move.w	(a0)+,d2
