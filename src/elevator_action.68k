@@ -1073,7 +1073,7 @@ l_01a0:
 	addq.b	#1,d0                           	| [$01a3: inc  a]
 	jne	l_01b4                             	| [$01a4: jp   nz,$01B4]
 	move.b	scroll_related_value_8002(a6),d0                   	| [$01a7: ld   a,($8002)]
-	tst.b	d0                             	| [$01aa: or   a]
+											| [$01aa: or   a]
 	jne	l_01b4                             	| [$01ab: jp   nz,$01B4]
 	move.b	l_8001(a6),d0                   	| [$01ae: ld   a,($8001)]
 	subq.b	#0x02,d0                        	| [$01b1: sub  $02]
@@ -1145,8 +1145,9 @@ l_0215:
 	move.w	#0xDF,d3                          	| [$021c: ld   de,$00DF]
 	add.w	d3,d5                            	| [$021f: add  hl,de]
 	STORE_WORD	d5,l_8028(a6)            	| [$0220: ld   ($8028),hl]
+	LOAD_D1D2_FROM_D1_16
 	move.b	main_scroll_value_8005(a6),d0   	| [$0223: ld   a,(main_scroll_value_8005)]
-	sub.b	d2,d0                            	| [$0226: sub  c]
+	sub.b	d2,d0                            	| [$0226: sub  c] c = d1 lsb
 	move.b	d0,main_scroll_value_8005(a6)   	| [$0227: ld   (main_scroll_value_8005),a]
 	move.b	d2,d0                           	| [$022a: ld   a,c]
 												| [$022b: or   a]
@@ -1155,15 +1156,15 @@ l_0215:
 0:
 	jpl	l_027d                             	| [$022d: jp   p,$027D]
 	lea	l_8001(a6),a0                      	| [$0230: ld   hl,$8001]
-	                         	| [$0233: ld   a,(hl)]
-	add.b	d2,(a0)                            	| [$0234: add  a,c]
-	                         	| [$0235: ld   (hl),a]
+	move.b	(a0),d0                         	| [$0233: ld   a,(hl)] we need D0 for later!
+												| [$0234: add  a,c]
+	add.b	d2,(a0)                         	| [$0235: ld   (hl),a]
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$0236: ret  c] [...]
 0:
 	add.b	#0x08,d0                         	| [$0237: add  a,$08]
 	move.b	d0,(a0)+                         	| [$0239: ld   (hl),a]
-	                           	| [$023a: inc  hl]
+	                           	               | [$023a: inc  hl]
 	subq.b	#1,(a0)                         	| [$023b: dec  (hl)]
 	jpl	l_0244                             	| [$023c: jp   p,$0244]
 	move.b	#0x05,(a0)                      	| [$023f: ld   (hl),$05]
@@ -7857,23 +7858,24 @@ table_280E:
 	.byte	0x06
 	.align	2
 l_28b3:
-	jbsr	l_28c0                            	| [$28b3: call $28C0]
+	jbsr	update_scroll_value_from_viewed_floor_28c0                            	| [$28b3: call $28C0]
 	jbsr	l_28de                            	| [$28b6: call $28DE]
 	jbsr	l_2921                            	| [$28b9: call $2921]
 	jbsr	l_16bd                            	| [$28bc: call $16BD]
 	rts                                    	| [$28bf: ret]
 
-l_28c0:
+update_scroll_value_from_viewed_floor_28c0:
 	lea	l_8001(a6),a0                      	| [$28c0: ld   hl,$8001]
-	clr.b	(a0)                             	| [$28c3: ld   (hl),$00]
-	addq.w	#1,a0                           	| [$28c5: inc  hl]
-	clr.b	(a0)                             	| [$28c6: ld   (hl),$00]
-	addq.w	#1,a0                           	| [$28c8: inc  hl]
+	clr.b	(a0)+                           | [$28c3: ld   (hl),$00] clear $8002
+	                           	| [$28c5: inc  hl]
+	clr.b	(a0)+                           | [$28c6: ld   (hl),$00] clear $8003
+	                           	| [$28c8: inc  hl]
 	move.b	viewed_floor_802C(a6),d0                   	| [$28c9: ld   a,($802C)]
 	move.b	d0,d1                           	| [$28cc: ld   b,a]
 	subq.b	#2,d0                           	| [$28cd: dec  a] * 2
-	move.b	d0,(a0)                         	| [$28cf: ld   (hl),a]
+	move.b	d0,(a0)                         	| [$28cf: ld   (hl),a] update $8003: floor-2
 	addq.w	#2,a0                           	| [$28d0: inc  hl] * 2
+	* compute floor => scroll value
 	move.b	#0x1F,d0                        	| [$28d2: ld   a,$1F]
 	sub.b	d1,d0                            	| [$28d4: sub  b]
 	move.b	d0,d1                           	| [$28d5: ld   b,a]
@@ -7883,7 +7885,7 @@ l_28c0:
 												| [$28d9: add  a,a]
 												| [$28da: add  a,a]
 												| [$28db: add  a,a]
-	move.b	d0,(a0)                         	| [$28dc: ld   (hl),a]
+	move.b	d0,(a0)                         	| [$28dc: ld   (hl),a] set scroll value
 	rts                                    	| [$28dd: ret]
 
 l_28de:
@@ -16310,8 +16312,11 @@ l_5f83:
 	rts                                    	| [$5f92: ret  z] [...]
 0:
 	jra	l_604b                             	| [$5f93: jp   $604B]
+	
+	
 l_5f96:
-	LOAD_WORD	l_8028(a6),d5             	| [$5f96: ld   hl,($8028)]	move.w	d5,d1                           	| [$5f99: ld   b,h]
+	LOAD_WORD	l_8028(a6),d5             	| [$5f96: ld   hl,($8028)]
+	move.w	d5,d1                           	| [$5f99: ld   b,h]
 	move.b	(0x05,a2),d3    	| [$5f9b: ld   d,(ix+character_delta_x_05)]
 	move.b	(0x04,a2),d4                    	| [$5f9e: ld   e,(ix+$04)]
 	LOAD_D3_16_FROM_D3D4
@@ -16319,6 +16324,7 @@ l_5f96:
 	sub.w	d3,d5                            	| [$5fa2: sbc  hl,de]
  	jcc	l_5fa9                             	| [$5fa4: jp   nc,$5FA9]
 	move.w	d1,d3                           	| [$5fa7: ld   d,b]
+												| [$5fa8: ld   e,c]
 l_5fa9:
 	LOAD_D3D4_FROM_D3_16
 	move.b	(0x01,a2),d5    	| [$5fa9: ld   h,(ix+character_x_right_01)]
