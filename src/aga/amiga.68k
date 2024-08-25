@@ -2331,11 +2331,11 @@ osd_read_inputs_1:
 0:
 	tst.b	(0x4F,a0)		| "<-" key
 	beq.b	0f
-	bclr	#1,d0
+	bclr	#0,d0
 0:
 	tst.b	(0x4E,a0)		| "->" key
 	beq.b	0f
-	bclr	#0,d0
+	bclr	#1,d0
 0:
 	tst.b	(0x63,a0)		| "ctrl" key
 	beq.b	0f

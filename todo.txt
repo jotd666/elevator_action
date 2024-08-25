@@ -54,16 +54,14 @@ TODO:
 
 ISSUES:
 
-- player disappears instead of entering elevator at start
-- main scrolling not updated, enemies/player not drawn at all
+- start animation going too far (killed frames appear) LOG_REGS remain check!!!
+- enemies not spawning
+- update too fast!!!
 - player I score: 10000 at start!! debug around l_5895
-- Is elevator drawn twice properly???
-- monitor player params (x, floor, y offset) at each mainloop PC
+- controls: left/right/jump ok, add shoot & up/down
+
 
 - NTSC version: remove brick wall, bottom status higher
-
-	jeq	player_died_75fe                             	| [$75c2: jp  
-	=> called when playing at once:
 	
 scroll:
 
