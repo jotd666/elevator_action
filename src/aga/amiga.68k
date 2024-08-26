@@ -2323,11 +2323,11 @@ osd_read_inputs_1:
 
 	tst.b	(0x4C,a0)		| "up" key
 	beq.b	0f
-	bclr	#3,d0
+	bclr	#BIT_UP,d0
 0:
 	tst.b	(0x4D,a0)		| "down" key
 	beq.b	0f
-	bclr	#2,d0
+	bclr	#BIT_DOWN,d0
 0:
 	tst.b	(0x4F,a0)		| "<-" key
 	beq.b	0f
@@ -2335,45 +2335,42 @@ osd_read_inputs_1:
 0:
 	tst.b	(0x4E,a0)		| "->" key
 	beq.b	0f
-	bclr	#1,d0
+	bclr	#BIT_RIGHT,d0
 0:
 	tst.b	(0x63,a0)		| "ctrl" key
 	beq.b	0f
-	bclr	#7,d0
+	bclr	#BIT_FIRE,d0
 0:
 	tst.b	(0x64,a0)		| left "alt" key
 	beq.b	0f
-	bclr	#5,d0
+	bclr	#BIT_JUMP,d0
 0:
 
 	* directions + fire
 	move.l	_joypad_state(pc),d1
 	btst	#JPB_BTN_UP,d1
 	beq.b	0f
-	bclr	#3,d0
-	btst	#0,control_flags+3
-	bne.b	0f
-	bclr	#5,d0		| only if up for jump set!
+	bclr	#BIT_UP,d0		| only if up for jump set!
 0:
 	btst	#JPB_BTN_DOWN,d1
 	beq.b	0f
-	bclr	#2,d0
+	bclr	#BIT_DOWN,d0
 0:
 	btst	#JPB_BTN_LEFT,d1
 	beq.b	0f
-	bclr	#1,d0
+	bclr	#0,d0
 0:
 	btst	#JPB_BTN_RIGHT,d1
 	beq.b	0f
-	bclr	#0,d0
+	bclr	#BIT_RIGHT,d0
 0:
 	btst	#JPB_BTN_RED,d1
 	beq.b	0f
-	bclr	#7,d0
+	bclr	#BIT_FIRE,d0
 0:
 	btst	#JPB_BTN_BLU,d1
 	beq.b	0f
-	bclr	#5,d0
+	bclr	#BIT_JUMP,d0
 0:
 
 	movem.l	(a7)+,a0/d1
@@ -2383,6 +2380,12 @@ BIT_INSERT_COIN_1 = 5
 BIT_INSERT_COIN_2 = 4
 BIT_START_1P = 6
 BIT_START_2P = 7
+BIT_LEFT = 0
+BIT_RIGHT = 1
+BIT_UP = 3
+BIT_DOWN = 2
+BIT_FIRE = 4
+BIT_JUMP = 5
 
 osd_read_inputs_1__:
 

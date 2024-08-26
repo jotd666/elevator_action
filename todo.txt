@@ -54,7 +54,10 @@ TODO:
 
 ISSUES:
 
+- scrolling not properly drawn after a whil
+- shoot: crash: wrong address
 - start animation going too far (killed frames appear) LOG_REGS remain check!!!
+  when accessing sprite_code_table_62E2
 - enemies not spawning
 - update too fast!!!
 - player I score: 10000 at start!! debug around l_5895
@@ -69,4 +72,4 @@ scroll:
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
 DK check issues????
-
+MsPac: floppy file??? re-upload

@@ -12294,31 +12294,40 @@ l_456c:
 	rts                                    	| [$457b: ret  nc] [...]
 0:
 l_457c:
-	lea	l_82FF(a6),a0                      	| [$457c: ld   hl,$82FF]
+	move.b	#0x82,d5                      	| [$457c: ld   hl,$82FF]
+	move.b	#0xFF,d6                      	| [$457c: ld   hl,$82FF]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$457f: ld   a,(current_enemy_index_85BA)]
 	add.b	d1,d0                            	| [$4582: add  a,b]
-	add.b	d0,d0                            	| [$4583: add  a,a]
-	add.b	d0,d0                            	| [$4584: add  a,a]
-	add.b	d0,d0                            	| [$4585: add  a,a]
+	lsl.b	#3,d0								| [$4583: add  a,a]
+												| [$4584: add  a,a]
+												| [$4585: add  a,a]
 	add.b	d6,d0                            	| [$4586: add  a,l]
 	move.b	d0,d6                           	| [$4587: ld   l,a]
 	move.b	d5,d0                           	| [$4588: ld   a,h]
 	move.b	#0x00,d7                        	| [$4589: adc  a,$00]
 	addx.b	d7,d0                           	| [$4589: adc  a,$00]
  	move.b	d0,d5                           	| [$458b: ld   h,a]
+	LOAD_D5_16_FROM_D5D6
+	bclr	#15,d5
+	lea		(a6,d5.w),a0
 	clr.b	(a0)                             	| [$458c: ld   (hl),$00]
 	addq.w	#3,a0                           	| [$458e: inc  hl] * 3
 
-	move.l	a2,-(sp)                        	| [$4591: push ix]
-	move.l	(sp)+,a1                        	| [$4593: pop  de]
-	movem.w	(sp)+,d3/d4                    	| [$4593: pop  de]
-	move.b	d4,(a0)                         	| [$4594: ld   (hl),e]
-	addq.w	#1,a0                           	| [$4595: inc  hl]
-	move.b	d3,(a0)                         	| [$4596: ld   (hl),d]
-	addq.w	#1,a0                           	| [$4597: inc  hl]
+	* encode ram pointer on character
+	move.l	a2,d3                        	| [$4591: push ix]
+	sub.l	a6,d3
+	bset	#15,d3							| add 0x8000
+										| [$4593: pop  de]
+									| [$4593: pop  de]
+	LOAD_D3D4_FROM_D3_16
+	move.b	d4,(a0)+                         	| [$4594: ld   (hl),e]
+	                           	| [$4595: inc  hl]
+	move.b	d3,(a0)+                         	| [$4596: ld   (hl),d]
+	                           	| [$4597: inc  hl]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$4598: ld   a,(current_enemy_index_85BA)]
 	move.b	d0,(a0)                         	| [$459b: ld   (hl),a]
 	rts                                    	| [$459c: ret]
+	
 l_459d:
 	LOAD_POINTER	ram_pointer_85BD(a6),a0             	| [$459d: ld   hl,($85BD)]
 	move.b	(a0),d0                         	| [$45a0: ld   a,(hl)]
@@ -13225,49 +13234,47 @@ l_4be7:
 	rts                                    	| [$4c09: ret]
 l_4c0a:
 	addq.b	#1,(0x02,a2)                    	| [$4c0a: inc  (ix+$02)]
-	jbsr	l_5054                            	| [$4c0d: call $5054]
+	jbsr	handle_shoot_5054                            	| [$4c0d: call $5054]
 	rts                                    	| [$4c10: ret]
 l_4c11:
 	move.b	#0xFB,(0x02,a2)                 	| [$4c11: ld   (ix+$02),$FB]
-	jbsr	l_5054                            	| [$4c15: call $5054]
+	jbsr	handle_shoot_5054                            	| [$4c15: call $5054]
 	move.b	#0x10,d1                        	| [$4c18: ld   b,$10]
 l_4c1a:
-	ILLEGAL
-	cmp.l	a1,a1
-	cmp.l	a1,a1
-	cmp.l	a1,a1
-	cmp.l	a1,a1
-	.warning  "debug this!!!"
-	movem.w	d1/d2,-(sp)                    	| [$4c1a: push bc]
-	move.b	l_82F4(a6),d0                   	| [$4c1b: ld   a,($82F4)]
-	LOAD_POINTER	l_82F2(a6),a0             	| [$4c1e: ld   hl,($82F2)]
-* WTF??????
-	eor.b	d6,d0                            	| [$4c21: xor  l]
-	sub.b	(a0),d0                          	| [$4c22: sub  (hl)]
-	move.b	d0,l_82F4(a6)                   	| [$4c23: ld   ($82F4),a]
-	addq.w	#1,a0                           	| [$4c26: inc  hl]
-	STORE_POINTER	a0,l_82F2(a6)            	| [$4c27: ld   ($82F2),hl]
-	move.w	#0x800A,d1                      	| [$4c2a: ld   bc,$800A]
-	add.w	d1,a0                            	| [$4c2d: add  hl,bc]
-      .warning   "review d1 computation above"
-	jcc	l_4c47                             	| [$4c2e: jr   nc,$4C47]
-	STORE_POINTER	a0,l_82F2(a6)            	| [$4c30: ld   ($82F2),hl]
-	lea	l_82F4(a6),a0                      	| [$4c33: ld   hl,$82F4]
-	move.b	table_7FF8,d0                       	| [$4c36: ld   a,($7FF8)]
-	                                    	| [$4c39: nop]
-	move.b	(a0),d7
-	eor.b	d7,d0                            	| [$4c3a: xor  (hl)]
-	move.b	d0,(a0)                         	| [$4c3b: ld   (hl),a]
-	jeq	l_4c47                             	| [$4c3c: jr   z,$4C47]
-	lea	l_82B1(a6),a0                      	| [$4c3e: ld   hl,$82B1]
-											| [$4c41: ld   b,$00]
-	move.w	#0x44,d2                        	| [$4c43: ld   c,$44]
-	add.w	d2,a0                            	| [$4c45: add  hl,bc]
-	move.b	d2,(a0)                         	| [$4c46: ld   (hl),c]
-l_4c47:
-	movem.w	(sp)+,d1/d2                    	| [$4c47: pop  bc]
-	subq.b	#1,d1                           	| [...]
-	jne	l_4c1a                             	| [$4c48: djnz $4C1A]
+	* this part is clearly a protection of sorts activated when player is shooting
+	* if something is not right it will set 82F5 (hidden with address computation)
+    * to $44... it never happens in the game, so I suppose this is bad... But I'm not
+    * even sure of this... we'll see...	
+	      	    | [$4c1a: push bc]
+	       	| [$4c1b: ld   a,($82F4)]
+	         	| [$4c1e: ld   hl,($82F2)]
+
+	        	| [$4c21: xor  l]
+	         	| [$4c22: sub  (hl)] here game reads the whole memory (ROM). Nuts!!
+	       	| [$4c23: ld   ($82F4),a]
+				| [$4c26: inc  hl]
+	        	| [$4c27: ld   ($82F2),hl]
+	       	| [$4c2a: ld   bc,$800A]
+	        	| [$4c2d: add  hl,bc]
+	      	| [$4c2e: jr   nc,$4C47]
+	        	| [$4c30: ld   ($82F2),hl]
+	      	| [$4c33: ld   hl,$82F4]
+	           	| [$4c36: ld   a,($7FF8)]
+	   	| [$4c39: nop]
+	
+	        	| [$4c3a: xor  (hl)]
+	       	| [$4c3b: ld   (hl),a]
+	      	| [$4c3c: jr   z,$4C47]
+	      	| [$4c3e: ld   hl,$82B1]
+			| [$4c41: ld   b,$00]
+	       	| [$4c43: ld   c,$44]
+	        	| [$4c45: add  hl,bc]
+	       	| [$4c46: ld   (hl),c]
+
+	      	| [$4c47: pop  bc]
+	       	| [...]
+	      	| [$4c48: djnz $4C1A]
+	* then non-weird code resumes...
 	LOAD_POINTER	ram_pointer_8336(a6),a0             	| [$4c4a: ld   hl,($8336)]
 	move.b	(a0),d0                         	| [$4c4d: ld   a,(hl)]
 	addq.b	#1,d0                           	| [$4c4e: inc  a]
@@ -13873,12 +13880,12 @@ erase_grappling_wire_5043:
 	jbsr	osd_w_videoram
 	rts                                    	| [$5053: ret]
 
-l_5054:
+handle_shoot_5054:
 	move.l	a2,-(sp)                        	| [$5054: push ix]
-	move.b	(0x05,a2),d4    	| [$5056: ld   e,(ix+character_delta_x_05)]
-	move.b	(0x06,a2),d3  	| [$5059: ld   d,(ix+character_situation_06)]
-	LOAD_D3D4_FROM_D3_16
-	* this is a ram address                  	| [$505c: push de]
+	move.b	(0x05,a2),d4    	| [$5056: ld   e,(ix+5)]
+	move.b	(0x06,a2),d3  	| [$5059: ld   d,(ix+6)]
+	LOAD_D3_16_FROM_D3D4
+	* this is a character address in RAM (ex: 851A) | [$505c: push de]
 	sub.w	#0x8000,d3
 	.ifndef		RELEASE
 	jcc		0f
@@ -13886,11 +13893,10 @@ l_5054:
 	cmp.b	d3,d3
 0:
 	.endif
-	move.l	a6,a2
-	add.w	d3,a2		| real RAM address on host space
+	lea	(a6,d3.w),a2	| real RAM address on host space
 	                   	| [$505c: push de]
 	                   	| [$505d: pop  ix]
-	move.b	(0x09,a2),d0                    	| [$505f: ld   a,(ix+$09)]
+	move.b	(enemy_state_09,a2),d0                    	| [$505f: ld   a,(ix+$09)]
 	cmp.b	#0x07,d0                         	| [$5062: cp   $07]
 	jeq	l_506b                             	| [$5064: jr   z,$506B]
 	cmp.b	#0x05,d0                         	| [$5066: cp   $05]
@@ -16719,8 +16725,8 @@ l_618a:
 	move.l	(sp)+,a0                        	| [$61b4: pop  hl]
 	move.b	d6,d1                           	| [$61b5: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BF(a6),a0             	| [$61b6: ld   hl,($85BF)]
- 	jbsr	update_object_coords_61f0           | [$61b9: call $61F0] update character body (when walking)
-	jbsr	update_object_coords_61f0           | [$61bc: call $61F0] update character head (when walking)
+ 	jbsr	update_character_graphic_properties_61f0           | [$61b9: call $61F0] update character body (when walking)
+	jbsr	update_character_graphic_properties_61f0           | [$61bc: call $61F0] update character head (when walking)
 	jbsr	l_629c                            	| [$61bf: call $629C]
 	rts                                    	| [$61c2: ret]
 l_61c3:
@@ -16749,37 +16755,35 @@ l_61e4:
 	add.w	d3,a0                            	| [$61ed: add  hl,de]
 	move.b	d0,(a0)                         	| [$61ee: ld   (hl),a]
 	rts                                    	| [$61ef: ret]
-	
-update_object_coords_61f0:
+
+* < A0: output buffer for graphic properties	
+* < A1: pointer on a table of properties for character
+* (tile code, etc...)
+
+update_character_graphic_properties_61f0:
 	move.b	(character_state_04,a2),d0                    	| [$61f0: ld   a,(ix+$04)]
-	LOG_REGS	61f3
 	move.b	d0,(a0)+                         	| [$61f3: ld   (hl),a]
 	                           	| [$61f4: inc  hl]
 	move.b	(a1)+,d0                         	| [$61f5: ld   a,(de)]
 	add.b	(character_x_00,a2),d0           	| [$61f6: add  a,(ix+character_x_00)]
-	LOG_REGS	61f9
 	move.b	d0,(a0)+                         	| [$61f9: ld   (hl),a]
 	                           	| [$61fa: inc  de]
 	                           	| [$61fb: inc  hl]
 	move.b	(a1)+,d0                         	| [$61fc: ld   a,(de)]
-	LOG_REGS	61fd
 	add.b	d1,d0                            	| [$61fd: add  a,b]
 	move.b	d0,(a0)+                         	| [$61fe: ld   (hl),a]
 	                           	| [$61ff: inc  de]
 	                           	| [$6200: inc  hl]
-	LOG_REGS	6201
 	move.b	d2,(a0)                         	| [$6201: ld   (hl),c]
 	move.b	(a1)+,d0                         	| [$6202: ld   a,(de)]
 	or.b	d2,d0                             	| [$6203: or   c]
 	move.b	d0,(a0)+                         	| [$6204: ld   (hl),a]
 	                           	| [$6205: inc  de]
 	                           	| [$6206: inc  hl]
-	LOG_REGS	6207
 	move.b	(a1)+,d0                         	| [$6207: ld   a,(de)]
 	move.b	d0,(a0)+                         	| [$6208: ld   (hl),a]
 	                           	| [$6209: inc  de]
 	                           	| [$620a: inc  hl]
-	LOG_REGS	620b
 	rts                                    	| [$620b: ret]
 
 l_620c:
@@ -16831,7 +16835,7 @@ l_6247:
 	lsl.w	#3,d5                            	| [$625e: add  hl,hl]
  	                            	| [$625f: add  hl,hl]
 	                            	| [$6260: add  hl,hl]
-	lea	table_62E2,a1                          	| [$6261: ld   de,$62E2]
+	lea	sprite_code_table_62E2,a1                          	| [$6261: ld   de,$62E2]
 	add.w	d5,a1                            	| [$6264: add  hl,de]
 												| [$6265: ex   de,hl]
 	clr.b	d2                               	| [$6266: ld   c,$00]
@@ -16931,7 +16935,7 @@ load_character_elevator_structure_62CE:
 	jbsr	exx                               	| [$62e0: exx]
 	rts                                    	| [$62e1: ret]
 
-table_62E2:
+sprite_code_table_62E2:
 	.byte	0xFB
 	.byte	0x00
 	.byte	0x00
@@ -17357,7 +17361,7 @@ handle_music_6500:
 
 	| [$6503: ld   a,($85C3)]
 	| [$6506: ld   c,a]
-	| [$6507: ld   a,(hl)]
+	| [$6507: ld   a,(hl)] protection?? $82F5 read at some point! if set to 0x44 this could go wrong!
 	| [$6508: xor  l]
 	| [$6509: add  a,c]
 	| [$650a: ld   ($85C3),a]
