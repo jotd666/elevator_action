@@ -1441,7 +1441,7 @@ platform_init:
 	lea		game_sprite_colors+2,a1
 	moveq	#7,d0
 0:
-	move.l		elevators_palette,a0
+	lea		elevators_palette,a0
 	moveq	#3,d1
 1:
 	move.w	(a0)+,d2
@@ -1937,6 +1937,17 @@ update_game_elevators:
 	* TODO: for elevators, we need to store positions of elevator
 	* pink area start so we can change colors dynamically
 	* there can be 2 elevators per column
+	
+	* "inside elevator" and "outside elevator, no cable" tiles are
+	* only 1 color, we have to handle this color dynamically so just
+	* blank it
+	cmp.b	#0x3B,d2
+	jeq		0f
+	cmp.b	#0x3f,d2
+	jeq		0f
+	jra		update_sprite_bitmap
+0:
+	MOVEQ	#0,d2		| clear tile!
 * < D0: sprite number
 * < D1: X/Y offset to apply to data
 update_sprite_bitmap:

@@ -168,7 +168,14 @@ title_playfield_palette = title_playfield_palette + (16-len(title_playfield_pale
 game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it) for i,layer_name in enumerate(game_layer_names)]
 
 # insert black color to elevator layer
-game_layer[2][0].insert(0,(0,0,0))
+elevators_palette = game_layer[2][0]
+
+elevators_palette.append((0,0,0))
+suppressed_elevator_colors = {(37, 117, 117),(255, 176, 218)}
+elevators_palette[:] = sorted(set(elevators_palette) - suppressed_elevator_colors)
+
+
+
 
 sprite_names = dict()
 
@@ -288,6 +295,11 @@ layer_bitmaps = {}
 
 nb_planes = 4
 
+elev_tiles = game_layer[2][1]
+# remove inside/outside elevator colors
+for c in [0x3A,0x3E,0X3C,0x3F,0x37,0x38,0x3B]:
+    bitplanelib.replace_color(elev_tiles[c],suppressed_elevator_colors,(0,0,0))
+
 
 for tn,tc in (["title",title_layer],["game",game_layer]):
 
@@ -382,7 +394,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("elevators_palette:\n")
-    bitplanelib.palette_dump(game_layer[2][0],f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+    bitplanelib.palette_dump(elevators_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
