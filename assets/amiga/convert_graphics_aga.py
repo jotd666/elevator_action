@@ -46,16 +46,12 @@ varying_palettes = [
 (1,1,1)),  # black, elevator background
 ]
 
-for v in varying_palettes:
-    inside_elevator = v[0]   # dynamic => change to existing gray, change on Y
-    outside_elevator = v[2]  # background => change to black, change background on Y
-    elevator_shade = (37,37,37)
-    elevator_cable_gray = (176,176,176)
-    elevator_floor_gray = (218,218,218)
 
 
 varying_palettes_rgb4 = [
 [bitplanelib.to_rgb4_color(x) for x in lst] for lst in varying_palettes]
+
+
 
 #varying_palettes_rgb4_str = [
 #["{:03x}".format(bitplanelib.to_rgb4_color(x)) for x in lst] for lst in varying_palettes]
@@ -73,18 +69,15 @@ def dump_asm_bytes(*args,**kwargs):
 # just the ones that are used
 # lists below may be incomplete
 used_game_tiles = {"status":set(range(16,52)) | {1} | set(range(0xE0,0x100)),
-  "building":set(range(64,94)) | set(range(0xB0,0xBB)) | {148,157,
-  160,
-  166,
-  167,
-  168,
-  169,
+  "building": set(range(0x40,0xC0))
+   | {148,
   197,
   0x98,0x99,0x9A,0x9B,0x9C,0xFD,0xFE,  # grappling hook
   0x81,0x8C,0x88,0x89,0x85,0x8A,0x8B,
+  0x90,0x91,0x6
   },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
-used_title_tiles = {"status":set(range(16,50)) | {6,7,8,51,0x4F},
+used_title_tiles = {"status":set(range(16,50)) | {4,5,6,7,8,51,0x4F},
 "big_letters": set(range(80,128)) | {64,0x4B,0x4C,0x4D,0x4E,0x94} | set(range(158,256)),
 "elevator_letters": set(range(128,181)) | {248, 249}}
 
@@ -396,6 +389,11 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("elevators_palette:\n")
     bitplanelib.palette_dump(elevators_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
+    f.write("elevators_dyn_colors:\n")
+    for v in varying_palettes_rgb4:
+        inside_elevator = v[0]   # dynamic => change to existing gray, change on Y
+        outside_elevator = v[2]  # background => change to black, change background on Y
+        f.write(f"\t.word\t0x{inside_elevator:04x},0x{outside_elevator:04x}\n")
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_tables\n")

@@ -1,11 +1,10 @@
 
 - AGA: 16+16 dual playfield
-- ECS: 16 colors
+- ECS: 16 colors, sprites for the 4 first elevators, then bobs
 
 reverse stuff:
 
 - when color changes (light shot)
-- shot positions / animation routines
 - colorbanks (D506/7)
 
 enemy A.I when is 51A7 calles?
@@ -25,12 +24,10 @@ finish replacing aggressivity field
 
   
 figure 8002 and 800E pointers? values?
-dig out problematic*.py script with d3/d4/a1, d5/d6/a0
 
 
 title_sequence_11F0: debug not reached????
 
-red doors position tables: l_278b
 
 0e9f called when??? reset charset???
 
@@ -49,23 +46,8 @@ l_7503
 
 TODO:
 
-- elevator dynamic colors
-- remove some colors (pink/green) in elevator tiles to black
+- elevator dynamic colors: in progress
 
-ISSUES:
-
-- scrolling not properly drawn after a whil
-- shoot: crash: wrong address
-- start animation going too far (killed frames appear) LOG_REGS remain check!!!
-  when accessing sprite_code_table_62E2
-- enemies not spawning
-- update too fast!!!
-- player I score: 10000 at start!! debug around l_5895
-- controls: left/right/jump ok, add shoot & up/down
-
-
-- NTSC version: remove brick wall, bottom status higher
-	
 elevator column scroll:
 - if brutal scroll change, just reset all colors to green for that elevator
 - when writing a elevator floor tile:
@@ -75,6 +57,21 @@ elevator column scroll:
     on 3a: draw 8 green + 1 pink (clipped)
     on 3e: draw 8 pink + 1 green (clipped)
   
+ISSUES:
+
+
+- start animation going too far (killed frames appear) LOG_REGS remain check!!!
+  when accessing sprite_code_table_62E2
+- enemies not spawning
+- update too fast!!!
+- player I score: 10000 at start!! debug around l_5895
+- red doors at all floors: red doors position tables: l_278b
+
+- buggy scrolling after a while (elevators & building!!)
+
+
+- NTSC version: remove brick wall, bottom status higher
+	
 
 
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
