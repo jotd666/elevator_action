@@ -4475,9 +4475,11 @@ l_1573:
 	move.b	d0,d3                           	| [$1576: ld   d,a]
 	addq.w	#1,a0                           	| [$1577: inc  hl]
 	move.b	(a0)+,d4                         	| [$1578: ld   e,(hl)] load DE as screen address of door to update
-	ILLEGAL  | screen address as dest!                           	| [$1579: inc  hl]
-	jbsr	ldi                               	| [$157a: ldi]
-	jbsr	ldi                               	| [$157c: ldi]
+	LOAD_D3_16_FROM_D3D4
+	lea		videoram_layer_1_C400-0xC400,a1
+	add.w	d3,a1
+	jbsr	ldi_video                               	| [$157a: ldi]
+	jbsr	ldi_video                               	| [$157c: ldi]
 	jra	l_1573                             	| [$157e: jp   $1573]
 
 l_1581:
@@ -8304,11 +8306,6 @@ l_2b18:
 	jne	l_2b18                             	| [$2b1b: djnz $2B18]
 	lea	l_83AD(a6),a2                      	| [$2b1d: ld   ix,$83AD] end of array?
 	move.b	#0x07,d2                        	| [$2b21: ld   c,$07]
-
-	* TEMP TEMP
-	.warning   "fixed random!!"
-	move.b 	#0x54,pseudo_random_seed_81D6+1(a6)
-	move.b	#0x70,pseudo_random_seed_81D6(a6)
 	
 l_2b23:
 	jbsr	l_2b7f                            	| [$2b23: call $2B7F] computes d3 & d4
