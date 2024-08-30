@@ -49,7 +49,6 @@ ISSUES:
 - sprite right clipping
 - start animation going too far (killed frames appear) LOG_REGS remain check!!!
   when accessing sprite_code_table_62E2
-- lamps all start broken
 - doors open: only red doors (special case to make with color attribute on doors)
 - buggy scrolling after a while (elevators & building!!): position at floor 20 (bottom of elevator)
   and save video ram compare vs MAME to see if it's graphic or transcode issue

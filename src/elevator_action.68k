@@ -1277,7 +1277,7 @@ l_02af:
 	jbsr	add_red_door_tiles_to_scroll_data_02ca                            	| [$02c2: call $02CA]
 	rts                                    	| [$02c5: ret]
 l_02c6:
-	jbsr	l_035f                            	| [$02c6: call $035F]
+	jbsr	display_broken_lamp_if_needed_035f                            	| [$02c6: call $035F]
 	rts                                    	| [$02c9: ret]
 
 * < D4: floor number 0-31 (horizon up or bottom depending on scroll direction)
@@ -1400,23 +1400,25 @@ l_0340:
 	jeq	l_02de                             	| [$0356: jp   z,$02DE]
 	lea	l_8022(a6),a0                      	| [$0359: ld   hl,$8022]
 	jra	l_02de                             	| [$035c: jp   $02DE]
-l_035f:
+
+display_broken_lamp_if_needed_035f:
+	moveq	#0,d0
 	move.b	d4,d0                           	| [$035f: ld   a,e]
 	sub.b	#0x08,d0                         	| [$0360: sub  $08]
-	move.b	d0,d4                           	| [$0362: ld   e,a]
+	move.w	d0,d4                           	| [$0362: ld   e,a]
 	cmp.b	#0x03,d0                         	| [$0363: cp   $03]
 	jcs	l_036b                             	| [$0365: jp   c,$036B]
 	cmp.b	#0x08,d0                         	| [$0368: cp   $08]
-	bcc.b	0f                               	| [...]
+	bcc.b	l_036b                               	| [...]
 	rts                                    	| [$036a: ret  c] [...]
-0:
 l_036b:
 	lea	l_81DA(a6),a0                      	| [$036b: ld   hl,$81DA]
-	add.w	d3,a0                            	| [$036e: add  hl,de]
+	add.w	d4,a0                            	| [$036e: add  hl,de]
 	move.b	(a0),d1                         	| [$036f: ld   b,(hl)]
-	move.b	d3,d0                           	| [$0370: ld   a,e]
+	move.b	d4,d0                           	| [$0370: ld   a,e]
+	* load broken lamp tile instead
 	move.b	#0x97,d0                        	| [$0373: ld   a,$97]
-	cmp.b	#0x0C,d3                         	| [$0371: cp   $0C] switched instructions, preserve flags!
+	cmp.b	#0x0C,d4                         	| [$0371: cp   $0C] switched instructions, preserve flags!
 	jeq	l_0380                             	| [$0375: jp   z,$0380]
 	btst.b	#0,d1                           	| [$0378: bit  0,b]
 	jne	l_0380                             	| [$037a: jp   nz,$0380]
@@ -9407,7 +9409,7 @@ unknown_enemy_handling_3164:
 	clr.b	d0                               	| [$3194: xor  a]
 	move.b	d0,l_82EC(a6)                   	| [$3195: ld   ($82EC),a]
 	move.b	game_in_play_flag_823B(a6),d0   	| [$3198: ld   a,(game_in_play_flag_823B)]
-	tst.b	d0                             	| [$319b: or   a]
+	                            	| [$319b: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$319c: ret  nz] [...]
 0:
@@ -9636,7 +9638,7 @@ enemy_vs_lamp_collision_32ED:
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$3311: ret  nc] [...]
 0:
-	jra	l_331b                             	| [$3312: jp   $331B]
+	jra	enemy_hit_by_lamp_331b                             	| [$3312: jp   $331B]
 l_3315:
 	add.b	#0x08,d0                         	| [$3315: add  a,$08]
 	cmp.b	(character_x_00,a2),d0           	| [$3317: cp   (ix+character_x_00)]
@@ -9644,12 +9646,12 @@ l_3315:
 	rts                                    	| [$331a: ret  c] [...]
 0:
 * enemy hit by falling lamp
-l_331b:
+enemy_hit_by_lamp_331b:
 	move.b	d0,l_8243(a6)                   	| [$331b: ld   ($8243),a]
 	move.b	(enemy_state_09,a2),d0          	| [$331e: ld   a,(ix+enemy_state_09)]
 	cmp.b	#0x05,d0                         	| [$3321: cp   $05]
 	bne.b	0f                               	| [...]
-	rts                                    	| [$3323: ret  z] already hit [...]
+	rts                                      	| [$3323: ret  z] already hit [...]
 0:
 	move.b	#0x05,(enemy_state_09,a2)       	| [$3324: ld   (ix+enemy_state_09),$05]
 	clr.b	(0x0a,a2)                        	| [$3328: ld   (ix+$0a),$00]
@@ -9658,8 +9660,8 @@ l_331b:
 	jbsr	play_sound_3656                   	| [$3331: call play_sound_3656]
 	clr.b	d0                               	| [$3334: xor  a]
 	move.b	d0,l_82EC(a6)                   	| [$3335: ld   ($82EC),a]
-	move.w	(sp)+,d0                        	| [$3338: pop  af]
-	rts                                    	| [$3339: ret]
+	addq.w	#4,a7	                        	| [$3338: pop  af] skip caller (lamp test for other enemies)
+	rts                                    	    | [$3339: ret]     and return to caller's caller
 
 l_333a:
 	move.b	l_823E(a6),d0                   	| [$333a: ld   a,($823E)]
@@ -9701,6 +9703,7 @@ l_3371:
 	lea	videoram_layer_2_C800(a6),a1       	| [$3376: ld   de,videoram_layer_2_C800]
 	add.l	a1,d5                            	| [$3379: add  hl,de]
 	move.l	d5,a0
+	* break the lamp (change to broken lamp tile)
 	move.b	#0x97,d0                      	| [$337a: ld   (hl),$97]
 	jbsr	osd_w_videoram
 	rts                                    	| [$337c: ret]
