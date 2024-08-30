@@ -20,35 +20,19 @@ end of mainloop
 76C0: CD E1 0B    call $0BE1
 76C3: CD A0 15    call $15A0
 
-finish replacing aggressivity field
-
   
 figure 8002 and 800E pointers? values?
 
 
-title_sequence_11F0: debug not reached????
-
 
 0e9f called when??? reset charset???
 
-
-boot sequence: simply (when game runs properly)
-
-title:
-reverse l_7334
-reverse 73A5
-l_74cf
-l_74e5
-l_7503
-
-0xd000, 0xd05f
 
 - player crushed by elevator: working!
 
 TODO:
 
 - elevator dynamic colors: in progress
-- test: enter in red door
 
 elevator column scroll:
 - if brutal scroll change, just reset all colors to green for that elevator
@@ -62,14 +46,11 @@ elevator column scroll:
    
 ISSUES:
 
-
+- sprite right clipping
 - start animation going too far (killed frames appear) LOG_REGS remain check!!!
   when accessing sprite_code_table_62E2
-- enemies not spawning
-- update too fast!!!
-- player I score: 10000 at start!! debug around l_5895
-- red doors at all floors: red doors position tables: l_278b
-
+- lamps all start broken
+- doors open: only red doors (special case to make with color attribute on doors)
 - buggy scrolling after a while (elevators & building!!): position at floor 20 (bottom of elevator)
   and save video ram compare vs MAME to see if it's graphic or transcode issue
 
@@ -81,4 +62,4 @@ ISSUES:
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
 DK check issues????
-MsPac: floppy file??? re-upload
+

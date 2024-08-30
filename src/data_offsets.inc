@@ -1,6 +1,6 @@
 l_8000 = 0x0000
 l_8001 = 0x0001
-scroll_related_value_8002 = 0x0002
+bottom_y_horizon_8002 = 0x0002
 l_8003 = 0x0003
 scroll_speed_8004 = 0x0004
 main_scroll_value_8005 = 0x0005
@@ -150,7 +150,7 @@ grappling_hook_tile_834b = 0x034b
 l_834C = 0x034c
 current_player_score_834D = 0x034d
 highest_score_8350 = 0x0350
-l_8353 = 0x0353
+upper_status_bar_shadow_8353 = 0x0353
 l_8358 = 0x0358
 l_8362 = 0x0362
 l_836C = 0x036c

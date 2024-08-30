@@ -1072,7 +1072,7 @@ l_01a0:
 	move.b	l_8003(a6),d0                   	| [$01a0: ld   a,($8003)]
 	addq.b	#1,d0                           	| [$01a3: inc  a]
 	jne	l_01b4                             	| [$01a4: jp   nz,$01B4]
-	move.b	scroll_related_value_8002(a6),d0                   	| [$01a7: ld   a,($8002)]
+	move.b	bottom_y_horizon_8002(a6),d0                   	| [$01a7: ld   a,($8002)]
 											| [$01aa: or   a]
 	jne	l_01b4                             	| [$01ab: jp   nz,$01B4]
 	move.b	l_8001(a6),d0                   	| [$01ae: ld   a,($8001)]
@@ -1251,54 +1251,54 @@ l_029c:
 	bne.b	0f                               	| [...]
 	rts                                    	| [$02a0: ret  z] [...]
 0:
-	LOAD_WORD	scroll_related_value_8002(a6),d5             	| [$02a1: ld   hl,($8002)]
-
+	LOAD_WORD	bottom_y_horizon_8002(a6),d5             	| [$02a1: ld   hl,($8002)]
+	* D5: XXYY: XX = current floor - 2 (bottom horizon), YY = fine position in-between floors
 	move.b	scroll_speed_8004(a6),d0        	| [$02a4: ld   a,(scroll_speed_8004)]
 	                             	| [$02a7: or   a]
 	jmi	l_02af                             	| [$02a8: jp   m,$02AF]
 	                           	| [$02ab: ld   a,h]
-	add.w	#0x0500,d5                        	| [$02ac: add  a,$05]
+	add.w	#0x0500,d5          | [$02ac: add  a,$05] current floor + 3 instead
 	                           	| [$02ae: ld   h,a]
 l_02af:
-	move.b	d5,d2                           	| [$02af: ld   c,l]
+	move.b	d5,d2                           	| [$02af: ld   c,l] save fine value
 	move.w	d5,d0                           	| [$02b0: ld   a,h]
-	rol.w	#8,d0
+	rol.w	#8,d0                               | horizon in term of floor number
 	cmp.b	#0x08,d0                         	| [$02b1: cp   $08]
 	jcs	l_0340                             	| [$02b3: jp   c,$0340]
 	cmp.b	#0x1F,d0                         	| [$02b6: cp   $1F]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$02b8: ret  nc] [...]
 0:
-	moveq	#0,d3                               	| [$02ba: ld   d,$00]
-	move.b	d0,d3                           	| [$02b9: ld   e,a]
+	moveq	#0,d4                               | [$02ba: ld   d,$00]
+	move.b	d0,d4                           	| [$02b9: ld   e,a]
 	move.b	d2,d0                           	| [$02bc: ld   a,c]
 	cmp.b	#0x05,d0                         	| [$02bd: cp   $05]
 	jeq	l_02c6                             	| [$02bf: jp   z,$02C6]
-	jbsr	l_02ca                            	| [$02c2: call $02CA]
+	jbsr	add_red_door_tiles_to_scroll_data_02ca                            	| [$02c2: call $02CA]
 	rts                                    	| [$02c5: ret]
 l_02c6:
 	jbsr	l_035f                            	| [$02c6: call $035F]
 	rts                                    	| [$02c9: ret]
 
-l_02ca:
+* < D4: floor number 0-31 (horizon up or bottom depending on scroll direction)
+add_red_door_tiles_to_scroll_data_02ca:
 	lea	red_door_position_array_8210(a6),a0	| [$02ca: ld   hl,red_door_position_array_8210]
-	add.w	d3,a0                            	| [$02cd: add  hl,de]
+	add.w	d4,a0                            	| [$02cd: add  hl,de]
 	move.b	(a0),d0                         	| [$02ce: ld   a,(hl)]
 	cmp.b	#0x08,d0                         	| [$02cf: cp   $08]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$02d1: ret  nc] [...]
 0:
+	jbsr	osd_break
 	lea	scroll_row_8008(a6),a0             	| [$02d2: ld   hl,scroll_row_8008]
 	move.b	d0,d1                           	| [$02d5: ld   b,a]
 	movem.w	d3/d4,-(sp)                    	| [$02d6: push de]
-	move.l	a1,-(sp)                        	| [$02d6: push de]
 	add.b	d0,d0                            	| [$02d7: add  a,a]
 	add.b	d1,d0                            	| [$02d8: add  a,b]
 	addq.b	#0x04,d0                        	| [$02d9: add  a,$04]
-	moveq	#0,d3
-	move.b	d0,d3                           	| [$02db: ld   e,a]
-	add.w	d3,a0                            	| [$02dc: add  hl,de]
-	move.l	(sp)+,a1                        	| [$02dd: pop  de]
+	moveq	#0,d4
+	move.b	d0,d4                           	| [$02db: ld   e,a]
+	add.w	d4,a0                            	| [$02dc: add  hl,de]
 	movem.w	(sp)+,d3/d4                    	| [$02dd: pop  de]
 l_02de:
 	move.b	d2,d0                           	| [$02de: ld   a,c]
@@ -1318,33 +1318,40 @@ l_02f8:
 	move.b	d1,d0                           	| [$02f8: ld   a,b]
 	cmp.b	d2,d0                            	| [$02f9: cp   c]
 	jcc	l_0303                             	| [$02fa: jp   nc,$0303]
+	* draw mid part of red door, handle to the left
 	move.b	#0x83,(a0)+                      	| [$02fd: ld   (hl),$83]
 	                           	| [$02ff: inc  hl]
 	move.b	#0x82,(a0)                      	| [$0300: ld   (hl),$82]
 	rts                                    	| [$0302: ret]
 l_0303:
+	* draw mid part of red door, handle to the right
 	move.b	#0x82,(a0)+                      	| [$0303: ld   (hl),$82]
 	                           	| [$0305: inc  hl]
 	move.b	#0x84,(a0)                      	| [$0306: ld   (hl),$84]
 	rts                                    	| [$0308: ret]
 l_0309:
+	* draw lower part of red door
 	move.b	#0x82,(a0)+                      	| [$0309: ld   (hl),$82]
 	                           	| [$030b: inc  hl]
 	move.b	#0x82,(a0)                      	| [$030c: ld   (hl),$82]
 	rts                                    	| [$030e: ret]
 l_030f:
+	* upper part of door, dark floor
 	move.b	#0x9E,d1                        	| [$030f: ld   b,$9E]
 	move.b	d4,d0                           	| [$0311: ld   a,e]
+	* check if dark floor
 	cmp.b	#0x10,d0                         	| [$0312: cp   $10]
 	jcc	l_031e                             	| [$0314: jp   nc,$031E]
 	cmp.b	#0x0B,d0                         	| [$0317: cp   $0B]
 	jcs	l_031e                             	| [$0319: jp   c,$031E]
+	* draw upper part of door, normal floor
 	move.b	#0x80,d1                        	| [$031c: ld   b,$80]
 l_031e:
 	move.b	d1,(a0)+                         	| [$031e: ld   (hl),b]
 	                           	| [$031f: inc  hl]
 	move.b	d1,(a0)                         	| [$0320: ld   (hl),b]
 	rts                                    	| [$0321: ret]
+
 l_0322:
 	move.b	#0xE0,d2                        	| [$0322: ld   c,$E0]
 	subq.w	#1,a0                           	| [$0324: dec  hl]
@@ -1389,14 +1396,14 @@ l_0340:
 	rts                                    	| [$0351: ret  nc] [...]
 0:
 	lea	l_800B(a6),a0                      	| [$0352: ld   hl,$800B]
-											| [$0355: or   a]
+	tst.b	d0								| [$0355: or   a]
 	jeq	l_02de                             	| [$0356: jp   z,$02DE]
 	lea	l_8022(a6),a0                      	| [$0359: ld   hl,$8022]
 	jra	l_02de                             	| [$035c: jp   $02DE]
 l_035f:
-	move.b	d3,d0                           	| [$035f: ld   a,e]
+	move.b	d4,d0                           	| [$035f: ld   a,e]
 	sub.b	#0x08,d0                         	| [$0360: sub  $08]
-	move.b	d0,d3                           	| [$0362: ld   e,a]
+	move.b	d0,d4                           	| [$0362: ld   e,a]
 	cmp.b	#0x03,d0                         	| [$0363: cp   $03]
 	jcs	l_036b                             	| [$0365: jp   c,$036B]
 	cmp.b	#0x08,d0                         	| [$0368: cp   $08]
@@ -1409,7 +1416,7 @@ l_036b:
 	move.b	(a0),d1                         	| [$036f: ld   b,(hl)]
 	move.b	d3,d0                           	| [$0370: ld   a,e]
 	move.b	#0x97,d0                        	| [$0373: ld   a,$97]
-	cmp.b	#0x0C,d3                         	| [$0371: cp   $0C]
+	cmp.b	#0x0C,d3                         	| [$0371: cp   $0C] switched instructions, preserve flags!
 	jeq	l_0380                             	| [$0375: jp   z,$0380]
 	btst.b	#0,d1                           	| [$0378: bit  0,b]
 	jne	l_0380                             	| [$037a: jp   nz,$0380]
@@ -1428,15 +1435,16 @@ l_0387:
 	bmi.b	0f                               	| [...]
 	rts                                    	| [$038b: ret  p] [...]
 0:
-	LOAD_WORD	scroll_related_value_8002(a6),d5             	| [$038c: ld   hl,($8002)]
- 
-	sub.w	#0x100,d5                           	| [$038f: dec  h]
+	LOAD_WORD	bottom_y_horizon_8002(a6),d5             	| [$038c: ld   hl,($8002)]
+	LOAD_D5D6_FROM_D5_16
+	
+	subq.b	#0x1,d5                           	| [$038f: dec  h]
 	jeq	l_03ac                             	| [$0390: jp   z,$03AC]
-	add.w	#0x100,d5                           	| [$0393: inc  h]
+	addq.b	#0x1,d5                           	| [$0393: inc  h]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$0394: ret  nz] [...]
 0:
-	subq.w	#1,d5                           	| [$0395: dec  l]
+	subq.b	#1,d6                           	| [$0395: dec  l]
 	bpl.b	0f                               	| [...]
 	rts                                    	| [$0396: ret  m] [...]
 0:
@@ -1454,7 +1462,7 @@ l_0387:
 	clr.b	(a0)                             	| [$03a9: ld   (hl),$00]
 	rts                                    	| [$03ab: ret]
 l_03ac:
-	subq.w	#1,d5                           	| [$03ac: dec  l]
+	subq.b	#1,d6                           	| [$03ac: dec  l]
 	bmi.b	0f                               	| [...]
 	rts                                    	| [$03ad: ret  p] [...]
 0:
@@ -2856,7 +2864,7 @@ l_0b98:
 0:
 	.endif
 	lea	jump_table_0BBF,a0                 	| [$0bba: ld   hl,jump_table_0BBF]
-	add.w	d3,a0                            	| [$0bbd: add  hl,de]
+	move.l	(a0,d3.w),a0                            	| [$0bbd: add  hl,de]
  	jra	(a0)                               	| [$0bbe: jp   (hl)]
 
 jump_table_0BBF:
@@ -4476,8 +4484,8 @@ l_1573:
 	addq.w	#1,a0                           	| [$1577: inc  hl]
 	move.b	(a0)+,d4                         	| [$1578: ld   e,(hl)] load DE as screen address of door to update
 	LOAD_D3_16_FROM_D3D4
-	lea		videoram_layer_1_C400-0xC400,a1
-	add.w	d3,a1
+	lea		videoram_layer_1_C400-0xC400(a6),a1
+	add.l	d3,a1		| long add!!
 	jbsr	ldi_video                               	| [$157a: ldi]
 	jbsr	ldi_video                               	| [$157c: ldi]
 	jra	l_1573                             	| [$157e: jp   $1573]
@@ -4529,8 +4537,8 @@ l_15bf:
 	jpl	l_15b7                             	| [$15c3: jp   p,$15B7]
 	jbsr	exx                               	| [$15c6: exx] restore registers (a1)
 	lea	sprites_shadow_ram_8169+0x60(a6),a0    | [$15c7: ld   hl,$81C9]
-	clr.b	d0                               	| [$15ca: xor  a] not useful for sub, but d0 needs to be zero
-	cmp.l	a0,a1                            	| [$15cb: sbc  hl,de] check if sprite address as a1 got past base+0x60
+	clr.b	d0                               	| [$15ca: xor  a] not useful for 68k sub, but d0 needs to be zero
+	sub.l	a1,a0                            	| [$15cb: sbc  hl,de] check if sprite address as a1 got past base+0x60
 	bne.b	0f                               	| [...]
 	* if reached, exit
 	rts                                    	| [$15cd: ret  z] [...]
@@ -5816,7 +5824,7 @@ pseudo_random_1E06:
     move.b	d5,pseudo_random_seed_81D6+1(a6)
 	rts                                    	| [$1e14: ret]
 
-* seems to be never called. Only called from 1E1D through ramdon_1E2A
+* seems to be never called. Only called from 1E1D through random_1E2A
 
 	movem.w	d5/d6,-(sp)                        	| [$1e15: push hl]
 	jbsr	pseudo_random_1E06                	| [$1e16: call pseudo_random_1E06]
@@ -5835,9 +5843,9 @@ l_1e22:
 	movem.w	(sp)+,d5/d6                        	| [$1e28: pop  hl]
 	rts                                    	| [$1e29: ret]
 
-* random dollowed by some kind of division to get a small
+* random followed by some kind of division to get a small
 * number in A
-ramdon_1E2A:
+random_1E2A:
 
 	movem.w	d5/d6,-(sp)                        	| [$1e2a: push hl]
 	jbsr	pseudo_random_1E06                	| [$1e2b: call pseudo_random_1E06]
@@ -5847,13 +5855,14 @@ ramdon_1E2A:
 
 * random dollowed by some kind of division to get a small
 * number in A
-ramdon_1E35:
+random_1E35:
 
 	movem.w	d5/d6,-(sp)                        	| [$1e35: push hl]
 	jbsr	pseudo_random_1E06                	| [$1e36: call pseudo_random_1E06]
 	move.b	#0xE0,d5                        	| [$1e39: ld   h,$E0]
 	jra	l_1e1b                             	| [$1e3b: jp   $1E1B]
 
+* < D1: parameter to limit random value
 * > D0: pseudo-random
 get_random_value_1e3e:
 	movem.w	d5/d6,-(sp)                        	| [$1e3e: push hl]
@@ -7610,8 +7619,8 @@ l_2733:
 	                           	| [$2735: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2733                             	| [$2736: djnz $2733]
-	jbsr	l_2753                            	| [$2738: call $2753]
-	jbsr	l_278b                            	| [$273b: call $278B]
+	jbsr	position_red_doors_on_lower_floors_2753        	| [$2738: call $2753]
+	jbsr	position_red_doors_on_higher_floors_278b        | [$273b: call $278B]
 	rts                                    	| [$273e: ret]
 
 l_273f:
@@ -7628,7 +7637,7 @@ l_274b:
 	jne	l_2746                             	| [$274d: djnz $2746]
 	move.b	d0,l_802D(a6)                   	| [$274f: ld   ($802D),a]
 	rts                                    	| [$2752: ret]
-l_2753:
+position_red_doors_on_lower_floors_2753:
 	lea	table_280E-0xE+0x2D,a0                          	| [$2753: ld   hl,$282D]
 	move.b	#0x06,d1                        	| [$2756: ld   b,$06]
 	move.b	#0x01,d2                        	| [$2758: ld   c,$01]
@@ -7640,59 +7649,66 @@ l_2753:
 0:
 	cmp.b	#0x04,d0                         	| [$2763: cp   $04]
 	jcs	l_2777                             	| [$2765: jr   c,$2777]
+	* highest level of difficulty at start: add even more red doors
 	lea	red_door_position_array_8210(a6),a0	| [$2767: ld   hl,red_door_position_array_8210]
 	jbsr	l_2784                            	| [$276a: call $2784]
 	move.b	d0,d1                           	| [$276d: ld   b,a]
 	jbsr	l_2784                            	| [$276e: call $2784]
-	subq.w	#1,a0                           	| [$2771: dec  hl]
+												| [$2771: dec  hl]
 	move.b	#0x07,d0                        	| [$2772: ld   a,$07]
 	sub.b	d1,d0                            	| [$2774: sub  b]
-	move.b	d0,(a0)                         	| [$2775: ld   (hl),a]
+	move.b	d0,-(a0)                         	| [$2775: ld   (hl),a]
 	rts                                    	| [$2776: ret]
 l_2777:
+	* high level of difficulty at start: add more red doors
 	lea	red_door_position_array_8210(a6),a0	| [$2777: ld   hl,red_door_position_array_8210]
 	jbsr	l_2784                            	| [$277a: call $2784]
 	move.b	d0,d1                           	| [$277d: ld   b,a]
 	jbsr	l_2784                            	| [$277e: call $2784]
-	subq.w	#1,a0                           	| [$2781: dec  hl]
-	move.b	d0,(a0)                         	| [$2782: ld   (hl),a]
+												| [$2781: dec  hl]
+	move.b	d0,-(a0)                         	| [$2782: ld   (hl),a]
 	rts                                    	| [$2783: ret]
 l_2784:
-	move.b	(a0),d0                         	| [$2784: ld   a,(hl)]
-	addq.w	#1,a0                           	| [$2785: inc  hl]
+	move.b	(a0)+,d0                         	| [$2784: ld   a,(hl)]
+											| [$2785: inc  hl]
 	cmp.b	#0x08,d0                         	| [$2786: cp   $08]
 	jcc	l_2784                             	| [$2788: jr   nc,$2784]
 	rts                                    	| [$278a: ret]
-l_278b:
-	lea	table_280E-0xE+0x36,a0                          	| [$278b: ld   hl,$2836]
+	
+position_red_doors_on_higher_floors_278b:
+	lea	table_280E-0xE+0x36,a0                  | [$278b: ld   hl,$2836]
 	move.b	#0x08,d1                        	| [$278e: ld   b,$08]
 	move.b	#0x08,d2                        	| [$2790: ld   c,$08]
 	jbsr	position_red_doors_27D2           	| [$2792: call position_red_doors_27D2]
-	lea	table_280E-0xE+0x3F,a0                          	| [$2795: ld   hl,$283F]
+	lea	table_280E-0xE+0x3F,a0                  | [$2795: ld   hl,$283F]
 	move.b	#0x0B,d1                        	| [$2798: ld   b,$0B]
 	move.b	#0x09,d2                        	| [$279a: ld   c,$09]
 	jbsr	position_red_doors_27D2           	| [$279c: call position_red_doors_27D2]
-	lea	table_280E-0xE+0x48,a0                          	| [$279f: ld   hl,$2848]
+	lea	table_280E-0xE+0x48,a0                  | [$279f: ld   hl,$2848]
 	move.b	#0x0E,d1                        	| [$27a2: ld   b,$0E]
 	move.b	#0x0C,d2                        	| [$27a4: ld   c,$0C]
 	jbsr	position_red_doors_27D2           	| [$27a6: call position_red_doors_27D2]
-	lea	table_280E-0xE+0x51,a0                          	| [$27a9: ld   hl,$2851]
+	lea	table_280E-0xE+0x51,a0                  | [$27a9: ld   hl,$2851]
 	move.b	#0x11,d1                        	| [$27ac: ld   b,$11]
 	move.b	#0x0F,d2                        	| [$27ae: ld   c,$0F]
 	jbsr	position_red_doors_27D2           	| [$27b0: call position_red_doors_27D2]
-	lea	table_280E-0xE+0x5A,a0                          	| [$27b3: ld   hl,$285A]
+	lea	table_280E-0xE+0x5A,a0                  | [$27b3: ld   hl,$285A]
 	move.b	#0x14,d1                        	| [$27b6: ld   b,$14]
 	move.b	#0x12,d2                        	| [$27b8: ld   c,$12]
 	jbsr	position_red_doors_27D2           	| [$27ba: call position_red_doors_27D2]
-	lea	table_280E-0xE+0x63,a0                          	| [$27bd: ld   hl,$2863]
+	lea	table_280E-0xE+0x63,a0                  | [$27bd: ld   hl,$2863]
 	move.b	#0x19,d1                        	| [$27c0: ld   b,$19]
 	move.b	#0x15,d2                        	| [$27c2: ld   c,$15]
 	jbsr	position_red_doors_27D2           	| [$27c4: call position_red_doors_27D2]
-	lea	table_280E-0xE+0x6C,a0                          	| [$27c7: ld   hl,$286C]
+	lea	table_280E-0xE+0x6C,a0                  | [$27c7: ld   hl,$286C]
 	move.b	#0x1E,d1                        	| [$27ca: ld   b,$1E]
 	move.b	#0x1A,d2                        	| [$27cc: ld   c,$1A]
 	jbsr	position_red_doors_27D2           	| [$27ce: call position_red_doors_27D2]
-	rts                                    	| [$27d1: ret]
+	rts                                    	    | [$27d1: ret]
+
+* < A0: pointer on table
+* < D1: max floor
+* < D2: min floor
 
 position_red_doors_27D2:
 	move.b	skill_level_8237(a6),d0         	| [$27d2: ld   a,(skill_level_8237)]
@@ -7718,23 +7734,23 @@ l_27dc:
 l_27e7:
 	movem.w	d3/d4,-(sp)                    	| [$27e7: push de]
 l_27e8:
-	jbsr	get_random_value_1e3e                            	| [$27e8: call $1E3E]
+	jbsr	get_random_value_1e3e               | [$27e8: call $1E3E]
 	add.b	d2,d0                            	| [$27eb: add  a,c]
-	moveq   #0,d3                               	| [$27ed: ld   d,$00]
+	moveq   #0,d3                               | [$27ed: ld   d,$00]
 	move.b	d0,d3                           	| [$27ec: ld   e,a]
-	lea	red_door_position_array_8210(a6),a0	| [$27ef: ld   hl,red_door_position_array_8210]
+	lea	red_door_position_array_8210(a6),a0	    | [$27ef: ld   hl,red_door_position_array_8210]
 	add.w	d3,a0                            	| [$27f2: add  hl,de]
 	move.b	(a0),d0                         	| [$27f3: ld   a,(hl)]
 	cmp.b	#0x08,d0                         	| [$27f4: cp   $08]
-	jcs	l_27e8                             	| [$27f6: jr   c,$27E8]
+	jcs	l_27e8                             	    | [$27f6: jr   c,$27E8] slot taken/unavail / re-cast
 
 	move.l	a0,-(sp)                        	| [$27f8: push hl]
-	lea	table_280E-0xE+0x75,a0                          	| [$27f9: ld   hl,$2875]
+	lea	table_280E-0xE+0x75,a0                  | [$27f9: ld   hl,$2875]
 	add.w	d3,a0                            	| [$27fc: add  hl,de]
 	add.w	d3,a0                            	| [$27fd: add  hl,de]
-	jbsr	pseudo_random_with_regsave_1DF5                	| [$27fe: call pseudo_random_with_regsave_1DF5]
+	jbsr	pseudo_random_with_regsave_1DF5     | [$27fe: call pseudo_random_with_regsave_1DF5]
 	and.b	#0x01,d0                         	| [$2801: and  $01]
-	jne	l_2806                             	| [$2803: jr   nz,$2806]
+	jne	l_2806                             	    | [$2803: jr   nz,$2806]
 	addq.w	#1,a0                           	| [$2805: inc  hl]
 l_2806:
 	move.l	(sp)+,a1                        	| [$2806: pop  de]
@@ -7897,7 +7913,7 @@ update_scroll_value_from_viewed_floor_28c0:
 	rts                                    	| [$28dd: ret]
 
 l_28de:
-	LOAD_WORD	scroll_related_value_8002(a6),d5             	| [$28de: ld   hl,($8002)]
+	LOAD_WORD	bottom_y_horizon_8002(a6),d5             	| [$28de: ld   hl,($8002)]
 
 	st.b	d0                                	| [$28e1: ld   a,$FF]
 	move.b	d0,scroll_speed_8004(a6)        	| [$28e3: ld   (scroll_speed_8004),a]
@@ -7906,7 +7922,7 @@ l_28de:
 	move.b	#0x1F,d1                        	| [$28e7: ld   b,$1F]
 l_28e9:
 	move.w	d1,-(sp)                    	| [$28e9: push bc]
-	LOAD_WORD	scroll_related_value_8002(a6),d5             	| [$28ea: ld   hl,($8002)]
+	LOAD_WORD	bottom_y_horizon_8002(a6),d5             	| [$28ea: ld   hl,($8002)]
 
 	move.w	d5,d1                           	| [$28ed: ld   b,h]
 	LOAD_D1D2_FROM_D1_16                           	| [$28ee: ld   c,l]
@@ -7920,19 +7936,19 @@ l_28e9:
 	move.w	#0x0020,d1                      	| [$28f9: ld   bc,$0020] 32
 	jbsr	ldir_video                          	| [$28fc: ldir]
 	move.w	(sp)+,d1                    	| [$28fe: pop  bc]
-	LOAD_WORD	scroll_related_value_8002(a6),d5             	| [$28ff: ld   hl,($8002)]
-	addq.w	#0x1,d5                           	| [$2902: inc  l]
+	LOAD_WORD	bottom_y_horizon_8002(a6),d5             	| [$28ff: ld   hl,($8002)]
+	addq.b	#0x1,d5                           	| [$2902: inc  l]
 	move.b	d5,d0                           	| [$2903: ld   a,l]
 	subq.b	#0x06,d0                        	| [$2904: sub  $06]
 	jne	l_290b                             	| [$2906: jp   nz,$290B]
 	move.b	d0,d5                           	| [$2909: ld   l,a]
 	add.w	#0x100,d5                           	| [$290a: inc  h]
 l_290b:
-	STORE_WORD	d5,scroll_related_value_8002(a6)            	| [$290b: ld   ($8002),hl]
+	STORE_WORD	d5,bottom_y_horizon_8002(a6)            	| [$290b: ld   ($8002),hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_28e9                             	| [$290e: djnz $28E9]
 	move.w	(sp)+,d5                        	| [$2910: pop  hl]
-	STORE_WORD	d5,scroll_related_value_8002(a6)     | [$2911: ld   ($8002),hl]
+	STORE_WORD	d5,bottom_y_horizon_8002(a6)     | [$2911: ld   ($8002),hl]
 	        	| [$2914: ld   hl,main_scroll_columns_D020]
 	                       	| [$2917: ld   b,$20]
 	move.b	main_scroll_value_8005(a6),d0   	| [$2919: ld   a,(main_scroll_value_8005)]
@@ -8201,7 +8217,7 @@ l_2a7d:
 	jne	l_2a7d                             	| [$2a80: djnz $2A7D]
 	move.b	#0x02,d1                        	| [$2a82: ld   b,$02]
 l_2a84:
-	jbsr	ramdon_1E35                       	| [$2a84: call ramdon_1E35]
+	jbsr	random_1E35                       	| [$2a84: call random_1E35]
 	move.b	d0,d5                           	| [$2a89: ld   l,a]
 	clr.w	d5                               	| [$2a87: ld   h,$00]
 	add.w	d5,a0                            	| [$2a8a: add  hl,hl]
@@ -8835,6 +8851,10 @@ l_2e53:
 	move.b	(0x17,a2),d6                    	| [$2e57: ld   l,(ix+$17)]
 	move.b	(0x18,a2),d5                    	| [$2e5a: ld   h,(ix+$18)]
 	LOAD_D5_16_FROM_D5D6
+	move.l	a6,a0
+	sub.l	#0x8000,a0
+	add.l	d5,a0
+	
 	move.b	l_8245(a6),d0                   	| [$2e5d: ld   a,($8245)]
 	                               	| [$2e60: neg]
 	bne.b	0f                               	| [...]
@@ -8972,10 +8992,10 @@ l_2f1f:
 	add.b	#0xC5,d0                         	| [$2f25: add  a,$C5]
 	exg	a5,a3                            	| [$2f27: ex   (sp),iy]
 	jne	l_2f15                             	| [$2f29: jr   nz,$2F15]
+	* never reached??
 	move.b	(0x19,a2),d6                    	| [$2f2b: ld   l,(ix+$19)]
 	move.b	(0x1a,a2),d5                    	| [$2f2e: ld   h,(ix+$1a)]
 	LOAD_D5_16_FROM_D5D6
-	.warning	"debug in MAME 2f31"
 	illegal
 	NOP
 	cmp.l	a0,a0
@@ -9072,18 +9092,20 @@ initial_player_structure_2F9C:
 
 l_2faa:
 	lea	player_structure_851A(a6),a2       	| [$2faa: ld   ix,player_structure_851A]
-	move.b	(0x07,a2),d0                    	| [$2fae: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$2fae: ld   a,(ix+$07)]
 	cmp.b	#0x1F,d0                         	| [$2fb1: cp   $1F]
 	bcs.b	0f                               	| [...]
+	* on top floor! do nothing
 	rts                                    	| [$2fb3: ret  nc] [...]
 0:
-	moveq   #0,d3                               	| [$2fb5: ld   d,$00]
-	move.b	d0,d3                           	| [$2fb4: ld   e,a]
+	moveq   #0,d4                               	| [$2fb5: ld   d,$00]
+	move.b	d0,d4                           	| [$2fb4: ld   e,a]
 	lea	red_door_position_array_8210(a6),a0	| [$2fb7: ld   hl,red_door_position_array_8210]
-	add.w	d3,a0                            	| [$2fba: add  hl,de]
-	move.b	(a0),d0                         	| [$2fbb: ld   a,(hl)]
+	add.w	d4,a0                            	| [$2fba: add  hl,de]
+	move.b	(a0),d0                         	| [$2fbb: ld   a,(hl)] position of door at player floor
 	cmp.b	#0x08,d0                         	| [$2fbc: cp   $08]
 	bcs.b	0f                               	| [...]
+	* no door at this floor
 	rts                                    	| [$2fbe: ret  nc] [...]
 0:
 	move.b	d0,d3                           	| [$2fbf: ld   d,a]
@@ -9102,9 +9124,9 @@ l_2fd0:
 	move.b	d3,d0                           	| [$2fd0: ld   a,d]
 	add.b	d3,d0                            	| [$2fd1: add  a,d]
 	add.b	d3,d0                            	| [$2fd2: add  a,d]
-	add.b	d0,d0                            	| [$2fd3: add  a,a]
-	add.b	d0,d0                            	| [$2fd4: add  a,a]
-	add.b	d0,d0                            	| [$2fd5: add  a,a]
+	lsl.b	#3,d0                            	| [$2fd3: add  a,a]
+												| [$2fd4: add  a,a]
+												| [$2fd5: add  a,a]
 	add.b	#0x24,d0                         	| [$2fd6: add  a,$24]
 l_2fd8:
 	move.b	d0,(character_x_00,a2)          	| [$2fd8: ld   (ix+character_x_00),a]
@@ -15042,7 +15064,7 @@ l_57ba:
 
 update_upper_status_bar_57C6:
 	* completely rewritten for efficiency
-	lea	l_8353(a6),a1                      	| [$57c6: ld   hl,$8353]
+	lea	upper_status_bar_shadow_8353(a6),a1                      	| [$57c6: ld   hl,$8353]
 	lea	l_C463(a6),a0                      	| [$57c9: ld   de,$C463] screen address of status bar
 	moveq	#26-1,d1
 0:
@@ -15210,7 +15232,7 @@ string_credit_588E:
 	.align	2
 	
 l_5895:
-	lea	l_8353(a6),a0                      	| [$5895: ld   hl,$8353]
+	lea	upper_status_bar_shadow_8353(a6),a0                      	| [$5895: ld   hl,$8353]
 	move.b	#0x1A,d1                        	| [$5898: ld   b,$1A]
 	move.b	#0x33,d0                        	| [$589a: ld   a,$33]
 l_589c:
@@ -15218,7 +15240,7 @@ l_589c:
 	                           	| [$589d: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_589c                             	| [$589e: djnz $589C]
-	lea	current_player_score_834D(a6),a0                      	| [$58a0: ld   hl,$834D]
+	lea	current_player_score_834D(a6),a0          | [$58a0: ld   hl,$834D]
 	lea	l_8358(a6),a1                      	| [$58a3: ld   de,$8358]
 	move.b	current_player_is_p2_8236(a6),d0                   	| [$58a6: ld   a,($8236)]
 	                             	| [$58a9: or   a]
@@ -15466,7 +15488,7 @@ player_hit_by_enemy_shots_test_5A0D:
 	lea	enemy_1_853A(a6),a2                	| [$5a11: ld   ix,enemy_1_853A]
 * loop on enemies
 l_5a15:
-	jbsr	ramdon_1E2A                       	| [$5a15: call ramdon_1E2A]
+	jbsr	random_1E2A                       	| [$5a15: call random_1E2A]
 	move.b	d0,d4                           	| [$5a18: ld   e,a]
 	move.b	#0x01,d2                        	| [$5a19: ld   c,$01]
 	jbsr	l_5a4c                            	| [$5a1b: call $5A4C]
@@ -15489,7 +15511,7 @@ l_5a2e:
 	lea	probablility_to_spawn_an_enemy_837C(a6),a0	| [$5a37: ld   hl,probablility_to_spawn_an_enemy_837C]
 	cmp.b	(a0),d0                          	| [$5a3a: cp   (hl)]
 	jcs	l_5a41                             	| [$5a3b: jr   c,$5A41]
-	jbsr	ramdon_1E2A                       	| [$5a3d: call ramdon_1E2A]
+	jbsr	random_1E2A                       	| [$5a3d: call random_1E2A]
 	move.b	d0,d4                           	| [$5a40: ld   e,a]
 l_5a41:
 	jbsr	l_5a4c                            	| [$5a41: call $5A4C]

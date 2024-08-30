@@ -859,7 +859,7 @@ update_bobs:
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
 	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
-	cmp.b	#230,d0
+	cmp.b	#236,d0
 	jcc		2f 						| don't draw sprites too far right
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
