@@ -21,7 +21,7 @@ end of mainloop
 76C3: CD A0 15    call $15A0
 
   
-figure 8002 and 800E pointers? values?
+figure 800E pointers? values?
 
 
 
@@ -46,18 +46,35 @@ elevator column scroll:
    
 ISSUES:
 
+- enemy behaviour & sprites completely wrong
 - sprite right clipping
-- start animation going too far (killed frames appear) LOG_REGS remain check!!!
+- jump into elevator animation going too far (killed frames appear) LOG_REGS remain check!!!
   when accessing sprite_code_table_62E2
 - doors open: only red doors (special case to make with color attribute on doors)
-- buggy scrolling after a while (elevators & building!!): position at floor 20 (bottom of elevator)
-  and save video ram compare vs MAME to see if it's graphic or transcode issue
-
-
 - NTSC version: remove brick wall, bottom status higher
-	
+- reaching bottom floor: goes back too far (higher door detect probably not working)
+- wrong colors on sprite which hides character when taking stairs
+- head of character remains displayed at the end of stairs
+- opening doors remain displayed
+- sprites completely wrong when player takes the document	
 
-
+to debug:
+	.ifndef	RELEASE
+	move.w	#0xC740,d7
+	jbsr	display_debug_value
+	addq.w	#3,d7
+	exg	d0,d2
+	jbsr	display_debug_value
+	exg	d0,d2
+	move.w	d0,-(a7)
+	addq.w	#3,d7
+	move.b	bottom_floor_horizon_8003(a6),d0
+	jbsr	display_debug_value
+	addq.w	#3,d7
+	move.b	bottom_floor_fine_horizon_8002(a6),d0
+	jbsr	display_debug_value
+	move.w	(a7)+,d0
+	.endif
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
 DK check issues????

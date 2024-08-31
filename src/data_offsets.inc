@@ -1,7 +1,7 @@
 l_8000 = 0x0000
 l_8001 = 0x0001
-bottom_y_horizon_8002 = 0x0002
-l_8003 = 0x0003
+bottom_floor_fine_horizon_8002 = 0x0002
+bottom_floor_horizon_8003 = 0x0003
 scroll_speed_8004 = 0x0004
 main_scroll_value_8005 = 0x0005
 scroll_tile_pointer_8006 = 0x0006
