@@ -28,8 +28,6 @@ figure 800E pointers? values?
 0e9f called when??? reset charset???
 
 
-- player crushed by elevator: working!
-
 TODO:
 
 - elevator dynamic colors: in progress
@@ -46,13 +44,11 @@ elevator column scroll:
    
 ISSUES:
 
-- enemy behaviour & sprites completely wrong
-- jump into elevator animation going too far (killed frames appear) LOG_REGS remain check!!!
-  when accessing sprite_code_table_62E2
+- enemy sprites completely wrong: parasite sprites, wrong color scheme
 - reaching bottom floor: goes back too far (higher door detect probably not working)
 - head of character remains displayed at the end of stairs
 - opening doors remain displayed
-- sprites completely wrong when player takes the document	
+- player takes the document sprites: briefcase inside should be black
 - NTSC version: remove brick wall, bottom status higher
 
 to debug:

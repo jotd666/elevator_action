@@ -74,7 +74,7 @@ used_game_tiles = {"status":set(range(16,52)) | {1} | set(range(0xE0,0x100)),
   197,
   0x98,0x99,0x9A,0x9B,0x9C,0xFD,0xFE,  # grappling hook
   0x81,0x8C,0x88,0x89,0x85,0x8A,0x8B,
-  0x90,0x91,0x6,0xEA,0xEB,0xEC,0xE8,0xE9,0xE0,0xE1,
+  0x90,0x91,0x6,0xEA,0xEB,0xEC,0xE8,0xE9,0xE0,0xE1,0xE6,0xE7
   },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
 used_title_tiles = {"status":set(range(16,50)) | {4,5,6,7,8,51,0x4F},
@@ -184,6 +184,9 @@ def change_color(img,color1,color2):
             rval.putpixel((x,y),p)
     return rval
 
+def add_sprite(index,name):
+    sprite_names[index] = name
+
 def add_sprite_range(start,end,name):
     for i in range(start,end):
         sprite_names[i] = name
@@ -210,14 +213,20 @@ add_sprite_range(0x28,0x2B,"wall")  # to be draw above characters on stairs
 add_sprite_range(16+64,32+64,"enemy_dark_floor")
 add_sprite_range(50+64,56+64,"enemy_dark_floor_shoots")
 add_sprite_range(32+64,40+64,"blue_door")
-add_sprite_range(0x28+64,0x2B+64,"wall")  # to be draw above characters on stairs
+add_sprite(0x28+64,"wall")  # to be draw above characters on stairs
 
 add_sprite_range(16+128,32+128,"enemy_lights_out")
 add_sprite_range(50+128,56+128,"enemy_lights_out_shoots")
+add_sprite(1+192,"five_hundred_points")
+add_sprite(8+192,"player_carrying_file")
+add_sprite(47+192,"five_hundred_points")
+add_sprite(48+192,"player_carrying_file")
+
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"elevator","game")
 sprites_1_sheet = Image.open(os.path.join(sprites_path,"sprites_4.png"))
 sprites_2_sheet = Image.open(os.path.join(sprites_path,"sprites_5.png"))
+sprites_0_sheet = Image.open(os.path.join(sprites_path,"sprites_6.png"))
 # make a color correspondence dictionary
 color_translation_dict = {}
 
@@ -232,6 +241,8 @@ for x in range(sprites_1_sheet.size[0]):
         if p1 == (0,0,0):
             p1 = dummy
         color_translation_dict[p2] = p1
+
+sprites_0_sheet = change_color(sprites_0_sheet,(0,0,0),transparent)
 
 # one problem is: spies and lamps are black, and the main sheet (sprites_4) has proper colors for all sprites
 # but transparent color is black (when dumped with MAME gfx save)
@@ -260,6 +271,8 @@ sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,None,"sprites
 sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43)) | set(range(50,56)),"sprites",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64)
 
+sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,{1,8,48,47},"sprites",dump=dump_it,name_dict=sprite_names,tile_offset=192)
+
 # create "lights out" enemies
 sprites_3_sheet = change_color(sprites_2_sheet,(0,0,176),(0,0,255))
 sprites_3_sheet = change_color(sprites_3_sheet,(79,79,79),(0,0,0))
@@ -268,6 +281,7 @@ sprites_palette_3,sprites_set_3 = load_tileset(sprites_3_sheet,True,16,set(range
                         name_dict=sprite_names,tile_offset=128)
 
 full_sprite_set = sprites_set + sprites_set_2 + sprites_set_3
+full_sprite_set += [None]*(192-len(full_sprite_set)) + sprites_set_0
 
 # playfield+status+sprites
 game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0])))

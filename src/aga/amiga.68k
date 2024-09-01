@@ -863,7 +863,11 @@ update_bobs:
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
 	BCLR	#6,d2
-	jeq	2f		| if not set, skip
+	jne	20f
+	* sprite sheet 1, not a lot of used sprites there
+	add.b	#0xC0,d2
+	jra		21f
+20:
 	cmp.b	#0xD,D2
 	jne	21f
 	* kludge: to avoid handling clipping & sprite hide
@@ -1904,9 +1908,9 @@ compute_tile_xy:
 
 * < D0: sprite number
 * < D1: X/Y offset to apply to data
-* < D2.W: color 1 to draw (8 times)
+* < D2.W: color 1 to draw (8*6 times)
 * < D3.W: color 2 to draw (1 time)
-change_elevator_copper_colors:
+change_elevator_copper_colors_descending:
 	lsr.w	#SPRITE_POWER_OF_2+1,d1	  | consider only Y offset
 	move.w	d0,d5
 	lsl.w	#SPRITE_POWER_OF_2+3,d0	  | times SPRITE_STRUCT_SIZE
@@ -1927,7 +1931,7 @@ change_elevator_copper_colors:
 	lsl.w	#3,d5		| times 8, select proper copper column
 	add.w	#6,d5
 	add.w	d5,a2		| proper start address
-	moveq	#7,d4
+	moveq	#48-1,d4
 	* now write 8 times color 1
 1:
 	move.w	d2,(a2)
@@ -1944,6 +1948,52 @@ change_elevator_copper_colors:
 	addq	#4,d1
 	cmp.w	#(NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS)*4,d1
 	bcc		0f		| clipping
+	dbf		d4,1b
+	
+0:
+	rts
+	
+* < D0: sprite number
+* < D1: X/Y offset to apply to data
+* < D2.W: color 1 to draw (8*6 times)
+* < D3.W: color 2 to draw (1 time)
+change_elevator_copper_colors_ascending:
+	lsr.w	#SPRITE_POWER_OF_2+1,d1	  | consider only Y offset
+	move.w	d0,d5
+	lsl.w	#SPRITE_POWER_OF_2+3,d0	  | times SPRITE_STRUCT_SIZE
+	lea		sprite_table,a2
+	add.w	d0,a2		| select proper sprite structure, get current scroll position
+	MOVEQ	#0,d4
+	move.b	(_previous_y_position,a2),d4
+	* TODO take global scroll into account too
+	sub.w	d4,d1		| sub from d1, get offset for copper rows
+	bmi		0f
+	cmp.w	#NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS,d1
+	bcc		0f
+	
+	lea	dynamic_rows,a2
+	add.w	d1,d1
+	add.w	d1,d1
+	move.l	(a2,d1.w),a2	| select proper row
+	lsl.w	#3,d5		| times 8, select proper copper column
+	add.w	#6,d5
+	add.w	d5,a2		| proper start address
+	moveq	#48-1,d4
+	* now write 8 times color 1
+1:
+	move.w	d2,(a2)
+	add.w	#8,a2			| next row
+	addq	#4,d1
+	cmp.w	#(NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS)*4,d1
+	bcc		0f		| clipping
+	dbf		d4,1b
+	* now write 8 times color 2 (temp)
+	moveq	#7,d4
+1:
+	move.w	d3,(a2)
+	sub.w	#8,a2			| prev row
+	subq	#4,d1
+	bmi		0f		| clipping
 	dbf		d4,1b
 	
 0:
@@ -2028,17 +2078,24 @@ update_game_elevators:
 	cmp.b	#0x3A,d2
 	jne		1f
 	* bottom of elevator
+	movem.w	d0-d5,-(a7)
+	move.w	#0x0F0,D2	
+	move.w	#0x00F,d3   | TEMP COLS
+	* doesn't work at all
+	jbsr	change_elevator_copper_colors_ascending
+	movem.w	(a7)+,d0-d5
 	
 	jra		update_sprite_bitmap
 1:
 	cmp.b	#0x3E,d2
 	jne		update_sprite_bitmap
+
 	* top of elevator: set elevator background color on relevant col/row
 	movem.w	d0-d5,-(a7)
 	move.w	#0x0F0,D2	
 	move.w	#0x00F,d3   | TEMP COLS
 	* doesn't work at all
-	*jbsr	change_elevator_copper_colors
+	jbsr	change_elevator_copper_colors_descending
 	movem.w	(a7)+,d0-d5
 	
 	jra		update_sprite_bitmap		
@@ -2111,6 +2168,8 @@ update_bg_tile_game:
 
 	btst	#11,d7		| third layer? sprites
 	jne	update_game_elevators
+	
+	rts
 	
 	move.l	panel_screen_ptr,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2
