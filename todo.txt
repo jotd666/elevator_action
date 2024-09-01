@@ -46,17 +46,18 @@ elevator column scroll:
    
 ISSUES:
 
+- main font color in title: yellow???
 - enemy behaviour & sprites completely wrong
 - sprite right clipping
 - jump into elevator animation going too far (killed frames appear) LOG_REGS remain check!!!
   when accessing sprite_code_table_62E2
 - doors open: only red doors (special case to make with color attribute on doors)
-- NTSC version: remove brick wall, bottom status higher
 - reaching bottom floor: goes back too far (higher door detect probably not working)
 - wrong colors on sprite which hides character when taking stairs
 - head of character remains displayed at the end of stairs
 - opening doors remain displayed
 - sprites completely wrong when player takes the document	
+- NTSC version: remove brick wall, bottom status higher
 
 to debug:
 	.ifndef	RELEASE

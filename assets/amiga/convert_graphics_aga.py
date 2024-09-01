@@ -98,7 +98,7 @@ def ensure_empty(d):
     else:
         os.makedirs(d)
 
-def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,name_dict=None):
+def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,name_dict=None,tile_offset=0):
     tile_type = "game" if game_gfx else "title"
 
     if isinstance(image_name,str):
@@ -115,7 +115,8 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,nam
 
     if dump:
         dump_subdir = os.path.join(dumpdir,tile_type,tileset_name)
-        ensure_empty(dump_subdir)
+        if tile_offset == 0:
+            ensure_empty(dump_subdir)
 
     tile_number = 0
     palette = set()
@@ -137,11 +138,11 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,nam
                 if dump:
                     img = ImageOps.scale(img,5,resample=Image.Resampling.NEAREST)
                     if name_dict:
-                        name = name_dict.get(tile_number,"unknown")
+                        name = name_dict.get(tile_number+tile_offset,"unknown")
                     else:
                         name = "unknown"
 
-                    img.save(os.path.join(dump_subdir,f"{name}_{tile_number:02x}.png"))
+                    img.save(os.path.join(dump_subdir,f"{name}_{tile_number+tile_offset:02x}.png"))
 
             tile_number += 1
 
@@ -183,9 +184,9 @@ def change_color(img,color1,color2):
             rval.putpixel((x,y),p)
     return rval
 
-def add_sprite_range(start,end,name,namedict=sprite_names):
+def add_sprite_range(start,end,name):
     for i in range(start,end):
-        namedict[i] = name
+        sprite_names[i] = name
 
 # better name sprites, as some color hacks are needed (black color is used for spies and lamps)
 add_sprite_range(0,16,"player")
@@ -199,13 +200,18 @@ add_sprite_range(59,61,"player")
 add_sprite_range(61,62,"exclamation")
 add_sprite_range(62,64,"lamp")
 
-alt_sprite_names = dict()
+# sprites have more "cluts" but it's relying on palette sometimes and also isn't worth
+# implementing, as for instance, player sprite or car only have one valid clut.
+# enemies and doors have different color schemes. 3 color schemes for enemies, 2 color schemes for doors
+#
 # add 2 special enemy "cluts" and blue opening door
 #add_sprite_range(16,32,"enemy_lights_out",namedict=alt_sprite_names)
-add_sprite_range(16,32,"enemy_dark_floor",namedict=alt_sprite_names)
-add_sprite_range(50,56,"enemy_dark_floor_shoots",namedict=alt_sprite_names)
-add_sprite_range(32,40,"blue_door",namedict=alt_sprite_names)
+add_sprite_range(16+64,32+64,"enemy_dark_floor")
+add_sprite_range(50+64,56+64,"enemy_dark_floor_shoots")
+add_sprite_range(32+64,40+64,"blue_door")
 
+add_sprite_range(16+128,32+128,"enemy_lights_out")
+add_sprite_range(50+128,56+128,"enemy_lights_out_shoots")
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"elevator","game")
 sprites_1_sheet = Image.open(os.path.join(sprites_path,"sprites_4.png"))
@@ -249,13 +255,15 @@ for x in range(sprites_2_sheet.size[0]):
 
 sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,None,"sprites",dump=dump_it,name_dict=sprite_names)
 # dark floor enemies + blue door
-sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,40)) | set(range(50,56)),"sprites_alt",dump=dump_it,name_dict=alt_sprite_names)
+sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,40)) | set(range(50,56)),"sprites",dump=dump_it,
+                                            name_dict=sprite_names,tile_offset=64)
 
-# create lights out enemies
+# create "lights out" enemies
 sprites_3_sheet = change_color(sprites_2_sheet,(0,0,176),(0,0,255))
 sprites_3_sheet = change_color(sprites_3_sheet,(79,79,79),(0,0,0))
 
-sprites_palette_3,sprites_set_3 = load_tileset(sprites_3_sheet,True,16,set(range(16,32)) | set(range(50,56)),"lights_out_enemies",dump=dump_it,name_dict=None)
+sprites_palette_3,sprites_set_3 = load_tileset(sprites_3_sheet,True,16,set(range(16,32)) | set(range(50,56)),"sprites",dump=dump_it,
+                        name_dict=sprite_names,tile_offset=128)
 
 full_sprite_set = sprites_set + sprites_set_2 + sprites_set_3
 
@@ -432,7 +440,8 @@ character_tables:
     for i,tile in enumerate(bob_list):
         f.write("\t.long\t")
         if tile:
-            f.write(f"bob_info_{i}")
+            sn = sprite_names.get(i,"bob_info")
+            f.write(f"{sn}_{i:02x}")
         else:
             f.write("0")
 
@@ -440,7 +449,9 @@ character_tables:
 
     for i,tile in enumerate(bob_list):
         if tile:
-            f.write(f"bob_info_{i}:\n")
+            sn = sprite_names.get(i,"bob_info")
+
+            f.write(f"{sn}_{i:02x}:\n")
             for i,p in enumerate(tile):
                 if i%(len(tile)//2) == 0:
                     f.write("\t.word\t16,4,0\n") # TODO optimize later (shots, small characters)

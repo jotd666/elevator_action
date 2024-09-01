@@ -18970,9 +18970,15 @@ l_73e6:
 
        	| [$73f1: ld   (hl),a]
 l_73f2:
+	.ifndef	RELEASE
+	tst.b	no_sync_flag
+	jeq		0f
+	rts
+	.endif
+0:
 	tst.b	sync_flag_80AB(a6)                   	| [$73f2: ld   a,($80AB)]
 	                             	| [$73f5: or   a]
-	jne	l_73f2                             	| [$73f6: jr   nz,$73F2]
+	jne	0b                             	| [$73f6: jr   nz,$73F2]
 	rts                                    	| [$73f8: ret]
 	
 	

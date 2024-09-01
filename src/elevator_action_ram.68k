@@ -17,6 +17,7 @@
 	.global	ram_buffer
 	.global vbl_sync_counter
 	.global vbl_sync_flag
+	.global no_sync_flag
 	.ifndef	RELEASE
 	.global ram_start_8000
 	.endif
@@ -78,6 +79,8 @@ vbl_sync_flag:
 	.byte	0
 vbl_sync_counter:
 	.byte	0
+no_sync_flag:
+	.byte 	0
 break_at_startup_flag:
 	.byte	0
 sound_latch_D50B:

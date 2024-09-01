@@ -858,9 +858,6 @@ update_bobs:
 	*add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
-	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
-	cmp.b	#236,d0
-	jcc		2f 						| don't draw sprites too far right
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
@@ -2624,8 +2621,13 @@ handle_keyboard:
 	cmp.b	#0x58,d0	| F9 key crashes game (restarts whdload)
 	bne.b	0f
 	illegal
-	.endif
 0:
+	cmp.b	#0x59,d0	| F10 key toggles sync
+	bne.b	0f
+	move.w	#0xF00,color+_custom
+	eor.b	#1,no_sync_flag
+0:
+	.endif
 
 	cmp.b	_keyexit,d0	| "ESC" key or whdload quitkey
 	bne.b	2f
