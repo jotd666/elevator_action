@@ -21,8 +21,8 @@ AFB_68020 = 1
 PREVIOUS_SPRITE_SIZE = 8
 BORDERBLANK = 1
 
-SPRITE_X_CORRECTION = 0
-SPRITE_Y_CORRECTION = -14
+SPRITE_X_CORRECTION = -2
+SPRITE_Y_CORRECTION = -15
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 0
 
@@ -855,14 +855,32 @@ update_bobs:
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
-	*add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
+	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
 	moveq	#NB_TARGET_SPRITES-1,d7
 1:
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
-	and.b	#0x3F,d2
+	BCLR	#6,d2
+	jeq	2f		| if not set, skip
+	cmp.b	#0xD,D2
+	jne	21f
+	* kludge: to avoid handling clipping & sprite hide
+	* just for the start wire sequence, we just don't show
+	* the player sliding on wire if too far on the right
+	move.b	(TARGET_SPRITE_X,a0),d0
+	cmp.b	#200,d0
+	jcc	2f
+21:
+	btst	#2,(TARGET_SPRITE_ATTRIBUTES,a0)
+	jeq	22f
+	* select alternate color, I simplified the whole
+	* clut/palette thing because there are really only
+	* 1 or 2 possible colors, maybe 3 but only for enemies
+	* when lights are shot!
+	add.w	#0x40,d2
+22:
 *int color = 2 * ((m_colorbank[1] >> 4) & 0x03) + ((m_spriteram[offs + 2] >> 2) & 0x01);
 *int flip_x = m_spriteram[offs + 2] & 0x01;
 *int flip_y = m_spriteram[ offs + 2] & 0x02;
@@ -897,10 +915,10 @@ update_bobs:
 	
 	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
 	.ifne	SPRITE_Y_CORRECTION
-	add.w	#SPRITE_Y_CORRECTION,d1
+	add.b	#SPRITE_Y_CORRECTION,d1
 	.endif
 	.ifne	SPRITE_X_CORRECTION
-	add.w	#SPRITE_X_CORRECTION,d0
+	add.b	#SPRITE_X_CORRECTION,d0
 	.endif
 
 	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
@@ -936,7 +954,7 @@ update_bobs:
 2:
 	addq.w	#8,a6
 3:
-	addq.w	#4,a0
+	subq.w	#4,a0
 	dbf		d7,1b
 	
 	rts
@@ -1385,7 +1403,7 @@ platform_init:
 
  	*         VVHH
     move.w #0x1C81,diwstrt(a5)
-    move.w #0x2889+8,diwstop(a5)
+    move.w #0x2881,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -1396,7 +1414,7 @@ platform_init:
 	move.w	#0x32,bplcon4(a5)	| odd sprites palette start at color 48, even at 32
     move.w #(SPRITE_FMODE<<2)+0x3,fmode(a5)
 
-	move.w	#0,bplcon1(a5)
+    move.w #0,bplcon1(a5)
 	moveq	#-8,d0
     move.w d0,bpl1mod(a5)
     move.w d0,bpl2mod(a5)

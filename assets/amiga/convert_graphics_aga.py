@@ -74,7 +74,7 @@ used_game_tiles = {"status":set(range(16,52)) | {1} | set(range(0xE0,0x100)),
   197,
   0x98,0x99,0x9A,0x9B,0x9C,0xFD,0xFE,  # grappling hook
   0x81,0x8C,0x88,0x89,0x85,0x8A,0x8B,
-  0x90,0x91,0x6
+  0x90,0x91,0x6,0xEA,0xEB,0xEC,0xE8,0xE9,0xE0,0xE1,
   },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
 used_title_tiles = {"status":set(range(16,50)) | {4,5,6,7,8,51,0x4F},
@@ -196,9 +196,10 @@ add_sprite_range(43,48,"car")
 add_sprite_range(48,50,"player_shoots")
 add_sprite_range(50,56,"enemy_shoots")
 add_sprite_range(56,58,"shot")
-add_sprite_range(59,61,"player")
+add_sprite_range(58,61,"player")
 add_sprite_range(61,62,"exclamation")
 add_sprite_range(62,64,"lamp")
+add_sprite_range(0x28,0x2B,"wall")  # to be draw above characters on stairs
 
 # sprites have more "cluts" but it's relying on palette sometimes and also isn't worth
 # implementing, as for instance, player sprite or car only have one valid clut.
@@ -209,6 +210,7 @@ add_sprite_range(62,64,"lamp")
 add_sprite_range(16+64,32+64,"enemy_dark_floor")
 add_sprite_range(50+64,56+64,"enemy_dark_floor_shoots")
 add_sprite_range(32+64,40+64,"blue_door")
+add_sprite_range(0x28+64,0x2B+64,"wall")  # to be draw above characters on stairs
 
 add_sprite_range(16+128,32+128,"enemy_lights_out")
 add_sprite_range(50+128,56+128,"enemy_lights_out_shoots")
@@ -255,7 +257,7 @@ for x in range(sprites_2_sheet.size[0]):
 
 sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,None,"sprites",dump=dump_it,name_dict=sprite_names)
 # dark floor enemies + blue door
-sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,40)) | set(range(50,56)),"sprites",dump=dump_it,
+sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43)) | set(range(50,56)),"sprites",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64)
 
 # create "lights out" enemies
