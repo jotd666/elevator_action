@@ -1147,6 +1147,7 @@ blit_planes_any_internal_cookie_cut:
     add.w   d2,d4       | blit height
     * always the same settings (ATM)
 	moveq	#0,d2
+	add.w	d5,a3			| apply y offset to mask too (y offset looks wrong)
 	
     * now just wait for blitter ready to write all registers
 	WAIT_BLIT
@@ -1160,7 +1161,6 @@ blit_planes_any_internal_cookie_cut:
     move.w  d0,bltcmod(a5)	|C modulo
     move.w  d0,bltdmod(a5)	|D modulo
 					
-	add.w	d5,a3			| apply y offset to mask too (y offset looks wrong)
 	subq	#1,d3
 	beq.b	7f
 	subq	#1,d3
@@ -1918,6 +1918,7 @@ change_elevator_copper_colors_descending:
 	add.w	d0,a2		| select proper sprite structure, get current scroll position
 	MOVEQ	#0,d4
 	move.b	(_previous_y_position,a2),d4
+	add.w	#16,d1
 	* TODO take global scroll into account too
 	sub.w	d4,d1		| sub from d1, get offset for copper rows
 	bmi		0f
@@ -1927,16 +1928,15 @@ change_elevator_copper_colors_descending:
 	lea	dynamic_rows,a2
 	add.w	d1,d1
 	add.w	d1,d1
-	move.l	(a2,d1.w),a2	| select proper row
 	lsl.w	#3,d5		| times 8, select proper copper column
 	add.w	#6,d5
-	add.w	d5,a2		| proper start address
 	moveq	#48-1,d4
 	* now write 8 times color 1
 1:
-	move.w	d2,(a2)
-	add.w	#8,a2			| next row
-	addq	#4,d1
+	move.l	(a2,d1.w),a3	| select proper row
+	add.w	d5,a3		| proper start address
+	move.w	d2,(a3)
+	addq	#4,d1		| next row
 	cmp.w	#(NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS)*4,d1
 	bcc		0f		| clipping
 	dbf		d4,1b
@@ -1966,6 +1966,7 @@ change_elevator_copper_colors_ascending:
 	MOVEQ	#0,d4
 	move.b	(_previous_y_position,a2),d4
 	* TODO take global scroll into account too
+	add.w	#16,d1
 	sub.w	d4,d1		| sub from d1, get offset for copper rows
 	bmi		0f
 	cmp.w	#NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS,d1
@@ -1974,18 +1975,16 @@ change_elevator_copper_colors_ascending:
 	lea	dynamic_rows,a2
 	add.w	d1,d1
 	add.w	d1,d1
-	move.l	(a2,d1.w),a2	| select proper row
 	lsl.w	#3,d5		| times 8, select proper copper column
 	add.w	#6,d5
-	add.w	d5,a2		| proper start address
 	moveq	#48-1,d4
-	* now write 8 times color 1
+	* now write x times color 1
 1:
-	move.w	d2,(a2)
-	add.w	#8,a2			| next row
-	addq	#4,d1
-	cmp.w	#(NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS)*4,d1
-	bcc		0f		| clipping
+	move.l	(a2,d1.w),a3	| select proper row
+	add.w	d5,a3		| proper start address
+	move.w	d2,(a3)
+	subq	#4,d1
+	bmi		0f		| clipping
 	dbf		d4,1b
 	* now write 8 times color 2 (temp)
 	moveq	#7,d4
@@ -2079,10 +2078,10 @@ update_game_elevators:
 	jne		1f
 	* bottom of elevator
 	movem.w	d0-d5,-(a7)
-	move.w	#0x0F0,D2	
-	move.w	#0x00F,d3   | TEMP COLS
-	* doesn't work at all
-	jbsr	change_elevator_copper_colors_ascending
+	lea		elevators_dyn_colors,a3
+	move.w	(a3)+,D2	
+	move.w	(a3),d3
+	**jbsr	change_elevator_copper_colors_ascending
 	movem.w	(a7)+,d0-d5
 	
 	jra		update_sprite_bitmap
@@ -2092,10 +2091,11 @@ update_game_elevators:
 
 	* top of elevator: set elevator background color on relevant col/row
 	movem.w	d0-d5,-(a7)
-	move.w	#0x0F0,D2	
-	move.w	#0x00F,d3   | TEMP COLS
+	lea		elevators_dyn_colors,a3
+	move.w	(a3)+,D2	
+	move.w	(a3),d3
 	* doesn't work at all
-	jbsr	change_elevator_copper_colors_descending
+	**jbsr	change_elevator_copper_colors_descending
 	movem.w	(a7)+,d0-d5
 	
 	jra		update_sprite_bitmap		
@@ -2168,8 +2168,7 @@ update_bg_tile_game:
 
 	btst	#11,d7		| third layer? sprites
 	jne	update_game_elevators
-	
-	rts
+
 	
 	move.l	panel_screen_ptr,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2

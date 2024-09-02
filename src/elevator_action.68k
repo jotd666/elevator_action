@@ -1578,7 +1578,7 @@ update_main_scrolling_03C3:
 	rts                                    	| [$041e: ret]
 
 l_041f:
-	lea	l_8377(a6),a0                      	| [$041f: ld   hl,$8377]
+	lea	opening_door_flag_array_8377(a6),a0                      	| [$041f: ld   hl,$8377]
 	move.b	player_structure_851A+current_floor_07(a6),d0	| [$0422: ld   a,(player_structure_851A+current_floor_07)]
 	move.b	d0,d2                           	| [$0425: ld   c,a]
 	subq.b	#1,d2                           	| [$0426: dec  c]
@@ -11084,9 +11084,12 @@ l_3c2a:
 	move.b	(a0),d2                         	| [$3c3c: ld   c,(hl)]
 	rts                                    	| [$3c3d: ret]
 	
+* updates timer which makes character enter/exit a room
+* timer is not used to update opening door sprite, but this
+* routine is responsible for opening/closing door sprite nevertheless
 update_in_room_timer_3c3e:
-	move.b	(exiting_room_timer_0a,a2),d0                    	| [$3c3e: ld   a,(ix+$0a)]
-	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$3c41: inc  (ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0   | [$3c3e: ld   a,(ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)   | [$3c41: inc  (ix+$0a)]
 	tst.b	d0                             	| [$3c44: or   a]
 	jeq	l_3d14                             	| [$3c45: jp   z,$3D14]
 	cmp.b	#0x08,d0                         	| [$3c48: cp   $08]
@@ -11112,11 +11115,12 @@ l_3c71:
 	clr.b	(0x04,a2)                        	| [$3c71: ld   (ix+$04),$00]
 	move.b	#0x12,d1                        	| [$3c75: ld   b,$12]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$3c77: ld   a,(current_enemy_index_85BA)]
-	tst.b	d0                             	| [$3c7a: or   a]
+												| [$3c7a: or   a]
 	jeq	l_3c86                             	| [$3c7b: jr   z,$3C86]
 	move.b	skill_level_8237(a6),d0         	| [$3c7d: ld   a,(skill_level_8237)]
 	cmp.b	#0x02,d0                         	| [$3c80: cp   $02]
 	jcc	l_3c86                             	| [$3c82: jr   nc,$3C86]
+	* enemies exit room slower in lower difficulty levels!
 	move.b	#0x0A,d1                        	| [$3c84: ld   b,$0A]
 l_3c86:
 	move.b	(exiting_room_timer_0a,a2),d0                    	| [$3c86: ld   a,(ix+$0a)]
@@ -11130,18 +11134,18 @@ l_3c8e:
 	bne.b	0f                               	| [...]
 	rts                                    	| [$3c96: ret  z] [...]
 0:
-	st.b	(0x09,a2)                 	| [$3c97: ld   (ix+$09),$FF]
+	st.b	(enemy_state_09,a2)                 	| [$3c97: ld   (ix+$09),$FF]
 	move.b	l_8375(a6),d0                   	| [$3c9b: ld   a,($8375)]
 	move.b	d0,(0x10,a2)                    	| [$3c9e: ld   (ix+$10),a]
 	rts                                    	| [$3ca1: ret]
-	rts                                    	| [$3ca2: ret]
+	                                    	| [$3ca2: ret]
 
 character_exited_door_3ca3:
 	move.b	#0x02,(0x04,a2)                 	| [$3ca3: ld   (ix+$04),$02]
 	move.b	#CS_ON_GROUND_00,(character_situation_06,a2)	| [$3ca7: ld   (ix+character_situation_06),CS_ON_GROUND_00]
 	move.b	#0x1D,(character_y_offset_down_02,a2) | [$3cab: ld   (ix+$02),$1D]
 	move.b	#0x06,(character_y_offset_03,a2)	| [$3caf: ld   (ix+character_y_offset_03),$06]
-	clr.b	(0x09,a2)                        	| [$3cb3: ld   (ix+$09),$00]
+	clr.b	(enemy_state_09,a2)                        	| [$3cb3: ld   (ix+$09),$00]
 	clr.b	(0x0c,a2)                        	| [$3cb7: ld   (ix+$0c),$00]
 	clr.b	(character_delta_x_05,a2)        	| [$3cbb: ld   (ix+character_delta_x_05),$00]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$3cbf: ld   a,(current_enemy_index_85BA)]
@@ -11254,10 +11258,10 @@ l_3d6a:
 	rts                                    	| [$3d91: ret  nz] [...]
 0:
 l_3d92:
-	move.b	(0x07,a2),d0                    	| [$3d92: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$3d92: ld   a,(ix+$07)]
 	move.b	d0,(0x02,a3)                    	| [$3d95: ld   (iy+$02),a]
-	move.b	(0x08,a2),d0                    	| [$3d98: ld   a,(ix+$08)]
-	move.b	d0,(character_state_04,a3)      	| [$3d9b: ld   (iy+character_state_04),a]
+	move.b	(spawning_door_08,a2),d0      | [$3d98: ld   a,(ix+$08)]
+	move.b	d0,(0x04,a3)      	| [$3d9b: ld   (iy+character_state_04),a]
 	clr.b	d0                               	| [$3d9e: xor  a]
 	move.b	d0,(0x05,a3)                    	| [$3d9f: ld   (iy+$05),a]
 	move.b	d0,(0x06,a3)                    	| [$3da2: ld   (iy+$06),a]
@@ -11274,17 +11278,18 @@ l_3dad:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3db3: ret  nz] [...]
 0:
-	move.b	(character_state_04,a3),d0      	| [$3db4: ld   a,(iy+character_state_04)]
+	move.b	(0x04,a3),d0      	| [$3db4: ld   a,(iy+character_state_04)]
 	cmp.b	(0x08,a2),d0                     	| [$3db7: cp   (ix+$08)]
 	rts                                    	| [$3dba: ret]
+
 l_3dbb:
 	move.b	(current_floor_07,a2),d0                    	| [$3dbb: ld   a,(ix+$07)]
 	cmp.b	#0x07,d0                         	| [$3dbe: cp   $07]
 	jcs	l_3de5                             	| [$3dc0: jp   c,$3DE5]
-	move.b	(0x08,a2),d0                    	| [$3dc3: ld   a,(ix+$08)]
-	add.b	d0,d0                            	| [$3dc6: add  a,a]
-	add.b	d0,d0                            	| [$3dc7: add  a,a]
-	add.b	d0,d0                            	| [$3dc8: add  a,a]
+	move.b	(spawning_door_08,a2),d0                    	| [$3dc3: ld   a,(ix+$08)]
+	lsl.b	#3,d0                            	| [$3dc6: add  a,a]
+												| [$3dc7: add  a,a]
+												| [$3dc8: add  a,a]
 	move.b	d0,d1                           	| [$3dc9: ld   b,a]
 	add.b	d1,d0                            	| [$3dca: add  a,b]
 	add.b	d1,d0                            	| [$3dcb: add  a,b]
@@ -15295,7 +15300,7 @@ l_58d5:
 
 l_58eb:
 	jbsr	l_58fb                            	| [$58eb: call $58FB]
-	jbsr	l_596c                            	| [$58ee: call $596C]
+	jbsr	check_opening_doors_596c                            	| [$58ee: call $596C]
 	jbsr	l_59bb                            	| [$58f1: call $59BB]
 	jbsr	l_59f4                            	| [$58f4: call $59F4]
 	jbsr	l_041f                            	| [$58f7: call $041F]
@@ -15377,8 +15382,8 @@ l_595f:
 	move.b	d0,probablility_to_spawn_an_enemy_837C(a6)	| [$5968: ld   (probablility_to_spawn_an_enemy_837C),a]
 	rts                                    	| [$596b: ret]
 
-l_596c:
-	lea	l_8377(a6),a0                      	| [$596c: ld   hl,$8377]
+check_opening_doors_596c:
+	lea	opening_door_flag_array_8377(a6),a0                      	| [$596c: ld   hl,$8377]
 	clr.b	d0                               	| [$596f: xor  a]
 	move.b	d0,(a0)+                         	| [$5970: ld   (hl),a]
 	                           	| [$5971: inc  hl]
@@ -15393,13 +15398,13 @@ l_596c:
 	subq.b	#1,d2                           	| [$5982: dec  c]
 * start loop on enemies
 l_5983:
-	move.b	(0x09,a2),d0                    	| [$5983: ld   a,(ix+$09)]
+	move.b	(enemy_state_09,a2),d0                    	| [$5983: ld   a,(ix+$09)]
 	addq.b	#1,d0                           	| [$5986: inc  a]
-	jeq	l_59b6                             	| [$5987: jp   z,$59B6]
+	jeq	l_59b6                             	| [$5987: jp   z,$59B6] enemy inactive: skip
 	move.b	(character_situation_06,a2),d0  	| [$598a: ld   a,(ix+character_situation_06)]
 	cmp.b	#CS_IN_ROOM_05,d0                	| [$598d: cp   CS_IN_ROOM_05]
 	jeq	enemy_exiting_room_599D            	| [$598f: jr   z,enemy_exiting_room_599D]
-	tst.b	d0                             	| [$5991: or   a]
+	cmp.b	#CS_ON_GROUND_00,d0                             	| [$5991: or   a]
 	jne	l_59b6                             	| [$5992: jr   nz,$59B6]
 	move.b	(0x1c,a2),d0                    	| [$5994: ld   a,(ix+$1c)]
 	cmp.b	#0x0C,d0                         	| [$5997: cp   $0C]
@@ -15408,12 +15413,14 @@ l_5983:
 
 * starting point for enemies
 enemy_exiting_room_599D:
-	move.b	(0x0a,a2),d0                    	| [$599d: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$599d: ld   a,(ix+$0a)]
 	                             	| [$59a0: or   a]
 	jpl	l_59b6                             	| [$59a1: jp   p,$59B6]
 l_59a4:
-	move.b	(0x07,a2),d0                    	| [$59a4: ld   a,(ix+$07)]
-	lea	l_8377(a6),a0                      	| [$59a7: ld   hl,$8377]
+	* exiting room (door is opening)
+	move.b	(current_floor_07,a2),d0                    	| [$59a4: ld   a,(ix+$07)]
+	lea	opening_door_flag_array_8377(a6),a0                      	| [$59a7: ld   hl,$8377]
+	* compare player and enemy floors
 	sub.b	d2,d0                            	| [$59aa: sub  c]
 	jeq	l_59b5                             	| [$59ab: jr   z,$59B5]
 	addq.w	#1,a0                           	| [$59ad: inc  hl]
@@ -15423,8 +15430,10 @@ l_59a4:
 	subq.b	#1,d0                           	| [$59b2: dec  a]
 	jne	l_59b6                             	| [$59b3: jr   nz,$59B6]
 l_59b5:
+	* increase value of element of opening_door_flag_array_8377 array: door opening somewhere
 	addq.b	#1,(a0)                         	| [$59b5: inc  (hl)]
 l_59b6:
+	* next enemy
 	add.w	d3,a2                            	| [$59b6: add  ix,de]
  	subq.b	#1,d1                           	| [...]
 	jne	l_5983                             	| [$59b8: djnz $5983]
@@ -15548,7 +15557,7 @@ maybe_spawn_an_enemy_5a4c:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$5a57: ret  nz] [...]
 0:
-	move.b	(0x0a,a2),d0                    	| [$5a58: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$5a58: ld   a,(ix+$0a)]
 	cmp.b	#0xE0,d0                         	| [$5a5b: cp   $E0]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$5a5d: ret  nz] [...]
@@ -15559,7 +15568,7 @@ l_5a5e:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$5a62: ret  nz] [...]
 0:
-	lea	l_8377(a6),a0                      	| [$5a63: ld   hl,$8377]
+	lea	opening_door_flag_array_8377(a6),a0                      	| [$5a63: ld   hl,$8377]
 	and.w   #0xFF,d3                               	| [$5a66: ld   d,$00]
 	move.b	d4,d3
 	add.w	d3,a0                            	| [$5a68: add  hl,de]
@@ -15594,8 +15603,8 @@ spawn_enemy_5A86:
 	move.b	d0,(0x0f,a2)                    	| [$5a91: ld   (ix+$0f),a]
 	move.b	d0,(0x10,a2)                    	| [$5a94: ld   (ix+$10),a]
 	move.b	#CS_IN_ROOM_05,(character_situation_06,a2)	| [$5a97: ld   (ix+character_situation_06),CS_IN_ROOM_05]
-	st.b	(0x04,a2)                 	| [$5a9b: ld   (ix+$04),$FF]
-	move.b	#0xE0,(0x0a,a2)                 	| [$5a9f: ld   (ix+$0a),$E0]
+	st.b	(0x04,a2)                 	        | [$5a9b: ld   (ix+$04),$FF]
+	move.b	#0xE0,(exiting_room_timer_0a,a2)    | [$5a9f: ld   (ix+$0a),$E0]
 	addq.b	#1,(a0)                         	| [$5aa3: inc  (hl)]
 	move.b	instant_difficulty_level_8374(a6),d0	| [$5aa4: ld   a,(instant_difficulty_level_8374)]
 	move.b	d0,(enemy_aggressivity_13,a2)   	| [$5aa7: ld   (ix+enemy_aggressivity_13),a]
