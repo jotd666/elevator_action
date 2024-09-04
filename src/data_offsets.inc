@@ -14,7 +14,11 @@ l_8011 = 0x0011
 l_801D = 0x001d
 l_8022 = 0x0022
 l_8028 = 0x0028
-l_802A = 0x002a
+* the absolute height is the logical building Y coord
+* (doesn't depend on scrolling or actual screen position but
+* a fine version of current floor)
+* 0: reached bottom floor, 0x5xx: top floor
+absolute_height_802A = 0x002a
 viewed_floor_802C = 0x002c
 l_802D = 0x002d
 l_802F = 0x002f

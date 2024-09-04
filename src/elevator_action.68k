@@ -254,7 +254,7 @@ hex_table:
 *	map(0xd600, 0xd600).mirror(0x00ff).writeonly().share(m_video_mode)|
 
 * moving door slot offsets
-moving_door_unknown_00 = 0x0
+moving_door_x_00 = 0x0
 moving_door_unknown_01 = 0x1
 moving_door_floor_02 = 0x2
 moving_door_unknown_03 = 0x3
@@ -1160,7 +1160,7 @@ stabilize_view_handle_falls_01BA:
 	move.b	(0x07,a2),d1                    	| [$01cf: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$01d2: ld   c,$00]
 	move.b	(character_y_offset_03,a2),d3   	| [$01d4: ld   d,(ix+character_y_offset_03)]
-	jra	compute_smth_d5_d6_1e6c                             	| [$01d7: jp   $1E6C]
+	jra	compute_delta_height_1e6c                             	| [$01d7: jp   $1E6C]
 
 * player falls
 player_falling_01DA:
@@ -1168,7 +1168,7 @@ l_01da:
 	move.b	(0x07,a2),d1                    	| [$01da: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$01dd: ld   c,$00]
 	move.b	#0x06,d3                        	| [$01df: ld   d,$06]
-	jra	compute_smth_d5_d6_1e6c                             	| [$01e1: jp   $1E6C]
+	jra	compute_delta_height_1e6c                             	| [$01e1: jp   $1E6C]
 
 player_inside_elevator_01E4:
 	jbsr	load_character_elevator_structure_62CE	| [$01e4: call load_character_elevator_structure_62CE]
@@ -1185,9 +1185,9 @@ player_in_or_on_elevator_01F4:
 	move.b	d0,d3                           	| [$01f9: ld   d,a]
 	move.b	(0x08,a2),d0                    	| [$01fa: ld   a,(ix+$08)]
 	roxl.b	#1,d0                           	| [$01fd: rla]
-	jcc	compute_smth_d5_d6_1e6c                             	| [$01fe: jp   nc,$1E6C]
+	jcc	compute_delta_height_1e6c                             	| [$01fe: jp   nc,$1E6C]
 	subq.b	#2,d1                           	| [$0201: dec  b] * 2
-	jra	compute_smth_d5_d6_1e6c                             	| [$0203: jp   $1E6C]
+	jra	compute_delta_height_1e6c                             	| [$0203: jp   $1E6C]
 
 update_scrolling_playfield_0206:
 	clr.b	d0                               	| [$0206: xor  a]
@@ -1200,9 +1200,9 @@ update_scrolling_playfield_0206:
 	* sign extend
 	                         	| [$0213: ld   b,$FF]
 l_0215:
-	LOAD_WORD	l_802A(a6),d5             	| [$0215: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$0215: ld   hl,($802A)]
 	add.w	d1,d5                            	| [$0218: add  hl,bc]
-	STORE_WORD	d5,l_802A(a6)            	| [$0219: ld   ($802A),hl]
+	STORE_WORD	d5,absolute_height_802A(a6)            	| [$0219: ld   ($802A),hl]
 	move.w	#0xDF,d3                          	| [$021c: ld   de,$00DF]
 	add.w	d3,d5                            	| [$021f: add  hl,de]
 	STORE_WORD	d5,l_8028(a6)            	| [$0220: ld   ($8028),hl]
@@ -2432,6 +2432,8 @@ enemies_shot_collision_08D2:
 	rts                                    	| [$08f7: ret]
 
 * check collision enemies / player bullets
+* < A2: bullet structure
+* < A3: enemy structure
 enemy_shot_collision_08F8:
 	move.b	(character_state_04,a3),d0      	| [$08f8: ld   a,(iy+character_state_04)]
 	cmp.b	#0x02,d0                         	| [$08fb: cp   $02]
@@ -2439,12 +2441,12 @@ enemy_shot_collision_08F8:
 	rts                                    	| [$08fd: ret  nz] [...]
 0:
 * character is active
-	move.b	(0x09,a3),d0                    	| [$08fe: ld   a,(iy+$09)]
+	move.b	(enemy_state_09,a3),d0                    	| [$08fe: ld   a,(iy+$09)]
 	cmp.b	#0x05,d0                         	| [$0901: cp   $05]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0903: ret  z] [...]
 0:
-	move.b	(0x06,a3),d0                    	| [$0904: ld   a,(iy+$06)]
+	move.b	(character_situation_06,a3),d0                    	| [$0904: ld   a,(iy+$06)]
 	                             	| [$0907: or   a]
 	jeq	l_0920                             	| [$0908: jr   z,$0920]
 	subq.b	#0x03,d0                        	| [$090a: sub  $03]
@@ -2464,29 +2466,29 @@ l_091d:
 	rts                                    	| [$091f: ret  nc] [...]
 0:
 l_0920:
-	move.b	(0x07,a3),d0                    	| [$0920: ld   a,(iy+$07)]
-	cmp.b	(character_x_00,a2),d0           	| [$0923: cp   (ix+character_x_00)]
+	move.b	(current_floor_07,a3),d0                    	| [$0920: ld   a,(iy+$07)]
+	cmp.b	(0,a2),d0           	| [$0923: cp   (ix+character_x_00)]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$0926: ret  nz] [...]
 0:
-	move.b	(character_x_right_01,a2),d0    	| [$0927: ld   a,(ix+character_x_right_01)]
-	cmp.b	(0x02,a3),d0                     	| [$092a: cp   (iy+$02)]
+	move.b	(1,a2),d0    	| [$0927: ld   a,(ix+character_x_right_01)]
+	cmp.b	(character_y_offset_down_02,a3),d0                     	| [$092a: cp   (iy+$02)]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$092d: ret  nc] [...]
 0:
-	cmp.b	(0x03,a3),d0                     	| [$092e: cp   (iy+$03)]
+	cmp.b	(character_y_offset_03,a3),d0                     	| [$092e: cp   (iy+$03)]
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$0931: ret  c] [...]
 0:
 l_0932:
-	move.b	(0x04,a2),d4                    	| [$0932: ld   e,(ix+$04)]
+	move.b	(4,a2),d4                    	| [$0932: ld   e,(ix+$04)]
 	move.b	d4,d0                           	| [$0935: ld   a,e]
-	sub.b	(character_y_offset_03,a2),d0    	| [$0936: sub  (ix+character_y_offset_03)]
+	sub.b	(3,a2),d0    	| [$0936: sub  (ix+character_y_offset_03)]
 	move.b	d0,d3                           	| [$0939: ld   d,a]
 	sub.b	d4,d0                            	| [$093a: sub  e]
 	jmi	l_094d                             	| [$093b: jp   m,$094D]
 	addq.b	#3,d3                           	| [$093e: inc  d] * 3
-	move.b	(0x01,a3),d0                    	| [$0941: ld   a,(iy+$01)]
+	move.b	(character_x_right_01,a3),d0                    	| [$0941: ld   a,(iy+$01)]
 	cmp.b	d3,d0                            	| [$0944: cp   d]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$0945: ret  nc] [...]
@@ -2572,7 +2574,7 @@ check_if_all_documents_collected_09A3:
 	jbsr	play_sound             	| [$09af: ld   (sound_latch_D50B),a]
 	jbsr	ground_floor_reached_45E5         	| [$09b2: call ground_floor_reached_45E5]
 * check if all documents have been collected, starting by the top floor
-	lea	red_door_position_array_8210+0x1E,a0	| [$09b5: ld   hl,red_door_position_array_8210+$1E]
+	lea	red_door_position_array_8210+0x1E(a6),a0	| [$09b5: ld   hl,red_door_position_array_8210+$1E]
 	move.b	#0x1E,d1                        	| [$09b8: ld   b,$1E]
 l_09ba:
 	move.b	(a0),d0                         	| [$09ba: ld   a,(hl)]
@@ -2634,7 +2636,7 @@ l_0a15:
 	clr.b	d0                               	| [$0a28: xor  a]
 	move.b	d0,l_8520(a6)                   	| [$0a29: ld   ($8520),a]
 	move.b	viewed_floor_802C(a6),d0                   	| [$0a2c: ld   a,($802C)]
-	move.b	d0,player_structure_851A+current_floor_07	| [$0a2f: ld   (player_structure_851A+current_floor_07),a]
+	move.b	d0,player_structure_851A+current_floor_07(a6)	| [$0a2f: ld   (player_structure_851A+current_floor_07),a]
 	move.b	#0x01,d0                        	| [$0a32: ld   a,$01]
 	move.b	d0,timer_8bit_reload_value_80A9(a6)	| [$0a34: ld   (timer_8bit_reload_value_80A9),a]
 	jbsr	l_0b03                            	| [$0a37: call $0B03]
@@ -2759,7 +2761,7 @@ l_0b03:
 	move.b	d0,d1                           	| [$0b0b: ld   b,a]
 	clr.b	d2                               	| [$0b0c: ld   c,$00]
 	move.b	#0x06,d3                        	| [$0b0e: ld   d,$06]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$0b10: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$0b10: call $1E6C]
 	LOAD_D5_16_FROM_D5D6
 	move.w	#0x006E,d3                      	| [$0b13: ld   de,$006E] 110
 	clr.b	d0                               	| [$0b16: xor  a]
@@ -2840,7 +2842,7 @@ l_0b7a:
 * < ix: enemy character structure
 l_0b98:
 	clr.b	(0x17,a2)                        	| [$0b98: ld   (ix+$17),$00]
-	move.b	(0x09,a2),d0                    	| [$0b9c: ld   a,(ix+$09)]
+	move.b	(enemy_state_09,a2),d0                    	| [$0b9c: ld   a,(ix+$09)]
 	                             	| [$0b9f: or   a]
 	bpl.b	0f                               	| [...]
 	rts                                    	| [$0ba0: ret  m] [...]
@@ -3028,7 +3030,7 @@ l_0ccd:
 	moveq	#0,d1                               	| [$0ccd: ld   b,$00]
 	clr.b	d2                               	| [$0ccf: ld   c,$00]
 	move.b	#0x06,d3                        	| [$0cd1: ld   d,$06]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$0cd3: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$0cd3: call $1E6C]
 	move.b	d5,d0                           	| [$0cd6: ld   a,h]
 	                            	| [$0cd7: or   a]
 	beq.b	0f                               	| [...]
@@ -3086,7 +3088,7 @@ l_0d03:
 * and left there
 l_0d1b:
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0    | [$0d1b: ld   hl,$80F1]
-	move.b	#0x04,(a0)+         | [$0d1e: ld   (hl),$04] highest priority
+	move.b	#0x04,(a0)+         | [$0d1e: ld   (hl),$04] lowest priority
 	                           	| [$0d20: inc  hl]
 	move.b	#0xF0,(a0)+         | [$0d21: ld   (hl),$F0]
 	                          	| [$0d23: inc  hl]
@@ -4088,7 +4090,7 @@ l_1309:
 	add.b	d1,d0                            	| [$131a: add  a,b]
 	add.b	d1,d0                            	| [$131b: add  a,b]
 	add.b	#0x20,d0                         	| [$131c: add  a,$20]
-	move.b	d0,(moving_door_unknown_00,a2)          	| [$131e: ld   (ix+character_x_00),a]
+	move.b	d0,(moving_door_x_00,a2)          	| [$131e: ld   (ix+character_x_00),a]
 	add.b	#0x0F,d0                         	| [$1321: add  a,$0F]
 	move.b	d0,(moving_door_unknown_01,a2)    	| [$1323: ld   (ix+character_x_right_01),a]
 l_1326:
@@ -4350,21 +4352,21 @@ l_1461:
 
 animate_moving_door_sprite_1486:
 	LOAD_POINTER	moving_door_sprite_slot_80EF(a6),a0             	| [$1486: ld   hl,($80EF)]
-	move.b	#0x01,(a0)+                      	| [$1489: ld   (hl),$01]
+	move.b	#0x01,(a0)+                      	| [$1489: ld   (hl),$01] high priority
 	                                         	| [$148b: inc  hl]
-	move.b	(moving_door_unknown_00,a2),d0      | [$148c: ld   a,(ix+character_x_00)]
+	move.b	(moving_door_x_00,a2),d0            | [$148c: ld   a,(ix+character_x_00)] X never changes
 	move.b	d0,(a0)+                         	| [$148f: ld   (hl),a]
 	                           	                | [$1490: inc  hl]
 	move.b	(moving_door_floor_02,a2),d1	    | [$1491: ld   b,(ix+character_y_offset_down_02)]
 	clr.b	d2                               	| [$1494: ld   c,$00]
 	move.b	#0x04,d3                        	| [$1496: ld   d,$04]
 	move.l	a0,-(sp)                        	| [$1498: push hl]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$1499: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$1499: call $1E6C]
 	move.b	d6,d2                           	| [$149c: ld   c,l]
 	move.l	(sp)+,a0                        	| [$149d: pop  hl]
-	move.b	d2,(a0)+                         	| [$149e: ld   (hl),c]
-	                           	| [$149f: inc  hl]
-	move.b	(moving_door_type_06,a2),d0                    	| [$14a0: ld   a,(ix+$06)]
+	move.b	d2,(a0)+                         	| [$149e: ld   (hl),c] door Y, computed from floor & scroll value
+	                           	                | [$149f: inc  hl]
+	move.b	(moving_door_type_06,a2),d0         | [$14a0: ld   a,(ix+$06)]
 	not.b	d0                               	| [$14a3: cpl]
 	and.b	#0x01,d0                         	| [$14a4: and  $01]
 	add.b	d0,d0                            	| [$14a6: add  a,a]
@@ -4372,22 +4374,23 @@ animate_moving_door_sprite_1486:
 	add.b	(moving_door_unknown_03,a2),d0    	| [$14a8: add  a,(ix+character_y_offset_03)]
 	move.b	d0,d3                           	| [$14ab: ld   d,a]
 	move.b	d3,(a0)+                         	| [$14ac: ld   (hl),d]
-	                           	| [$14ad: inc  hl]
+	                           	                | [$14ad: inc  hl]
 	move.b	#0x60,(a0)+                      	| [$14ae: ld   (hl),$60]
-	                           	| [$14b0: inc  hl]
-	move.b	#0x01,(a0)+                      	| [$14b1: ld   (hl),$01]
-	                           	| [$14b3: inc  hl]
-	move.b	(moving_door_unknown_00,a2),d0          	| [$14b4: ld   a,(ix+character_x_00)]
+	                           	                | [$14b0: inc  hl]
+	move.b	#0x01,(a0)+                      	| [$14b1: ld   (hl),$01] high priority
+	                           	                | [$14b3: inc  hl]
+	move.b	(moving_door_x_00,a2),d0      | [$14b4: ld   a,(ix+character_x_00)]
 	move.b	d0,(a0)+                         	| [$14b7: ld   (hl),a]
-	                           	| [$14b8: inc  hl]
+	                           	                | [$14b8: inc  hl]
 	move.b	d2,d0                           	| [$14b9: ld   a,c]
+	* lower part
 	add.b	#0x10,d0                         	| [$14ba: add  a,$10]
-	move.b	d0,(a0)+                         	| [$14bc: ld   (hl),a]
-	                           	| [$14bd: inc  hl]
+	move.b	d0,(a0)+                         	| [$14bc: ld   (hl),a] Y
+	                           	                | [$14bd: inc  hl]
 	move.b	d3,(a0)+                         	| [$14be: ld   (hl),d]
-	                           	| [$14bf: inc  hl]
+	                           	                | [$14bf: inc  hl]
 	move.b	#0x61,(a0)                      	| [$14c0: ld   (hl),$61]
-	rts                                    	| [$14c2: ret]
+	rts                                    	    | [$14c2: ret]
 
 * either draw background (when door is opening) or draw door (when closed)
 draw_door_tiles_14c3:
@@ -4495,7 +4498,7 @@ l_155b:
 	jne	l_1568                             	| [$155f: jp   nz,$1568]
 	move.b	d3,d0                           	| [$1562: ld   a,d]
 	add.b	d2,d0                            	| [$1563: add  a,c]
-	move.b	d0,(moving_door_unknown_00,a2)          	| [$1564: ld   (ix+character_x_00),a]
+	move.b	d0,(moving_door_x_00,a2)          	| [$1564: ld   (ix+character_x_00),a]
 	rts                                    	| [$1567: ret]
 l_1568:
 	move.b	d3,d0                           	| [$1568: ld   a,d]
@@ -4558,8 +4561,16 @@ l_15b1:
 l_15b7:
 	move.w	#0x18-1,d1                        	| [$15b7: ld   b,$18] 24 objects total
 	* coords are exactly the same as sprite ram, except that for the leading byte which is
-	* the display priority 0->4. It loops 4 times, each time adding to sprite shadow ram but filtering
+	* the display priority 0 (highest) ->4 (lowest). It loops 4 times, each time adding to sprite shadow ram but filtering
 	* by display priority for the 24 possible displayable sprites
+	*
+	* so:
+	* 0: priority 0-4 (lowest)
+	* 1: X coord
+	* 2: Y coord
+	* 3: attribute
+	* 4: code
+	
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0               | [$15b9: ld   hl,$80F1] 5 bytes per object
 * loop
 l_15bc:
@@ -4571,13 +4582,14 @@ next_object_15bf:
 	subq.b	#1,d0                           	| [$15c2: dec  a]
 	jpl	l_15b7                             	    | [$15c3: jp   p,$15B7]
 	jbsr	exx                               	| [$15c6: exx] restore registers (a1)
-	lea	sprites_shadow_ram_8169+0x60(a6),a0     | [$15c7: ld   hl,$81C9]
+	lea	sprites_shadow_ram_8169+0x60(a6),a0     | [$15c7: ld   hl,$81C9] top sprite shadow ram
 	clr.b	d0                               	| [$15ca: xor  a] not useful for 68k sub, but d0 needs to be zero
-	sub.l	a1,a0                            	| [$15cb: sbc  hl,de] check if sprite address as a1 got past base+0x60
+	cmp.l	a1,a0                            	| [$15cb: sbc  hl,de] check if sprite address as a1 got past base+0x60
 	bne.b	0f                               	| [...]
 	* if reached, exit (sprite shadow ram is full)
 	rts                                    	| [$15cd: ret  z] [...]
 0:
+	sub.l	a1,a0		| perform suba, doesn't set Z flag, hence the need of cmp above!
 	* compute A0 "msb"
 	move.l	a0,d6
 	sub.l	a6,d6
@@ -4599,7 +4611,7 @@ update_sprite_ram_with_object_15d4:
 	addq.w	#1,a0                           	| [$15d8: inc  hl] skip status
 	move.b	(a0)+,d0                         	| [$15d9: ld   a,(hl)]
 	add.b	d1,d0                            	| [$15da: add  a,b]
-	move.b	d0,(a1)+                         	| [$15db: ld   (de),a]
+	move.b	d0,(a1)+                         	| [$15db: ld   (de),a] X coord
 	                           	| [$15dc: inc  hl]
 	                           	| [$15dd: inc  de]
 	move.b	(a0)+,(a1)+                         	| [$15de: ld   a,(hl)] Y coord
@@ -5946,9 +5958,9 @@ l_1e5a:
 * < D1/D2
 * > D5/D6
 * > D7: set if carry from sub (used in stabilize_view_handle_falls_01BA)
-compute_smth_d5_d6_1e6c:
+compute_delta_height_1e6c:
 	jbsr	l_1e5a                            	| [$1e6c: call $1E5A]
-	LOAD_WORD	l_802A(a6),d3             	| [$1e6f: ld   de,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d3     | [$1e6f: ld   de,($802A)]
 
 	moveq	#0,d0                              	| [$1e73: xor  a] probably useless, clear carry
 	sub.w	d3,d5                            	| [$1e74: sbc  hl,de]
@@ -8015,7 +8027,7 @@ l_2921:
 	lsl.w	#3,d5                            	| [$2932: add  hl,hl]
 	                            	| [$2933: add  hl,hl]
 	                           	| [$2934: add  hl,hl]
-	STORE_WORD	d5,l_802A(a6)            	| [$2935: ld   ($802A),hl]
+	STORE_WORD	d5,absolute_height_802A(a6)            	| [$2935: ld   ($802A),hl]
 	move.w	#0x00DF,d3                          	| [$2938: ld   de,$00DF]
 	add.w	d3,d5                            	| [$293b: add  hl,de]
  	STORE_WORD	d5,l_8028(a6)            	| [$293c: ld   ($8028),hl]
@@ -8647,7 +8659,7 @@ l_2c98:
 l_2ca9:
 	move.b	d4,(character_x_00,a2)          	| [$2ca9: ld   (ix+character_x_00),e]
 	move.b	d3,(character_x_right_01,a2)    	| [$2cac: ld   (ix+character_x_right_01),d]
-	LOAD_WORD	l_802A(a6),d5             	| [$2caf: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$2caf: ld   hl,($802A)]
 	LOAD_D5D6_FROM_D5_16
 	move.b	(0x07,a2),d3                    	| [$2cb2: ld   d,(ix+$07)]
 	move.b	(0x06,a2),d4                    	| [$2cb5: ld   e,(ix+$06)]
@@ -9756,7 +9768,7 @@ l_337d:
 	clr.b	d2                               	| [$3382: ld   c,$00]
 	move.b	l_823E(a6),d0                   	| [$3384: ld   a,($823E)]
 	move.b	d0,d1                           	| [$3387: ld   b,a]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$3388: call $1E6C]
+	jbsr	compute_delta_height_1e6c           | [$3388: call $1E6C]
 	move.b	d6,d0                           	| [$338b: ld   a,l]
 	move.l	(sp)+,a0                        	| [$338c: pop  hl]
 	move.b	d0,(a0)                         	| [$338d: ld   (hl),a]
@@ -11464,10 +11476,10 @@ l_3ecd:
 	move.b	#0x08,(character_y_offset_03,a2)	| [$3ed1: ld   (ix+character_y_offset_03),$08]
 	move.b	#0x01,(0x0c,a2)                 	| [$3ed5: ld   (ix+$0c),$01]
 l_3ed9:
-	move.b	(0x07,a2),d1                    	| [$3ed9: ld   b,(ix+$07)]
+	move.b	(current_floor_07,a2),d1                    	| [$3ed9: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$3edc: ld   c,$00]
 	move.b	#0x08,d3                        	| [$3ede: ld   d,$08]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$3ee0: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$3ee0: call $1E6C]
 	move.b	d6,d1                           	| [$3ee3: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BB(a6),a0             	| [$3ee4: ld   hl,($85BB)]
 	move.b	#0x01,(a0)+                      	| [$3ee7: ld   (hl),$01]
@@ -11488,7 +11500,7 @@ l_3f03:
 	move.b	(current_floor_07,a2),d1                    	| [$3f03: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$3f06: ld   c,$00]
 	move.b	#0x08,d3                        	| [$3f08: ld   d,$08]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$3f0a: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$3f0a: call $1E6C]
 	move.b	d6,d1                           	| [$3f0d: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BB(a6),a0             	| [$3f0e: ld   hl,($85BB)]
  	move.b	#0x01,(a0)+                      	| [$3f11: ld   (hl),$01]
@@ -11520,7 +11532,7 @@ l_3f2e:
 	move.b	(current_floor_07,a2),d1                    	| [$3f36: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$3f39: ld   c,$00]
 	move.b	#0x30,d3                        	| [$3f3b: ld   d,$30]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$3f3d: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$3f3d: call $1E6C]
 	move.b	d6,d1                           	| [$3f40: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BB(a6),a0             	| [$3f41: ld   hl,($85BB)]
 	addq.w	#1,a0                           	| [$3f44: inc  hl]
@@ -11537,7 +11549,7 @@ l_3f4e:
 	move.b	(current_floor_07,a2),d1                    	| [$3f56: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$3f59: ld   c,$00]
 	move.b	#0x30,d3                        	| [$3f5b: ld   d,$30]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$3f5d: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$3f5d: call $1E6C]
 	move.b	d6,d1                           	| [$3f60: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BB(a6),a0             	| [$3f61: ld   hl,($85BB)]
  	addq.w	#1,a0                           	| [$3f64: inc  hl]
@@ -11734,7 +11746,7 @@ l_40ee:
 	move.b	(current_floor_07,a2),d1                    	| [$40fd: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$4100: ld   c,$00]
 	move.b	#0x30,d3                        	| [$4102: ld   d,$30]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$4104: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$4104: call $1E6C]
 	move.b	d6,d1                           	| [$4107: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BB(a6),a0             	| [$4108: ld   hl,($85BB)]
 	move.b	#0x01,(a0)+                      	| [$410b: ld   (hl),$01]
@@ -11755,7 +11767,7 @@ l_411b:
 	move.b	(current_floor_07,a2),d1                    	| [$412a: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$412d: ld   c,$00]
 	move.b	#0x30,d3                        	| [$412f: ld   d,$30]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$4131: call $1E6C]
+	jbsr	compute_delta_height_1e6c                            	| [$4131: call $1E6C]
 	move.b	d6,d1                           	| [$4134: ld   b,l]
 	LOAD_POINTER	ram_pointer_85BB(a6),a0             	| [$4135: ld   hl,($85BB)]
 	move.b	#0x01,(a0)+                      	| [$4138: ld   (hl),$01]
@@ -14139,10 +14151,10 @@ l_5153:
 	move.w	#0x0004,d3                      	| [$5157: ld   de,$0004] 4
 	add.w	d3,a0                            	| [$515a: add  hl,de]
 	move.b	d2,(a0)                         	| [$515b: ld   (hl),c]
-	move.b	(character_x_00,a2),d1          	| [$515c: ld   b,(ix+character_x_00)]
+	move.b	(0,a2),d1          	| [$515c: ld   b,(ix+character_x_00)]
 	clr.b	d2                               	| [$515f: ld   c,$00]
-	move.b	(character_x_right_01,a2),d3    	| [$5161: ld   d,(ix+character_x_right_01)]
-	jbsr	compute_smth_d5_d6_1e6c                            	| [$5164: call $1E6C]
+	move.b	(1,a2),d3    	| [$5161: ld   d,(ix+character_x_right_01)]
+	jbsr	compute_delta_height_1e6c                            	| [$5164: call $1E6C]
 	move.b	d5,d0                           	| [$5167: ld   a,h]
 	                             	| [$5168: or   a]
 	jne	l_519d                             	| [$5169: jp   nz,$519D]
@@ -14153,7 +14165,7 @@ l_5153:
 	clr.b	(a0)+                             	| [$5173: ld   (hl),$00]
 	                           	| [$5175: inc  hl]
 	move.b	#0xFB,d1                        	| [$5176: ld   b,$FB]
-	move.b	(character_y_offset_03,a2),d0   	| [$5178: ld   a,(ix+character_y_offset_03)]
+	move.b	(3,a2),d0   	| [$5178: ld   a,(ix+character_y_offset_03)]
 	                             	| [$517b: or   a]
 	jpl	l_5181                             	| [$517c: jp   p,$5181]
 	move.b	#0xF5,d1                        	| [$517f: ld   b,$F5]
@@ -14310,7 +14322,7 @@ l_5295:
 	move.b	d0,d3                           	| [$529e: ld   e,a]
 	add.w	d3,a0                            	| [$52a1: add  hl,de]
 	move.b	(a0),d0                         	| [$52a2: ld   a,(hl)]
-	tst.b	d0                             	| [$52a3: or   a]
+	                             	| [$52a3: or   a]
 	bmi.b	0f                               	| [...]
 	rts                                    	| [$52a4: ret  p] [...]
 0:
@@ -14505,7 +14517,7 @@ enemy_walk_state_53F6:
 	jbsr	l_0568                            	| [$53fd: call $0568]
 	jcs	l_5436                             	| [$5400: jp   c,$5436]
 	move.b	(0x1a,a2),d0                    	| [$5403: ld   a,(ix+$1a)]
-	tst.b	d0                             	| [$5406: or   a]
+	                             	| [$5406: or   a]
 	bne.b	0f                               	| [...]
 	jbsr	l_5b33                            	| [$5407: call z,$5B33]
 0:
@@ -14522,7 +14534,7 @@ enemy_walk_state_53F6:
 	cmp.b	#0x02,d0                         	| [$5422: cp   $02]
 	jcc	l_55d7                             	| [$5424: jp   nc,$55D7]
 	move.b	(0x10,a2),d0                    	| [$5427: ld   a,(ix+$10)]
-	tst.b	d0                             	| [$542a: or   a]
+	                             	| [$542a: or   a]
 	bne.b	0f                               	| [...]
 	jbsr	l_55ef                            	| [$542b: call z,$55EF]
 0:
@@ -14594,10 +14606,10 @@ l_54a9:
 0:
 l_54b0:
 	move.b	(0x06,a3),d0                    	| [$54b0: ld   a,(iy+$06)]
-	tst.b	d0                             	| [$54b3: or   a]
+	                             	| [$54b3: or   a]
 	jeq	l_54eb                             	| [$54b4: jr   z,$54EB]
 	move.b	(0x1e,a2),d0                    	| [$54b6: ld   a,(ix+$1e)]
-	tst.b	d0                             	| [$54b9: or   a]
+	                             	| [$54b9: or   a]
 	jeq	l_54cd                             	| [$54ba: jr   z,$54CD]
 	move.b	(0x07,a2),d0                    	| [$54bc: ld   a,(ix+$07)]
 	sub.b	(0x03,a3),d0                     	| [$54bf: sub  (iy+$03)]
@@ -14741,7 +14753,7 @@ l_55d7:
 	clr.b	(0x1a,a2)                        	| [$55d7: ld   (ix+$1a),$00]
 	move.b	#0x0A,d1                        	| [$55db: ld   b,$0A]
 	move.b	(0x0e,a2),d0                    	| [$55dd: ld   a,(ix+$0e)]
-	tst.b	d0                             	| [$55e0: or   a]
+	                             	| [$55e0: or   a]
 	jeq	l_55e5                             	| [$55e1: jr   z,$55E5]
 	move.b	#0x07,d1                        	| [$55e3: ld   b,$07]
 l_55e5:
@@ -14896,10 +14908,10 @@ l_5694:
 	move.l	a0,-(sp)                        	| [$5696: push hl]
 	lea	table_577B-0xB+0xE,a0                          	| [$5697: ld   hl,$577E]
 	move.b	l_8242(a6),d0                   	| [$569a: ld   a,($8242)]
-	tst.b	d0                             	| [$569d: or   a]
+	                             	| [$569d: or   a]
 	jne	l_5702                             	| [$569e: jp   nz,$5702]
 	move.b	(0x06,a3),d0                    	| [$56a1: ld   a,(iy+$06)]
-	tst.b	d0                             	| [$56a4: or   a]
+	                             	| [$56a4: or   a]
 	jne	l_56b3                             	| [$56a5: jr   nz,$56B3]
 	move.b	(0x07,a3),d0                    	| [$56a7: ld   a,(iy+$07)]
 	cmp.b	#0x0B,d0                         	| [$56aa: cp   $0B]
@@ -14971,7 +14983,7 @@ award_end_of_level_bonus_56F9:
 	jra	l_5702                             	| [$56ff: jp   $5702] useless!
 l_5702:
 	move.b	game_in_play_flag_823B(a6),d0   	| [$5702: ld   a,(game_in_play_flag_823B)]
-	tst.b	d0                             	| [$5705: or   a]
+	                             	| [$5705: or   a]
 	jne	l_5716                             	| [$5706: jr   nz,$5716]
 	lea	current_player_score_834D(a6),a1                      	| [$5708: ld   de,$834D]
 	moveq	#2,d1                        	| [$570b: ld   b,$03]
@@ -14989,7 +15001,7 @@ l_5716:
 	lea	current_player_score_834D(a6),a0                      	| [$5716: ld   hl,$834D]
 	lea	l_8358(a6),a1                      	| [$5719: ld   de,$8358]
 	move.b	current_player_is_p2_8236(a6),d0                   	| [$571c: ld   a,($8236)]
-	tst.b	d0                             	| [$571f: or   a]
+	                             	| [$571f: or   a]
 	jeq	l_5725                             	| [$5720: jr   z,$5725]
 	lea	l_836C(a6),a1                      	| [$5722: ld   de,$836C]
 l_5725:
@@ -15028,7 +15040,7 @@ l_5738:
 	rts                                    	| [$5753: ret]
 l_5754:
 	move.b	l_8373(a6),d0                   	| [$5754: ld   a,($8373)]
-	tst.b	d0                             	| [$5757: or   a]
+	                             	| [$5757: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$5758: ret  nz] [...]
 0:
@@ -16076,7 +16088,7 @@ l_5d61:
 	STORE_POINTER	a0,elevator_tile_address_copy_850F(a6)            	| [$5d6c: ld   ($850F),hl]
 	lea	l_84A7(a6),a2                      	| [$5d6f: ld   ix,$84A7]
 l_5d73:
-	jbsr	l_5f44                            	| [$5d73: call $5F44]
+	jbsr	elevator_stuff_5f44                            	| [$5d73: call $5F44]
 	move.w	#0xFFEB,d3                          	| [$5d76: ld   de,$FFEB]
 	add.w	d3,a2                            	| [$5d79: add  ix,de]
 	move.b	l_850E(a6),d0                   	| [$5d7b: ld   a,($850E)]
@@ -16222,7 +16234,7 @@ l_5e60:
 * complex computation to find best distance??
 compute_d3w_from_d5w_5e76:
 	
-	LOAD_WORD	l_802A(a6),d5             	| [$5e76: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$5e76: ld   hl,($802A)]
 	
 	move.b	l_850E(a6),d0                   	| [$5e79: ld   a,($850E)]
 	                             	| [$5e7c: or   a]
@@ -16266,7 +16278,7 @@ l_5eb0:
 	add.w	d3,d5                            	| [$5eb3: add  hl,de]
  
 	move.w	d5,-(sp)                        	| [$5eb4: push hl]
-	LOAD_WORD	l_802A(a6),d5             	| [$5eb5: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$5eb5: ld   hl,($802A)]
 
 	move.w	#0x00C0,d3                          	| [$5eb8: ld   de,$00C0]
 	move.b	(0x0e,a2),d0                    	| [$5ebb: ld   a,(ix+$0e)]
@@ -16300,7 +16312,7 @@ l_5ee0:
 	add.w	d3,d5                            	| [$5ee3: add  hl,de]
 
 	move.w	d5,-(sp)                        	| [$5ee4: push hl]
-	LOAD_WORD	l_802A(a6),d5             	| [$5ee5: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$5ee5: ld   hl,($802A)]
 
 	move.w	#0x0540,d3                          	| [$5ee8: ld   de,$0540]
 	move.w	d5,d0                           	| [$5eeb: ld   a,l]
@@ -16342,7 +16354,7 @@ l_5f0c:
 	exg	d3,d5                              	| [$5f1e: ex   de,hl]
 l_5f1f:
 	move.w	d3,-(sp)                    	| [$5f1f: push de]
-	LOAD_WORD	l_802A(a6),d5             	| [$5f20: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$5f20: ld   hl,($802A)]
 
 	move.w	#0x0120,d3                          	| [$5f23: ld   de,$0120]
 	jra	l_5ec4                             	| [$5f26: jp   $5EC4]
@@ -16366,24 +16378,25 @@ l_5f39:
 	jne	l_5f39                             	| [$5f41: djnz $5F39]
 	rts                                    	| [$5f43: ret]
 
-l_5f44:
+* < IX (ex: $8492???)
+elevator_stuff_5f44:
 	jbsr	l_5f96                            	| [$5f44: call $5F96]
 	jbsr	l_5fdf                            	| [$5f47: call $5FDF]
-	move.b	(character_x_right_01,a2),d5    	| [$5f4a: ld   h,(ix+character_x_right_01)]
-	move.b	(character_x_00,a2),d6          	| [$5f4d: ld   l,(ix+character_x_00)]
+	move.b	(1,a2),d5    	| [$5f4a: ld   h,(ix+character_x_right_01)]
+	move.b	(0,a2),d6          	| [$5f4d: ld   l,(ix+character_x_00)]
 	LOAD_D5_16_FROM_D5D6
-	move.b	(character_y_offset_03,a2),d3   	| [$5f50: ld   d,(ix+character_y_offset_03)]
-	move.b	(0x02,a2),d4                    	| [$5f53: ld   e,(ix+$02)]
+	move.b	(3,a2),d3   	| [$5f50: ld   d,(ix+character_y_offset_03)]
+	move.b	(2,a2),d4                    	| [$5f53: ld   e,(ix+$02)]
 	LOAD_D3_16_FROM_D3D4
 												| [$5f56: xor  a]
 	sub.w	d3,d5                            	| [$5f57: sbc  hl,de]
 	jcc	l_5f75                             	| [$5f59: jp   nc,$5F75]
-	move.b	(move_direction_0d,a2),d0       	| [$5f5c: ld   a,(ix+move_direction_0d)]
+	move.b	(0xd,a2),d0       	| [$5f5c: ld   a,(ix+move_direction_0d)]
 	                             	| [$5f5f: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$5f60: ret  z] [...]
 0:
-	subq.b	#1,(move_direction_0d,a2)       	| [$5f61: dec  (ix+move_direction_0d)]
+	subq.b	#1,(0xd,a2)       	| [$5f61: dec  (ix+move_direction_0d)]
 	move.b	l_850C(a6),d0                   	| [$5f64: ld   a,($850C)]
 	move.b	d0,d3                           	| [$5f67: ld   d,a]
 	movem.w	d3/d4,-(sp)                    	| [$5f68: push de]
@@ -16396,14 +16409,14 @@ l_5f44:
 0:
 	jra	l_6033                             	| [$5f72: jp   $6033]
 l_5f75:
-	move.b	(move_direction_0d,a2),d0       	| [$5f75: ld   a,(ix+move_direction_0d)]
+	move.b	(0xd,a2),d0       	| [$5f75: ld   a,(ix+move_direction_0d)]
 	                             	| [$5f78: or   a]
 	jeq	l_5f83                             	| [$5f79: jp   z,$5F83]
 	jbsr	l_6028                            	| [$5f7c: call $6028]
 	jbsr	l_605a                            	| [$5f7f: call $605A]
 	rts                                    	| [$5f82: ret]
 l_5f83:
-	addq.b	#1,(move_direction_0d,a2)       	| [$5f83: inc  (ix+move_direction_0d)]
+	addq.b	#1,(0xd,a2)       	| [$5f83: inc  (ix+move_direction_0d)]
 	move.b	(0x09,a2),d3                    	| [$5f86: ld   d,(ix+$09)]
 	jbsr	l_604b                            	| [$5f89: call $604B]
 	move.b	(0x0b,a2),d3                    	| [$5f8c: ld   d,(ix+$0b)]
@@ -16427,8 +16440,8 @@ l_5f96:
 												| [$5fa8: ld   e,c]
 l_5fa9:
 	LOAD_D3D4_FROM_D3_16
-	move.b	(0x01,a2),d5    	| [$5fa9: ld   h,(ix+character_x_right_01)]
-	move.b	(a2),d6          	| [$5fac: ld   l,(ix+character_x_00)]
+	move.b	(0x01,a2),d5    	| [$5fa9: ld   h,(ix+1)]
+	move.b	(a2),d6          	| [$5fac: ld   l,(ix)]
 	move.b	d3,(0x01,a2)    	| [$5faf: ld   (ix+character_x_right_01),d]
 	move.b	d4,(a2)          	| [$5fb2: ld   (ix+character_x_00),e]
 	LOAD_D3_16_FROM_D3D4
@@ -16455,13 +16468,15 @@ l_5fd6:
 	move.b	d0,(0x08,a2)  	| [$5fd8: ld   (ix+associated_elevator_08),a]
 	subq.b	#1,(0x09,a2)          	| [$5fdb: dec  (ix+enemy_state_09)]
 	rts                                    	| [$5fde: ret]
+	
+* < IX: 847D??
 l_5fdf:
-	LOAD_WORD	l_802A(a6),d5             	| [$5fdf: ld   hl,($802A)]
+	LOAD_WORD	absolute_height_802A(a6),d5             	| [$5fdf: ld   hl,($802A)]
 
 	move.w	d5,d1                           	| [$5fe2: ld   b,h]
 	                           	| [$5fe3: ld   c,l]
-	move.b	(current_floor_07,a2),d3        	| [$5fe4: ld   d,(ix+current_floor_07)]
-	move.b	(character_situation_06,a2),d4  	| [$5fe7: ld   e,(ix+character_situation_06)]
+	move.b	(7,a2),d3        	| [$5fe4: ld   d,(ix+current_floor_07)]
+	move.b	(6,a2),d4  	| [$5fe7: ld   e,(ix+character_situation_06)]
 	LOAD_D3_16_FROM_D3D4
 	                               	| [$5fea: xor  a]
 	sub.w	d3,d5                            	| [$5feb: sbc  hl,de]
@@ -16890,7 +16905,7 @@ l_620c:
 	move.b	(0x07,a2),d1                    	| [$6217: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$621a: ld   c,$00]
 	move.b	(character_y_offset_03,a2),d3   	| [$621c: ld   d,(ix+character_y_offset_03)]
-	jra	compute_smth_d5_d6_1e6c                             	| [$621f: jp   $1E6C]
+	jra	compute_delta_height_1e6c                             	| [$621f: jp   $1E6C]
 l_6222:
 	jbsr	load_character_elevator_structure_62CE	| [$6222: call load_character_elevator_structure_62CE]
 	move.b	(0x01,a3),d1                    	| [$6225: ld   b,(iy+$01)]
@@ -16906,9 +16921,9 @@ l_6232:
 	move.b	d0,d3                           	| [$623a: ld   d,a]
 	move.b	(0x08,a2),d0                    	| [$623b: ld   a,(ix+$08)]
 	roxl.b	#1,d0                           	| [$623e: rla]
-	jcc	compute_smth_d5_d6_1e6c                             	| [$623f: jp   nc,$1E6C]
+	jcc	compute_delta_height_1e6c                             	| [$623f: jp   nc,$1E6C]
 	subq.b	#2,d1                           	| [$6242: dec  b] * 2
-	jra	compute_smth_d5_d6_1e6c                             	| [$6244: jp   $1E6C]
+	jra	compute_delta_height_1e6c                             	| [$6244: jp   $1E6C]
 
 
 l_6247:

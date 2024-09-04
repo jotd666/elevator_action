@@ -45,9 +45,11 @@ elevator column scroll:
 ISSUES:
 
 - enemy sprites completely wrong: parasite sprites, wrong color scheme
-- reaching bottom floor: goes back too far (higher door detect probably not working)
-- head of character remains displayed at the end of stairs
-- opening doors remain displayed: structures: moving_door_slot_80AD, 80B5???
+  enemy character 0x18 appearing everywhere
+- enemies don't shoot
+- enemy animation is erratic
+- clip sprites (car!!)
+- test: reach bottom leaving 1 red door not entered see what happens
 - player takes the document sprites: briefcase inside should be black
 - NTSC version: remove brick wall, bottom status higher
 
@@ -70,7 +72,6 @@ to debug:
 	.endif
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
 
-DK check issues????
 
 investigate: l_61c3:  disable character??
 	LOAD_POINTER	ram_pointer_85BF(a6),a0       

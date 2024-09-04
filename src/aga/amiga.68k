@@ -866,7 +866,7 @@ update_bobs:
 	jne	20f
 	* sprite sheet 1, not a lot of used sprites there
 	add.b	#0xC0,d2
-	jra		21f
+	jra		22f
 20:
 	cmp.b	#0xD,D2
 	jne	21f
