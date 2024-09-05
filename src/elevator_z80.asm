@@ -14039,105 +14039,42 @@ load_character_elevator_structure_62CE:
 62E0: D9          exx
 62E1: C9          ret
 
+; sprite table with parts of code "hidden" in it, probably inserted there to save space
+; because some offsets weren't used?? WTF
 table_62E2:
-	dc.b	FB      
-	dc.b	00      
-	dc.b	00      
-	dc.b	40      
-	dc.b	FB      
-	dc.b	10 00   
-	dc.b	4E      
-	dc.b	FB      
-	dc.b	00      
-	dc.b	00      
-	dc.b	41      
-	dc.b	FA 10 00
-	dc.b	4E      
-	dc.b	FA 00 00
-	dc.b	42      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FB      
-	dc.b	FE 00   
-	dc.b	43      
-	dc.b	FB      
-	dc.b	0E 00   
-	dc.b	4E      
-	dc.b	FB      
-	dc.b	00      
-	dc.b	00      
-	dc.b	49      
-	dc.b	FB      
-	dc.b	10 00   
-	dc.b	4F      
-	dc.b	FC 00 00
-	dc.b	44      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	03      
-	dc.b	44      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FB      
-	dc.b	08      
-	dc.b	00      
-	dc.b	45      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FB      
-	dc.b	08      
-	dc.b	00      
-	dc.b	46      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	00      
-	dc.b	4A      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 00
-	dc.b	47      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 00
-	dc.b	48      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	00      
-	dc.b	4B      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
+	.byte	FB 00 00 40 FB 10 00 4E FB 00 00 41 FA 10 00 4E ; 62E2 
+	.byte	FA 00 00 42 00 00 00 00 FB FE 00 43 FB 0E 00 4E ; 62F2 
+	.byte	FB 00 00 49 FB 10 00 4F FC 00 00 44 00 00 00 00 ; 6302 
+	.byte	FD 00 03 44 00 00 00 00 FB 08 00 45 00 00 00 00 ; 6312 
+	.byte	FB 08 00 46 00 00 00 00 00 00 00 00 00 00 00 00 ; 6322 
+	.byte	FD 00 00 4A 00 00 00 00 FC 00 00 47 00 00 00 00 ; 6332 
+	.byte	FC 00 00 48 00 00 00 00 FD 00 00 4B 00 00 00 00 ; 6342 
+	.byte	FD 7E 00 B7 C8 DD 7E 06 B7 C3 D2 63 FD 7E 00 C9 ; 6352 real code!
+	.byte	FE 00 01 40 FE 10 01 4E FE 00 01 41 FF 10 01 4E ; 6362 
+	.byte	FF 00 01 42 00 00 00 00 FE FE 01 43 FE 0E 01 4E ; 6372 
+	.byte	FE 00 01 49 FE 10 01 4F FD 00 01 44 00 00 00 00 ; 6382 
+	.byte	FC 00 02 44 00 00 00 00 FE 08 01 45 00 00 00 00 ; 6392 
+	.byte	FE 08 01 46 00 00 00 00 00 00 00 00 00 00 00 00 ; 63A2 
+	.byte	FC 00 01 4A 00 00 00 00 FD 00 01 47 00 00 00 00 ; 63B2 
+	.byte	FD 00 01 48 00 00 00 00 FC 00 01 4B 00 00 00 00 ; 63C2 
+	.byte	C2 08 46 DD 7E 03 FE 07 D8 C3 08 46 DD 7E 03 D8 ; 63D2 real code!
+	.byte	FB 00 00 50 FB 10 00 5E FB 00 00 51 FA 10 00 5E ; 63E2 
+	.byte	FA 00 00 52 00 00 00 00 FB FE 00 53 FB 0E 00 5E ; 63F2 
+	.byte	FB 00 00 59 FB 10 00 5F FC 00 00 54 00 00 00 00 ; 6402 
+	.byte	FD 00 03 54 00 00 00 00 FB 08 00 55 00 00 00 00 ; 6412 
+	.byte	FB 08 00 56 00 00 00 00 F6 00 00 5D 06 00 00 5C ; 6422 
+	.byte	FD 00 00 5A 00 00 00 00 FC 00 00 57 00 00 00 00 ; 6432 
+	.byte	FC 00 00 58 00 00 00 00 FD 00 00 5B 00 00 00 00 ; 6442 
+	.byte	FA 01 FF 00 19 00 00 01 6D 00 A7 00 53 00 0A 00 ; 6452
+	.byte	FE 00 01 50 FE 10 01 5E FE 00 01 51 FF 10 01 5E ; 6462 
+	.byte	FF 00 01 52 00 00 00 00 FE FE 01 53 FE 0E 01 5E ; 6472 
+	.byte	FE 00 01 59 FE 10 01 5F FD 00 01 54 00 00 00 00 ; 6482 
+	.byte	FC 00 02 54 00 00 00 00 FE 08 01 55 00 00 00 00 ; 6492 
+	.byte	FE 08 01 56 00 00 00 00 FD 00 01 5C 0D 00 01 5D ; 64A2 
+	.byte	FC 00 01 5A 00 00 00 00 FD 00 01 57 00 00 00 00 ; 64B2 
+	.byte	FD 00 01 58 00 00 00 00 FC 00 01 5B 00 00 00 00 ; 64C2 
+
+
 
 6352: FD 7E 00    ld   a,(iy+$00)
 6355: B7          or   a
@@ -14149,272 +14086,12 @@ table_62E2:
 635E: FD 7E 00    ld   a,(iy+$00)
 6361: C9          ret
 
-unused_6362:
-	dc.b	FE 00   
-	dc.b	01 40 FE
-	dc.b	10 01   
-	dc.b	4E      
-	dc.b	FE 00   
-	dc.b	01 41 FF
-	dc.b	10 01   
-	dc.b	4E      
-	dc.b	FF      
-	dc.b	00      
-	dc.b	01 42 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FE FE   
-	dc.b	01 43 FE
-	dc.b	0E 01   
-	dc.b	4E      
-	dc.b	FE 00   
-	dc.b	01 49 FE
-	dc.b	10 01   
-	dc.b	4F      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 44 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 02
-	dc.b	44      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FE 08   
-	dc.b	01 45 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FE 08   
-	dc.b	01 46 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 01
-	dc.b	4A      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 47 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 48 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 01
-	dc.b	4B      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
 
 63D2: C2 08 46    jp   nz,$4608
 63D5: DD 7E 03    ld   a,(ix+character_y_offset_03)
 63D8: FE 07       cp   $07
 63DA: D8          ret  c
 63DB: C3 08 46    jp   $4608
-; this is unreached & unused
-	dc.b	DD 7E 03
-	dc.b	D8      
-	dc.b	FB      
-	dc.b	00      
-	dc.b	00      
-	dc.b	50      
-	dc.b	FB      
-	dc.b	10 00   
-	dc.b	5E      
-	dc.b	FB      
-	dc.b	00      
-	dc.b	00      
-	dc.b	51      
-	dc.b	FA 10 00
-	dc.b	5E      
-	dc.b	FA 00 00
-	dc.b	52      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FB      
-	dc.b	FE 00   
-	dc.b	53      
-	dc.b	FB      
-	dc.b	0E 00   
-	dc.b	5E      
-	dc.b	FB      
-	dc.b	00      
-	dc.b	00      
-	dc.b	59      
-	dc.b	FB      
-	dc.b	10 00   
-	dc.b	5F      
-	dc.b	FC 00 00
-	dc.b	54      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	03      
-	dc.b	54      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FB      
-	dc.b	08      
-	dc.b	00      
-	dc.b	55      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FB      
-	dc.b	08      
-	dc.b	00      
-	dc.b	56      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	F6 00   
-	dc.b	00      
-	dc.b	5D      
-	dc.b	06 00   
-	dc.b	00      
-	dc.b	5C      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	00      
-	dc.b	5A      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 00
-	dc.b	57      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 00
-	dc.b	58      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	00      
-	dc.b	5B      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FA 01 FF
-	dc.b	00      
-	dc.b	19      
-	dc.b	00      
-	dc.b	00      
-	dc.b	01 6D 00
-	dc.b	A7      
-	dc.b	00      
-	dc.b	53      
-	dc.b	00      
-	dc.b	0A      
-	dc.b	00      
-	dc.b	FE 00   
-	dc.b	01 50 FE
-	dc.b	10 01   
-	dc.b	5E      
-	dc.b	FE 00   
-	dc.b	01 51 FF
-	dc.b	10 01   
-	dc.b	5E      
-	dc.b	FF      
-	dc.b	00      
-	dc.b	01 52 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FE FE   
-	dc.b	01 53 FE
-	dc.b	0E 01   
-	dc.b	5E      
-	dc.b	FE 00   
-	dc.b	01 59 FE
-	dc.b	10 01   
-	dc.b	5F      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 54 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 02
-	dc.b	54      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FE 08   
-	dc.b	01 55 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FE 08   
-	dc.b	01 56 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 5C 0D
-	dc.b	00      
-	dc.b	01 5D FC
-	dc.b	00      
-	dc.b	01 5A 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 57 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FD      
-	dc.b	00      
-	dc.b	01 58 00
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	FC 00 01
-	dc.b	5B      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
-	dc.b	00      
 
 l_64D2:
 64D2: 3A 79 87    ld   a,($8779)

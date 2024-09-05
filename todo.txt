@@ -44,10 +44,9 @@ elevator column scroll:
    
 ISSUES:
 
-- enemy sprites completely wrong: parasite sprites, wrong color scheme
-  enemy character 0x18 appearing everywhere
+- enemy sprites: wrong color scheme
 - enemies rarely shoot
-- enemy animation is erratic
+- lamps???
 
 minor:
 

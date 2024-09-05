@@ -863,6 +863,8 @@ update_bobs:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
+	cmp.b	#0x2,D2
+	jeq		2f			| fake BOB at start
 	BCLR	#6,d2
 	jne	20f
 	* sprite sheet 1, not a lot of used sprites there
@@ -878,6 +880,7 @@ update_bobs:
 	cmp.b	#200,d0
 	jcc	2f
 21:
+
 	btst	#2,(TARGET_SPRITE_ATTRIBUTES,a0)
 	jeq	22f
 	* select alternate color, I simplified the whole
@@ -895,11 +898,17 @@ update_bobs:
 *	btst.b	#1,(TARGET_SPRITE_ATTRIBUTES,a0)
 *	beq.b	0f
 *0:
+	cmp.b	#0x18,d2
+	bne	450f
+	lea		sprite_ram_d100,a3	
+	jbsr	osd_break
+450:
 	move.l	(a4,d2.w*4),d4	| test pointer
 	jmi		2f			| legal but skipped
 	bne.b	11f
 	.ifndef	RELEASE
 	* not known/registered: we should log that!
+	move.b	(TARGET_SPRITE_CODE,a0),d2
 	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
 	move.w	#0xF00,0xDFF180
 	.endif
