@@ -46,10 +46,11 @@ ISSUES:
 
 - enemy sprites completely wrong: parasite sprites, wrong color scheme
   enemy character 0x18 appearing everywhere
-- enemies don't shoot
+- enemies rarely shoot
 - enemy animation is erratic
-- clip sprites (car!!)
-- test: reach bottom leaving 1 red door not entered see what happens
+
+minor:
+
 - player takes the document sprites: briefcase inside should be black
 - NTSC version: remove brick wall, bottom status higher
 
