@@ -1,28 +1,13 @@
 
 - AGA: 16+16 dual playfield
-- ECS: 16 colors, sprites for the 4 first elevators, then bobs
+- ECS: 16 colors, no DPF, background restore
+  sprites for the 4 first elevators, then bobs, bobs
+  have Y translation applied to make up for non shifting!
 
 reverse stuff:
 
 - when color changes (light shot)
 - colorbanks (D506/7)
-
-enemy A.I when is 51A7 calles?
-
-jump_table_0BBF
-
-end of mainloop
-76B1: CD 68 0B    call $0B68
-76B4: CD E8 2F    call $2FE8
-76B7: CD 27 31    call $3127
-76BA: CD 81 30    call $3081
-76BD: CD BA 4B    call $4BBA
-76C0: CD E1 0B    call $0BE1
-76C3: CD A0 15    call $15A0
-
-  
-figure 800E pointers? values?
-
 
 
 0e9f called when??? reset charset???
@@ -31,7 +16,7 @@ figure 800E pointers? values?
 TODO:
 
 - elevator dynamic colors: in progress
-
+- sounds!!
 elevator column scroll:
 - if brutal scroll change, just reset all colors to green for that elevator
 - when writing a elevator floor tile:
@@ -42,11 +27,14 @@ elevator column scroll:
     on 3e: draw 8 pink + 1 green (clipped)
    implemented, not selecting proper column!
    
+- record "hurry up" music for no9
+
 ISSUES:
 
-- enemy sprites: wrong color scheme
-- enemies rarely shoot
 - lamps???
+- elevators sometimes blink/are hidden
+- priority error when exiting red room for player?
+- 2 player mode cocktail Y shift crap on sprites/player
 
 minor:
 
@@ -71,8 +59,5 @@ to debug:
 	move.w	(a7)+,d0
 	.endif
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
-
-
-investigate: l_61c3:  disable character??
-	LOAD_POINTER	ram_pointer_85BF(a6),a0       
+ 
 	

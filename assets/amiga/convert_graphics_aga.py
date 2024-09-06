@@ -267,11 +267,14 @@ for x in range(sprites_2_sheet.size[0]):
 
 
 sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,None,"sprites",dump=dump_it,name_dict=sprite_names)
+
 # dark floor enemies + blue door
 sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43)) | set(range(50,56)),"sprites",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64)
 
 sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,{1,8,48,47},"sprites",dump=dump_it,name_dict=sprite_names,tile_offset=192)
+
+print(sprites_palette)
 
 # create "lights out" enemies
 sprites_3_sheet = change_color(sprites_2_sheet,(0,0,176),(0,0,255))
@@ -286,9 +289,14 @@ full_sprite_set += [None]*(192-len(full_sprite_set)) + sprites_set_0
 # playfield+status+sprites
 game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0])))
 
-sprites_palette = tuple(sorted(set(sprites_palette) |
+sprites_palette = sorted(set(sprites_palette) |
   set(sprites_palette_2) |
-  set(sprites_palette_3)))
+  set(sprites_palette_3))
+
+sprites_palette[0] = (0x10,0x20,0x30)  # invalid color, ignored by dual playfield anyway since it's color 0
+sprites_palette.insert(1,(0,0,0))
+
+sprites_palette = tuple(sprites_palette)
 # elevators
 game_background_palette = tuple(sorted(game_layer[2][0]))
 
