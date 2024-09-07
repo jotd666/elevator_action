@@ -222,15 +222,12 @@ add_sprite(63,"lamp_exploding")
 # enemies and doors have different color schemes. 3 color schemes for enemies, 2 color schemes for doors
 #
 # add 2 special enemy "cluts" and blue opening door
-#add_sprite_range(16,32,"enemy_lights_out",namedict=alt_sprite_names)
 add_sprite_range(16+64,32+64,"enemy_dark_floor")
 add_sprite_range(50+64,56+64,"enemy_dark_floor_shoots")
 add_sprite_range(32+62,40+64,"blue_door")
 add_sprite(64+0x3E,"lamp")  # falling lamp
 add_sprite_range(0x28+64,0x2B+64,"wall")  # to be draw above characters on stairs
 
-add_sprite_range(16+128,32+128,"enemy_lights_out")
-add_sprite_range(50+128,56+128,"enemy_lights_out_shoots")
 add_sprite(1+192,"five_hundred_points")
 add_sprite(8+192,"player_carrying_file")
 add_sprite(47+192,"five_hundred_points")
@@ -293,22 +290,16 @@ sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,{1,8,48,4
 
 
 
-# create "lights out" enemies
-sprites_3_sheet = change_color(sprites_2_sheet,(0,0,176),(0,0,255))
-sprites_3_sheet = change_color(sprites_3_sheet,(79,79,79),(0,0,0))
 
-sprites_palette_3,sprites_set_3 = load_tileset(sprites_3_sheet,True,16,set(range(16,32)) | set(range(50,56)),"sprites",dump=dump_it,
-                        name_dict=sprite_names,tile_offset=128)
 
-full_sprite_set = sprites_set + sprites_set_2 + sprites_set_3
+full_sprite_set = sprites_set + sprites_set_2
 full_sprite_set += [None]*(192-len(full_sprite_set)) + sprites_set_0
 
 # playfield+status+sprites
 game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0])))
 
 sprites_palette = sorted(set(sprites_palette) |
-  set(sprites_palette_2) |
-  set(sprites_palette_3))
+  set(sprites_palette_2))
 
 sprites_palette[0] = (0x10,0x20,0x30)  # invalid color, ignored by dual playfield anyway since it's color 0
 sprites_palette.insert(1,(0,0,0))
@@ -423,6 +414,18 @@ for tile in full_sprite_set:
 
 src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","aga")
 
+dark_color_rep = {(255,0,0):(255,0,0), (255,255,255):(111,111,111), (176, 176, 176):(0,111,167)}
+
+
+dark_palette = [dark_color_rep.get(c,(0,0,0)) for c in game_playfield_palette]
+
+dark_color_rep = {(79,79,79):(0,0,0), (0,0,255):(0,0,176), # enemy skin and blue doors are dark/darker,
+ (176, 176, 176):(0,111,167),
+ (37,176,176):(0,0,0),
+ (255,255,255):(111,111,111)}  # fake building front sprites follow tiles rules
+
+dark_sprites_palette = [dark_color_rep.get(c,c) for c in sprites_palette]
+
 # dump palettes
 with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("level_palettes:\n")
@@ -430,9 +433,14 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
         f.write(f"\t.long\tlevel_palette_{i}\n")
     for i in range(4):
         f.write(f"level_palette_{i}:\n")
+        # TODO change a few colors
         bitplanelib.palette_dump(game_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+    f.write(f"dark_palette:\n")
+    bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("sprites_palette:\n")
     bitplanelib.palette_dump(sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+    f.write("dark_sprites_palette:\n")
+    bitplanelib.palette_dump(dark_sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("elevators_palette:\n")

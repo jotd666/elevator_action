@@ -5978,10 +5978,10 @@ init_hw_scroll_and_charset_260C:
 												| [$261b: ld   ($D501),a]
 												| [$261e: ld   ($D503),a]
 												| [$2621: ld   ($D505),a]
-	move.b	#0x10,d0                        	| [$2624: ld   a,$10]
-	move.b	d0,colorbank_D506               	| [$2626: ld   (colorbank_D506),a]
-	move.b	#0x32,d0                        	| [$2629: ld   a,$32]
-	move.b	d0,colorbank_D507               	| [$262b: ld   (colorbank_D507),a]
+	moveq	#0,d0                        	| [$2624: ld   a,$10]
+	jbsr	osd_set_color_bank               	| [$2626: ld   (colorbank_D506),a]
+	              	| [$2629: ld   a,$32]
+	              	| [$262b: ld   (colorbank_D507),a]
 	move.b	flip_screen_81D8(a6),d0                   	| [$262e: ld   a,($81D8)]
 	                             	| [$2631: or   a]
 												| [$2632: jr   nz,$2644]
@@ -7961,7 +7961,7 @@ unknown_enemy_handling_3164:
 	or.b	(a0),d0                           	| [$31a4: or   (hl)]
 	move.l	(sp)+,a0                        	| [$31a5: pop  hl]
 	move.b	d0,l_8642(a6)                   	| [$31a6: ld   ($8642),a]
-	jne	l_3265                             	| [$31a9: jp   nz,$3265]
+	jne	make_building_dark_3265                             	| [$31a9: jp   nz,$3265]
 	rts                                    	| [$31ac: ret]
 
 l_31ad:
@@ -7969,7 +7969,7 @@ l_31ad:
 	move.b	d0,lamp_shot_state_8240(a6)     	| [$31af: ld   (lamp_shot_state_8240),a]
 	move.b	d0,l_8164(a6)                   	| [$31b2: ld   ($8164),a]
 	clr.b	d0                               	| [$31b5: xor  a]
-	move.b	d0,l_8242(a6)                   	| [$31b6: ld   ($8242),a]
+	move.b	d0,building_is_dark_8242(a6)                   	| [$31b6: ld   ($8242),a]
 	rts                                    	| [$31b9: ret]
 
 update_shot_lamp_31BA:
@@ -7988,9 +7988,9 @@ update_shot_lamp_31BA:
 	jcs	l_3225                             	| [$31d0: jp   c,$3225]
 	cmp.b	#0x18,d0                         	| [$31d3: cp   $18]
 	jcs	l_3251                             	| [$31d5: jp   c,$3251]
-	jeq	l_3265                             	| [$31d8: jp   z,$3265]
+	jeq	make_building_dark_3265                             	| [$31d8: jp   z,$3265]
 	cmp.b	#0x5A,d0                         	| [$31db: cp   $5A]
-	jeq	l_3292                             	| [$31dd: jp   z,$3292]
+	jeq	restore_building_lights_3292                             	| [$31dd: jp   z,$3292]
 	rts                                    	| [$31e0: ret]
 l_31e1:
 	move.b	#0x24,d0                        	| [$31e1: ld   a,$24]
@@ -8071,15 +8071,16 @@ l_3251:
 	addq.b	#0x04,d0                        	| [$3261: add  a,$04]
 	move.b	d0,(a0)                         	| [$3263: ld   (hl),a]
 	rts                                    	| [$3264: ret]
-l_3265:
+	
+make_building_dark_3265:
 	st.b	d0                                	| [$3265: ld   a,$FF]
 	move.b	d0,l_8164(a6)                   	| [$3267: ld   ($8164),a]
-	move.b	#0x30,d0                        	| [$326a: ld   a,$30]
-	move.b	d0,colorbank_D506               	| [$326c: ld   (colorbank_D506),a]
-	move.b	#0x22,d0                        	| [$326f: ld   a,$22]
-	move.b	d0,colorbank_D507               	| [$3271: ld   (colorbank_D507),a]
+	moveq	#1,d0                        	| [$326a: ld   a,$30]
+	jbsr	osd_set_color_bank               	| [$326c: ld   (colorbank_D506),a]
+											| [$326f: ld   a,$22]
+											| [$3271: ld   (colorbank_D507),a]
 	move.b	#0x01,d0                        	| [$3274: ld   a,$01]
-	move.b	d0,l_8242(a6)                   	| [$3276: ld   ($8242),a]
+	move.b	d0,building_is_dark_8242(a6)                   	| [$3276: ld   ($8242),a]
 	move.b	game_in_play_flag_823B(a6),d0   	| [$3279: ld   a,(game_in_play_flag_823B)]
 												| [$327c: or   a]
 	beq.b	0f                               	| [...]
@@ -8101,12 +8102,12 @@ l_3265:
 	move.b	d0,level_timer_16bit_msb_8232(a6)	| [$328e: ld   (level_timer_16bit_msb_8232),a]
 	rts                                    	| [$3291: ret]
 
-l_3292:
+restore_building_lights_3292:
 	jbsr	l_31ad                            	| [$3292: call $31AD]
-	move.b	#0x10,d0                        	| [$3295: ld   a,$10]
-	move.b	d0,colorbank_D506               	| [$3297: ld   (colorbank_D506),a]
-	move.b	#0x32,d0                        	| [$329a: ld   a,$32]
-	move.b	d0,colorbank_D507               	| [$329c: ld   (colorbank_D507),a]
+	moveq	#0,d0                        	| [$3295: ld   a,$10]
+	jbsr	osd_set_color_bank               	| [$3297: ld   (colorbank_D506),a]
+											| [$329a: ld   a,$32]
+											| [$329c: ld   (colorbank_D507),a]
 	move.b	game_in_play_flag_823B(a6),d0   	| [$329f: ld   a,(game_in_play_flag_823B)]
 	                             	| [$32a2: or   a]
 	beq.b	0f                               	| [...]
@@ -13399,7 +13400,7 @@ l_5694:
 
 	move.l	a0,-(sp)                        	| [$5696: push hl]
 	lea	table_577B-0xB+0xE,a0                          	| [$5697: ld   hl,$577E]
-	move.b	l_8242(a6),d0                   	| [$569a: ld   a,($8242)]
+	move.b	building_is_dark_8242(a6),d0                   	| [$569a: ld   a,($8242)]
 	                             	| [$569d: or   a]
 	jne	l_5702                             	| [$569e: jp   nz,$5702]
 	move.b	(0x06,a3),d0                    	| [$56a1: ld   a,(iy+$06)]
@@ -13421,7 +13422,7 @@ l_56b9:
 
 	move.l	a0,-(sp)                        	| [$56bb: push hl]
 	lea	table_577B-0xB+0x14,a0                          	| [$56bc: ld   hl,$5784]
-	move.b	l_8242(a6),d0                   	| [$56bf: ld   a,($8242)]
+	move.b	building_is_dark_8242(a6),d0                   	| [$56bf: ld   a,($8242)]
 	                             	| [$56c2: or   a]
 	jne	l_5702                             	| [$56c3: jp   nz,$5702]
 	move.b	(character_situation_06,a2),d0  	| [$56c6: ld   a,(ix+character_situation_06)]
@@ -15466,7 +15467,7 @@ l_6247:
 	rts                                    	| [$627c: ret  nz] [...]
 0:
 l_627d:
-	move.b	l_8242(a6),d0                   	| [$627d: ld   a,($8242)]
+	move.b	building_is_dark_8242(a6),d0                   	| [$627d: ld   a,($8242)]
 	                             	| [$6280: or   a]
 	jne	l_628c                             	| [$6281: jr   nz,$628C]
 	move.b	(current_floor_07,a2),d0                    	| [$6283: ld   a,(ix+$07)]

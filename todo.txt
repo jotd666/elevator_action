@@ -31,9 +31,15 @@ elevator column scroll:
 - record "hurry up" music for no9
 - record "game over" music for no9
 - rip end sound (car/bonus)
+- elevator looped sound
+- return to red door looped sound should stop: which commands stops it?
+- no sound for falling enemy
+- when does the "ping" sound play?
 
 ISSUES:
 
+- remove third enemy set, it is second set with palette change
+- set color bank: also alter sprites
 - elevators sometimes blink/are hidden (player in elevator => exits: elevator disappears!)
 - priority error when exiting red room for player?
 - 2 player mode cocktail Y shift crap on sprites/player

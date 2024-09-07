@@ -201,6 +201,7 @@ start:
 		.global osd_read_inputs_1
 		.global osd_read_inputs_2
 		.global	osd_set_gfx_bank
+		.global	osd_set_color_bank
 		.global	osd_set_column_scroll
 	
 	.include	"ReadJoypad.i"
@@ -1598,10 +1599,41 @@ osd_disable_interrupts:
 
 
 
+* < D0: 0: normal colors, 1: dark colors
+osd_set_color_bank:
+	movem.l	d0-d1/a0-a1,-(a7)
+	tst.b	d0
+	jne		1f
 	
+	lea		sprites_palette,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		bob_colors,a1
+	bsr		load_palette
+	
+	lea		level_palettes,a0
+	* TODO which level ATM 1
+	moveq	#0,d0
+	move.l	(a0,d0.w*4),a0
 
-
-
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		playfield_tiles_colors,a1
+	bsr		load_palette
+0:
+	movem.l	(a7)+,d0-d1/a0-a1
+	rts
+1:
+	* dark mode
+	lea		dark_sprites_palette,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		bob_colors,a1
+	bsr		load_palette
+	
+	lea	dark_palette,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		playfield_tiles_colors,a1
+	bsr		load_palette
+	jra		0b
+	
 osd_set_gfx_bank:
 	movem.l	d0-a6,-(a7)
 	cmp.b	current_gfx_bank,d0
@@ -1631,10 +1663,6 @@ osd_set_gfx_bank:
 	lea		title_palette,a0
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		title_colors,a1
-	bsr		load_palette
-	lea		sprites_palette,a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		bob_colors,a1
 	bsr		load_palette
 	
 	* set bitplanes (non-dual)
@@ -1678,14 +1706,8 @@ osd_set_gfx_bank:
 	lea		panel_end_tiles_colors,a1
 	bsr		load_palette
 
-
-	lea		level_palettes,a0
-	* TODO which level ATM 1
-	moveq	#0,d0
-	move.l	(a0,d0.w*4),a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		playfield_tiles_colors,a1
-	bsr		load_palette
+	MOVEQ	#0,d0
+	jbsr	osd_set_color_bank
 	
 	* BOB palettes already set at startup
 	
