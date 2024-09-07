@@ -15,6 +15,7 @@ reverse stuff:
 
 TODO:
 
+- different colors per level
 - elevator dynamic colors: in progress
 - sounds!!
 elevator column scroll:
@@ -28,12 +29,22 @@ elevator column scroll:
    implemented, not selecting proper column!
    
 - record "hurry up" music for no9
+- record "game over" music for no9
+- rip end sound (car/bonus)
 
 ISSUES:
 
-- elevators sometimes blink/are hidden
+- elevators sometimes blink/are hidden (player in elevator => exits: elevator disappears!)
 - priority error when exiting red room for player?
 - 2 player mode cocktail Y shift crap on sprites/player
+- noisy sfx
+- parasite graphics on top (bottom: hidden with dff)
+- game over: sprites not cleared, red/green remaining elevator sprites: detect gameover/set column and clear??
+- intro SFX should be in the music module
+- sprite priority error when player/enemy exits door (bottom door)
+- priority error in car: player head/car
+- clipping support? because end with car doesn't work
+
 
 minor:
 
@@ -58,4 +69,12 @@ to debug:
 	.endif
 298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
  
-	
+
+bpset 125d,,{PC=1263;g}  music
+bpset 307d,,{PC=PC+3;g}  elevator
+bpset 4d55,,{PC=PC+3;g}  bullet hits wall
+bpset 4425,,{PC=PC+3;g}  walk
+bpset 4418,,{PC=PC+3;g}  jump
+
+bpset 3656,,{PC=4429;g}  all!!
+bpset 3656,,{A=$3A;g}    force all sounds to $3A!!!

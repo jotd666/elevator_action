@@ -68,7 +68,8 @@ def dump_asm_bytes(*args,**kwargs):
 # for each layer, very few tiles are used. Don't generate all tiles with the given colors,
 # just the ones that are used
 # lists below may be incomplete
-used_game_tiles = {"status":set(range(16,52)) | {1,0XDE,0xDF} | set(range(0xE0,0x100)),
+used_game_tiles = {"status":set(range(16,52)) | {1,0x4E} | set(range(0xE0,0x100)) |
+   set(range(0xC6,0xE0)),  # BONUS + big digits, but displayed above other layer, should be displayed on sprites layer
   "building": set(range(0x40,0xC0)) | set(range(0xE0,0xED))
    | {148,
   197,

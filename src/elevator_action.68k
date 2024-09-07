@@ -413,10 +413,10 @@ sound_table:
 	.byte	-1   | 0x34
 	.byte	-1   | 0x35
 	.byte	DOCUMENT_COLLECTED_SND   | 0x36
-	.byte	-1   | 0x37
-	.byte	-1   | 0x38 missing document (end sound)
+	.byte	RED_DOOR_OPENED_SND   | 0x37
+	.byte	FORGOT_DOCUMENTS_SND   | 0x38 missing document (end sound)
 	.byte	-1   | 0x39
-	.byte	-1   | 0x3a
+	.byte	ENEMY_KILLED_SND  | 0x3a     enemy was shot
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
 	.byte	-1   | 0x3d
@@ -454,10 +454,10 @@ sound_table:
 	.byte	-1   | 0x5d
 	.byte	-1   | 0x5e
 	.byte	-1   | 0x5f
-	.byte	-1   | 0x60
+	.byte	-2   | 0x60 sound stop
 	.byte	-1   | 0x61
-	.byte	-1   | 0x62
-	.byte	-1   | 0x63
+	.byte	UP_THE_STAIRS_SND   | 0x62
+	.byte	DOWN_THE_STAIRS_SND   | 0x63
 	.byte	-1   | 0x64 elevator move sound
 	.byte	-2   | 0x65 sound stop
 	.byte	WALK_SND   | 0x66
@@ -503,9 +503,9 @@ sound_table:
 	.byte	-1   | 0x8e
 	.byte	-1   | 0x8f
 	.byte	-1   | 0x90
-	.byte	-1   | 0x91
-	.byte	-1   | 0x92
-	.byte	-1   | 0x93 bullet hits wall
+	.byte	PLAYER_SHOT_SND   | 0x91
+	.byte	ENEMY_SHOT_SND   | 0x92
+	.byte	BULLET_HITS_WALL_SND   | 0x93 bullet hits wall
 	.byte	-1   | 0x94
 	.byte	-1   | 0x95
 	.byte	-1   | 0x96
@@ -550,18 +550,18 @@ sound_table:
 	.byte	-1   | 0xbd
 	.byte	-1   | 0xbe
 	.byte	-1   | 0xbf
-	.byte	-1   | 0xc0
+	.byte	-2   | 0xc0 seems to be: no sound
 	.byte	CREDIT_SND   | 0xc1
 	.byte	HOOK_SHOT_SND   | 0xc2 grappling hook
-	.byte	-1   | 0xc3
-	.byte	-1   | 0xc4
-	.byte	-1   | 0xc5
+	.byte	PLAYER_FALLS_SND   | 0xc3
+	.byte	PLAYER_KILLED_SND   | 0xc4
+	.byte	PLAYER_CRUSHED_SND   | 0xc5  crushed 1
 	.byte	-1   | 0xc6
-	.byte	-1   | 0xc7
+	.byte	LAMP_FALLS_SND   | 0xc7
 	.byte	-1   | 0xc8
-	.byte	-1   | 0xc9
+	.byte	PLAYER_CRUSHED_2_SND   | 0xc9
 	.byte	-1   | 0xca
-	.byte	-1   | 0xcb
+	.byte	KICKING_ENEMY_SND   | 0xcb
 	.byte	-1   | 0xcc
 	.byte	-1   | 0xcd
 	.byte	-1   | 0xce
@@ -8309,7 +8309,7 @@ l_33d2:
 l_33e4:
 	jbsr	l_3529                            	| [$33e4: call $3529]
 	move.b	#0xC0,d0                        	| [$33e7: ld   a,$C0]
-	jbsr	play_sound             	| [$33e9: ld   (sound_latch_D50B),a]
+	jbsr	play_sound             	| [$33e9: ld   (sound_latch_D50B),a] no sound?
 	jbsr	l_364d                            	| [$33ec: call $364D]
 	move.b	copy_of_dip_switches_1_824E(a6),d0	| [$33ef: ld   a,(copy_of_dip_switches_1_824E)]
 	btst.b	#2,d0                           	| [$33f2: bit  2,a]
@@ -9420,7 +9420,7 @@ l_3ae1:
 	bne.b	0f                               	| [...]
 	rts                                    	| [$3af0: ret  z] [...]
 0:
-	move.b	#0xC9,d0                        	| [$3af1: ld   a,$C9]
+	move.b	#0xC9,d0                        	| [$3af1: ld   a,$C9] crushed by elevator
 	jbsr	play_sound_3656                   	| [$3af3: call play_sound_3656]
 	rts                                    	| [$3af6: ret]
 l_3af7:
@@ -9434,7 +9434,7 @@ l_3af7:
 	bne.b	0f                               	| [...]
 	rts                                    	| [$3b00: ret  z] [...]
 0:
-	move.b	#0xC5,d0                        	| [$3b01: ld   a,$C5] player crushed by elevator
+	move.b	#0xC5,d0                        	| [$3b01: ld   a,$C5] player crushed by elevator (loop)
 	jbsr	play_sound_3656                   	| [$3b03: call play_sound_3656]
 	rts                                    	| [$3b06: ret]
 
@@ -9470,7 +9470,7 @@ l_3b2b:
 	jbsr	l_3bbb                            	| [$3b34: call $3BBB]
 	jbsr	load_character_elevator_structure_62CE	| [$3b37: call load_character_elevator_structure_62CE]
 	move.b	(0x01,a3),d0                    	| [$3b3a: ld   a,(iy+$01)]
-	sub.b	(0x07,a2),d0                     	| [$3b3d: sub  (ix+$07)]
+	sub.b	(current_floor_07,a2),d0                     	| [$3b3d: sub  (ix+$07)]
 	jcc	l_3b62                             	| [$3b40: jp   nc,$3B62]
 	moveq	#0,d1                               	| [$3b43: ld   b,$00]
 	neg.b	d0                               	| [$3b45: neg]
@@ -9519,7 +9519,7 @@ l_3b73:
 l_3b8f:
 	move.b	#0x01,d0                        	| [$3b8f: ld   a,$01]
 	move.b	d0,l_82EB(a6)                   	| [$3b91: ld   ($82EB),a]
-	move.b	#0xC4,d0                        	| [$3b94: ld   a,$C4]
+	move.b	#0xC4,d0                        	| [$3b94: ld   a,$C4] player killed, death music
 	jbsr	play_sound_3656                   	| [$3b96: call play_sound_3656]
 	rts                                    	| [$3b99: ret]
 l_3b9a:
@@ -10188,7 +10188,7 @@ l_407d:
 	move.b	d0,(character_delta_x_05,a2)    	| [$408c: ld   (ix+character_delta_x_05),a]
 	move.b	#0x0C,(exiting_room_timer_0a,a2)                 	| [$408f: ld   (ix+$0a),$0C]
 	move.b	#0x60,d0                        	| [$4093: ld   a,$60]
-	jbsr	play_sound_3656                   	| [$4095: call play_sound_3656]
+	jbsr	play_sound_3656                   	| [$4095: call play_sound_3656] no sound???
 	rts                                    	| [$4098: ret]
 
 l_4099:
