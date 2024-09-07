@@ -3,27 +3,6 @@
 
 	.include	"elevator_action.inc"
 
-amiga_break:
-	* sends a WinUAE command to enter WinUAE debugger
-	.ifndef	RELEASE
-	move.l	D0,-(a7)
-	pea     0.w
-	* Normally it would point to where the result of the command is written, but since the last parameter (first pushed)
-	* indicating the number of bytes to write is 0, nothing is written.
-	pea     0.w	
-	pea     1003f-1002f
-	pea     1002f(pc)
-	pea     -1.w
-	pea     82.w
-	jsr     0xf0ff60
-	lea     24(sp),sp
-	move.l	(a7)+,d0
-	.endif
-    rts
-		
-1002: .asciz    "AKS_ENTERDEBUGGER 1"
-1003:
-        .align	2
 		
 	.macro	LOAD_D1_16_FROM_D1D2
 	and.l	#0xFFFF,d1
@@ -331,7 +310,7 @@ load_d3d4_address_from_6bdc_in_a1:
 	.ifndef	RELEASE
 	cmp.l	#end_table_6BDC,a1
 	jcs		0f
-	jbsr	amiga_break
+	jbsr	osd_break
 	tst		d3
 	illegal
 0:
@@ -345,7 +324,7 @@ load_d5d6_address_from_6bdc_in_a0:
 	.ifndef	RELEASE
 	cmp.l	#end_table_6BDC,a0
 	jcs		0f
-	jbsr	amiga_break
+	jbsr	osd_break
 	tst		d5
 	illegal
 0:
@@ -368,11 +347,16 @@ play_sound:
 	move.w	(a7)+,d1
 	move.l	(a7)+,a0
 	rts
-0:	
-	* sound not linked to our sound engine
-	**jbsr	amiga_break
+0:
+	cmp.b	#-2,d0
+	beq	2f
+	**jbsr	osd_break
 	jra	1b
-
+2:
+	* stop elevator sound
+	*jbsr	osd_loop_stop
+	jra		1b
+	
 sound_table:
 	.byte	-1   | 0x00
 	.byte	-1   | 0x01
@@ -425,10 +409,10 @@ sound_table:
 	.byte	-1   | 0x30
 	.byte	-1   | 0x31
 	.byte	-1   | 0x32
-	.byte	-1   | 0x33
+	.byte	JUMPING_SND   | 0x33
 	.byte	-1   | 0x34
 	.byte	-1   | 0x35
-	.byte	-1   | 0x36
+	.byte	DOCUMENT_COLLECTED_SND   | 0x36
 	.byte	-1   | 0x37
 	.byte	-1   | 0x38 missing document (end sound)
 	.byte	-1   | 0x39
@@ -475,8 +459,8 @@ sound_table:
 	.byte	-1   | 0x62
 	.byte	-1   | 0x63
 	.byte	-1   | 0x64 elevator move sound
-	.byte	-1   | 0x65 sound stop
-	.byte	-1   | 0x66
+	.byte	-2   | 0x65 sound stop
+	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67
 	.byte	-1   | 0x68
 	.byte	-1   | 0x69
@@ -568,7 +552,7 @@ sound_table:
 	.byte	-1   | 0xbf
 	.byte	-1   | 0xc0
 	.byte	CREDIT_SND   | 0xc1
-	.byte	-1   | 0xc2 grappling hook
+	.byte	HOOK_SHOT_SND   | 0xc2 grappling hook
 	.byte	-1   | 0xc3
 	.byte	-1   | 0xc4
 	.byte	-1   | 0xc5
@@ -645,7 +629,6 @@ execute_dynamic_ram_code_8246:
 	jbra	l_2f1f		| would execute jmp (ix), ix = $2F1F
 0:
 	* undiscovered cases (are there some?? don't think so)
-	jbsr	amiga_break
 	illegal
 	NOP
 	illegal
@@ -2878,10 +2861,10 @@ l_0b98:
 	add.b	d3,d3                            	| [$0bb5: add  a,e]
 	add.b	d3,d3                            	| [$0bb6: add  a,e]
 	.ifndef	RELEASE											| [$0bb7: ld   e,a]
-	cmp.w	#21,d3
+	cmp.w	#25,d3
 	jcs		0f
 	* out of bounds!
-	jbsr	amiga_break
+	jbsr	osd_break
 	illegal
 0:
 	.endif

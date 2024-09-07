@@ -31,7 +31,15 @@ sound_dict = {
 
 "PLAYER_KILLED_SND"               :{"index":0,"channel":2,"sample_rate":hq_sample_rate,"priority":1},
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
-#"EXTRA_LIFE_SND"       :{"index":0x1B,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":1},
+"HOOK_SHOT_SND"                :{"index":3,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"RED_DOOR_OPENED_SND"                :{"index":5,"channel":3,"sample_rate":hq_sample_rate,"priority":20},
+"DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"UP_THE_STAIRS_SND"                :{"index":7,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"KICKING_ENEMY_SND"                :{"index":8,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"PING_SND"                :{"index":9,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"JUMPING_SND"                :{"index":10,"channel":0,"sample_rate":hq_sample_rate,"priority":20},
 
 #"FIGHTER_RESCUED_SND"    :{"index":0x18,"pattern":18,"volume":24,'loops':False,"ticks":280},
 
@@ -39,7 +47,7 @@ sound_dict = {
 
 with open(os.path.join(src_dir,"..","sounds.inc"),"w") as f:
     for k,v in sorted(sound_dict.items(),key = lambda x:x[1]["index"]):
-        f.write(f"\t.equ\t{k},  {v['index']:x}\n")
+        f.write(f"\t.equ\t{k},  0x{v['index']:x}\n")
 
 max_sound = 0x20  # max(x["index"] for x in sound_dict.values())+1
 sound_table = [""]*max_sound
