@@ -31,14 +31,12 @@ elevator column scroll:
 
 ISSUES:
 
-- lamps???
 - elevators sometimes blink/are hidden
 - priority error when exiting red room for player?
 - 2 player mode cocktail Y shift crap on sprites/player
 
 minor:
 
-- player takes the document sprites: briefcase inside should be black
 - NTSC version: remove brick wall, bottom status higher
 
 to debug:

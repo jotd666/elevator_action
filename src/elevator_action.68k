@@ -7989,7 +7989,7 @@ l_31ad:
 	move.b	d0,l_8242(a6)                   	| [$31b6: ld   ($8242),a]
 	rts                                    	| [$31b9: ret]
 
-shot_lamp_collision_31BA:
+update_shot_lamp_31BA:
 	move.b	lamp_shot_state_8240(a6),d0     	| [$31ba: ld   a,(lamp_shot_state_8240)]
 	addq.b	#1,d0                           	| [$31bd: inc  a]
 	bne.b	0f                               	| [...]
@@ -8000,7 +8000,7 @@ shot_lamp_collision_31BA:
 	jeq	l_31e1                             	| [$31c3: jp   z,$31E1]
 	cmp.b	#0x03,d0                         	| [$31c6: cp   $03]
 	jcs	l_3207                             	| [$31c8: jp   c,$3207]
-	jeq	l_3214                             	| [$31cb: jp   z,$3214]
+	jeq	change_to_falling_lamp_sprite_3214                             	| [$31cb: jp   z,$3214]
 	cmp.b	#0x15,d0                         	| [$31ce: cp   $15]
 	jcs	l_3225                             	| [$31d0: jp   c,$3225]
 	cmp.b	#0x18,d0                         	| [$31d3: cp   $18]
@@ -8024,8 +8024,8 @@ l_31e1:
 	jbsr	l_337d                            	| [$31f9: call $337D]
 	addq.w	#1,a0                           	| [$31fc: inc  hl]
 	clr.b	(a0)+                             	| [$31fd: ld   (hl),$00]
-	                           	| [$31ff: inc  hl]
-	move.b	#0x7F,(a0)                      	| [$3200: ld   (hl),$7F]
+	                           	                | [$31ff: inc  hl]
+	move.b	#0x7F,(a0)                      	| [$3200: ld   (hl),$7F] exploding lamp
 	move.b	#0xC7,d0                        	| [$3202: ld   a,$C7] lamp falling sound
 	jra	play_sound_3656                    	| [$3204: jp   play_sound_3656]
 l_3207:
@@ -8036,7 +8036,8 @@ l_3207:
 	sub.b	d1,d0                            	| [$320f: sub  b]
 	move.b	d0,l_8166(a6)                   	| [$3210: ld   ($8166),a]
 	rts                                    	| [$3213: ret]
-l_3214:
+
+change_to_falling_lamp_sprite_3214:
 	lea	l_8166(a6),a0                      	| [$3214: ld   hl,$8166]
 	move.b	scroll_speed_8004(a6),d0        	| [$3217: ld   a,(scroll_speed_8004)]
 	move.b	d0,d1                           	| [$321a: ld   b,a]
@@ -8046,7 +8047,7 @@ l_3214:
 	                           	| [$321e: inc  hl]
 	move.b	#0x04,(a0)+                      	| [$321f: ld   (hl),$04]
 	                           	| [$3221: inc  hl]
-	move.b	#0x7E,(a0)                      	| [$3222: ld   (hl),$7E]
+	move.b	#0x7E,(a0)                      	| [$3222: ld   (hl),$7E] lamp falling sprite
 	rts                                    	| [$3224: ret]
 l_3225:
 	move.b	l_823F(a6),d0                   	| [$3225: ld   a,($823F)]
@@ -14198,11 +14199,10 @@ l_5abc:
 	add.w	d3,a0                            	| [$5ace: add  hl,de]
  	move.b	(a0),d0                         	| [$5acf: ld   a,(hl)]
 	move.b	(spawning_door_08,a2),d1        	| [$5ad0: ld   b,(ix+spawning_door_08)]
-l_5ad3:
-	.warning 	"optimize this rol"
-	rol.b	#1,d0                            	| [$5ad3: rlca]
-	subq.b	#1,d1                           	| [$5ad4: dec  b]
-	jpl	l_5ad3                             	| [$5ad5: jp   p,$5AD3]
+	addq	#1,d1
+	rol.b	d1,d0                            	| [$5ad3: rlca]
+												| [$5ad4: dec  b]
+												| [$5ad5: jp   p,$5AD3]
 	and.b	#0x01,d0                         	| [$5ad8: and  $01] test spawn enemy
 	movem.w	(sp)+,d1/d2                    	| [$5ada: pop  bc]
 	rts                                    	| [$5adb: ret]
@@ -15152,10 +15152,9 @@ l_60b8:
 	add.w	d5,a0                            	| [$60ce: add  hl,de]
 l_60cf:
 	LOAD_POINTER	elevator_tile_address_copy_850F(a6),a1             	| [$60cf: ld   de,($850F)]
-	.warning   "optimize that copy"
-	jbsr	ldi                               	| [$60d3: ldi]
-	jbsr	ldi                               	| [$60d5: ldi]
-	jbsr	ldi                               	| [$60d7: ldi]
+	move.b	(a0)+,(a1)+                               	| [$60d3: ldi]
+	move.b	(a0)+,(a1)+                               	| [$60d5: ldi]
+	move.b	(a0)+,(a1)+                               	| [$60d7: ldi]
 	STORE_POINTER	a1,elevator_tile_address_copy_850F(a6)            	| [$60d9: ld   ($850F),de]
 	rts                                    	| [$60dd: ret]
 
@@ -15409,8 +15408,8 @@ update_character_graphic_properties_61f0:
 	move.b	d0,(a0)+                         	  | [$6204: ld   (hl),a] attribute
 	                                        	  | [$6205: inc  de]
 	                                        	  | [$6206: inc  hl]
-	move.b	(a1)+,d0                         	  | [$6207: ld   a,(de)]
-	move.b	d0,(a0)+                         	  | [$6208: ld   (hl),a] code
+	move.b	(a1)+,(a0)+                         	  | [$6207: ld   a,(de)]
+	                         	  | [$6208: ld   (hl),a] code
 	                                        	  | [$6209: inc  de]
 	                                        	  | [$620a: inc  hl]
 	rts                                    	      | [$620b: ret]
@@ -17718,7 +17717,7 @@ perform_all_in_game_tasks_76A2:
 	jbsr	handle_main_scrolling_017F        	| [$76a5: call handle_main_scrolling_017F]
 	jbsr	handle_elevators_0EBF             	| [$76a8: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$76ab: call handle_moving_doors_12A2]
-	jbsr	shot_lamp_collision_31BA          	| [$76ae: call shot_lamp_collision_31BA]
+	jbsr	update_shot_lamp_31BA          	| [$76ae: call update_shot_lamp_31BA]
 	jbsr	handle_enemies_0B68                	| [$76b1: call handle_enemies_0B68] if skipped, enemy lies down and stays there, then no enemies appear
 	jbsr	l_2fe8                            	| [$76b4: call $2FE8]
 	jbsr	l_3127                            	| [$76b7: call $3127]

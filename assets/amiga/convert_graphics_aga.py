@@ -133,6 +133,15 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dump=False,nam
                 # only consider colors of used tiles
                 palette.update(set(bitplanelib.palette_extract(img)))
 
+                # quick hack: inside the document briefcase is transparent, shuold be black
+                # there are just 2 frames, so instead of doing all the crap I did for black enemies
+                # let's just change it manually
+                if tile_offset==192:
+                    if tile_number==8:
+                        paint_black(img,((9,7),(9,8),(11,8),(12,8),(13,8),(13,7)))
+                    elif tile_number==0x30:
+                        paint_black(img,((8,7),(8,8),(9,8),(11,8),(12,8),(12,7)))
+
 
                 tileset_1.append(img)
                 if dump:
@@ -173,6 +182,9 @@ elevators_palette[:] = sorted(set(elevators_palette) - suppressed_elevator_color
 
 sprite_names = dict()
 
+def paint_black(img,coords):
+    for x,y in coords:
+        img.putpixel((x,y),(0,0,0))
 
 def change_color(img,color1,color2):
     rval = Image.new("RGB",img.size)
@@ -201,8 +213,8 @@ add_sprite_range(50,56,"enemy_shoots")
 add_sprite_range(56,58,"shot")
 add_sprite_range(58,61,"player")
 add_sprite_range(61,62,"exclamation")
-add_sprite_range(62,64,"lamp")
-add_sprite_range(0x28,0x2B,"wall")  # to be draw above characters on stairs
+add_sprite(63,"lamp_exploding")
+#add_sprite_range(0x28,0x2B,"wall")  # to be draw above characters on stairs
 
 # sprites have more "cluts" but it's relying on palette sometimes and also isn't worth
 # implementing, as for instance, player sprite or car only have one valid clut.
@@ -212,8 +224,9 @@ add_sprite_range(0x28,0x2B,"wall")  # to be draw above characters on stairs
 #add_sprite_range(16,32,"enemy_lights_out",namedict=alt_sprite_names)
 add_sprite_range(16+64,32+64,"enemy_dark_floor")
 add_sprite_range(50+64,56+64,"enemy_dark_floor_shoots")
-add_sprite_range(32+64,40+64,"blue_door")
-add_sprite(0x28+64,"wall")  # to be draw above characters on stairs
+add_sprite_range(32+62,40+64,"blue_door")
+add_sprite(64+0x3E,"lamp")  # falling lamp
+add_sprite_range(0x28+64,0x2B+64,"wall")  # to be draw above characters on stairs
 
 add_sprite_range(16+128,32+128,"enemy_lights_out")
 add_sprite_range(50+128,56+128,"enemy_lights_out_shoots")
@@ -266,15 +279,18 @@ for x in range(sprites_2_sheet.size[0]):
             sprites_1_sheet.putpixel((x,y),(0,0,0))
 
 
-sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,None,"sprites",dump=dump_it,name_dict=sprite_names)
+# take all from main sheet except some tiles that are never present on that CLUT
+all_sprites = set(range(64)) - {0x3E,0x2A,0x29,0x28}
+
+sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,all_sprites,"sprites",dump=dump_it,name_dict=sprite_names)
 
 # dark floor enemies + blue door
-sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43)) | set(range(50,56)),"sprites",dump=dump_it,
+sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43)) | set(range(50,56)) | {0x3E},"sprites",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64)
 
 sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,{1,8,48,47},"sprites",dump=dump_it,name_dict=sprite_names,tile_offset=192)
 
-print(sprites_palette)
+
 
 # create "lights out" enemies
 sprites_3_sheet = change_color(sprites_2_sheet,(0,0,176),(0,0,255))
