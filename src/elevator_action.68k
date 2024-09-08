@@ -896,8 +896,8 @@ rst_28:
 	       	| [$0030: call mcu_comm_routine_77BD]
 	    	| [$0033: ret]
 
-elevator_irq_0038:
-	jra	elevator_irq_1199                  	| [$0038: jp   elevator_irq_1199]
+
+                  	| [$0038: jp   elevator_irq_1199]
 
 l_003b:
 	move.b	(0x09,a2),d0                    	| [$003b: ld   a,(ix+$09)]

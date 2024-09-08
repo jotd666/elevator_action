@@ -17,7 +17,7 @@ TODO:
 
 - different colors per level
 - elevator dynamic colors: in progress
-- sounds!!
+
 elevator column scroll:
 - if brutal scroll change, just reset all colors to green for that elevator
 - when writing a elevator floor tile:
@@ -38,9 +38,7 @@ elevator column scroll:
 
 ISSUES:
 
-- remove third enemy set, it is second set with palette change
-- set color bank: also alter sprites
-- elevators sometimes blink/are hidden (player in elevator => exits: elevator disappears!)
+
 - priority error when exiting red room for player?
 - 2 player mode cocktail Y shift crap on sprites/player
 - noisy sfx
