@@ -21,7 +21,7 @@ AFB_68020 = 1
 PREVIOUS_SPRITE_SIZE = 8
 BORDERBLANK = 1
 
-SPRITE_X_CORRECTION = -2
+SPRITE_X_CORRECTION = -2+16
 SPRITE_Y_CORRECTION = -15
 HW_SPRITE_X_CORRECTION = 0
 HW_SPRITE_Y_CORRECTION = 0
@@ -341,6 +341,7 @@ _user:
 	* align bitplanes
 	lea		fg_screen_buffer_1,a0
 	bsr		align_for_fmode
+	subq	#2,a0			| de-align
 	move.l	a0,fg_screen_data_1
 	move.l	a0,fg_drawed_screen_ptr
 	move.l	a0,fg_displayed_screen_ptr
@@ -356,6 +357,7 @@ _user:
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	lea		fg_screen_buffer_2,a0
 	bsr		align_for_fmode
+	subq	#2,a0			| de-align
 	move.l	a0,fg_screen_data_2
 	move.l	a0,fg_displayed_screen_ptr
 	.endif
@@ -875,16 +877,6 @@ update_bobs:
 	add.b	#0xC0,d2
 	jra		22f
 20:
-	cmp.b	#0xD,D2
-	jne	21f
-	* kludge: to avoid handling clipping & sprite hide
-	* just for the start wire sequence, we just don't show
-	* the player sliding on wire if too far on the right
-	move.b	(TARGET_SPRITE_X,a0),d0
-	cmp.b	#200,d0
-	jcc	2f
-21:
-
 	btst	#2,(TARGET_SPRITE_ATTRIBUTES,a0)
 	jeq	22f
 	* select alternate color, I simplified the whole
@@ -902,11 +894,6 @@ update_bobs:
 *	btst.b	#1,(TARGET_SPRITE_ATTRIBUTES,a0)
 *	beq.b	0f
 *0:
-	cmp.b	#0x18,d2
-	bne	450f
-	lea		sprite_ram_d100,a3	
-	jbsr	osd_break
-450:
 	move.l	(a4,d2.w*4),d4	| test pointer
 	jmi		2f			| legal but skipped
 	bne.b	11f
@@ -1411,17 +1398,17 @@ platform_init:
 	* set blitter parameters once and for all
     move.l  #-1,bltafwm(a5)
 	
-*	move.l	monitor,d0
-*	cmp.l	#NTSC_MONITOR_ID,D0
-*	bne		0f
-*	* disable extra mid-screen interrupt, as it would be too fast (NTSC)
-*	move.w	#0x1FE,intreq_block
-*	move.w	#0x1FE,intreq_block+4
-*0:
+	move.l	monitor,d0
+	cmp.l	#NTSC_MONITOR_ID,D0
+	bne		0f
+	* disable extra mid-screen interrupt, as it would be too fast (NTSC)
+	move.w	#0x1FE,intreq_block_game
+*	move.w	#0x1FE,intreq_block_intro
+0:
 
  	*         VVHH
     move.w #0x1C81,diwstrt(a5)
-    move.w #0x2081,diwstop(a5)
+    move.w #0x0C81,diwstop(a5)
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -1592,22 +1579,23 @@ osd_is_vblank_interrupt_enabled:
 
 
 * 60Hz VBLANK interrupt (also keyboard)
+* only called at bootup, not from interrupts (at least!!)
 osd_enable_interrupts:
-	tst.b	interrupt_mode
-	beq.b	0f
-	* clear SR from interrupt mode, so enable interrupts really
-	* works from the game (which calls enable interrupts from interrupt)
-	move.w	#0x2000,SR
-0:
+*	tst.b	interrupt_mode
+*	beq.b	0f
+*	* clear SR from interrupt mode, so enable interrupts really
+*	* works from the game (which calls enable interrupts from interrupt)
+*	move.w	#0x2000,SR
+*0:
 	move.w	#0xC038,_custom+intena
 	rts
 	
 osd_disable_interrupts:
-	tst.b	interrupt_mode
-	beq.b	0f
-	* if interrupts are disabled again from interrupt, re-set SR
-	move.w	#0x2700,SR
-0:
+*	tst.b	interrupt_mode
+*	beq.b	0f
+*	* if interrupts are disabled again from interrupt, re-set SR
+*	move.w	#0x2700,SR
+*0:
 	move.w	#0x0030,_custom+intena
 	rts
 
@@ -2458,6 +2446,7 @@ set_static_bitplanes:
 
 set_fg_bitplanes:
     move.l	fg_displayed_screen_ptr(pc),a0
+	addq.w	#2,a0		| add 16 pixel offset which allows left side clipping
     moveq #4-1,d1
 	move.l	a0,d0
     lea	bobs_bitplanes+2,a0
@@ -2532,22 +2521,23 @@ osd_read_inputs_2:
 	bclr	#BIT_START_2P,d0
 0:	
 
-
-*	* directions + fire
-*	move.l	_joypad_state(pc),d1
-*	btst	#JPB_BTN_UP,d1
-*	beq.b	0f
-*	bclr	#3,d0
-*0:
-*	btst	#JPB_BTN_DOWN,d1
-*	beq.b	0f
-*	bclr	#2,d0
-*0:
-*
-*	btst	#JPB_BTN_RED,d1
-*	beq.b	0f
-*	bclr	#5,d0
-*0:
+	bsr		is_game_playing
+	jeq	1f
+	move.l	_joypad_state,d1
+	* game not playing, we can insert coin/start with joypad
+	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
+	beq.b	0f
+	bclr	#BIT_INSERT_COIN_1,d0
+0:
+	btst	#JPB_BTN_UP,d1		| "1" key like in MAME
+	beq.b	0f
+	bclr	#BIT_START_1P,d0
+0:
+	btst	#JPB_BTN_DOWN,d1		| "2" key like in MAME
+	beq.b	0f
+	bclr	#BIT_START_2P,d0
+0:	
+1:	
 	movem.l	(a7)+,a0/d1
 	rts
 	
@@ -2625,57 +2615,6 @@ BIT_DOWN = 2
 BIT_FIRE = 4
 BIT_JUMP = 5
 
-osd_read_inputs_1__:
-
-	moveq	#-1,d0
-		
-	movem.l	a0/d1,-(a7)
-
-*	bsr		is_game_playing
-*	bne.b	2f
-*0:
-	* if game not playing, or within "continue" loop
-	* consider "fire" as insert coin
-	move.l	_joypad_state(pc),d1
-	* save prev state as game loops within vblank
-	* pushing fire would either lockup the game
-	* or insert a lot of credits simulatenously
-
-	* game not in play, accept start 1P game with "up"
-	btst	#JPB_BTN_UP,d1
-	beq.b	0f
-	bclr	#BIT_START_1P,d0
-0:
-	* game not in play, accept start 2P game with "down"
-	* temp: disabled ATM, 2P mode is buggy!
-	btst	#JPB_BTN_DOWN,d1
-	beq.b	0f
-	bclr	#BIT_START_2P,d0
-0:
-	btst	#JPB_BTN_RED,d1
-	beq.b	1f
-	* game not in play, accept insert coin with fire
-	bclr	#BIT_INSERT_COIN_1,d0
-1:
-2:
-
-	lea		keyboard_table(pc),a0
-	* misc control keys
-	tst.b	(5,a0)		| "5" key like in MAME
-	beq.b	0f
-	bclr	#BIT_INSERT_COIN_1,d0		| insert coin
-0:
-	tst.b	(1,a0)		| "1" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_1P,d0
-0:
-	tst.b	(2,a0)		| "2" key like in MAME
-	beq.b	0f
-	bclr	#BIT_START_2P,d0
-0:	
-	movem.l	(a7)+,a0/d1
-
-	rts
 	
 osd_read_dsw1:
 	* actual dipswitches
@@ -3138,10 +3077,11 @@ title_sprite_colors:
 	DECL_COLOR_BANK	0
 	
     .word  0x100*120+1,0xFFFE	| mid screen wait
-	*.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
+intreq_block_intro:
+	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 	* pal limit
-    .word  0xFFDF,0xFFFE       | PAL wait
+    .word  0xFFCF,0xFFFE       | PAL wait
 	DECL_COLOR_BANK	1
 	* black color sprites
 	DECL_COLORS	0,32
@@ -3170,13 +3110,18 @@ bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-panel_tiles_colors:
-	DECL_COLORS	16,TOTAL_NB_COLORS
 	DECL_COLOR_BANK	1
 game_sprite_colors:
 	DECL_COLORS	0,32
 game_sprites:
 	DECL_SPRITES
+	DECL_COLOR_BANK	0
+	DECL_COLORS	0,TOTAL_NB_COLORS   | BOBs black colors
+
+	.word	0x2C01,0xFFFE
+
+panel_tiles_colors:
+	DECL_COLORS	16,TOTAL_NB_COLORS
 
 	* let the panel display!
 	.word	0x3C01,0xFFFE
@@ -3204,7 +3149,7 @@ dynamic_row_00:
 	
 	* mid-line wait & extra interrupt
 	.word	0x8001,0xFFFE
-intreq_block:
+intreq_block_game:
 	* now wait some lines until we're sure bitmap only contains
 	* non-black: we can set color 0 to light blue now
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int

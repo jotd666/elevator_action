@@ -29,7 +29,7 @@ EMPTY_SND = "EMPTY_SND"
 sound_dict = {
 
 
-"FORGOT_DOCUMENTS_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate,"priority":1},
+"FORGOT_DOCUMENTS_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate,"priority":5},
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
 "WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
 "HOOK_SHOT_SND"                :{"index":3,"channel":2,"sample_rate":8000,"priority":20},
@@ -39,16 +39,16 @@ sound_dict = {
 "UP_THE_STAIRS_SND"                :{"index":7,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "KICKING_ENEMY_SND"                :{"index":8,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "PING_SND"                :{"index":9,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
-"JUMPING_SND"                :{"index":10,"channel":0,"sample_rate":hq_sample_rate,"priority":20},
+"JUMPING_SND"                :{"index":10,"channel":0,"sample_rate":hq_sample_rate,"priority":2},
 "BULLET_HITS_WALL_SND"                :{"index":11,"channel":2,"sample_rate":hq_sample_rate,"priority":1},
 "KICKING_ENEMY_SND"                :{"index":12,"channel":0,"sample_rate":hq_sample_rate,"priority":20},
-"LAMP_FALLS_SND"                :{"index":13,"channel":1,"sample_rate":hq_sample_rate,"priority":1},
+"LAMP_FALLS_SND"                :{"index":13,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "PLAYER_SHOT_SND"                :{"index":14,"channel":1,"sample_rate":hq_sample_rate,"priority":2},
 "ENEMY_SHOT_SND"                :{"index":15,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
 "PLAYER_FALLS_SND"                :{"index":16,"channel":1,"sample_rate":hq_sample_rate,"priority":5},
 "PLAYER_KILLED_SND"                :{"index":17,"channel":1,"sample_rate":hq_sample_rate,"priority":5},
 "PLAYER_CRUSHED_SND"               :{"index":18,"channel":1,"sample_rate":hq_sample_rate,"priority":5},
-"RETURN_TO_DOOR_SND"               :{"index":19,"channel":0,"sample_rate":hq_sample_rate,"priority":5,"loops":True},
+"RETURN_TO_DOOR_SND"               :{"index":19,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":5,"loops":True},
 "PLAYER_CRUSHED_2_SND"               :{"index":20,"channel":1,"sample_rate":hq_sample_rate,"priority":1},
 "ENEMY_KILLED_SND"               :{"index":21,"channel":1,"sample_rate":hq_sample_rate,"priority":10},
 

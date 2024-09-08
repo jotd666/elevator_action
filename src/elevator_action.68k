@@ -367,7 +367,9 @@ play_sound:
 0:
 	cmp.b	#-2,d0
 	beq	2f
-	**jbsr	osd_break
+	.ifndef	RELEASE
+	jbsr	osd_break
+	.endif
 	jra	1b
 2:
 	* stop elevator sound
@@ -475,7 +477,7 @@ sound_table:
 	.byte	-1   | 0x61
 	.byte	UP_THE_STAIRS_SND   | 0x62
 	.byte	DOWN_THE_STAIRS_SND   | 0x63
-	.byte	-1   | 0x64 elevator move sound
+	.byte	-2   | 0x64 elevator move sound TODO
 	.byte	-2   | 0x65 sound stop
 	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67
@@ -12129,8 +12131,9 @@ force_player_into_elevator_4e14:
 	jbsr	l_4b95                            	| [$4e25: call $4B95]
 	jbsr	set_player_initial_state_2f72                            	| [$4e28: call $2F72]
 	clr.b	d0                               	| [$4e2b: xor  a]
-	move.b	d0,player_on_roof_anim_timer_833C(a6)                   	| [$4e2c: ld   ($833C),a]
-	jbsr	osd_enable_interrupts               | ei
+	move.b	d0,player_on_roof_anim_timer_833C(a6) 	| [$4e2c: ld   ($833C),a]
+	* not required!
+	**jbsr	osd_enable_interrupts               | ei
 l_4e30:
 	lea	player_on_roof_anim_timer_833C(a6),a0                      	| [$4e30: ld   hl,$833C]
 	move.b	(a0),d0                         	| [$4e33: ld   a,(hl)]
@@ -17678,10 +17681,11 @@ l_764b:
 
 ground_floor_reached_764E:
 	jbsr	check_if_all_documents_collected_09A3	| [$764e: call check_if_all_documents_collected_09A3]
-	                        	| [$7651: push af]
+	move.w	d0,-(a7)                       	| [$7651: push af]
 	                        	| [$7652: ld   a,$C0]
-	move.b	#0xC0,sound_latch_D50B             	| [$7654: ld   (sound_latch_D50B),a]
-	                        	| [$7657: pop  af]
+	move.b	#0xC0,d0             	| [$7654: ld   (sound_latch_D50B),a]
+	jbsr	play_sound
+	move.w	(a7)+,d0                        	| [$7657: pop  af]
 	tst.b	d0                             	| [$7658: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$7659: ret  z] [...]

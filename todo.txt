@@ -28,33 +28,38 @@ elevator column scroll:
     on 3e: draw 8 pink + 1 green (clipped)
    implemented, not selecting proper column!
    
+- insert coin when game is playing: is_game_playing doesn't work
 - record "hurry up" music for no9
-- record "game over" music for no9
-- rip end sound (car/bonus)
+- record "game over" music for no9 (code: 0xCA)
+- rip end sound (car/bonus): 0xC8
+- sound 3D?
+- 0x39: stops "return to red door" loop
+- return to red door loop doesn't play
+- "forgot documents" sound doesn"t play
 - elevator looped sound
-- return to red door looped sound should stop: which commands stops it?
-- no sound for falling enemy
+- no sound for falling enemy: is there one?
 - when does the "ping" sound play?
 
 ISSUES:
 
-
-- priority error when exiting red room for player?
-- 2 player mode cocktail Y shift crap on sprites/player
+- level colors are wrong (level 4 OK??)
+- some cover-up sprites colors are wrong too
+  - when lights are out
+  - on levels 2+
+- priority error when exiting rooms for player/enemy (lower sprite part)
+- priority error in car going to right: player head/car
+- no exhaust fumes in car???
+- 2 player mode cocktail Y shift crap on sprites/player (only on intro)
 - noisy sfx
-- parasite graphics on top (bottom: hidden with dff)
 - game over: sprites not cleared, red/green remaining elevator sprites: detect gameover/set column and clear??
 - intro SFX should be in the music module
-- sprite priority error when player/enemy exits door (bottom door)
-- priority error in car: player head/car
-- clipping support? because end with car doesn't work
-  => bobs playfield starts earlier, display planeptr+2 and add 16
-     to bobs X
+
 
 
 minor:
 
 - NTSC version: remove brick wall, bottom status higher
+- parasite graphics on top (sprites)
 
 to debug:
 	.ifndef	RELEASE
