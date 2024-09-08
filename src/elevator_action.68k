@@ -149,6 +149,22 @@ ok\@:
 	.endm
 	.endif
 	
+display_column_scroll_values:
+	movem.l	d0-d1/d7/a0-a1,-(a7)
+	move.w	#0xC740,d7
+	moveq	#0,d1
+0:
+	move.b	d1,d0
+	jbsr	osd_get_column_scroll
+	jbsr	display_debug_value
+	addq.w	#3,d7
+	addq	#1,d1
+	cmp.b	#8,d1
+	bne		0b
+	movem.l	(a7)+,d0-d1/d7/a0-a1
+	rts
+	
+
 * < D0: hex value to display
 * < D7: screen address
 
@@ -262,6 +278,7 @@ enemy_unknown_timer_0e = 0xe
 unknown_0f = 0xf
 enemy_unknown_timer_10 = 0x10
 enemy_aggressivity_13 = 0x13
+player_unknown_13 = 0x13
 enemy_shoot_timeout_19 = 0x19   | smaller: shoots more often
 
 * elevator structs offsets (size=8)
@@ -2386,7 +2403,7 @@ l_0895:
 	move.b	d2,d0                           	| [$08b0: ld   a,c]
 	jra	l_07cd                             	| [$08b1: jp   $07CD]
 l_08b4:
-	move.b	(0x07,a2),d0                    	| [$08b4: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$08b4: ld   a,(ix+$07)]
 	                             	| [$08b7: or   a]
 	jeq	enemies_shot_collision_08D2        	| [$08b8: jp   z,enemies_shot_collision_08D2]
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$08bb: ld   a,(copy_of_dip_switches_3_8250)]
@@ -3879,6 +3896,7 @@ elevator_irq_1199:
 	move.l	a4,-(sp)                        	| [$11a3: push bc]
 	move.l	a2,-(sp)                        	| [$11a4: push ix]
 	move.l	a3,-(sp)                        	| [$11a6: push iy]
+
 	lea	timer_8bit_80AA(a6),a0             	| [$11a8: ld   hl,timer_8bit_80AA]
 	subq.b	#1,(a0)                         	| [$11ab: dec  (hl)]
 	jpl	l_1249                             	| [$11ac: jp   p,$1249]
@@ -6092,6 +6110,7 @@ set_level_palette_26ca:
 	subq.b	#1,d0                           	| [$26d0: dec  a]
 	jeq	l_26fb                             	| [$26d1: jr   z,$26FB]
 l_26d3:
+	
 	lea	palette_data_77E3,a0                          	| [$26d3: ld   hl,$77E3]
 	move.b	game_in_play_flag_823B(a6),d0   	| [$26d6: ld   a,(game_in_play_flag_823B)]
 	                             	| [$26d9: or   a]
@@ -6100,8 +6119,11 @@ l_26d3:
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$26dc: ld   a,(copy_of_dip_switches_3_8250)]
 	move.b	d0,d1                           	| [$26df: ld   b,a]
 	move.b	skill_level_8237(a6),d0         	| [$26e0: ld   a,(skill_level_8237)]
-	sub.b	d1,d0                            	| [$26e3: sub  b]
-	and.b	#0x03,d0                         	| [$26e4: and  $03]
+	sub.b	d1,d0                            	| [$26e3: sub  b] minus start skill level
+	and.b	#0x03,d0                         	| [$26e4: and  $03] get a 0-3 value for the 4 palettes
+
+	jbsr	osd_set_level_palette
+	
 	ror.b	#2,d0                            	| [$26e6: rrca] multiply by 64
 	* d5 is palette offset to apply to a0     	| [$26e8: ex   de,hl]
 	moveq	#0,d5                               	| [$26e9: ld   h,$00]
@@ -6112,7 +6134,7 @@ l_26ee:
 	* TODO here set palette, there are 64 colors in theory
 	* but in fact it looks like there are a lot less
 	*lea	palette_D200,a1                    	| [$26ee: ld   de,palette_D200]
-	move.w	#0x0080,d1                      	| [$26f1: ld   bc,$0080] 128
+	*move.w	#0x0080,d1                      	| [$26f1: ld   bc,$0080] 128
 	*jbsr	ldir                              	| [$26f4: ldir]
 	clr.b	d0                               	| [$26f6: xor  a]
 	move.b	d0,sync_flag_80AB(a6)                   	| [$26f7: ld   ($80AB),a]
@@ -6718,7 +6740,7 @@ credit_string_2A37:
 	.align	2
 
 init_level_skill_params_2A2E:
-	move.w	#0x0000,d5                      	| [$2a3e: ld   hl,$0000] 0
+	moveq	#0,d5                      	| [$2a3e: ld   hl,$0000] 0
 	STORE_WORD	d5,level_timer_16bit_8231(a6)	| [$2a41: ld   (level_timer_16bit_8231),hl] reset timer
  	move.b	#0x04,d0                        	| [$2a44: ld   a,$04]
 	move.b	d0,l_8233(a6)                   	| [$2a46: ld   ($8233),a]
@@ -7695,12 +7717,12 @@ l_2fe8:
 	jbsr	l_432a                            	| [$300a: call $432A]
 	jbsr	l_618a                            	| [$300d: call $618A]
 	jbsr	handle_elevator_sound_3046        	| [$3010: call handle_elevator_sound_3046]
-	move.b	(0x13,a2),d0                    	| [$3013: ld   a,(ix+$13)]
+	move.b	(player_unknown_13,a2),d0                    	| [$3013: ld   a,(ix+$13)]
 	                             	| [$3016: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$3017: ret  z] [...]
 0:
-	subq.b	#1,(0x13,a2)                    	| [$3018: dec  (ix+$13)]
+	subq.b	#1,(player_unknown_13,a2)                    	| [$3018: dec  (ix+$13)]
 	rts                                    	| [$301b: ret]
 
 l_301c:
@@ -7911,7 +7933,7 @@ l_3127:
 	rts                                    	| [$3163: ret]
 
 unknown_enemy_handling_3164:
-	move.b	(0x09,a2),d0                    	| [$3164: ld   a,(ix+$09)]
+	move.b	(enemy_state_09,a2),d0                    	| [$3164: ld   a,(ix+$09)]
 	cmp.b	#0x05,d0                         	| [$3167: cp   $05]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$3169: ret  nc] [...]
@@ -8089,14 +8111,14 @@ make_building_dark_3265:
 
 	move.l	a2,-(sp)                        	| [$327e: push ix]
 	lea	l_862B(a6),a2                      	| [$3280: ld   ix,$862B]
-	move.b	(0x17,a2),d0                    	| [$3284: ld   a,(ix+$17)]
+	move.b	(0x17,a2),d0                    	| [$3284: ld   a,(ix+$17)] hidden 8642 access!
 	                               	| [$3287: and  a]
 	movem.l	(sp)+,a2                        	| [$3288: pop  ix]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$328a: ret  z] [...]
 0:
 	* ouch! this is going to make game much harder! TODO check this
-	* possibly a protection check
+	* very likely a protection check
 	illegal
 	move.b	pseudo_random_seed_81D6(a6),d0  	| [$328b: ld   a,(pseudo_random_seed_81D6)]
 	move.b	d0,level_timer_16bit_msb_8232(a6)	| [$328e: ld   (level_timer_16bit_msb_8232),a]
@@ -8115,7 +8137,7 @@ restore_building_lights_3292:
 0:
 
 	move.l	a3,-(sp)                        	| [$32a4: push iy]
-	lea	l_858F(a6),a3                      	| [$32a6: ld   iy,$858F]
+	lea	l_858F(a6),a3                      	| [$32a6: ld   iy,$858F] hidden access for l_85C4
 	move.b	(0x35,a3),d0                    	| [$32aa: ld   a,(iy+$35)]
 	                               	| [$32ad: and  a]
 	movem.l	(sp)+,a3                        	| [$32ae: pop  iy]
@@ -8132,9 +8154,9 @@ restore_building_lights_3292:
 
 	move.l	a2,-(sp)                        	| [$32b8: push ix]
 	lea	l_85A4(a6),a2                      	| [$32ba: ld   ix,$85A4]
-	move.b	d0,(0x20,a2)                    	| [$32be: ld   (ix+$20),a]
+	move.b	d0,(0x20,a2)                    	| [$32be: ld   (ix+$20),a] 85C4
 	lea	l_8244(a6),a2                      	| [$32c1: ld   ix,$8244]
-	bset.b	#2,(0x0a,a2)                    	| [$32c5: set  2,(ix+$0a)]
+	bset.b	#2,(0x0a,a2)                    	| [$32c5: set  2,(ix+$0a)] 824E set free play!!
 	move.l	(sp)+,a2                        	| [$32c9: pop  ix]
 	rts                                    	| [$32cb: ret]
 
@@ -17545,7 +17567,7 @@ table_756B:
 	.byte	0x00
 
 start_next_level_759B:
-	jbsr	l_7660                            	| [$759b: call $7660]
+	jbsr	display_playfield_layout_7660                            	| [$759b: call $7660]
 start_level_759e:
 	jbsr	l_767a                            	| [$759e: call $767A]
 	clr.b	d0                               	| [$75a1: xor  a]
@@ -17647,7 +17669,7 @@ l_763d:
 	move.b	d0,viewed_floor_802C(a6)                   	| [$763d: ld   ($802C),a]
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$7640: ld   a,(copy_of_dip_switches_3_8250)]
 	btst.b	#6,d0                           	| [$7643: bit  6,a]
-	jne	l_764b                             	| [$7645: jr   nz,$764B]
+	jne	l_764b                             	| [$7645: jr   nz,$764B] no hit? infinite lives too
 	lea	nb_lives_8234(a6),a0               	| [$7647: ld   hl,nb_lives_8234]
 	subq.b	#1,(a0)                         	| [$764a: dec  (hl)]
 l_764b:
@@ -17667,7 +17689,7 @@ ground_floor_reached_764E:
 	jbsr	start_music_if_in_game_363f                            	| [$765a: call $363F]
 	jra	start_level_759e                             	| [$765d: jp   $759E]
 
-l_7660:
+display_playfield_layout_7660:
 	jbsr	l_71e1                            	| [$7660: call $71E1]
 	clr.b	d0                               	| [$7663: xor  a]
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$7664: ld   (menu_or_game_tiles_81D9),a]

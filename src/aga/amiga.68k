@@ -203,6 +203,8 @@ start:
 		.global	osd_set_gfx_bank
 		.global	osd_set_color_bank
 		.global	osd_set_column_scroll
+		.global	osd_get_column_scroll
+		.global	osd_set_level_palette
 	
 	.include	"ReadJoypad.i"
 	.include	"whdload_funcs.i"
@@ -368,17 +370,18 @@ _user:
 
 
 
-* ALL DIP SWITCHES ARE WRONG ATM
+	move.l	cheat_flags,d0
+	btst	#0,d0
+	jeq		0f
+	bset	#6,dip_switches_3		| "NO HIT" original cheat
+0:
 
-*	move.l	dip_switch_start_course(pc),d0
-*	move.b	d0,start_level_flag
-	
-	moveq	#0,d1
-	move.b	dip_switch_start_lives+3(pc),d1
-	bne.b	1f
-	moveq	#3,d1	| 3 lives is default
-1:
-	* DSW 0 = 2 lives
+*	moveq	#0,d1
+*	move.b	dip_switch_start_lives+3(pc),d1
+*	bne.b	1f
+*	moveq	#3,d1	| 3 lives is default
+*1:
+*	* DSW 0 = 2 lives
 *	move.b	(a0,d1.w),d0
 *	not.b	d0
 *	move.b	d0,dip_switches_1
@@ -1570,6 +1573,17 @@ load_palette:
 	rts
 	
 
+
+
+osd_set_level_palette:
+	move.b	d0,level_palette
+	move.l	d0,-(a7)
+	* force re-set of color bank
+	moveq	#0,d0
+	jbsr	osd_set_color_bank
+	move.l	(a7)+,d0
+	rts
+	
 osd_is_vblank_interrupt_enabled:
 	move.w	_custom+intenar,d0
 	btst	#5,d0			| check vblank interrupt
@@ -1611,8 +1625,8 @@ osd_set_color_bank:
 	bsr		load_palette
 	
 	lea		level_palettes,a0
-	* TODO which level ATM 1
 	moveq	#0,d0
+	move.b	level_palette,d0
 	move.l	(a0,d0.w*4),a0
 
 	move.w	#TOTAL_NB_COLORS,d0
@@ -1769,6 +1783,15 @@ set_playfield_bitplanes:
 	move.l	(a3)+,(a4)+
 	.endr	
 	.endm
+
+* < D0: column number
+* > D0: scroll value 	
+osd_get_column_scroll:
+	lea		column_values,a0
+	and.w	#0xFF,d0
+	move.b	(a0,d0.w),d0
+	rts
+	
 * D0: scroll value
 * D1: column index 0-xx
 *
@@ -1779,6 +1802,8 @@ osd_set_column_scroll:
 	movem.l	d0-d3/a0-a4,-(a7)
 	and.w	#0x7,d1
 	and.w	#0xFF,d0
+	lea		column_values,a0
+	move.b	d0,(a0,d1.w)
 	
 	move.w	d1,d2
 	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 32: SPRITE_STRUCT_SIZE
@@ -2856,6 +2881,8 @@ dip_switches_3:
 current_gfx_bank:
 	.byte	-1
 
+level_palette:
+	.byte	0
 mid_screen_interrupt:
 	.byte	0
 mid_screen_interrupt_count:
@@ -2947,6 +2974,9 @@ fg_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
+column_values:
+	.skip	8
+	
 update_tile_function:
 	.long	0
 _keyexit:

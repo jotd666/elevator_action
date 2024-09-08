@@ -42,7 +42,7 @@ varying_palettes = [
 (0,167,207)),  # light blue, elevator background
 # level 4
 ((35,207,207),  # pink, inside elevator
-(131,131,131),   # light gray, walls
+(131,131,131),   # dark gray, walls
 (1,1,1)),  # black, elevator background
 ]
 
@@ -431,10 +431,14 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("level_palettes:\n")
     for i in range(4):
         f.write(f"\t.long\tlevel_palette_{i}\n")
+    wall_color_index = game_playfield_palette.index(varying_palettes[0][1])
     for i in range(4):
         f.write(f"level_palette_{i}:\n")
-        # TODO change a few colors
-        bitplanelib.palette_dump(game_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+        p = list(game_playfield_palette)
+        if i:
+            # must change palette for walls
+            p[wall_color_index] = varying_palettes[i][1]
+        bitplanelib.palette_dump(p,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write(f"dark_palette:\n")
     bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("sprites_palette:\n")

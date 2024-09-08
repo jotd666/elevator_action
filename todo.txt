@@ -50,6 +50,8 @@ ISSUES:
 - sprite priority error when player/enemy exits door (bottom door)
 - priority error in car: player head/car
 - clipping support? because end with car doesn't work
+  => bobs playfield starts earlier, display planeptr+2 and add 16
+     to bobs X
 
 
 minor:
