@@ -7391,7 +7391,7 @@ l_2e2a:
 	clr.b	d0                               	| [$2e2a: xor  a]
 	move.b	d0,sync_flag_80AB(a6)                   	| [$2e2b: ld   ($80AB),a]
 	move.b	d0,current_player_is_p2_8236(a6)                   	| [$2e2e: ld   ($8236),a]
-	jbsr	l_71e1                            	| [$2e31: call $71E1]
+	jbsr	check_if_must_flip_screen_71e1                            	| [$2e31: call $71E1]
 	move.b	#0x01,d0                        	| [$2e34: ld   a,$01]
 	* set menu/title tiles
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$2e36: ld   (menu_or_game_tiles_81D9),a]
@@ -12178,7 +12178,7 @@ l_4e74:
 	lea	grappling_hook_tile_834b(a6),a0                      	| [$4e79: ld   hl,$834B]
 	STORE_POINTER	a0,ram_pointer_8346(a6)            	| [$4e7c: ld   ($8346),hl]
 	STORE_POINTER	a0,ram_pointer_8349(a6)            	| [$4e7f: ld   ($8349),hl]
-	jbsr	l_71e1                            	| [$4e82: call $71E1]
+	jbsr	check_if_must_flip_screen_71e1                            	| [$4e82: call $71E1]
 	clr.b	d0                               	| [$4e85: xor  a]
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$4e86: ld   (menu_or_game_tiles_81D9),a]
 	jbsr	init_hw_scroll_and_charset_260C                            	| [$4e89: call $260C]
@@ -16855,7 +16855,7 @@ title_screen_loop_7171:
 init_title_state_719a:
 	clr.b	d0                               	| [$719a: xor  a]
 	move.b	d0,current_player_is_p2_8236(a6)                   	| [$719b: ld   ($8236),a]
-	jbsr	l_71e1                            	| [$719e: call $71E1]
+	jbsr	check_if_must_flip_screen_71e1                            	| [$719e: call $71E1]
 	move.b	#0x01,d0                        	| [$71a1: ld   a,$01]
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$71a3: ld   (menu_or_game_tiles_81D9),a]
 	jbsr	init_hw_scroll_and_charset_260C                            	| [$71a6: call $260C]
@@ -16886,22 +16886,28 @@ l_71cf:
 	move.l	(sp)+,a2                        	| [$71dc: pop  ix]
 	move.l	(sp)+,a3                        	| [$71de: pop  iy]
 	rts                                    	| [$71e0: ret]
-l_71e1:
-	move.b	copy_of_dip_switches_1_824E(a6),d0	| [$71e1: ld   a,(copy_of_dip_switches_1_824E)]
-	move.b	d0,d3                           	| [$71e4: ld   d,a]
-	move.b	current_player_is_p2_8236(a6),d0                   	| [$71e5: ld   a,($8236)]
-	btst.b	#7,d3                           	| [$71e8: bit  7,d]
-	jeq	l_71ed                             	| [$71ea: jr   z,$71ED]
-	clr.b	d0                               	| [$71ec: xor  a]
-l_71ed:
-	move.b	d0,d1                           	| [$71ed: ld   b,a]
-	clr.b	d0                               	| [$71ee: xor  a]
-	btst.b	#6,d3                           	| [$71ef: bit  6,d]
-	jeq	l_71f4                             	| [$71f1: jr   z,$71F4]
-	addq.b	#1,d0                           	| [$71f3: inc  a]
-l_71f4:
-	eor.b	d1,d0                            	| [$71f4: xor  b]
-	move.b	d0,flip_screen_81D8(a6)                   	| [$71f5: ld   ($81D8),a]
+	
+* does nothing on this port as
+* 1) cocktail mode is not supported
+* 2) leaving this partially enables
+*    some sprite Y shift for player 2 that makes intro part buggy
+
+check_if_must_flip_screen_71e1:
+	rts
+	| [$71e1: ld   a,(copy_of_dip_switches_1_824E)]
+        	| [$71e4: ld   d,a]                   	| [$71e5: ld   a,($8236)]
+        	| [$71e8: bit  7,d]
+       	| [$71ea: jr   z,$71ED]
+         	| [$71ec: xor  a]
+
+        	| [$71ed: ld   b,a]
+         	| [$71ee: xor  a]
+        	| [$71ef: bit  6,d]
+       	| [$71f1: jr   z,$71F4]
+        	| [$71f3: inc  a]
+
+         	| [$71f4: xor  b]
+                  	| [$71f5: ld   ($81D8),a]
 	rts                                    	| [$71f8: ret]
 l_71f9:
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$71f9: ld   a,(copy_of_dip_switches_3_8250)]
@@ -17686,6 +17692,10 @@ ground_floor_reached_764E:
 	move.b	#0xC0,d0             	| [$7654: ld   (sound_latch_D50B),a]
 	jbsr	play_sound
 	move.w	(a7)+,d0                        	| [$7657: pop  af]
+	tst.b	all_documents_collected_flag
+	jeq		0f
+	st		d0
+0:
 	tst.b	d0                             	| [$7658: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$7659: ret  z] [...]
@@ -17694,7 +17704,7 @@ ground_floor_reached_764E:
 	jra	start_level_759e                             	| [$765d: jp   $759E]
 
 display_playfield_layout_7660:
-	jbsr	l_71e1                            	| [$7660: call $71E1]
+	jbsr	check_if_must_flip_screen_71e1                            	| [$7660: call $71E1]
 	clr.b	d0                               	| [$7663: xor  a]
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$7664: ld   (menu_or_game_tiles_81D9),a]
 	jbsr	init_hw_scroll_and_charset_260C                            	| [$7667: call $260C]
@@ -17770,7 +17780,7 @@ l_76e7:
 l_76f6:
 	clr.b	d0                               	| [$76f6: xor  a]
 	move.b	d0,sync_flag_80AB(a6)                   	| [$76f7: ld   ($80AB),a]
-	jbsr	l_71e1                            	| [$76fa: call $71E1]
+	jbsr	check_if_must_flip_screen_71e1                            	| [$76fa: call $71E1]
 	move.b	#0x01,d0                        	| [$76fd: ld   a,$01]
 	move.b	d0,menu_or_game_tiles_81D9(a6)  	| [$76ff: ld   (menu_or_game_tiles_81D9),a]
 	jbsr	init_hw_scroll_and_charset_260C                            	| [$7702: call $260C]
@@ -17853,7 +17863,6 @@ l_7783:
 	lea	player_500_message_7795,a0         	| [$7783: ld   hl,player_500_message_7795]
 	lea	l_C5CC(a6),a1                      	| [$7786: ld   de,$C5CC]
 	jbsr	copy_string_to_screen_29F9        	| [$7789: call copy_string_to_screen_29F9]
-	move.b	current_player_is_p2_8236(a6),d0                   	| [$778c: ld   a,($8236)]
 	move.b	current_player_is_p2_8236(a6),d0                   	| [$778c: ld   a,($8236)]
 	add.b	#0x11,d0                         	| [$778f: add  a,$11]
 	lea		l_C5D3(a6),a0

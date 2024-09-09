@@ -4,18 +4,14 @@
   sprites for the 4 first elevators, then bobs, bobs
   have Y translation applied to make up for non shifting!
 
-reverse stuff:
-
-- when color changes (light shot)
-- colorbanks (D506/7)
 
 
-0e9f called when??? reset charset???
+TODO/ISSUES:
 
-
-TODO:
-
-- different colors per level
+- cheat/ check demo mode to position character near the bottom!
+- check elevator colors on low floors
+- test all doc collected cheat
+- different colors per level, including brick wall at the bottom!
 - elevator dynamic colors: in progress
 
 elevator column scroll:
@@ -28,38 +24,37 @@ elevator column scroll:
     on 3e: draw 8 pink + 1 green (clipped)
    implemented, not selecting proper column!
    
+  
 - insert coin when game is playing: is_game_playing doesn't work
+- level colors are wrong (level 4 OK??)
+- priority error when exiting rooms for player/enemy (lower sprite part)
+- priority error in car going to right: player head/car: mockup end!!
+- no exhaust fumes in car???
+- game over: sprites not cleared, red/green remaining elevator sprites: detect gameover/set column and clear??
+
+SOUND:
+
+- intro SFX should be in the music module
+- noisy sfx
+- "forgot documents" sound doesn"t play
+- elevator looped sound
+- when does the "ping" sound play?
 - record "hurry up" music for no9
 - record "game over" music for no9 (code: 0xCA)
 - rip end sound (car/bonus): 0xC8
 - sound 3D?
 - 0x39: stops "return to red door" loop
 - return to red door loop doesn't play
-- "forgot documents" sound doesn"t play
-- elevator looped sound
-- no sound for falling enemy: is there one?
-- when does the "ping" sound play?
-
-ISSUES:
-
-- level colors are wrong (level 4 OK??)
-- some cover-up sprites colors are wrong too
-  - when lights are out
-  - on levels 2+
-- priority error when exiting rooms for player/enemy (lower sprite part)
-- priority error in car going to right: player head/car
-- no exhaust fumes in car???
-- 2 player mode cocktail Y shift crap on sprites/player (only on intro)
-- noisy sfx
-- game over: sprites not cleared, red/green remaining elevator sprites: detect gameover/set column and clear??
-- intro SFX should be in the music module
 
 
 
 minor:
 
-- NTSC version: remove brick wall, bottom status higher
-- parasite graphics on top (sprites)
+- some cover-up sprites colors are wrong too
+  - when lights are out
+  - on levels 2+
+- parasite graphics on top (sprites): to test again
+- no sound for falling enemy: is there one?
 
 to debug:
 	.ifndef	RELEASE

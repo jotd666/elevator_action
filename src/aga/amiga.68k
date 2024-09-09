@@ -373,11 +373,16 @@ _user:
 
 
 	move.l	cheat_flags,d0
+	jeq		1f
+	st.b	cheat_used
 	btst	#0,d0
 	jeq		0f
 	bset	#6,dip_switches_3		| "NO HIT" original cheat
 0:
-
+	btst	#2,d0
+	sne		all_documents_collected_flag
+0:
+1:
 *	moveq	#0,d1
 *	move.b	dip_switch_start_lives+3(pc),d1
 *	bne.b	1f
@@ -1409,6 +1414,10 @@ platform_init:
  	*         VVHH
     move.w #0x1C81,diwstrt(a5)
     move.w #0x0C81,diwstop(a5)
+	cmp.l	#NTSC_MONITOR_ID,monitor
+	jne		0f
+    move.w #0xFC81,diwstop(a5)
+0:	
     move.w #0x0038,ddfstrt(a5)
     move.w #0x00D0,ddfstop(a5)
 
@@ -1733,6 +1742,10 @@ osd_set_gfx_bank:
     moveq #NB_PLAYFIELD_PLANES-1,d1
     move.l	panel_screen_ptr(pc),a0
 	add.w	#NB_BYTES_PER_ROW*PANEL_Y_GAP,a0
+	cmp.l	#NTSC_MONITOR_ID,monitor
+	jne		0f
+	add.w	#NB_BYTES_PER_ROW*16,a0		| skip 2 rows of bricks
+0:
 	move.l	a0,d0
     lea	panel_end_bitplanes+2,a0
 	move.l	#FG_SCREEN_PLANE_SIZE,d2
@@ -3102,21 +3115,24 @@ game_copperlist:
 	* on color bank 1
 	.word	bplcon2,HIDDEN_BOBS_BPLCON2_VALUE
 	
-	DECL_COLOR_BANK	1
 	* black color sprites
+	DECL_COLOR_BANK	1
 	DECL_COLORS	0,32
 
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-	DECL_COLOR_BANK	1
-game_sprite_colors:
-	DECL_COLORS	0,32
 game_sprites:
 	DECL_SPRITES
 	DECL_COLOR_BANK	0
 	DECL_COLORS	0,TOTAL_NB_COLORS   | BOBs black colors
+
+	.word	0x2B01,0xFFFE
+	* enable sprite colors now
+	DECL_COLOR_BANK	1
+game_sprite_colors:
+	DECL_COLORS	0,32
 
 	.word	0x2C01,0xFFFE
 
@@ -3172,6 +3188,11 @@ panel_end_tiles_colors:
 	
 	* pal limit
     .word  0xFFCF,0xFFFE       | PAL wait
+
+	* black color sprites
+	*DECL_COLOR_BANK	1
+	*DECL_COLORS	0,32
+
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
 
 	

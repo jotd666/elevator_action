@@ -1,5 +1,5 @@
 	.global infinite_lives_flag
-	.global perfect_challenge_stage_flag
+	.global all_documents_collected_flag
 	.global invincible_flag
 	.global infinite_time_flag
 	.global start_level
@@ -56,7 +56,8 @@ sprite_ram_d100:
 regscopy:
 	.skip	56
 
-
+all_documents_collected_flag:
+	.byte	0
 invincible_flag:
 	.byte	0
 infinite_lives_flag:
