@@ -477,8 +477,8 @@ sound_table:
 	.byte	-1   | 0x61
 	.byte	UP_THE_STAIRS_SND   | 0x62
 	.byte	DOWN_THE_STAIRS_SND   | 0x63
-	.byte	-2   | 0x64 elevator move sound TODO
-	.byte	-2   | 0x65 sound stop
+	.byte	ELEVATOR_LOOP_SND   | 0x64 elevator move sound
+	.byte	ELEVATOR_STOPS_SND   | 0x65 sound stop
 	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67
 	.byte	-1   | 0x68
@@ -7787,7 +7787,7 @@ l_306f:
 	move.b	#0x64,d0                        	| [$3078: ld   a,$64] elevator move sound
 	tst.b	d3                             	| [$3077: or   a]
 	jne	l_307d                             	| [$307a: jr   nz,$307D]
-	addq.b	#1,d0                           	| [$307c: inc  a] elevator sound stop?
+	addq.b	#1,d0                           	| [$307c: inc  a] elevator sound stop
 l_307d:
 	jbsr	play_sound_3656                   	| [$307d: call play_sound_3656]
 	rts                                    	| [$3080: ret]
@@ -12041,6 +12041,8 @@ player_arriving_on_roof_anim_4d70:
 	move.b	#0x1F,d0                        	| [$4d74: ld   a,$1F]
 	move.b	d0,viewed_floor_802C(a6)                   	| [$4d76: ld   ($802C),a]
 	jbsr	init_everything_4e6f                | [$4d79: call $4E6F]
+	tst.b	skip_intro_flag
+	jne		100f
 	clr.b	d0                               	| [$4d7c: xor  a]
 	move.b	d0,player_on_roof_anim_timer_833C(a6)                   	| [$4d7d: ld   ($833C),a]
 	move.b	d0,l_833D(a6)                   	| [$4d80: ld   ($833D),a]
@@ -12106,7 +12108,7 @@ l_4de9:
 	cmp.b	#0x09,d0                         	| [$4df4: cp   $09]
 	jcs	l_4de9                             	| [$4df6: jp   c,$4DE9]
 	clr.b	d0                               	| [$4df9: xor  a]
-	move.b	d0,player_on_roof_anim_timer_833C(a6)                   	| [$4dfa: ld   ($833C),a]
+	move.b	d0,player_on_roof_anim_timer_833C(a6)  	| [$4dfa: ld   ($833C),a]
 l_4dfd:
 	jbsr	player_checking_surroundings_4fc7      | [$4dfd: call $4FC7]
 	jbsr	game_tick_73cf                            	| [$4e00: call $73CF]
@@ -12115,7 +12117,12 @@ l_4dfd:
 	move.b	(a0),d0                         	| [$4e07: ld   a,(hl)]
 	cmp.b	#0x1A,d0                         	| [$4e08: cp   $1A]
 	jcs	l_4dfd                             	| [$4e0a: jp   c,$4DFD]
-
+100:
+	move.b	start_floor,d0
+	jeq		101f
+	move.b	d0,viewed_floor_802C(a6)                   	| [$4d76: ld   ($802C),a]
+	jbsr	init_everything_4e6f                | [$4d79: call $4E6F]
+101:
 	jbsr	start_music_if_in_game_363f                            	| [$4e0d: call $363F]
 	                            	| [$4e10: call $4E14]
 		    | [$4e13: ret]
@@ -12146,12 +12153,16 @@ l_4e30:
 l_4e40:
 	clr.b	d0                               	| [$4e40: xor  a]
 	move.b	d0,player_move_direction_8527(a6)	| [$4e41: ld   (player_move_direction_8527),a] no move
+	tst.b	start_floor
+	jne		102f			| skip if forced start floor
+	
 	move.b	l_83CE(a6),d0                   	| [$4e44: ld   a,($83CE)]
 	cmp.b	#0x1E,d0                         	| [$4e47: cp   $1E]
 	jne	l_4e52                             	| [$4e49: jr   nz,$4E52]
 	move.b	distance_to_lower_floor_83CD(a6),d0           | [$4e4b: ld   a,($83CD)]
 											| [$4e4e: or   a]
 	jne	l_4e57                             	| [$4e4f: jr   nz,$4E57] loop until elevator is on 30th
+102:
 	* reaches here when player is about to take control, on 30th floor
 	rts                                    	| [$4e51: ret]
 l_4e52:

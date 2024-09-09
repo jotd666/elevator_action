@@ -9,7 +9,7 @@
 * sound engine and also highscore management, common to all versions
 	
 .include "dos_lvos.i"
-
+.include "elevator_action.inc"
 
 SCORE_FILE_SIZE = 44
 
@@ -134,8 +134,18 @@ osd_sound_start:
 	lea		_custom,a6
 	and.w	#0xFF,d0
 	jeq	7f		| should stop the sound
-	
-	
+	cmp.b	#PLAYER_KILLED_SND,d0
+	jeq		10f
+	cmp.b	#ELEVATOR_STOPS_SND,d0
+	jne		0f
+10:
+	move.w	d0,-(a7)
+	* stop the elevator loop
+	moveq	#3,d0
+	jbsr	_mt_stopfx
+	clr.b	looped_sound_enabled
+	move.w	(a7)+,d0
+0:
 	lsl.w	#3,d0
 	lea		sound_table,a0
 
@@ -151,7 +161,7 @@ osd_sound_start:
 	tst.w	d1
 	beq.b	3f
 	tst.b	looped_sound_enabled
-	bne.b	3f			| else problem with space plant sound
+	bne.b	3f
 	* looped sound
 	st.b	looped_sound_enabled
 	jsr		_mt_loopfx

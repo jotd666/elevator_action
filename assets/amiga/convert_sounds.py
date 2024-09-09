@@ -51,6 +51,8 @@ sound_dict = {
 "RETURN_TO_DOOR_SND"               :{"index":19,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":5,"loops":True},
 "PLAYER_CRUSHED_2_SND"               :{"index":20,"channel":1,"sample_rate":hq_sample_rate,"priority":1},
 "ENEMY_KILLED_SND"               :{"index":21,"channel":1,"sample_rate":hq_sample_rate,"priority":10},
+"ELEVATOR_LOOP_SND"               :{"index":22,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10,"loops":True},
+"ELEVATOR_STOPS_SND"               :{"index":23,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
 
 #"FIGHTER_RESCUED_SND"    :{"index":0x18,"pattern":18,"volume":24,'loops':False,"ticks":280},
 

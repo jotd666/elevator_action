@@ -274,11 +274,11 @@ _user:
 	or.l	#0x10,cheat_flags
 2:
 
-	move.l	(A0)+,D0	| STARTCOURSE/K/N
-	beq.b	2f
-	bsr		bcpl_string_to_int
-	move.l	d0,dip_switch_start_course
-2:
+*	move.l	(A0)+,D0	| STARTFLOOR/K/N
+*	beq.b	2f
+*	bsr		bcpl_string_to_int
+*	move.l	d0,dip_switch_start_course
+*2:
 	move.l	(A0)+,D0	| STARTLIVES/S
 	beq.b	2f
 	bsr		bcpl_string_to_int
@@ -393,18 +393,14 @@ _user:
 *	not.b	d0
 *	move.b	d0,dip_switches_1
 	
+	move.l	start_floor_option,d1
+	lea		start_floor_table(pc),A0
+	move.b	(a0,d1.w),d1
+	move.b	d1,start_floor
 	
 	move.l	misc_options,d1
 	btst	#0,d1
-	
-	btst	#1,d1
-	beq.b	0f
-	bset	#5,d0
-0:
-	btst	#2,d1
-	beq.b	0f
-	bset	#6,d0
-0:
+	sne		skip_intro_flag
 	.ifndef	RELEASE
 	btst	#31,d1
 	sne		break_at_startup_flag
@@ -444,7 +440,13 @@ _user:
 
 	jra		demo_game
 
-
+start_floor_table:
+	dc.b	0
+	dc.b	6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+	dc.b	21,22,23,24,25,26,27,28,29
+	dc.b	0,0,0,0,0,0,0
+	.align  2
+	
 * so memory is quadword-aligned (not trusting .align directives)
 align_for_fmode:
 	add.w	#0x10,a0
@@ -2834,7 +2836,7 @@ control_flags:
 misc_options:
 		.long	0
 		.long	WHDLTAG_CUSTOM4_GET
-dip_switch_start_course:
+start_floor_option:
 		.long	0
 		.long	WHDLTAG_CUSTOM5_GET
 dip_switch_start_lives:
@@ -3116,7 +3118,11 @@ game_copperlist:
 	.word	bplcon2,HIDDEN_BOBS_BPLCON2_VALUE
 	
 	* black color sprites
+	*DECL_COLOR_BANK	1
+	*DECL_COLORS	0,32
+	* enable sprite colors now
 	DECL_COLOR_BANK	1
+game_sprite_colors:
 	DECL_COLORS	0,32
 
 bobs_bitplanes:
@@ -3128,11 +3134,6 @@ game_sprites:
 	DECL_COLOR_BANK	0
 	DECL_COLORS	0,TOTAL_NB_COLORS   | BOBs black colors
 
-	.word	0x2B01,0xFFFE
-	* enable sprite colors now
-	DECL_COLOR_BANK	1
-game_sprite_colors:
-	DECL_COLORS	0,32
 
 	.word	0x2C01,0xFFFE
 
@@ -3190,8 +3191,8 @@ panel_end_tiles_colors:
     .word  0xFFCF,0xFFFE       | PAL wait
 
 	* black color sprites
-	*DECL_COLOR_BANK	1
-	*DECL_COLORS	0,32
+	DECL_COLOR_BANK	1
+	DECL_COLORS	0,32
 
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
 

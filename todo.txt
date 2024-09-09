@@ -8,9 +8,8 @@
 
 TODO/ISSUES:
 
-- cheat/ check demo mode to position character near the bottom!
-- check elevator colors on low floors
-- test all doc collected cheat
+- elevator engine sound plays when player EXITS elevator
+- test all doc collected cheat: doesn't work
 - different colors per level, including brick wall at the bottom!
 - elevator dynamic colors: in progress
 
@@ -50,6 +49,7 @@ SOUND:
 
 minor:
 
+- NTSC: menu update is slow
 - some cover-up sprites colors are wrong too
   - when lights are out
   - on levels 2+

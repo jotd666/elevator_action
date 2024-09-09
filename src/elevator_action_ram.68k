@@ -4,7 +4,9 @@
 	.global infinite_time_flag
 	.global start_level
 	.global vb_ticks_count
+	.global	start_floor
 	.global break_at_startup_flag
+	.global skip_intro_flag
 	.global log_ptr
 	.global highscore_needs_saving_flag
 	.global	video_mode_d600
@@ -56,7 +58,11 @@ sprite_ram_d100:
 regscopy:
 	.skip	56
 
+start_floor:
+	.byte	0
 all_documents_collected_flag:
+	.byte	0
+skip_intro_flag:
 	.byte	0
 invincible_flag:
 	.byte	0
