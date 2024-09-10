@@ -13,7 +13,10 @@ TODO/ISSUES:
 - elevator dynamic colors: in progress
 
 elevator column scroll:
-- if brutal scroll change, just reset all colors to green for that elevator
+- scroll change or tile write: recompute floor/ceiling tiles positions
+  for that column and update copper fully. Maybe optimize: do not reset
+  to bg color if small scroll value change (but later)!
+
 - when writing a elevator floor tile:
   * 3a: write full elevator cabin (clipped)
 - when small scroll change:
@@ -34,7 +37,7 @@ elevator column scroll:
 
 SOUND:
 
-- intro SFX music module does not play
+- intro SFX music module: tune length
 - noisy sfx
 - "forgot documents" sound doesn"t play
 - when does the "ping" sound play?
