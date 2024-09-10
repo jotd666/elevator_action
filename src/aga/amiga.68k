@@ -1574,6 +1574,9 @@ load_palette:
 
 
 osd_set_level_palette:
+	add.b	level_color+3,d0
+	and.b	#3,d0
+	
 	move.b	d0,level_palette
 	move.l	d0,-(a7)
 	* force re-set of color bank
@@ -2829,7 +2832,7 @@ chiprevbits:
 cheat_flags:
 		.long	0
 		.long	WHDLTAG_CUSTOM2_GET
-control_flags:
+level_color:
 		.long	0
 
 		.long	WHDLTAG_CUSTOM3_GET

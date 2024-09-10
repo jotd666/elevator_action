@@ -32,7 +32,7 @@ sound_dict = {
 "FORGOT_DOCUMENTS_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate,"priority":5},
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
 "WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
-"HOOK_SHOT_SND"                :{"index":3,"channel":2,"sample_rate":8000,"priority":20},
+"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":40,'loops':False,"ticks":280},
 "DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "RED_DOOR_OPENED_SND"                :{"index":5,"channel":3,"sample_rate":hq_sample_rate,"priority":5},
 "DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
@@ -54,7 +54,6 @@ sound_dict = {
 "ELEVATOR_LOOP_SND"               :{"index":22,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10,"loops":True},
 "ELEVATOR_STOPS_SND"               :{"index":23,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
 
-#"FIGHTER_RESCUED_SND"    :{"index":0x18,"pattern":18,"volume":24,'loops':False,"ticks":280},
 
 }
 
@@ -181,8 +180,8 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
             write_asm(contents,fw)
 
     # make sure next section will be aligned
-    #with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
-    #    contents = f.read()
+    with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
+        contents = f.read()
     fw.write("{}:".format(music_module_label))
     #write_asm(contents,fw)
     fw.write("\t.align\t8\n")

@@ -40,6 +40,7 @@ _config
 *	dc.b	"C1:X:infinite lives:1;"
 	dc.b	"C1:X:no need to collect documents:2;"
 	dc.b	"C1:X:cheat keys:4;"
+	dc.b    "C2:L:level color:default,2,3,4;"
 *	dc.b    "C5:L:start lives:default,1,2,3,5;"
 	dc.b	"C3:X:skip introduction:0;"
 	IFD		CHIP_ONLY

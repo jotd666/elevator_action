@@ -365,15 +365,15 @@ play_sound:
 	move.l	(a7)+,a0
 	rts
 0:
-	cmp.b	#-2,d0
-	beq	2f
+	cmp.b	#-3,d0
+	beq	3f
 	.ifndef	RELEASE
 	jbsr	osd_break
 	.endif
 	jra	1b
-2:
-	* stop elevator sound
-	*jbsr	osd_loop_stop
+3:
+	* stop music/all sounds
+	jbsr	osd_sound_stop
 	jra		1b
 	
 sound_table:
@@ -477,8 +477,8 @@ sound_table:
 	.byte	-1   | 0x61
 	.byte	UP_THE_STAIRS_SND   | 0x62
 	.byte	DOWN_THE_STAIRS_SND   | 0x63
-	.byte	ELEVATOR_LOOP_SND   | 0x64 elevator move sound
-	.byte	ELEVATOR_STOPS_SND   | 0x65 sound stop
+	.byte	ELEVATOR_LOOP_SND   | 0x64 elevator start+move sound
+	.byte	ELEVATOR_STOPS_SND   | 0x65 elevator sound stop
 	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67
 	.byte	-1   | 0x68
@@ -569,7 +569,7 @@ sound_table:
 	.byte	-1   | 0xbd
 	.byte	-1   | 0xbe
 	.byte	-1   | 0xbf
-	.byte	-2   | 0xc0 seems to be: no sound
+	.byte	-3   | 0xc0 seems to be: stop all sounds
 	.byte	CREDIT_SND   | 0xc1
 	.byte	HOOK_SHOT_SND   | 0xc2 grappling hook
 	.byte	PLAYER_FALLS_SND   | 0xc3
@@ -2576,15 +2576,21 @@ l_098b:
 0:
 	jra	l_0932                             	| [$09a0: jp   $0932]
 
+* check if all documents collected, else put player in the 
+* highest red door
 check_if_all_documents_collected_09A3:
 	clr.b	d0                               	| [$09a3: xor  a]
 	move.b	d0,sync_flag_80AB(a6)                   	| [$09a4: ld   ($80AB),a]
 	jbsr	l_0ad8                            	| [$09a7: call $0AD8]
 	jbsr	l_364d                            	| [$09aa: call $364D]
 	move.b	#0xC0,d0                        	| [$09ad: ld   a,$C0]
-	jbsr	play_sound             	| [$09af: ld   (sound_latch_D50B),a]
+	jbsr	play_sound             	| [$09af: ld   (sound_latch_D50B),a] stop music
 	jbsr	ground_floor_reached_45E5         	| [$09b2: call ground_floor_reached_45E5]
 * check if all documents have been collected, starting by the top floor
+* unless cheat is set
+	tst.b	all_documents_collected_flag
+	jne		l_09d3
+	
 	lea	red_door_position_array_8210+0x1E(a6),a0	| [$09b5: ld   hl,red_door_position_array_8210+$1E]
 	move.b	#0x1E,d1                        	| [$09b8: ld   b,$1E]
 l_09ba:
@@ -12043,6 +12049,8 @@ player_arriving_on_roof_anim_4d70:
 	jbsr	init_everything_4e6f                | [$4d79: call $4E6F]
 	tst.b	skip_intro_flag
 	jne		100f
+	tst.b	start_floor
+	jne		100f
 	clr.b	d0                               	| [$4d7c: xor  a]
 	move.b	d0,player_on_roof_anim_timer_833C(a6)                   	| [$4d7d: ld   ($833C),a]
 	move.b	d0,l_833D(a6)                   	| [$4d80: ld   ($833D),a]
@@ -17622,7 +17630,7 @@ l_75b6:
 
 l_75e8:
 	move.b	(enemy_state_09,a2),d0          	| [$75e8: ld   a,(ix+enemy_state_09)]
-	cmp.b	#CS_IN_ROOM_05,d0                         	| [$75eb: cp   $05]
+	cmp.b	#0x5,d0                         	| [$75eb: cp   $05]
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$75ed: ret  c] [...]
 0:
@@ -17703,10 +17711,6 @@ ground_floor_reached_764E:
 	move.b	#0xC0,d0             	| [$7654: ld   (sound_latch_D50B),a]
 	jbsr	play_sound
 	move.w	(a7)+,d0                        	| [$7657: pop  af]
-	tst.b	all_documents_collected_flag
-	jeq		0f
-	st		d0
-0:
 	tst.b	d0                             	| [$7658: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$7659: ret  z] [...]

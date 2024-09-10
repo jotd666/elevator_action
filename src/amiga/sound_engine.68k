@@ -191,8 +191,8 @@ osd_sound_start:
 	bsr		osd_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
-    *lea	mpatrol_tunes,a0
-	illegal
+    lea	elevator_action_tunes,a0
+
 	move.b	d1,music_track_start_number
 	move.w	d1,d0
     sub.l   a1,a1		| samples are in the module
@@ -251,6 +251,6 @@ highscore_needs_saving:
 highscore_loaded:
 	.byte	0
 normal_hiscorename:
-	.asciz	"elevator.high"
+	.asciz	"elevator_action.high"
 
 

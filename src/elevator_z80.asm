@@ -91,6 +91,7 @@ GS_INSERT_COIN_09 = 9
 0007: C8          ret  z
 
 rst_08:
+protection_crap_0008:
 0008: 2F          cpl
 0009: 32 49 86    ld   ($8649),a
 000C: 3E 9C       ld   a,$9C
@@ -191,10 +192,12 @@ jump_table_0070:
 00AE: 57          ld   d,a
 00AF: CD 34 01    call $0134
 00B2: C9          ret
+
 00B3: CD 48 01    call $0148
 00B6: 16 00       ld   d,$00
 00B8: DD 72 11    ld   (ix+$11),d
 00BB: C3 EF 85    jp   dynamic_ram_code_85EF
+
 00BE: 16 00       ld   d,$00
 00C0: DD 72 11    ld   (ix+$11),d
 00C3: CD 74 01    call $0174
@@ -258,6 +261,7 @@ jump_table_0070:
 0143: B2          or   d
 0144: DD 77 0D    ld   (ix+move_direction_0d),a
 0147: C9          ret
+
 0148: DD 7E 0F    ld   a,(ix+$0f)
 014B: B7          or   a
 014C: C0          ret  nz
@@ -270,12 +274,14 @@ jump_table_0070:
 015A: FE 14       cp   $14
 015C: 28 0D       jr   z,$016B
 015E: C9          ret
+
 015F: DD 7E 10    ld   a,(ix+$10)
 0162: FE 07       cp   $07
 0164: 28 05       jr   z,$016B
 0166: FE 0E       cp   $0E
 0168: 28 01       jr   z,$016B
 016A: C9          ret
+
 016B: DD 7E 0B    ld   a,(ix+$0b)
 016E: EE 01       xor  $01
 0170: DD 77 0B    ld   (ix+$0b),a
@@ -288,10 +294,11 @@ jump_table_0070:
 017E: C9          ret
 
 handle_main_scrolling_017F:
-017F: CD 86 01    call $0186
-0182: CD 06 02    call $0206
+017F: CD 86 01    call adjust_scrolling_speed_direction_0186
+0182: CD 06 02    call update_scrolling_playfield_0206
 0185: C9          ret
 
+adjust_scrolling_speed_direction_0186:
 0186: AF          xor  a
 0187: 32 04 80    ld   (scroll_speed_8004),a
 018A: CD BA 01    call stabilize_view_handle_falls_01BA
@@ -330,18 +337,18 @@ stabilize_view_handle_falls_01BA:
 01C7: 3D          dec  a
 01C8: 28 23       jr   z,player_above_elevator_01ED
 01CA: FE 03       cp   CS_IN_ROOM_05-2
-01CC: CA DA 01    jp   z,$01DA
+01CC: CA DA 01    jp   z,player_falling_01DA
 01CF: DD 46 07    ld   b,(ix+$07)
 01D2: 0E 00       ld   c,$00
 01D4: DD 56 03    ld   d,(ix+character_y_offset_03)
-01D7: C3 6C 1E    jp   $1E6C
+01D7: C3 6C 1E    jp   compute_delta_height_1e6c
 
 ; player falls
 player_falling_01DA:
 01DA: DD 46 07    ld   b,(ix+$07)
 01DD: 0E 00       ld   c,$00
 01DF: 16 06       ld   d,$06
-01E1: C3 6C 1E    jp   $1E6C
+01E1: C3 6C 1E    jp   compute_delta_height_1e6c
 
 player_inside_elevator_01E4:
 01E4: CD CE 62    call load_character_elevator_structure_62CE
@@ -358,11 +365,12 @@ player_in_or_on_elevator_01F4:
 01F9: 57          ld   d,a
 01FA: DD 7E 08    ld   a,(ix+$08)
 01FD: 17          rla
-01FE: D2 6C 1E    jp   nc,$1E6C
+01FE: D2 6C 1E    jp   nc,compute_delta_height_1e6c
 0201: 05          dec  b
 0202: 05          dec  b
-0203: C3 6C 1E    jp   $1E6C
+0203: C3 6C 1E    jp   compute_delta_height_1e6c
 
+update_scrolling_playfield_0206:
 0206: AF          xor  a
 0207: 32 07 80    ld   ($8007),a
 020A: 3A 04 80    ld   a,(scroll_speed_8004)
@@ -383,7 +391,7 @@ player_in_or_on_elevator_01F4:
 022A: 79          ld   a,c
 022B: B7          or   a
 022C: C8          ret  z
-022D: F2 7D 02    jp   p,$027D
+022D: F2 7D 02    jp   p,update_bottom_horizon_027d
 0230: 21 01 80    ld   hl,$8001
 0233: 7E          ld   a,(hl)
 0234: 81          add  a,c
@@ -435,10 +443,11 @@ player_in_or_on_elevator_01F4:
 0270: C6 C8       add  a,$C8
 0272: 67          ld   h,a
 0273: 22 06 80    ld   (scroll_tile_pointer_8006),hl
-0276: CD 9C 02    call $029C
+0276: CD 9C 02    call add_dynamic_tiles_if_needed_029c
 0279: CD 87 03    call $0387
 027C: C9          ret
 
+update_bottom_horizon_027d:
 027D: 21 01 80    ld   hl,$8001
 0280: 7E          ld   a,(hl)
 0281: 81          add  a,c
@@ -462,6 +471,7 @@ player_in_or_on_elevator_01F4:
 0298: 47          ld   b,a
 0299: C3 47 02    jp   $0247
 
+add_dynamic_tiles_if_needed_029c:
 029C: 3A 07 80    ld   a,(scroll_tile_pointer_8006+1)
 029F: B7          or   a
 02A0: C8          ret  z
@@ -483,11 +493,12 @@ player_in_or_on_elevator_01F4:
 02BC: 79          ld   a,c
 02BD: FE 05       cp   $05
 02BF: CA C6 02    jp   z,$02C6
-02C2: CD CA 02    call $02CA
+02C2: CD CA 02    call add_red_door_tiles_to_scroll_data_02ca
 02C5: C9          ret
-02C6: CD 5F 03    call $035F
+02C6: CD 5F 03    call display_broken_lamp_if_needed_035f
 02C9: C9          ret
 
+add_red_door_tiles_to_scroll_data_02ca:
 02CA: 21 10 82    ld   hl,red_door_position_array_8210
 02CD: 19          add  hl,de
 02CE: 7E          ld   a,(hl)
@@ -580,6 +591,8 @@ player_in_or_on_elevator_01F4:
 0356: CA DE 02    jp   z,$02DE
 0359: 21 22 80    ld   hl,$8022
 035C: C3 DE 02    jp   $02DE
+
+display_broken_lamp_if_needed_035f:
 035F: 7B          ld   a,e
 0360: D6 08       sub  $08
 0362: 5F          ld   e,a
@@ -821,7 +834,7 @@ update_main_scrolling_03C3:
 0504: 79          ld   a,c
 0505: 87          add  a,a
 0506: 4F          ld   c,a
-0507: CD 3E 1E    call $1E3E
+0507: CD 3E 1E    call get_random_value_1e3e
 050A: 81          add  a,c
 050B: DD 77 10    ld   (ix+$10),a
 050E: C9          ret
@@ -833,7 +846,7 @@ update_main_scrolling_03C3:
 051B: 28 04       jr   z,$0521
 051D: 06 08       ld   b,$08
 051F: 0E 0F       ld   c,$0F
-0521: CD 3E 1E    call $1E3E
+0521: CD 3E 1E    call get_random_value_1e3e
 0524: 81          add  a,c
 0525: DD 77 10    ld   (ix+$10),a
 0528: C9          ret
@@ -883,6 +896,7 @@ table_0548:
 	dc.b	E0   
 	dc.b	F0   
 
+should_enemy_shoot_0568:
 0568: DD 7E 0E    ld   a,(ix+$0e)
 056B: B7          or   a
 056C: 20 10       jr   nz,$057E
@@ -892,21 +906,25 @@ table_0548:
 0575: 17          rla
 0576: E6 01       and  $01
 0578: DD BE 0B    cp   (ix+$0b)
-057B: C2 8E 05    jp   nz,$058E
+057B: C2 8E 05    jp   nz,enemy_doesnt_shoot_058e
 057E: 3A 20 85    ld   a,(player_structure_851A+character_situation_06)
 0581: FE 03       cp   CS_FALLING_03
 0583: D0          ret  nc
 ; walking, elevator or falling
 0584: CD E1 05    call $05E1
 0587: D0          ret  nc
-0588: CD 90 05    call $0590
+0588: CD 90 05    call does_facing_enemy_see_player_0590
 058B: C9          ret
 
+enemy_shoots_058c:
 058C: 37          scf
 058D: C9          ret
+
+enemy_doesnt_shoot_058e:
 058E: AF          xor  a
 058F: C9          ret
 
+does_facing_enemy_see_player_0590:
 0590: 3A 21 85    ld   a,(player_structure_851A+0x07)
 0593: 47          ld   b,a
 0594: FE 12       cp   $12
@@ -916,7 +934,7 @@ table_0548:
 059D: 38 29       jr   c,$05C8
 059F: DD 7E 07    ld   a,(ix+$07)
 05A2: FE 12       cp   $12
-05A4: C2 8E 05    jp   nz,$058E
+05A4: C2 8E 05    jp   nz,enemy_doesnt_shoot_058e
 05A7: DD 7E 00    ld   a,(ix+character_x_00)
 05AA: FE 7D       cp   $7D
 05AC: 3F          ccf
@@ -929,7 +947,7 @@ table_0548:
 05B8: 38 0E       jr   c,$05C8
 05BA: DD 7E 07    ld   a,(ix+$07)
 05BD: FE 14       cp   $14
-05BF: 20 CD       jr   nz,$058E
+05BF: 20 CD       jr   nz,enemy_doesnt_shoot_058e
 05C1: DD 7E 00    ld   a,(ix+character_x_00)
 05C4: FE AC       cp   $AC
 05C6: 3F          ccf
@@ -943,7 +961,7 @@ table_0548:
 05D5: C9          ret
 05D6: 78          ld   a,b
 05D7: FE 14       cp   $14
-05D9: 20 B1       jr   nz,$058C
+05D9: 20 B1       jr   nz,enemy_shoots_058c
 05DB: DD 7E 00    ld   a,(ix+character_x_00)
 05DE: FE AC       cp   $AC
 05E0: C9          ret
@@ -957,7 +975,7 @@ table_0548:
 05F3: 3F          ccf
 05F4: C9          ret
 05F5: CD F5 1D    call pseudo_random_1DF5
-05F8: 21 59 06    ld   hl,$0659
+05F8: 21 59 06    ld   hl,odds_table_0659
 05FB: DD 5E 13    ld   e,(ix+enemy_aggressivity_13)
 05FE: 16 00       ld   d,$00
 0600: 19          add  hl,de
@@ -969,7 +987,7 @@ table_0548:
 060D: CB 1F       rr   a
 060F: 4F          ld   c,a
 0610: 06 03       ld   b,$03
-0612: 11 08 00    ld   de,$0008
+0612: 11 08 00    ld   de,protection_crap_0008
 0615: FD 7E 02    ld   a,(iy+$02)
 0618: 3C          inc  a
 0619: 28 22       jr   z,$063D
@@ -1454,6 +1472,7 @@ enemy_shot_collision_08F8:
 099F: D0          ret  nc
 09A0: C3 32 09    jp   $0932
 
+check_if_all_documents_collected_09A3:
 09A3: AF          xor  a
 09A4: 32 AB 80    ld   ($80AB),a
 09A7: CD D8 0A    call $0AD8
@@ -1493,8 +1512,8 @@ enemy_shot_collision_08F8:
 09F1: CD A2 12    call handle_enemies_12A2
 09F4: CD E8 2F    call $2FE8
 09F7: CD E1 0B    call $0BE1
-09FA: CD A0 15    call $15A0
-09FD: CD CF 73    call $73CF
+09FA: CD A0 15    call update_sprite_shadow_ram_15a0
+09FD: CD CF 73    call game_tick_73cf
 0A00: 3A 33 80    ld   a,($8033)
 0A03: FE FF       cp   $FF
 0A05: 20 CC       jr   nz,$09D3
@@ -1531,16 +1550,16 @@ enemy_shot_collision_08F8:
 0A47: 38 0B       jr   c,$0A54
 0A49: 3E 39       ld   a,$39
 0A4B: 32 0B D5    ld   (sound_latch_D50B),a
-0A4E: CD 72 2F    call $2F72
+0A4E: CD 72 2F    call set_player_initial_state_2f72
 0A51: 3E 01       ld   a,$01
 0A53: C9          ret
-0A54: CD 06 02    call $0206
+0A54: CD 06 02    call update_scrolling_playfield_0206
 0A57: CD F0 0A    call $0AF0
 0A5A: CD BF 0E    call handle_elevators_0EBF
 0A5D: CD A2 12    call handle_enemies_12A2
 0A60: CD E1 0B    call $0BE1
-0A63: CD A0 15    call $15A0
-0A66: CD CF 73    call $73CF
+0A63: CD A0 15    call update_sprite_shadow_ram_15a0
+0A66: CD CF 73    call game_tick_73cf
 0A69: C3 15 0A    jp   $0A15
 0A6C: 3A 23 85    ld   a,(player_structure_851A+9)
 0A6F: FE 03       cp   $03
@@ -1555,7 +1574,7 @@ enemy_shot_collision_08F8:
 0A7F: 34          inc  (hl)
 0A80: FE 04       cp   $04
 0A82: 38 1F       jr   c,$0AA3
-0A84: CC D0 0A    call z,$0AD0
+0A84: CC D0 0A    call z,play_missing_document_end_sound_0ad0
 0A87: FE 09       cp   $09
 0A89: 30 20       jr   nc,$0AAB
 0A8B: 21 23 81    ld   hl,$8123
@@ -1578,15 +1597,17 @@ enemy_shot_collision_08F8:
 0AAD: 32 27 85    ld   (player_move_direction_8527),a	; no move
 0AB0: 21 23 81    ld   hl,$8123
 0AB3: 36 FF       ld   (hl),$FF
-0AB5: CD 06 02    call $0206
+0AB5: CD 06 02    call update_scrolling_playfield_0206
 0AB8: CD F0 0A    call $0AF0
 0ABB: CD BF 0E    call handle_elevators_0EBF
 0ABE: CD A2 12    call handle_enemies_12A2
 0AC1: CD E8 2F    call $2FE8
 0AC4: CD E1 0B    call $0BE1
-0AC7: CD A0 15    call $15A0
-0ACA: CD CF 73    call $73CF
+0AC7: CD A0 15    call update_sprite_shadow_ram_15a0
+0ACA: CD CF 73    call game_tick_73cf
 0ACD: C3 15 0A    jp   $0A15
+
+play_missing_document_end_sound_0ad0:
 0AD0: F5          push af
 0AD1: 3E 38       ld   a,$38
 0AD3: 32 0B D5    ld   (sound_latch_D50B),a
@@ -1623,7 +1644,7 @@ enemy_shot_collision_08F8:
 0B0B: 47          ld   b,a
 0B0C: 0E 00       ld   c,$00
 0B0E: 16 06       ld   d,$06
-0B10: CD 6C 1E    call $1E6C
+0B10: CD 6C 1E    call compute_delta_height_1e6c
 0B13: 11 6E 00    ld   de,$006E
 0B16: AF          xor  a
 0B17: ED 52       sbc  hl,de
@@ -1668,6 +1689,7 @@ enemy_shot_collision_08F8:
 0B67: C9          ret
 
 handle_enemes_0B68:
+handle_enemies_0B68:
 0B68: CD EB 58    call $58EB
 0B6B: DD 21 3A 85 ld   ix,enemy_1_853A
 0B6F: 21 32 81    ld   hl,$8132
@@ -1747,10 +1769,10 @@ jump_table_0BBF:
 0BFE: 3A 33 80    ld   a,($8033)
 0C01: D6 05       sub  $05
 0C03: 32 36 80    ld   ($8036),a
-0C06: DA 43 0C    jp   c,$0C43
+0C06: DA 43 0C    jp   c,protection_0C43
 0C09: D6 04       sub  $04
 0C0B: 32 36 80    ld   ($8036),a
-0C0E: DA 43 0C    jp   c,$0C43
+0C0E: DA 43 0C    jp   c,protection_0C43
 0C11: D6 2C       sub  $2C
 0C13: DA 81 0C    jp   c,$0C81
 0C16: D6 03       sub  $03
@@ -1775,6 +1797,7 @@ jump_table_0BBF:
 protection_0C43:
 ; the bootleg version NOPs the following
 ; bootleg: start NOP patch
+protection_0C43:
 0C43: D5          push de
 0C44: 11 F6 82    ld   de,$82F6
 0C47: 1B          dec  de
@@ -1836,7 +1859,7 @@ protection_0C43:
 0CCD: 06 00       ld   b,$00
 0CCF: 0E 00       ld   c,$00
 0CD1: 16 06       ld   d,$06
-0CD3: CD 6C 1E    call $1E6C
+0CD3: CD 6C 1E    call compute_delta_height_1e6c
 0CD6: 7C          ld   a,h
 0CD7: B7          or   a
 0CD8: C0          ret  nz
@@ -2194,7 +2217,7 @@ handle_elevators_0EBF:
 0F0F: 13          inc  de
 0F10: 13          inc  de
 0F11: D5          push de
-0F12: 11 08 00    ld   de,$0008
+0F12: 11 08 00    ld   de,protection_crap_0008
 0F15: 19          add  hl,de
 0F16: D1          pop  de
 0F17: 10 EC       djnz $0F05
@@ -2280,8 +2303,9 @@ update_elevator_directions_0F65:
 
 set_elevators_neutral_controls_0F99:
 
+set_elevators_neutral_controls_0F99:
 0F99: 21 84 83    ld   hl,elevator_array_837D+player_control_07
-0F9C: 11 08 00    ld   de,$0008
+0F9C: 11 08 00    ld   de,protection_crap_0008
 0F9F: 06 0B       ld   b,$0B
 0FA1: 3E 80       ld   a,$80		; set no move
 0FA3: 77          ld   (hl),a
@@ -2294,22 +2318,24 @@ set_elevators_neutral_controls_0F99:
 0FAE: 10 FC       djnz $0FAC
 0FB0: C9          ret
 
+read_dip_switches_0fb1:
 0FB1: 21 A5 80    ld   hl,$80A5
 0FB4: 3A 4F 82    ld   a,(copy_of_dip_switches_2_824F)
-0FB7: CD D2 0F    call $0FD2
+0FB7: CD D2 0F    call decode_dip_switches_0fd2
 0FBA: 21 A7 80    ld   hl,coin_slot_2_dsw_copy_80A7
 0FBD: 3A 4F 82    ld   a,(copy_of_dip_switches_2_824F)
 0FC0: 0F          rrca
 0FC1: 0F          rrca
 0FC2: 0F          rrca
 0FC3: 0F          rrca
-0FC4: CD D2 0F    call $0FD2
+0FC4: CD D2 0F    call decode_dip_switches_0fd2
 0FC7: AF          xor  a
 0FC8: 32 A2 80    ld   (nb_credits_80A2),a
 0FCB: 32 A3 80    ld   ($80A3),a
 0FCE: 32 A4 80    ld   ($80A4),a
 0FD1: C9          ret
 
+decode_dip_switches_0fd2:
 0FD2: E6 0F       and  $0F
 0FD4: FE 08       cp   $08
 0FD6: 30 09       jr   nc,$0FE1
@@ -2326,27 +2352,29 @@ set_elevators_neutral_controls_0F99:
 0FE8: 77          ld   (hl),a
 0FE9: C9          ret
 
+check_credits_0fea:
 0FEA: 3A AC 80    ld   a,(game_state_80AC)
 0FED: B7          or   a
 0FEE: C8          ret  z
-0FEF: CD 36 10    call $1036
+0FEF: CD 36 10    call switch_bank_on_9_credits_1036
 0FF2: 3A A3 80    ld   a,($80A3)
 0FF5: 21 A5 80    ld   hl,$80A5
-0FF8: CD 19 10    call $1019
+0FF8: CD 19 10    call increase_credits_if_required_1019
 0FFB: 78          ld   a,b
 0FFC: 32 A3 80    ld   ($80A3),a
-0FFF: CD 36 10    call $1036
+0FFF: CD 36 10    call switch_bank_on_9_credits_1036
 1002: 3A 50 82    ld   a,(copy_of_dip_switches_3_8250)
 1005: CB 7F       bit  7,a
 1007: C0          ret  nz
 1008: 3A A4 80    ld   a,($80A4)
 100B: 21 A7 80    ld   hl,coin_slot_2_dsw_copy_80A7
-100E: CD 19 10    call $1019
+100E: CD 19 10    call increase_credits_if_required_1019
 1011: 78          ld   a,b
 1012: 32 A4 80    ld   ($80A4),a
-1015: CD 36 10    call $1036
+1015: CD 36 10    call switch_bank_on_9_credits_1036
 1018: C9          ret
 
+increase_credits_if_required_1019:
 1019: 47          ld   b,a
 101A: 3A A2 80    ld   a,(nb_credits_80A2)
 101D: 4F          ld   c,a
@@ -2368,6 +2396,7 @@ set_elevators_neutral_controls_0F99:
 1032: 32 A2 80    ld   (nb_credits_80A2),a
 1035: C9          ret
 
+switch_bank_on_9_credits_1036:
 1036: 3A A2 80    ld   a,(nb_credits_80A2)
 1039: FE 09       cp   $09
 103B: 30 10       jr   nc,over_9_credits_104D
@@ -2386,6 +2415,7 @@ over_9_credits_104D:
 1055: 32 0E D5    ld   (bank_switch_d50e),a
 1058: C9          ret
 
+check_coin_inserted_1059:
 1059: 21 A3 80    ld   hl,$80A3
 105C: 3A 4B 82    ld   a,($824B)
 105F: 47          ld   b,a
@@ -2505,12 +2535,12 @@ free_play_string_10CA:
 113C: 32 AB 80    ld   ($80AB),a
 113F: 32 34 82    ld   (nb_lives_8234),a
 1142: 32 00 D6    ld   (video_mode_d600),a
-1145: CD 75 11    call $1175
+1145: CD 75 11    call fix_random_seed_for_demo_1175
 1148: 3E 02       ld   a,$02
 114A: 32 37 82    ld   (skill_level_8237),a
 114D: CD 3E 2A    call init_level_skill_params_2A2E
-1150: CD 00 27    call $2700
-1153: CD 65 2A    call $2A65
+1150: CD 00 27    call init_building_2700
+1153: CD 65 2A    call init_elevators_2a65
 1156: CD 9B 75    call start_next_level_759B
 1159: C9          ret
 115A: 21 D3 7B    ld   hl,recorded_inputs_7BD3
@@ -2524,6 +2554,8 @@ free_play_string_10CA:
 116F: 32 2C 80    ld   ($802C),a
 1172: 18 C7       jr   $113B
 1174: C9          ret
+
+fix_random_seed_for_demo_1175:
 1175: 3A 3B 82    ld   a,(game_in_play_flag_823B)
 1178: 3D          dec  a
 1179: 28 0F       jr   z,$118A		; never called
@@ -2579,10 +2611,11 @@ elevator_irq_1199:
 11C6: 80          add  a,b	; times 3 to adjust to jump table
 11C7: 5F          ld   e,a
 11C8: 16 00       ld   d,$00
-11CA: 21 CF 11    ld   hl,$11CF
+11CA: 21 CF 11    ld   hl,game_screen_jump_table_11CF
 11CD: 19          add  hl,de
 11CE: E9          jp   (hl)
 
+game_screen_jump_table_11CF:
 11CF: C3 ED 11    jp   $11ED				            | 0 ???
 11D2: C3 F0 11    jp   title_sequence_11F0              | 1
 11D5: C3 F6 11    jp   $11F6                            | 2 ???
@@ -2597,7 +2630,7 @@ elevator_irq_1199:
 11ED: C3 3E 12    jp   finish_irq_123E
 
 title_sequence_11F0:
-11F0: CD 30 74    call $7430
+11F0: CD 30 74    call title_animation_7430
 11F3: C3 3E 12    jp   finish_irq_123E
 
 11F6: C3 3E 12    jp   finish_irq_123E
@@ -2629,7 +2662,7 @@ ground_floor_reached_1229:
 122C: C3 11 12    jp   game_running_1211
 
 next_life_122F:
-122F: CD CA 26    call $26CA
+122F: CD CA 26    call set_level_palette_26ca
 1232: C3 3E 12    jp   finish_irq_123E
 
 game_over_1235:
@@ -2648,13 +2681,13 @@ finish_irq_123E:
 1249: 3A EA 82    ld   a,(coin_counter_lock_82EA)
 124C: B7          or   a
 124D: 20 0B       jr   nz,$125A
-124F: CD 59 10    call $1059
+124F: CD 59 10    call check_coin_inserted_1059
 1252: 3A 0C D4    ld   a,(service_mode_D40C)
 1255: CB 6F       bit  5,a
 1257: CA EB 70    jp   z,run_in_service_mode_70EB
 125A: 32 0D D5    ld   (watchdog_d50d),a
 125D: CD 00 65    call handle_music_6500
-1260: CD 6A 65    call $656A
+1260: CD 6A 65    call handle_music_656a
 1263: CD DF 65    call $65DF
 1266: 21 48 86    ld   hl,protection_variable_8648
 1269: 7E          ld   a,(hl)
@@ -2680,6 +2713,7 @@ finish_irq_123E:
 1285: FB          ei
 1286: C9          ret
 
+init_moving_door_slots_1287:
 1287: 3E FF       ld   a,$FF
 1289: 32 B2 80    ld   ($80B2),a
 128C: 32 BA 80    ld   ($80BA),a
@@ -2692,6 +2726,7 @@ finish_irq_123E:
 12A1: C9          ret
 
 handle_enemies_12A2:
+handle_moving_doors_12A2:
 12A2: 21 BD 80    ld   hl,opening_door_screen_address_80BD
 12A5: 22 ED 80    ld   ($80ED),hl
 12A8: DD 21 AD 80 ld   ix,$80AD
@@ -2716,10 +2751,10 @@ handle_enemies_12A2:
 12D7: CA 09 13    jp   z,$1309
 12DA: FE 0D       cp   $0D
 12DC: DA 6A 13    jp   c,$136A
-12DF: CA B6 13    jp   z,$13B6
+12DF: CA B6 13    jp   z,a_door_has_closed_13b6
 12E2: FE 30       cp   $30
-12E4: DA 56 14    jp   c,$1456
-12E7: CD EC 13    call $13EC
+12E4: DA 56 14    jp   c,reward_for_documents_1456
+12E7: CD EC 13    call a_blue_door_has_closed_13ec
 12EA: C9          ret
 12EB: DD 7E 05    ld   a,(ix+character_delta_x_05)
 12EE: B7          or   a
@@ -2732,13 +2767,13 @@ handle_enemies_12A2:
 12FB: 3C          inc  a
 12FC: FE 0D       cp   $0D
 12FE: DA 6A 13    jp   c,$136A
-1301: C3 B6 13    jp   $13B6
+1301: C3 B6 13    jp   a_door_has_closed_13b6
 1304: 3E 01       ld   a,$01
 1306: C3 6A 13    jp   $136A
 1309: CD 81 15    call $1581
 130C: DD 7E 02    ld   a,(ix+$02)
 130F: FE 07       cp   $07
-1311: 38 3D       jr   c,$1350
+1311: 38 3D       jr   c,door_on_lower_floors_1350
 1313: DD 7E 04    ld   a,(ix+$04)
 1316: 87          add  a,a
 1317: 87          add  a,a
@@ -2750,7 +2785,7 @@ handle_enemies_12A2:
 131E: DD 77 00    ld   (ix+character_x_00),a
 1321: C6 0F       add  a,$0F
 1323: DD 77 01    ld   (ix+character_x_right_01),a
-1326: CD 86 14    call $1486
+1326: CD 86 14    call animate_moving_door_sprite_1486
 1329: DD 7E 02    ld   a,(ix+$02)
 132C: 21 40 13    ld   hl,table_1340
 132F: FE 10       cp   $10
@@ -2758,7 +2793,7 @@ handle_enemies_12A2:
 1334: FE 0B       cp   $0B
 1336: DA 3C 13    jp   c,$133C
 1339: 21 48 13    ld   hl,$1348
-133C: CD C3 14    call $14C3
+133C: CD C3 14    call draw_door_tiles_14c3
 133F: C9          ret
 
 table_1340:
@@ -2779,6 +2814,7 @@ table_1340:
 	dc.b	00
 	dc.b	00
 	
+door_on_lower_floors_1350:
 1350: DD 7E 04    ld   a,(ix+$04)
 1353: B7          or   a
 1354: 20 0A       jr   nz,$1360
@@ -2835,6 +2871,8 @@ table_1340:
 13B3: 23          inc  hl
 13B4: 70          ld   (hl),b
 13B5: C9          ret
+
+a_door_has_closed_13b6:
 13B6: CD 81 15    call $1581
 13B9: DD 7E 06    ld   a,(ix+character_situation_06)
 13BC: E6 01       and  $01
@@ -2859,10 +2897,11 @@ table_1340:
 13DC: 06 00       ld   b,$00
 13DE: 21 16 14    ld   hl,table_1416
 13E1: 09          add  hl,bc
-13E2: CD C3 14    call $14C3
+13E2: CD C3 14    call draw_door_tiles_14c3
 13E5: DD 7E 06    ld   a,(ix+character_situation_06)
 13E8: FE 02       cp   CS_ABOVE_ELEVATOR_02
-13EA: 30 12       jr   nc,$13FE
+13EA: 30 12       jr   nc,a_red_door_has_closed_13fe
+a_blue_door_has_closed_13ec:
 13EC: 3E FF       ld   a,$FF
 13EE: DD 77 05    ld   (ix+character_delta_x_05),a
 13F1: DD 77 02    ld   (ix+character_fine_y_offset_02),a
@@ -2872,6 +2911,8 @@ table_1340:
 13FB: 19          add  hl,de
 13FC: 77          ld   (hl),a
 13FD: C9          ret
+
+a_red_door_has_closed_13fe:
 13FE: CD 00 15    call $1500
 1401: 3E FF       ld   a,$FF
 1403: 2A EF 80    ld   hl,($80EF)
@@ -2952,6 +2993,7 @@ table_1416:
 	dc.b	84
 	dc.b	82
 	dc.b	82
+reward_for_documents_1456:
 1456: DD 7E 05    ld   a,(ix+character_delta_x_05)
 1459: CB 57       bit  2,a
 145B: 06 2F       ld   b,$2F
@@ -2979,6 +3021,7 @@ table_1416:
 1482: CD 56 36    call play_sound_3656
 1485: C9          ret
 
+animate_moving_door_sprite_1486:
 1486: 2A EF 80    ld   hl,($80EF)
 1489: 36 01       ld   (hl),$01
 148B: 23          inc  hl
@@ -2989,7 +3032,7 @@ table_1416:
 1494: 0E 00       ld   c,$00
 1496: 16 04       ld   d,$04
 1498: E5          push hl
-1499: CD 6C 1E    call $1E6C
+1499: CD 6C 1E    call compute_delta_height_1e6c
 149C: 4D          ld   c,l
 149D: E1          pop  hl
 149E: 71          ld   (hl),c
@@ -3018,6 +3061,8 @@ table_1416:
 14BF: 23          inc  hl
 14C0: 36 61       ld   (hl),$61
 14C2: C9          ret
+
+draw_door_tiles_14c3:
 14C3: E5          push hl
 14C4: DD 46 02    ld   b,(ix+character_fine_y_offset_02)
 14C7: DD 4E 04    ld   c,(ix+$04)
@@ -3026,12 +3071,14 @@ table_1416:
 14CE: 4D          ld   c,l
 14CF: E1          pop  hl
 14D0: ED 5B ED 80 ld   de,($80ED)
-14D4: CD E5 14    call $14E5
-14D7: CD E5 14    call $14E5
-14DA: CD E5 14    call $14E5
-14DD: CD E5 14    call $14E5
+14D4: CD E5 14    call update_behind_door_tile_14e5
+14D7: CD E5 14    call update_behind_door_tile_14e5
+14DA: CD E5 14    call update_behind_door_tile_14e5
+14DD: CD E5 14    call update_behind_door_tile_14e5
 14E0: ED 53 ED 80 ld   ($80ED),de
 14E4: C9          ret
+
+update_behind_door_tile_14e5:
 14E5: 3E C8       ld   a,$C8
 14E7: 80          add  a,b
 14E8: 12          ld   (de),a
@@ -3148,6 +3195,7 @@ update_door_background_1570:
 159C: DD 77 06    ld   (ix+$06),a
 159F: C9          ret
 
+update_sprite_shadow_ram_15a0:
 15A0: 11 69 81    ld   de,sprites_shadow_ram_8169
 15A3: 3A D8 81    ld   a,($81D8)
 15A6: 06 02       ld   b,$02
@@ -3162,7 +3210,8 @@ update_door_background_1570:
 15B7: 06 18       ld   b,$18
 15B9: 21 F1 80    ld   hl,$80F1
 15BC: BE          cp   (hl)
-15BD: 28 15       jr   z,$15D4
+15BD: 28 15       jr   z,update_sprite_ram_with_object_15d4
+next_object_15bf:
 15BF: 19          add  hl,de
 15C0: 10 FA       djnz $15BC
 15C2: 3D          dec  a
@@ -3177,6 +3226,8 @@ update_door_background_1570:
 15D0: 13          inc  de
 15D1: 10 FC       djnz $15CF
 15D3: C9          ret
+
+update_sprite_ram_with_object_15d4:
 15D4: 08          ex   af,af'
 15D5: E5          push hl
 15D6: D9          exx
@@ -3202,7 +3253,7 @@ update_door_background_1570:
 15EA: 13          inc  de
 15EB: D9          exx
 15EC: 08          ex   af,af'
-15ED: C3 BF 15    jp   $15BF
+15ED: C3 BF 15    jp   next_object_15bf
 
 update_sprites_15F0:
 15F0: 21 69 81    ld   hl,sprites_shadow_ram_8169
@@ -4053,7 +4104,7 @@ enemy_in_elevator_1AE3:
 1AF9: DD 7E 10    ld   a,(ix+$10)
 1AFC: B7          or   a
 1AFD: C2 1C 1B    jp   nz,$1B1C
-1B00: CD 68 05    call $0568
+1B00: CD 68 05    call should_enemy_shoot_0568
 1B03: D2 20 1B    jp   nc,$1B20
 1B06: 3A 20 85    ld   a,($8520)
 1B09: B7          or   a
@@ -4071,7 +4122,7 @@ enemy_in_elevator_1AE3:
 1B25: DD 7E 10    ld   a,(ix+$10)
 1B28: B7          or   a
 1B29: C2 1C 1B    jp   nz,$1B1C
-1B2C: CD 68 05    call $0568
+1B2C: CD 68 05    call should_enemy_shoot_0568
 1B2F: D2 20 1B    jp   nc,$1B20
 1B32: CD 44 1C    call $1C44
 1B35: C3 1C 1B    jp   $1B1C
@@ -4096,7 +4147,7 @@ enemy_jumping_above_elevator_1B38:
 1B61: DD 7E 10    ld   a,(ix+$10)
 1B64: B7          or   a
 1B65: C2 1C 1B    jp   nz,$1B1C
-1B68: CD 68 05    call $0568
+1B68: CD 68 05    call should_enemy_shoot_0568
 1B6B: D2 20 1B    jp   nc,$1B20
 1B6E: CD 9E 1B    call $1B9E
 1B71: C3 1C 1B    jp   $1B1C
@@ -4191,7 +4242,7 @@ enemy_shooting_state_1C14:
 1C20: DD 7E 10    ld   a,(ix+$10)
 1C23: B7          or   a
 1C24: C2 30 1C    jp   nz,$1C30
-1C27: CD 68 05    call $0568
+1C27: CD 68 05    call should_enemy_shoot_0568
 1C2A: D2 3B 1C    jp   nc,$1C3B
 1C2D: CD 44 1C    call $1C44
 1C30: CD F5 05    call $05F5
@@ -4443,6 +4494,7 @@ table_1D75:
 	dc.b	C4 FF 00    
 
 pseudo_random_1DF5:
+pseudo_random_with_regsave_1DF5:
 1DF5: E5          push hl
 1DF6: 2A D6 81    ld   hl,(pseudo_random_seed_81D6)
 1DF9: 7D          ld   a,l
@@ -4485,6 +4537,7 @@ some_arith_op_1E1D:
 ; random dollowed by some kind of division to get a small
 ; number in A
 ramdon_1E2A:
+random_1E2A:
 1E2A: E5          push hl
 1E2B: CD 06 1E    call pseudo_random_1E06
 1E2E: 26 C0       ld   h,$C0
@@ -4494,11 +4547,13 @@ ramdon_1E2A:
 ; random dollowed by some kind of division to get a small
 ; number in A
 ramdon_1E35:
+random_1E35:
 1E35: E5          push hl
 1E36: CD 06 1E    call pseudo_random_1E06
 1E39: 26 E0       ld   h,$E0
 1E3B: C3 1B 1E    jp   $1E1B
 
+get_random_value_1e3e:
 1E3E: E5          push hl
 1E3F: CD 06 1E    call pseudo_random_1E06
 1E42: 60          ld   h,b
@@ -4533,6 +4588,7 @@ ramdon_1E35:
 1E6A: 19          add  hl,de
 1E6B: C9          ret
 
+compute_delta_height_1e6c:
 1E6C: CD 5A 1E    call $1E5A
 1E6F: ED 5B 2A 80 ld   de,($802A)
 1E73: AF          xor  a
@@ -6047,6 +6103,7 @@ ramdon_1E35:
 
 
 
+init_hw_scroll_and_charset_260C:
 260C: 3E 06       ld   a,$06
 260E: 32 00 D3    ld   (video_priority_D300),a
 2611: AF          xor  a
@@ -6108,7 +6165,7 @@ ramdon_1E35:
 2692: 3E 01       ld   a,$01
 2694: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 2697: CD C2 26    call reload_8bit_tiimer_26C2
-269A: CD CF 73    call $73CF
+269A: CD CF 73    call game_tick_73cf
 269D: C9          ret
 
 init_video_269E:
@@ -6133,11 +6190,13 @@ init_video_269E:
 26C1: C9          ret
 
 reload_8bit_tiimer_26C2:
+reload_8bit_timer_26C2:
 26C2: 3A A9 80    ld   a,(timer_8bit_reload_value_80A9)
 26C5: 3D          dec  a
 26C6: 32 AA 80    ld   (timer_8bit_80AA),a
 26C9: C9          ret
 
+set_level_palette_26ca:
 26CA: 3A D9 81    ld   a,(menu_or_game_tiles_81D9)
 26CD: B7          or   a
 26CE: 28 03       jr   z,$26D3
@@ -6166,9 +6225,10 @@ reload_8bit_tiimer_26C2:
 26F7: 32 AB 80    ld   ($80AB),a
 26FA: C9          ret
 
-26FB: 21 E3 79    ld   hl,$79E3
+26FB: 21 E3 79    ld   hl,table_79E3
 26FE: 18 EE       jr   $26EE
 
+init_building_2700:
 2700: CD 0A 27    call $270A
 2703: CD 3F 27    call $273F
 2706: CD B3 28    call $28B3
@@ -6196,8 +6256,8 @@ reload_8bit_tiimer_26C2:
 2733: 36 08       ld   (hl),$08
 2735: 23          inc  hl
 2736: 10 FB       djnz $2733
-2738: CD 53 27    call $2753
-273B: CD 8B 27    call $278B
+2738: CD 53 27    call position_red_doors_on_lower_floors_2753
+273B: CD 8B 27    call position_red_doors_on_higher_floors_278b
 273E: C9          ret
 
 273F: CD F5 1D    call pseudo_random_1DF5
@@ -6210,6 +6270,8 @@ reload_8bit_tiimer_26C2:
 274D: 10 F7       djnz $2746
 274F: 32 2D 80    ld   ($802D),a
 2752: C9          ret
+
+position_red_doors_on_lower_floors_2753:
 2753: 21 2D 28    ld   hl,$282D
 2756: 06 06       ld   b,$06
 2758: 0E 01       ld   c,$01
@@ -6240,6 +6302,8 @@ reload_8bit_tiimer_26C2:
 2786: FE 08       cp   $08
 2788: 30 FA       jr   nc,$2784
 278A: C9          ret
+
+position_red_doors_on_higher_floors_278b:
 278B: 21 36 28    ld   hl,$2836
 278E: 06 08       ld   b,$08
 2790: 0E 08       ld   c,$08
@@ -6288,7 +6352,7 @@ position_red_doors_27D2:
 27E6: 04          inc  b
 ; loop
 27E7: D5          push de
-27E8: CD 3E 1E    call $1E3E
+27E8: CD 3E 1E    call get_random_value_1e3e
 27EB: 81          add  a,c
 27EC: 5F          ld   e,a
 27ED: 16 00       ld   d,$00
@@ -6433,12 +6497,13 @@ table_280E:
 	dc.B	02          
 	dc.B	06
 
-28B3: CD C0 28    call $28C0                                          
+28B3: CD C0 28    call update_scroll_value_from_viewed_floor_28c0                                          
 28B6: CD DE 28    call $28DE                                          
 28B9: CD 21 29    call $2921
 28BC: CD BD 16    call $16BD
 28BF: C9          ret
 
+update_scroll_value_from_viewed_floor_28c0:
 28C0: 21 01 80    ld   hl,$8001
 28C3: 36 00       ld   (hl),$00
 28C5: 23          inc  hl
@@ -6519,8 +6584,10 @@ table_280E:
 293B: 19          add  hl,de
 293C: 22 28 80    ld   ($8028),hl
 293F: C9          ret
-2940: CD 5F 29    call $295F
-2943: CD CF 73    call $73CF
+
+goto_next_screen_2940:
+2940: CD 5F 29    call display_insert_coin_screen_295f
+2943: CD CF 73    call game_tick_73cf
 2946: 3A A2 80    ld   a,(nb_credits_80A2)
 2949: B7          or   a
 294A: C0          ret  nz
@@ -6536,6 +6603,8 @@ table_280E:
 295B: B5          or   l
 295C: 20 E5       jr   nz,$2943
 295E: C9          ret
+
+display_insert_coin_screen_295f:
 295F: AF          xor  a
 2960: 32 AB 80    ld   ($80AB),a
 2963: 32 00 D6    ld   (video_mode_d600),a
@@ -6547,10 +6616,10 @@ table_280E:
 296E: 10 FC       djnz $296C
 2970: 0D          dec  c
 2971: 20 F8       jr   nz,$296B
-2973: CD 39 58    call $5839
+2973: CD 39 58    call display_status_bars_5839
 2976: CD C6 57    call update_upper_status_bar_57C6
 2979: CD B0 10    call display_credit_info_10b0
-297C: CD 8E 29    call $298E
+297C: CD 8E 29    call display_insert_coin_298e
 297F: 21 2C 01    ld   hl,$012C
 2982: 22 2F 82    ld   ($822F),hl
 2985: 3E 09       ld   a,GS_INSERT_COIN_09
@@ -6558,6 +6627,7 @@ table_280E:
 298A: CD C2 26    call reload_8bit_tiimer_26C2
 298D: C9          ret
 
+display_insert_coin_298e:
 298E: 21 02 2A    ld   hl,insert_coin_string_2A02
 2991: 11 89 C5    ld   de,$C589
 2994: CD F9 29    call copy_string_to_screen_29F9
@@ -6571,19 +6641,20 @@ table_280E:
 29A7: CD F9 29    call copy_string_to_screen_29F9
 29AA: 2A A5 80    ld   hl,($80A5)
 29AD: 11 28 C6    ld   de,$C628
-29B0: CD D0 29    call $29D0
+29B0: CD D0 29    call display_coin_credit_text_29d0
 29B3: 21 22 2A    ld   hl,right_coin_shot_string_2A22
 29B6: 11 89 C6    ld   de,$C689
 29B9: CD F9 29    call copy_string_to_screen_29F9
 29BC: 2A A7 80    ld   hl,(coin_slot_2_dsw_copy_80A7)
 29BF: 11 C8 C6    ld   de,$C6C8
-29C2: CD D0 29    call $29D0
+29C2: CD D0 29    call display_coin_credit_text_29d0
 29C5: C9          ret
 29C6: 2A A5 80    ld   hl,($80A5)
 29C9: 11 28 C6    ld   de,$C628
-29CC: CD D0 29    call $29D0
+29CC: CD D0 29    call display_coin_credit_text_29d0
 29CF: C9          ret
 
+display_coin_credit_text_29d0:
 29D0: 44          ld   b,h
 29D1: 4D          ld   c,l
 29D2: 79          ld   a,c
@@ -6701,16 +6772,17 @@ init_level_skill_params_2A2E:
 2A61: 32 76 83    ld   ($8376),a
 2A64: C9          ret
 
+init_elevators_2a65:
 2A65: CD 75 2A    call $2A75
 2A68: CD 9A 2A    call $2A9A
 2A6B: CD 20 2C    call $2C20
 2A6E: CD 52 2D    call $2D52
-2A71: CD AC 2D    call $2DAC
+2A71: CD AC 2D    call initialize_elevator_screen_2dac
 2A74: C9          ret
 
 2A75: 06 0B       ld   b,$0B
 2A77: 21 83 83    ld   hl,$8383
-2A7A: 11 08 00    ld   de,$0008
+2A7A: 11 08 00    ld   de,protection_crap_0008
 2A7D: 36 00       ld   (hl),$00
 2A7F: 19          add  hl,de
 2A80: 10 FB       djnz $2A7D
@@ -6730,13 +6802,14 @@ init_level_skill_params_2A2E:
 2A97: 10 EB       djnz $2A84
 2A99: C9          ret
 
-2A9A: CD AA 2A    call $2AAA
+2A9A: CD AA 2A    call init_elevator_params_2aaa
 2A9D: CD ED 2A    call $2AED
 2AA0: CD 10 2B    call $2B10
 2AA3: CD 99 0F    call set_elevators_neutral_controls_0F99
 2AA6: CD 08 2C    call $2C08
 2AA9: C9          ret
 
+init_elevator_params_2aaa:
 2AAA: DD 21 7D 83 ld   ix,elevator_array_837D
 2AAE: 11 D7 2A    ld   de,table_2AD7
 2AB1: 06 00       ld   b,$00
@@ -6752,7 +6825,7 @@ init_level_skill_params_2A2E:
 2AC2: C2 C8 2A    jp   nz,$2AC8
 2AC5: DD 35 03    dec  (ix+min_floor_03)
 2AC8: C5          push bc
-2AC9: 01 08 00    ld   bc,$0008			; elevator struct size
+2AC9: 01 08 00    ld   bc,protection_crap_0008			; elevator struct size
 2ACC: DD 09       add  ix,bc
 2ACE: C1          pop  bc
 2ACF: 04          inc  b
@@ -6802,7 +6875,7 @@ table_2B05:
     
 2B10: 21 7D 83    ld   hl,elevator_array_837D
 2B13: 06 0B       ld   b,$0B
-2B15: 11 08 00    ld   de,$0008
+2B15: 11 08 00    ld   de,protection_crap_0008
 2B18: 36 00       ld   (hl),$00
 2B1A: 19          add  hl,de
 2B1B: 10 FB       djnz $2B18
@@ -6813,7 +6886,7 @@ table_2B05:
 2B27: 92          sub  d
 2B28: 3C          inc  a
 2B29: 47          ld   b,a
-2B2A: CD 3E 1E    call $1E3E
+2B2A: CD 3E 1E    call get_random_value_1e3e
 2B2D: 82          add  a,d
 2B2E: DD 77 01    ld   (ix+character_x_right_01),a
 2B31: 11 F8 FF    ld   de,$FFF8
@@ -7076,7 +7149,7 @@ table_2C66:
 2CEF: DD 77 0E    ld   (ix+$0e),a
 2CF2: 11 15 00    ld   de,$0015
 2CF5: DD 19       add  ix,de
-2CF7: 11 08 00    ld   de,$0008
+2CF7: 11 08 00    ld   de,protection_crap_0008
 2CFA: FD 19       add  iy,de
 2CFC: 10 EE       djnz $2CEC
 2CFE: C9          ret
@@ -7097,7 +7170,7 @@ table_2C66:
 2D28: C1          pop  bc
 2D29: 11 15 00    ld   de,$0015
 2D2C: FD 19       add  iy,de
-2D2E: 11 08 00    ld   de,$0008
+2D2E: 11 08 00    ld   de,protection_crap_0008
 2D31: DD 19       add  ix,de
 2D33: 10 D4       djnz $2D09
 2D35: C9          ret
@@ -7133,10 +7206,10 @@ table_2C66:
 2D63: C1          pop  bc
 2D64: 11 15 00    ld   de,$0015
 2D67: DD 19       add  ix,de
-2D69: 11 08 00    ld   de,$0008
+2D69: 11 08 00    ld   de,protection_crap_0008
 2D6C: FD 19       add  iy,de
 2D6E: 10 EC       djnz $2D5C
-2D70: CD 29 5F    call $5F29
+2D70: CD 29 5F    call propagate_main_scroll_value_to_elevators_5f29
 2D73: CD 63 61    call set_elevator_column_scroll_6163
 2D76: C9          ret
 
@@ -7170,6 +7243,7 @@ return_a_times_48_in_hl_2D84:
 2DA8: DD 75 13    ld   (ix+$13),l
 2DAB: C9          ret
 
+initialize_elevator_screen_2dac:
 2DAC: DD 21 D5 83 ld   ix,$83D5
 2DB0: 06 00       ld   b,$00
 2DB2: DD 7E 0D    ld   a,(ix+move_direction_0d)
@@ -7202,14 +7276,14 @@ return_a_times_48_in_hl_2D84:
 
 2DEE: CD 2A 2E    call $2E2A
 2DF1: CD C2 26    call reload_8bit_tiimer_26C2
-2DF4: CD CF 73    call $73CF
+2DF4: CD CF 73    call game_tick_73cf
 2DF7: 3A 0B D4    ld   a,($D40B)
 2DFA: E6 C0       and  $C0
 2DFC: 28 F6       jr   z,$2DF4
 2DFE: FE C0       cp   $C0
 2E00: 28 F2       jr   z,$2DF4
 2E02: CB 7F       bit  7,a
-2E04: 20 15       jr   nz,$2E1B
+2E04: 20 15       jr   nz,game_start_2e1b
 2E06: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
 2E09: CB 57       bit  2,a
 2E0B: 20 0A       jr   nz,$2E17
@@ -7220,6 +7294,7 @@ return_a_times_48_in_hl_2D84:
 2E17: CD 85 2E    call $2E85
 2E1A: C9          ret
 
+game_start_2e1b:
 2E1B: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
 2E1E: CB 57       bit  2,a
 2E20: 20 04       jr   nz,$2E26
@@ -7230,28 +7305,28 @@ return_a_times_48_in_hl_2D84:
 2E2A: AF          xor  a
 2E2B: 32 AB 80    ld   ($80AB),a
 2E2E: 32 36 82    ld   ($8236),a
-2E31: CD E1 71    call $71E1
+2E31: CD E1 71    call check_if_must_flip_screen_71e1
 2E34: 3E 01       ld   a,$01
 2E36: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-2E39: CD 0C 26    call $260C
+2E39: CD 0C 26    call init_hw_scroll_and_charset_260C
 2E3C: 3E 03       ld   a,GS_PUSH_START_03
 2E3E: 32 AC 80    ld   (game_state_80AC),a
 2E41: 3E 01       ld   a,$01
 2E43: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
-2E46: CD 39 58    call $5839
+2E46: CD 39 58    call display_status_bars_5839
 2E49: CD C6 57    call update_upper_status_bar_57C6
 2E4C: CD B0 10    call display_credit_info_10b0
 2E4F: C9          ret
 
-2E50: CD 98 2E    call $2E98
+2E50: CD 98 2E    call init_player_data_2e98
 2E53: DD 2A 48 82 ld   ix,($8248)
 2E57: DD 6E 17    ld   l,(ix+$17)
 2E5A: DD 66 18    ld   h,(ix+$18)
 2E5D: 3A 45 82    ld   a,($8245)
 2E60: ED 44       neg
-2E62: CC 46 82    call z,$8246
+2E62: CC 46 82    call z,execute_dynamic_ram_code_8246
 2E65: 3E DD       ld   a,$DD
-2E67: DD 21 46 82 ld   ix,$8246
+2E67: DD 21 46 82 ld   ix,execute_dynamic_ram_code_8246
 2E6B: DD 77 00    ld   (ix+$00),a
 2E6E: DD 21 45 82 ld   ix,$8245
 2E72: DD 77 00    ld   (ix+$00),a
@@ -7264,15 +7339,16 @@ return_a_times_48_in_hl_2D84:
 2E81: 32 36 82    ld   ($8236),a
 2E84: C9          ret
 
-2E85: CD 98 2E    call $2E98
-2E88: CD 9E 35    call $359E
-2E8B: CD 98 2E    call $2E98
+2E85: CD 98 2E    call init_player_data_2e98
+2E88: CD 9E 35    call switch_players_data_359e
+2E8B: CD 98 2E    call init_player_data_2e98
 2E8E: 3E 02       ld   a,$02
 2E90: 32 35 82    ld   ($8235),a
 2E93: AF          xor  a
 2E94: 32 36 82    ld   ($8236),a
 2E97: C9          ret
 
+init_player_data_2e98:
 2E98: 3A 52 82    ld   a,(dsw_copy_nb_lives_per_play_8252)
 2E9B: 32 34 82    ld   (nb_lives_8234),a
 2E9E: AF          xor  a
@@ -7416,7 +7492,8 @@ one_or_two_players_button_string_2EFD:
 2F71: C9          ret
 
 
-2F72: CD A9 46    call $46A9
+set_player_initial_state_2f72:
+2F72: CD A9 46    call get_sprite_shadow_ram_46a9
 2F75: 06 0A       ld   b,$0A
 2F77: 36 FF       ld   (hl),$FF
 2F79: 23          inc  hl
@@ -7611,11 +7688,12 @@ handle_player_controls_30CF:
 30E1: A8          xor  b
 30E2: 20 05       jr   nz,$30E9
 30E4: 3A 08 D4    ld   a,(input_1_D408)
-30E7: 18 03       jr   $30EC
+30E7: 18 03       jr   carry_on_with_controls_30ec
 ; probably cocktail mode: read input 2
 30E9: 3A 09 D4    ld   a,(input_2_D409)
 
 ; up: 8, down/crouch: 4, fire: $10, jump: $20, left: 1, right: 2, else 0
+carry_on_with_controls_30ec:
 30EC: 2F          cpl
 30ED: 47          ld   b,a
 30EE: E6 0F       and  $0F
@@ -7641,6 +7719,7 @@ handle_player_controls_30CF:
 310B: C9          ret
 
 demo_or_input_log_310C:
+demo_controls_310C:
 310C: 2A 3C 82    ld   hl,($823C)
 310F: 3D          dec  a
 3110: 28 0A       jr   z,read_and_log_input_311C
@@ -7648,7 +7727,7 @@ demo_or_input_log_310C:
 3113: 23          inc  hl
 3114: CB BC       res  7,h
 3116: 22 3C 82    ld   ($823C),hl
-3119: C3 EC 30    jp   $30EC
+3119: C3 EC 30    jp   carry_on_with_controls_30ec
 	; this is not reachable, as the routine is only called if game in play
 	; so with D0==1 or D0==2 (demo)
 	; it is probably a leftover of input recording code
@@ -7657,7 +7736,7 @@ read_and_log_input_311C:
 311F: 77          ld   (hl),a
 3120: 23          inc  hl
 3121: 22 3C 82    ld   ($823C),hl
-3124: C3 EC 30    jp   $30EC
+3124: C3 EC 30    jp   carry_on_with_controls_30ec
 
 3127: 3A 23 85    ld   a,(player_structure_851A+9)
 312A: FE 07       cp   $07
@@ -7719,7 +7798,7 @@ unknown_enemy_handling_3164:
 31A4: B6          or   (hl)
 31A5: E1          pop  hl
 31A6: 32 42 86    ld   ($8642),a
-31A9: C2 65 32    jp   nz,$3265
+31A9: C2 65 32    jp   nz,make_building_dark_3265
 31AC: C9          ret
 
 31AD: 3E FF       ld   a,$FF
@@ -7730,6 +7809,7 @@ unknown_enemy_handling_3164:
 31B9: C9          ret
 
 shot_lamp_collision_31BA:
+update_shot_lamp_31BA:
 31BA: 3A 40 82    ld   a,(lamp_shot_state_8240)
 31BD: 3C          inc  a
 31BE: C8          ret  z
@@ -7738,14 +7818,14 @@ shot_lamp_collision_31BA:
 31C3: CA E1 31    jp   z,$31E1
 31C6: FE 03       cp   $03
 31C8: DA 07 32    jp   c,$3207
-31CB: CA 14 32    jp   z,$3214
+31CB: CA 14 32    jp   z,change_to_falling_lamp_sprite_3214
 31CE: FE 15       cp   $15
 31D0: DA 25 32    jp   c,$3225
 31D3: FE 18       cp   $18
 31D5: DA 51 32    jp   c,$3251
-31D8: CA 65 32    jp   z,$3265
+31D8: CA 65 32    jp   z,make_building_dark_3265
 31DB: FE 5A       cp   $5A
-31DD: CA 92 32    jp   z,$3292
+31DD: CA 92 32    jp   z,restore_building_lights_3292
 31E0: C9          ret
 31E1: 3E 24       ld   a,$24
 31E3: 32 3F 82    ld   ($823F),a
@@ -7772,6 +7852,8 @@ shot_lamp_collision_31BA:
 320F: 90          sub  b
 3210: 32 66 81    ld   ($8166),a
 3213: C9          ret
+
+change_to_falling_lamp_sprite_3214:
 3214: 21 66 81    ld   hl,$8166
 3217: 3A 04 80    ld   a,(scroll_speed_8004)
 321A: 47          ld   b,a
@@ -7818,6 +7900,8 @@ shot_lamp_collision_31BA:
 3261: C6 04       add  a,$04
 3263: 77          ld   (hl),a
 3264: C9          ret
+
+make_building_dark_3265:
 3265: 3E FF       ld   a,$FF
 3267: 32 64 81    ld   ($8164),a
 326A: 3E 30       ld   a,$30
@@ -7841,6 +7925,7 @@ shot_lamp_collision_31BA:
 328E: 32 32 82    ld   (level_timer_16bit_msb_8232),a
 3291: C9          ret
 
+restore_building_lights_3292:
 3292: CD AD 31    call $31AD
 3295: 3E 10       ld   a,$10
 3297: 32 06 D5    ld   (colorbank_D506),a
@@ -7898,11 +7983,12 @@ enemy_vs_lamp_collision_32ED:
 330B: DA 15 33    jp   c,$3315
 330E: DD BE 01    cp   (ix+character_x_right_01)
 3311: D0          ret  nc
-3312: C3 1B 33    jp   $331B
+3312: C3 1B 33    jp   enemy_hit_by_lamp_331b
 3315: C6 08       add  a,$08
 3317: DD BE 00    cp   (ix+character_x_00)
 331A: D8          ret  c
 ; enemy hit by falling lamp
+enemy_hit_by_lamp_331b:
 331B: 32 43 82    ld   ($8243),a
 331E: DD 7E 09    ld   a,(ix+enemy_state_09)
 3321: FE 05       cp   $05
@@ -7958,7 +8044,7 @@ enemy_vs_lamp_collision_32ED:
 3382: 0E 00       ld   c,$00
 3384: 3A 3E 82    ld   a,($823E)
 3387: 47          ld   b,a
-3388: CD 6C 1E    call $1E6C
+3388: CD 6C 1E    call compute_delta_height_1e6c
 338B: 7D          ld   a,l
 338C: E1          pop  hl
 338D: 77          ld   (hl),a
@@ -7975,7 +8061,7 @@ bootup_338f:
 339B: CB 5C       bit  3,h
 339D: 28 FA       jr   z,$3399		; until 8800
 339F: 32 EA 82    ld   (coin_counter_lock_82EA),a
-33A2: CD 17 34    call $3417
+33A2: CD 17 34    call read_dip_switches_3417
 33A5: 21 1E 17    ld   hl,table_171E
 33A8: 11 C9 81    ld   de,$81C9
 33AB: 01 05 00    ld   bc,$0005
@@ -8027,6 +8113,7 @@ bootup_338f:
 3413: 36 00       ld   (hl),$00
 3415: 18 BB       jr   $33D2
 
+read_dip_switches_3417:
 3417: CD 03 35    call cache_dip_switches_3503
 341A: 21 50 83    ld   hl,$8350
 341D: AF          xor  a
@@ -8043,7 +8130,7 @@ bootup_338f:
 342E: 23          inc  hl
 342F: 13          inc  de
 3430: 10 FA       djnz $342C
-3432: CD B1 0F    call $0FB1
+3432: CD B1 0F    call read_dip_switches_0fb1
 3435: 3E 01       ld   a,$01
 3437: 32 35 82    ld   ($8235),a
 343A: AF          xor  a
@@ -8081,7 +8168,7 @@ bootup_338f:
 347D: ED B0       ldir
 347F: 3E DD       ld   a,$DD
 3481: 32 45 82    ld   ($8245),a
-3484: 21 46 82    ld   hl,$8246
+3484: 21 46 82    ld   hl,execute_dynamic_ram_code_8246
 3487: 77          ld   (hl),a
 3488: 23          inc  hl
 3489: 3E E9       ld   a,$E9
@@ -8138,10 +8225,10 @@ bad_hardware_34C5:
 34C6: C5          push bc
 34C7: AF          xor  a
 34C8: 32 36 82    ld   ($8236),a
-34CB: CD E1 71    call $71E1
+34CB: CD E1 71    call check_if_must_flip_screen_71e1
 34CE: 3E 01       ld   a,$01
 34D0: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-34D3: CD 0C 26    call $260C
+34D3: CD 0C 26    call init_hw_scroll_and_charset_260C
 34D6: C1          pop  bc
 34D7: E1          pop  hl
 34D8: 11 84 C5    ld   de,$C584
@@ -8225,13 +8312,13 @@ cache_dip_switches_3503:
 3534: B7          or   a
 3535: 20 10       jr   nz,$3547
 3537: CD D5 76    call $76D5
-353A: CD 70 4D    call $4D70
+353A: CD 70 4D    call player_arriving_on_roof_anim_4d70
 353D: 3E 01       ld   a,$01
 353F: 32 4A 82    ld   ($824A),a
-3542: CD 9E 75    call $759E
+3542: CD 9E 75    call start_level_759e
 3545: 18 09       jr   $3550
 3547: CD D5 76    call $76D5
-354A: CD 3F 36    call $363F
+354A: CD 3F 36    call start_music_if_in_game_363f
 354D: CD 9B 75    call start_next_level_759B
 3550: B7          or   a
 3551: 28 3F       jr   z,$3592
@@ -8244,7 +8331,7 @@ cache_dip_switches_3503:
 3560: 3A 53 82    ld   a,($8253)
 3563: B7          or   a
 3564: FA 31 35    jp   m,$3531
-3567: CD 9E 35    call $359E
+3567: CD 9E 35    call switch_players_data_359e
 356A: 18 C5       jr   $3531
 356C: AF          xor  a
 356D: 32 46 86    ld   ($8646),a
@@ -8252,22 +8339,24 @@ cache_dip_switches_3503:
 3573: 3A 35 82    ld   a,($8235)
 3576: 3D          dec  a
 3577: C8          ret  z
-3578: CD 9E 35    call $359E
+3578: CD 9E 35    call switch_players_data_359e
 357B: 3A 34 82    ld   a,(nb_lives_8234)
 357E: B7          or   a
 357F: F2 31 35    jp   p,$3531
 3582: 3A 36 82    ld   a,($8236)
 3585: B7          or   a
-3586: C4 9E 35    call nz,$359E
+3586: C4 9E 35    call nz,switch_players_data_359e
 3589: 3E 01       ld   a,$01
 358B: 32 46 86    ld   ($8646),a
 358E: CD C7 76    call $76C7
 3591: C9          ret
 
 3592: CD 3E 2A    call init_level_skill_params_2A2E
-3595: CD 00 27    call $2700
-3598: CD 65 2A    call $2A65
+3595: CD 00 27    call init_building_2700
+3598: CD 65 2A    call init_elevators_2a65
 359B: C3 47 35    jp   $3547
+
+switch_players_data_359e:
 359E: 3A 36 82    ld   a,($8236)
 35A1: EE 01       xor  $01
 35A3: 32 36 82    ld   ($8236),a
@@ -8342,10 +8431,11 @@ swap_memory_increase_pointers_3613:
 363C: 10 F3       djnz $3631
 363E: C9          ret
 
+start_music_if_in_game_363f:
 363F: 3A 3B 82    ld   a,(game_in_play_flag_823B)
 3642: B7          or   a
 3643: C0          ret  nz
-3644: CD B7 46    call $46B7
+3644: CD B7 46    call increase_difficulty_if_late_46b7
 3647: 00          nop
 3648: 00          nop
 3649: CD D2 64    call l_64D2
@@ -8677,7 +8767,7 @@ play_sound_3656:
 38E6: CB 3F       srl  a
 38E8: 6F          ld   l,a
 38E9: 26 00       ld   h,$00
-38EB: CD 00 39    call $3900
+38EB: CD 00 39    call select_proper_table_3900
 38EE: 19          add  hl,de
 38EF: DD 7E 0C    ld   a,(ix+$0c)
 38F2: FE 0D       cp   $0D
@@ -8687,6 +8777,8 @@ play_sound_3656:
 38FA: C9          ret
 38FB: DD 36 04 FF ld   (ix+$04),$FF
 38FF: C9          ret
+
+select_proper_table_3900:
 3900: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3903: B7          or   a
 3904: 20 0D       jr   nz,$3913
@@ -9095,6 +9187,8 @@ character_on_ground_397F:
 3C3B: 19          add  hl,de
 3C3C: 4E          ld   c,(hl)
 3C3D: C9          ret
+
+update_in_room_timer_3c3e:
 3C3E: DD 7E 0A    ld   a,(ix+$0a)
 3C41: DD 34 0A    inc  (ix+$0a)
 3C44: B7          or   a
@@ -9115,7 +9209,7 @@ character_on_ground_397F:
 3C68: D8          ret  c
 3C69: FE FA       cp   $FA
 3C6B: C2 D3 3C    jp   nz,$3CD3
-3C6E: C3 A3 3C    jp   $3CA3
+3C6E: C3 A3 3C    jp   character_exited_door_3ca3
 3C71: DD 36 04 00 ld   (ix+$04),$00
 3C75: 06 12       ld   b,$12
 3C77: 3A BA 85    ld   a,(current_enemy_index_85BA)
@@ -9139,6 +9233,7 @@ character_on_ground_397F:
 3CA1: C9          ret
 3CA2: C9          ret
 
+character_exited_door_3ca3:
 3CA3: DD 36 04 02 ld   (ix+$04),$02
 3CA7: DD 36 06 00 ld   (ix+character_situation_06),CS_ON_GROUND_00
 3CAB: DD 36 02 1D ld   (ix+$02),$1D
@@ -9186,7 +9281,7 @@ character_on_ground_397F:
 3D0F: B7          or   a
 3D10: C4 F1 3D    call nz,$3DF1
 3D13: C9          ret
-3D14: CD 6A 3D    call $3D6A
+3D14: CD 6A 3D    call get_free_moving_door_slot_3d6a
 3D17: C2 65 3D    jp   nz,set_character_on_ground_3D65
 3D1A: CD BB 3D    call $3DBB
 3D1D: 79          ld   a,c
@@ -9221,20 +9316,24 @@ character_on_ground_397F:
 set_character_on_ground_3D65:
 3D65: DD 36 06 00 ld   (ix+character_situation_06),CS_ON_GROUND_00
 3D69: C9          ret
+
+get_free_moving_door_slot_3d6a:
 3D6A: FD 21 AD 80 ld   iy,$80AD
-3D6E: CD AD 3D    call $3DAD
+3D6E: CD AD 3D    call check_opening_door_matches_character_3dad
 3D71: CA A9 3D    jp   z,$3DA9
 3D74: FD 21 B5 80 ld   iy,$80B5
-3D78: CD AD 3D    call $3DAD
+3D78: CD AD 3D    call check_opening_door_matches_character_3dad
 3D7B: CA A9 3D    jp   z,$3DA9
 3D7E: FD 21 AD 80 ld   iy,$80AD
 3D82: FD 7E 05    ld   a,(iy+$05)
 3D85: 3C          inc  a
-3D86: CA 92 3D    jp   z,$3D92
+3D86: CA 92 3D    jp   z,init_door_slot_3d92
 3D89: FD 21 B5 80 ld   iy,$80B5
 3D8D: FD 7E 05    ld   a,(iy+$05)
 3D90: 3C          inc  a
 3D91: C0          ret  nz
+
+init_door_slot_3d92:
 3D92: DD 7E 07    ld   a,(ix+$07)
 3D95: FD 77 02    ld   (iy+$02),a
 3D98: DD 7E 08    ld   a,(ix+$08)
@@ -9248,6 +9347,8 @@ set_character_on_ground_3D65:
 3DA9: 3E 01       ld   a,$01
 3DAB: B7          or   a
 3DAC: C9          ret
+
+check_opening_door_matches_character_3dad:
 3DAD: FD 7E 02    ld   a,(iy+$02)
 3DB0: DD BE 07    cp   (ix+$07)
 3DB3: C0          ret  nz
@@ -9284,7 +9385,7 @@ set_character_on_ground_3D65:
 3DEC: C8          ret  z
 3DED: 01 01 D0    ld   bc,$D001
 3DF0: C9          ret
-3DF1: CD 6A 3D    call $3D6A
+3DF1: CD 6A 3D    call get_free_moving_door_slot_3d6a
 3DF4: C2 5B 3E    jp   nz,$3E5B
 3DF7: 3A BA 85    ld   a,(current_enemy_index_85BA)
 3DFA: B7          or   a
@@ -9373,7 +9474,7 @@ set_character_on_ground_3D65:
 3ED9: DD 46 07    ld   b,(ix+$07)
 3EDC: 0E 00       ld   c,$00
 3EDE: 16 08       ld   d,$08
-3EE0: CD 6C 1E    call $1E6C
+3EE0: CD 6C 1E    call compute_delta_height_1e6c
 3EE3: 45          ld   b,l
 3EE4: 2A BB 85    ld   hl,($85BB)
 3EE7: 36 01       ld   (hl),$01
@@ -9392,7 +9493,7 @@ set_character_on_ground_3D65:
 3F03: DD 46 07    ld   b,(ix+$07)
 3F06: 0E 00       ld   c,$00
 3F08: 16 08       ld   d,$08
-3F0A: CD 6C 1E    call $1E6C
+3F0A: CD 6C 1E    call compute_delta_height_1e6c
 3F0D: 45          ld   b,l
 3F0E: 2A BB 85    ld   hl,($85BB)
 3F11: 36 01       ld   (hl),$01
@@ -9418,7 +9519,7 @@ set_character_on_ground_3D65:
 3F36: DD 46 07    ld   b,(ix+$07)
 3F39: 0E 00       ld   c,$00
 3F3B: 16 30       ld   d,$30
-3F3D: CD 6C 1E    call $1E6C
+3F3D: CD 6C 1E    call compute_delta_height_1e6c
 3F40: 45          ld   b,l
 3F41: 2A BB 85    ld   hl,($85BB)
 3F44: 23          inc  hl
@@ -9435,7 +9536,7 @@ set_character_on_ground_3D65:
 3F56: DD 46 07    ld   b,(ix+$07)
 3F59: 0E 00       ld   c,$00
 3F5B: 16 30       ld   d,$30
-3F5D: CD 6C 1E    call $1E6C
+3F5D: CD 6C 1E    call compute_delta_height_1e6c
 3F60: 45          ld   b,l
 3F61: 2A BB 85    ld   hl,($85BB)
 3F64: 23          inc  hl
@@ -9617,7 +9718,7 @@ set_character_on_ground_3D65:
 40FD: DD 46 07    ld   b,(ix+$07)
 4100: 0E 00       ld   c,$00
 4102: 16 30       ld   d,$30
-4104: CD 6C 1E    call $1E6C
+4104: CD 6C 1E    call compute_delta_height_1e6c
 4107: 45          ld   b,l
 4108: 2A BB 85    ld   hl,($85BB)
 410B: 36 01       ld   (hl),$01
@@ -9637,7 +9738,7 @@ set_character_on_ground_3D65:
 412A: DD 46 07    ld   b,(ix+$07)
 412D: 0E 00       ld   c,$00
 412F: 16 30       ld   d,$30
-4131: CD 6C 1E    call $1E6C
+4131: CD 6C 1E    call compute_delta_height_1e6c
 4134: 45          ld   b,l
 4135: 2A BB 85    ld   hl,($85BB)
 4138: 36 01       ld   (hl),$01
@@ -9906,7 +10007,7 @@ table_42E2:
 4344: CA 2B 3B    jp   z,$3B2B
 4347: FE 05       cp   CS_IN_ROOM_05
 4349: DA 64 3E    jp   c,$3E64
-434C: C3 3E 3C    jp   $3C3E
+434C: C3 3E 3C    jp   update_in_room_timer_3c3e
 434F: CD 59 43    call $4359
 4352: CD 61 36    call $3661
 4355: CD 58 45    call $4558
@@ -10272,8 +10373,8 @@ ground_floor_reached_45E5:
 460E: CD A2 12    call handle_enemies_12A2
 4611: CD E8 2F    call $2FE8
 4614: CD E1 0B    call $0BE1
-4617: CD A0 15    call $15A0
-461A: CD CF 73    call $73CF
+4617: CD A0 15    call update_sprite_shadow_ram_15a0
+461A: CD CF 73    call game_tick_73cf
 461D: C3 EA 45    jp   $45EA
 
 4620: 32 74 83    ld   (instant_difficulty_level_8374),a
@@ -10348,6 +10449,8 @@ switch_to_hurry_up_music_466E:
 46A3: E6 F3       and  $F3
 46A5: DD 77 0D    ld   (ix+move_direction_0d),a
 46A8: C9          ret
+
+get_sprite_shadow_ram_46a9:
 46A9: AF          xor  a
 46AA: 32 EE 82    ld   ($82EE),a
 46AD: 32 EF 82    ld   ($82EF),a
@@ -10355,6 +10458,7 @@ switch_to_hurry_up_music_466E:
 46B3: 21 F1 80    ld   hl,$80F1
 46B6: C9          ret
 
+increase_difficulty_if_late_46b7:
 46B7: 21 79 87    ld   hl,$8779
 46BA: 36 81       ld   (hl),$81
 46BC: 3A 32 82    ld   a,(level_timer_16bit_msb_8232)
@@ -10892,7 +10996,7 @@ switch_to_hurry_up_music_466E:
 4B8F: DD 36 05 FF ld   (ix+character_delta_x_05),$FF
 4B93: 18 96       jr   $4B2B
 4B95: 06 07       ld   b,$07
-4B97: 11 08 00    ld   de,$0008
+4B97: 11 08 00    ld   de,protection_crap_0008
 4B9A: 21 FF 82    ld   hl,$82FF
 4B9D: 36 FF       ld   (hl),$FF
 4B9F: 19          add  hl,de
@@ -10910,13 +11014,15 @@ switch_to_hurry_up_music_466E:
 4BB6: 23          inc  hl
 4BB7: 10 FC       djnz $4BB5
 4BB9: C9          ret
+
+update_bullets_4bba:
 4BBA: DD 21 FD 82 ld   ix,$82FD
 4BBE: 21 23 81    ld   hl,$8123
 4BC1: 22 36 83    ld   ($8336),hl
 4BC4: AF          xor  a
 4BC5: 32 35 83    ld   ($8335),a
-4BC8: CD E7 4B    call $4BE7
-4BCB: 11 08 00    ld   de,$0008
+4BC8: CD E7 4B    call update_bullet_4be7
+4BCB: 11 08 00    ld   de,protection_crap_0008
 4BCE: DD 19       add  ix,de
 4BD0: 2A 36 83    ld   hl,($8336)
 4BD3: 11 05 00    ld   de,$0005
@@ -10928,6 +11034,8 @@ switch_to_hurry_up_music_466E:
 4BE1: FE 07       cp   $07
 4BE3: C2 C8 4B    jp   nz,$4BC8
 4BE6: C9          ret
+
+update_bullet_4be7:
 4BE7: 3A 35 83    ld   a,($8335)
 4BEA: 21 F6 82    ld   hl,$82F6
 4BED: 5F          ld   e,a
@@ -10939,16 +11047,16 @@ switch_to_hurry_up_music_466E:
 4BF6: DA 0A 4C    jp   c,$4C0A
 4BF9: CA 11 4C    jp   z,$4C11
 4BFC: FE FB       cp   $FB
-4BFE: CA 78 4C    jp   z,$4C78
+4BFE: CA 78 4C    jp   z,bullet_flies_4c78
 4C01: FE FE       cp   $FE
-4C03: DA 9C 4C    jp   c,$4C9C
+4C03: DA 9C 4C    jp   c,bullet_hits_wall_4c9c
 4C06: CA B0 4C    jp   z,$4CB0
 4C09: C9          ret
 4C0A: DD 34 02    inc  (ix+$02)
-4C0D: CD 54 50    call $5054
+4C0D: CD 54 50    call handle_shoot_5054
 4C10: C9          ret
 4C11: DD 36 02 FB ld   (ix+$02),$FB
-4C15: CD 54 50    call $5054
+4C15: CD 54 50    call handle_shoot_5054
 4C18: 06 10       ld   b,$10
 4C1A: C5          push bc
 4C1B: 3A F4 82    ld   a,($82F4)
@@ -11002,6 +11110,8 @@ switch_to_hurry_up_music_466E:
 4C71: CD 56 36    call play_sound_3656
 4C74: CD B9 4C    call $4CB9
 4C77: C9          ret
+
+bullet_flies_4c78:
 4C78: 2A 36 83    ld   hl,($8336)
 4C7B: 36 04       ld   (hl),$04
 4C7D: 23          inc  hl
@@ -11022,6 +11132,7 @@ switch_to_hurry_up_music_466E:
 4C98: CD B9 4C    call $4CB9
 4C9B: C9          ret
 
+bullet_hits_wall_4c9c:
 4C9C: DD 34 02    inc  (ix+$02)
 4C9F: 2A 36 83    ld   hl,($8336)
 4CA2: 23          inc  hl
@@ -11065,7 +11176,7 @@ switch_to_hurry_up_music_466E:
 4CEE: 3D          dec  a
 4CEF: CA FA 4C    jp   z,$4CFA
 4CF2: D6 02       sub  $02
-4CF4: CA 33 4D    jp   z,$4D33
+4CF4: CA 33 4D    jp   z,fire_bullet_4d33
 4CF7: C3 53 4D    jp   $4D53
 4CFA: FD 2A 3A 83 ld   iy,($833A)
 4CFE: FD 7E 09    ld   a,(iy+$09)
@@ -11089,6 +11200,8 @@ switch_to_hurry_up_music_466E:
 4D2A: CD 56 36    call play_sound_3656
 4D2D: CD 94 56    call $5694
 4D30: C3 58 4D    jp   $4D58
+
+fire_bullet_4d33:
 4D33: FD 2A 3A 83 ld   iy,($833A)
 4D37: DD 7E 00    ld   a,(ix+character_x_00)
 4D3A: FD 77 00    ld   (iy+$00),a
@@ -11114,15 +11227,16 @@ switch_to_hurry_up_music_466E:
 4D6E: 77          ld   (hl),a
 4D6F: C9          ret
 
+player_arriving_on_roof_anim_4d70:
 4D70: AF          xor  a
 4D71: 32 AB 80    ld   ($80AB),a
 4D74: 3E 1F       ld   a,$1F
 4D76: 32 2C 80    ld   ($802C),a
-4D79: CD 6F 4E    call $4E6F
+4D79: CD 6F 4E    call init_everything_4e6f
 4D7C: AF          xor  a
 4D7D: 32 3C 83    ld   ($833C),a
 4D80: 32 3D 83    ld   ($833D),a
-4D83: CD CF 73    call $73CF
+4D83: CD CF 73    call game_tick_73cf
 4D86: 21 3C 83    ld   hl,$833C
 4D89: 34          inc  (hl)
 4D8A: 7E          ld   a,(hl)
@@ -11132,8 +11246,8 @@ switch_to_hurry_up_music_466E:
 4D92: 32 0B D5    ld   (sound_latch_D50B),a
 4D95: AF          xor  a
 4D96: 32 3C 83    ld   ($833C),a
-4D99: CD AC 4E    call $4EAC
-4D9C: CD CF 73    call $73CF
+4D99: CD AC 4E    call update_grappling_hook_tiles_4eac
+4D9C: CD CF 73    call game_tick_73cf
 4D9F: 21 3C 83    ld   hl,$833C
 4DA2: 34          inc  (hl)
 4DA3: 7E          ld   a,(hl)
@@ -11141,8 +11255,8 @@ switch_to_hurry_up_music_466E:
 4DA6: DA 99 4D    jp   c,$4D99
 4DA9: AF          xor  a
 4DAA: 32 3C 83    ld   ($833C),a
-4DAD: CD E7 4E    call $4EE7
-4DB0: CD CF 73    call $73CF
+4DAD: CD E7 4E    call grappling_wire_in_tension_4ee7
+4DB0: CD CF 73    call game_tick_73cf
 4DB3: 21 3C 83    ld   hl,$833C
 4DB6: 34          inc  (hl)
 4DB7: 7E          ld   a,(hl)
@@ -11150,8 +11264,8 @@ switch_to_hurry_up_music_466E:
 4DBA: DA AD 4D    jp   c,$4DAD
 4DBD: AF          xor  a
 4DBE: 32 3C 83    ld   ($833C),a
-4DC1: CD 13 4F    call $4F13
-4DC4: CD CF 73    call $73CF
+4DC1: CD 13 4F    call compute_player_sliding_on_wire_sprites_4f13
+4DC4: CD CF 73    call game_tick_73cf
 4DC7: 21 3C 83    ld   hl,$833C
 4DCA: 34          inc  (hl)
 4DCB: 7E          ld   a,(hl)
@@ -11159,8 +11273,8 @@ switch_to_hurry_up_music_466E:
 4DCE: DA C1 4D    jp   c,$4DC1
 4DD1: AF          xor  a
 4DD2: 32 3C 83    ld   ($833C),a
-4DD5: CD 4F 4F    call $4F4F
-4DD8: CD CF 73    call $73CF
+4DD5: CD 4F 4F    call player_sliding_slowing_down_4f4f
+4DD8: CD CF 73    call game_tick_73cf
 4DDB: 21 3C 83    ld   hl,$833C
 4DDE: 34          inc  (hl)
 4DDF: 7E          ld   a,(hl)
@@ -11168,8 +11282,8 @@ switch_to_hurry_up_music_466E:
 4DE2: DA D5 4D    jp   c,$4DD5
 4DE5: AF          xor  a
 4DE6: 32 3C 83    ld   ($833C),a
-4DE9: CD 5D 4F    call $4F5D
-4DEC: CD CF 73    call $73CF
+4DE9: CD 5D 4F    call player_releases_wire_4f5d
+4DEC: CD CF 73    call game_tick_73cf
 4DEF: 21 3C 83    ld   hl,$833C
 4DF2: 34          inc  (hl)
 4DF3: 7E          ld   a,(hl)
@@ -11177,25 +11291,26 @@ switch_to_hurry_up_music_466E:
 4DF6: DA E9 4D    jp   c,$4DE9
 4DF9: AF          xor  a
 4DFA: 32 3C 83    ld   ($833C),a
-4DFD: CD C7 4F    call $4FC7
-4E00: CD CF 73    call $73CF
+4DFD: CD C7 4F    call player_checking_surroundings_4fc7
+4E00: CD CF 73    call game_tick_73cf
 4E03: 21 3C 83    ld   hl,$833C
 4E06: 34          inc  (hl)
 4E07: 7E          ld   a,(hl)
 4E08: FE 1A       cp   $1A
 4E0A: DA FD 4D    jp   c,$4DFD
-4E0D: CD 3F 36    call $363F
-4E10: CD 14 4E    call $4E14
+4E0D: CD 3F 36    call start_music_if_in_game_363f
+4E10: CD 14 4E    call force_player_into_elevator_4e14
 4E13: C9          ret
 
+force_player_into_elevator_4e14:
 4E14: 3E 05       ld   a,GS_IN_GAME_05
 4E16: 32 AC 80    ld   (game_state_80AC),a
 4E19: CD 3A 2F    call $2F3A
 4E1C: CD AD 31    call $31AD
-4E1F: CD 87 12    call $1287
+4E1F: CD 87 12    call init_moving_door_slots_1287
 4E22: CD DC 0B    call $0BDC
 4E25: CD 95 4B    call $4B95
-4E28: CD 72 2F    call $2F72
+4E28: CD 72 2F    call set_player_initial_state_2f72
 4E2B: AF          xor  a
 4E2C: 32 3C 83    ld   ($833C),a
 4E2F: FB          ei
@@ -11223,9 +11338,11 @@ switch_to_hurry_up_music_466E:
 4E5D: CD A2 12    call handle_enemies_12A2
 4E60: CD E8 2F    call $2FE8
 4E63: CD E1 0B    call $0BE1
-4E66: CD A0 15    call $15A0
-4E69: CD CF 73    call $73CF
+4E66: CD A0 15    call update_sprite_shadow_ram_15a0
+4E69: CD CF 73    call game_tick_73cf
 4E6C: C3 30 4E    jp   $4E30
+
+init_everything_4e6f:
 4E6F: 21 3E 83    ld   hl,$833E
 4E72: 06 08       ld   b,$08
 4E74: 36 00       ld   (hl),$00
@@ -11234,16 +11351,16 @@ switch_to_hurry_up_music_466E:
 4E79: 21 4B 83    ld   hl,$834B
 4E7C: 22 46 83    ld   ($8346),hl
 4E7F: 22 49 83    ld   ($8349),hl
-4E82: CD E1 71    call $71E1
+4E82: CD E1 71    call check_if_must_flip_screen_71e1
 4E85: AF          xor  a
 4E86: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-4E89: CD 0C 26    call $260C
+4E89: CD 0C 26    call init_hw_scroll_and_charset_260C
 4E8C: 3E 04       ld   a,GS_GAME_STARTING_04
 4E8E: 32 AC 80    ld   (game_state_80AC),a
 4E91: CD 3E 2A    call init_level_skill_params_2A2E
-4E94: CD 2E 58    call $582E
-4E97: CD 00 27    call $2700
-4E9A: CD 65 2A    call $2A65
+4E94: CD 2E 58    call display_bottom_bricks_582e
+4E97: CD 00 27    call init_building_2700
+4E9A: CD 65 2A    call init_elevators_2a65
 4E9D: CD 01 58    call display_nb_lives_5801
 4EA0: CD C6 57    call update_upper_status_bar_57C6
 4EA3: 3E 05       ld   a,$05
@@ -11251,6 +11368,7 @@ switch_to_hurry_up_music_466E:
 4EA8: CD C2 26    call reload_8bit_tiimer_26C2
 4EAB: C9          ret
 
+update_grappling_hook_tiles_4eac:
 4EAC: 3A 3C 83    ld   a,($833C)
 4EAF: 47          ld   b,a
 4EB0: E6 FE       and  $FE
@@ -11281,6 +11399,8 @@ switch_to_hurry_up_music_466E:
 4EE2: 7B          ld   a,e
 4EE3: 32 4B 83    ld   ($834B),a
 4EE6: C9          ret
+
+grappling_wire_in_tension_4ee7:
 4EE7: 3A 3C 83    ld   a,($833C)
 4EEA: 47          ld   b,a
 4EEB: 87          add  a,a
@@ -11307,6 +11427,8 @@ switch_to_hurry_up_music_466E:
 4F0D: 3E 9C       ld   a,$9C
 4F0F: 32 4B 83    ld   ($834B),a
 4F12: C9          ret
+
+compute_player_sliding_on_wire_sprites_4f13:
 4F13: 3A 3C 83    ld   a,($833C)
 4F16: 87          add  a,a
 4F17: 47          ld   b,a
@@ -11347,6 +11469,7 @@ switch_to_hurry_up_music_466E:
 4F4D: 35          dec  (hl)
 4F4E: C9          ret
 
+player_sliding_slowing_down_4f4f:
 4F4F: 21 42 83    ld   hl,$8342
 4F52: 34          inc  (hl)
 4F53: 34          inc  (hl)
@@ -11359,6 +11482,7 @@ switch_to_hurry_up_music_466E:
 4F5B: 77          ld   (hl),a
 4F5C: C9          ret
 
+player_releases_wire_4f5d:
 4F5D: 3A 3C 83    ld   a,($833C)
 4F60: 87          add  a,a
 4F61: 87          add  a,a
@@ -11368,7 +11492,7 @@ switch_to_hurry_up_music_466E:
 4F66: 21 7F 4F    ld   hl,table_4F7F
 4F69: 19          add  hl,de
 4F6A: 11 3E 83    ld   de,$833E
-4F6D: 01 08 00    ld   bc,$0008
+4F6D: 01 08 00    ld   bc,protection_crap_0008
 4F70: ED B0       ldir
 4F72: 21 3E 83    ld   hl,$833E
 4F75: CD 40 4F    call $4F40
@@ -11424,6 +11548,7 @@ table_4F7F:
 	dc.b	00       
 	dc.b	00 
 	
+player_checking_surroundings_4fc7:
 4FC7: 3A 3C 83    ld   a,($833C)
 4FCA: 32 3D 83    ld   ($833D),a
 4FCD: E6 F8       and  $F8
@@ -11432,7 +11557,7 @@ table_4F7F:
 4FD2: 21 EB 4F    ld   hl,table_4FEB
 4FD5: 19          add  hl,de
 4FD6: 11 3E 83    ld   de,$833E
-4FD9: 01 08 00    ld   bc,$0008
+4FD9: 01 08 00    ld   bc,protection_crap_0008
 4FDC: ED B0       ldir
 4FDE: 21 3E 83    ld   hl,$833E
 4FE1: CD 40 4F    call $4F40
@@ -11470,16 +11595,18 @@ table_4FEB:
 500B: 21 3E 83    ld   hl,$833E                                       
 500C: 3E 83       ld   a,$83			; why??
 500E: 11 00 D1    ld   de,sprite_ram_d100
-5011: 01 08 00    ld   bc,$0008
+5011: 01 08 00    ld   bc,protection_crap_0008
 5014: ED B0       ldir
 5016: 3A 3D 83    ld   a,($833D)
 5019: B7          or   a
-501A: CA 26 50    jp   z,$5026
+501A: CA 26 50    jp   z,display_grappling_wire_5026
 501D: 3D          dec  a
-501E: CA 35 50    jp   z,$5035
+501E: CA 35 50    jp   z,erase_grappling_wire_5035
 5021: 3D          dec  a
-5022: CA 43 50    jp   z,$5043
+5022: CA 43 50    jp   z,erase_grappling_wire_5043
 5025: C9          ret
+
+display_grappling_wire_5026:
 5026: 2A 46 83    ld   hl,($8346)
 5029: 3A 48 83    ld   a,($8348)
 502C: 77          ld   (hl),a
@@ -11487,6 +11614,8 @@ table_4FEB:
 5030: 3A 4B 83    ld   a,($834B)
 5033: 77          ld   (hl),a
 5034: C9          ret
+
+erase_grappling_wire_5035:
 5035: 21 C0 C8    ld   hl,$C8C0
 5038: 11 22 00    ld   de,$0022
 503B: 06 07       ld   b,$07
@@ -11494,6 +11623,8 @@ table_4FEB:
 503F: 19          add  hl,de
 5040: 10 FB       djnz $503D
 5042: C9          ret
+
+erase_grappling_wire_5043:
 5043: 21 C1 C8    ld   hl,$C8C1
 5046: 11 22 00    ld   de,$0022
 5049: 06 06       ld   b,$06
@@ -11502,6 +11633,7 @@ table_4FEB:
 5050: 32 8D C9    ld   ($C98D),a
 5053: C9          ret
 
+handle_shoot_5054:
 5054: DD E5       push ix
 5056: DD 5E 05    ld   e,(ix+character_delta_x_05)
 5059: DD 56 06    ld   d,(ix+character_situation_06)
@@ -11516,7 +11648,7 @@ table_4FEB:
 506E: FE 03       cp   CS_FALLING_03
 5070: CA A0 50    jp   z,character_falling_50A0
 5073: CD 10 51    call $5110
-5076: CD AC 50    call $50AC
+5076: CD AC 50    call compute_d5_from_table_50ac
 5079: DD E1       pop  ix
 507B: DD 70 00    ld   (ix+character_x_00),b
 507E: DD 71 01    ld   (ix+character_x_right_01),c
@@ -11544,6 +11676,7 @@ character_falling_50A0:
 50A9: 36 FF       ld   (hl),$FF
 50AB: C9          ret
 
+compute_d5_from_table_50ac:
 50AC: 21 D8 50    ld   hl,table_50D8
 50AF: DD 7E 0C    ld   a,(ix+$0c)
 50B2: FE 07       cp   $07
@@ -11670,7 +11803,7 @@ character_on_ground_514C:
 515C: DD 46 00    ld   b,(ix+character_x_00)
 515F: 0E 00       ld   c,$00
 5161: DD 56 01    ld   d,(ix+character_x_right_01)
-5164: CD 6C 1E    call $1E6C
+5164: CD 6C 1E    call compute_delta_height_1e6c
 5167: 7C          ld   a,h
 5168: B7          or   a
 5169: C2 9D 51    jp   nz,$519D
@@ -11718,7 +11851,7 @@ enemy_unknown_state_51A7:
 51AA: AF          xor  a
 51AB: DD 77 1A    ld   (ix+$1a),a
 51AE: DD 77 17    ld   (ix+$17),a
-51B1: CD 68 05    call $0568
+51B1: CD 68 05    call should_enemy_shoot_0568
 51B4: DA F8 51    jp   c,$51F8
 51B7: 3A 21 85    ld   a,(player_structure_851A+current_floor_07)
 51BA: FE 07       cp   $07
@@ -11785,7 +11918,7 @@ enemy_unknown_state_51A7:
 ; called when enemy is on top of elevator cabin, A.I there
 enemy_above_elevator_524E:
 524E: DD 36 1A 00 ld   (ix+$1a),$00
-5252: CD 68 05    call $0568
+5252: CD 68 05    call should_enemy_shoot_0568
 5255: DA F8 51    jp   c,$51F8
 5258: DD 7E 11    ld   a,(ix+$11)
 525B: B7          or   a
@@ -11981,8 +12114,8 @@ enemy_walk_state_53F6:
 53F6: AF          xor  a
 53F7: DD 77 1B    ld   (ix+$1b),a
 53FA: DD 77 18    ld   (ix+$18),a
-53FD: CD 68 05    call $0568
-5400: DA 36 54    jp   c,$5436
+53FD: CD 68 05    call should_enemy_shoot_0568
+5400: DA 36 54    jp   c,enemy_decided_to_shoot_5436
 5403: DD 7E 1A    ld   a,(ix+$1a)
 5406: B7          or   a
 5407: CC 33 5B    call z,$5B33
@@ -12004,6 +12137,8 @@ enemy_walk_state_53F6:
 542E: DD 36 08 FF ld   (ix+$08),$FF
 5432: CD 3B 00    call $003B
 5435: C9          ret
+
+enemy_decided_to_shoot_5436:
 5436: DD 36 0F 01 ld   (ix+$0f),$01
 543A: DD 36 10 00 ld   (ix+$10),$00
 543E: DD 36 1A 00 ld   (ix+$1a),$00
@@ -12197,7 +12332,7 @@ enemy_walk_state_53F6:
 5601: DD 77 0B    ld   (ix+$0b),a
 5604: C9          ret
 
-5605: 21 3F 56    ld   hl,$563F
+5605: 21 3F 56    ld   hl,table_563F
 5608: 16 00       ld   d,$00
 560A: 58          ld   e,b
 560B: 19          add  hl,de
@@ -12382,7 +12517,7 @@ award_end_of_level_bonus_56F9:
 571F: B7          or   a
 5720: 28 03       jr   z,$5725
 5722: 11 6C 83    ld   de,$836C
-5725: CD D3 58    call $58D3
+5725: CD D3 58    call encode_score_as_tiles_58d3
 5728: CD 54 57    call $5754
 572B: E1          pop  hl
 572C: D1          pop  de
@@ -12405,7 +12540,7 @@ award_end_of_level_bonus_56F9:
 5748: ED B0       ldir
 574A: 21 50 83    ld   hl,$8350
 574D: 11 62 83    ld   de,$8362
-5750: CD D3 58    call $58D3
+5750: CD D3 58    call encode_score_as_tiles_58d3
 5753: C9          ret
 5754: 3A 73 83    ld   a,($8373)
 5757: B7          or   a
@@ -12513,7 +12648,7 @@ update_upper_status_bar_57C6:
 display_nb_lives_5801:
 5801: 3A 50 82    ld   a,(copy_of_dip_switches_3_8250)
 5804: CB 77       bit  6,a
-5806: 20 15       jr   nz,$581D
+5806: 20 15       jr   nz,no_hit_dsw_set_581d
 5808: 21 A1 C7    ld   hl,$C7A1
 580B: 3A 34 82    ld   a,(nb_lives_8234)
 580E: B7          or   a
@@ -12526,6 +12661,7 @@ display_nb_lives_5801:
 581A: 36 33       ld   (hl),$33
 581C: C9          ret
 
+no_hit_dsw_set_581d:
 581D: 21 27 58    ld   hl,string_5827
 5820: 11 A1 C7    ld   de,$C7A1
 5823: CD F9 29    call copy_string_to_screen_29F9
@@ -12539,12 +12675,14 @@ string_5827:	; "NO HIT"
 	dc.b	2C     
 	dc.b	31 FF
 
+display_bottom_bricks_582e:
 582E: 21 40 C7    ld   hl,$C740                                       
 5831: 3E 32       ld   a,$32                                          
 5833: 06 60       ld   b,$60                                          
 5835: 77          ld   (hl),a                                         
 5836: 23          inc  hl                                             
 5837: 10 FC       djnz $5835                                          
+display_status_bars_5839:
 5839: 21 40 C4    ld   hl,$C440
 583C: 3E 33       ld   a,$33
 583E: 06 40       ld   b,$40
@@ -12613,10 +12751,10 @@ table_588E:
 58A9: B7          or   a
 58AA: 28 03       jr   z,$58AF
 58AC: 11 6C 83    ld   de,$836C
-58AF: CD D3 58    call $58D3
+58AF: CD D3 58    call encode_score_as_tiles_58d3
 58B2: 21 50 83    ld   hl,$8350
 58B5: 11 62 83    ld   de,$8362
-58B8: CD D3 58    call $58D3
+58B8: CD D3 58    call encode_score_as_tiles_58d3
 58BB: 3A 35 82    ld   a,($8235)
 58BE: 3D          dec  a
 58BF: C8          ret  z
@@ -12626,8 +12764,10 @@ table_588E:
 58C9: B7          or   a
 58CA: 20 03       jr   nz,$58CF
 58CC: 11 6C 83    ld   de,$836C
-58CF: CD D3 58    call $58D3
+58CF: CD D3 58    call encode_score_as_tiles_58d3
 58D2: C9          ret
+
+encode_score_as_tiles_58d3:
 58D3: 06 03       ld   b,$03
 58D5: 7E          ld   a,(hl)
 58D6: E6 0F       and  $0F
@@ -12648,7 +12788,7 @@ table_588E:
 58EA: C9          ret
 
 58EB: CD FB 58    call $58FB
-58EE: CD 6C 59    call $596C
+58EE: CD 6C 59    call check_opening_doors_596c
 58F1: CD BB 59    call $59BB
 58F4: CD F4 59    call $59F4
 58F7: CD 1F 04    call $041F
@@ -12679,7 +12819,7 @@ table_588E:
 5924: AF          xor  a
 5925: 32 75 83    ld   ($8375),a
 5928: CD 4D 59    call update_max_nb_enemies_and_spawn_proba_594D
-592B: CD FC 5A    call $5AFC
+592B: CD FC 5A    call update_enemies_timers_and_aggressivity_5afc
 592E: C9          ret
 
 ; real-time difficulty computation from skill level
@@ -12724,6 +12864,7 @@ update_max_nb_enemies_and_spawn_proba_594D:
 5968: 32 7C 83    ld   (probablility_to_spawn_an_enemy_837C),a
 596B: C9          ret
 
+check_opening_doors_596c:
 596C: 21 77 83    ld   hl,$8377
 596F: AF          xor  a
 5970: 77          ld   (hl),a
@@ -12789,13 +12930,14 @@ enemy_exiting_room_599D:
 59D5: 28 07       jr   z,$59DE
 59D7: 7E          ld   a,(hl)
 59D8: 91          sub  c
-59D9: 28 07       jr   z,$59E2
+59D9: 28 07       jr   z,reload_timer_for_all_enemies_59e2
 59DB: 3D          dec  a
-59DC: 28 04       jr   z,$59E2
+59DC: 28 04       jr   z,reload_timer_for_all_enemies_59e2
 59DE: 23          inc  hl
 59DF: 10 F1       djnz $59D2
 59E1: C9          ret
 
+reload_timer_for_all_enemies_59e2:
 59E2: 3E 5A       ld   a,$5A
 59E4: 32 76 83    ld   ($8376),a
 59E7: 21 48 85    ld   hl,$8548
@@ -12827,7 +12969,7 @@ player_hit_by_enemy_shots_test_5A0D:
 5A15: CD 2A 1E    call ramdon_1E2A
 5A18: 5F          ld   e,a
 5A19: 0E 01       ld   c,$01
-5A1B: CD 4C 5A    call $5A4C
+5A1B: CD 4C 5A    call maybe_spawn_an_enemy_5a4c
 5A1E: 11 20 00    ld   de,$0020
 5A21: DD 19       add  ix,de
 5A23: 10 F0       djnz $5A15
@@ -12847,13 +12989,14 @@ try_to_spawn_an_enemy_5A26:
 5A3B: 38 04       jr   c,$5A41
 5A3D: CD 2A 1E    call ramdon_1E2A
 5A40: 5F          ld   e,a
-5A41: CD 4C 5A    call $5A4C
+5A41: CD 4C 5A    call maybe_spawn_an_enemy_5a4c
 5A44: 11 20 00    ld   de,$0020
 5A47: DD 19       add  ix,de
 5A49: 10 E3       djnz $5A2E
 5A4B: C9          ret
 
 ; < e: random offset to apply
+maybe_spawn_an_enemy_5a4c:
 5A4C: DD 7E 09    ld   a,(ix+enemy_state_09)
 5A4F: 3C          inc  a
 5A50: 28 0C       jr   z,$5A5E		; jump if enemy inactive
@@ -12931,6 +13074,7 @@ must_spawn_enemy_5AAB:
 5ADB: C9          ret
 
 5ADC: AF          xor  a		; don't spawn enemy
+try_to_spawn_an_enemy_player_in_elev_5ADD:
 5ADD: C1          pop  bc
 5ADE: C9          ret
 
@@ -12954,6 +13098,7 @@ special_enemy_cheat_20th_floor_5ADF:
 5AFA: C1          pop  bc
 5AFB: C9          ret
 
+update_enemies_timers_and_aggressivity_5afc:
 5AFC: 3A 31 82    ld   a,(level_timer_16bit_8231)
 5AFF: E6 FF       and  $FF
 5B01: FE FF       cp   $FF
@@ -12968,10 +13113,11 @@ special_enemy_cheat_20th_floor_5ADF:
 5B13: 19          add  hl,de
 5B14: 10 F7       djnz $5B0D
 5B16: 21 48 85    ld   hl,$8548
-5B19: CD 25 5B    call $5B25
+5B19: CD 25 5B    call decrease_value_for_all_enemies_5b25
 5B1C: 21 4A 85    ld   hl,$854A
-5B1F: CD 25 5B    call $5B25
+5B1F: CD 25 5B    call decrease_value_for_all_enemies_5b25
 5B22: 21 53 85    ld   hl,$8553
+decrease_value_for_all_enemies_5b25:
 5B25: 11 20 00    ld   de,$0020
 5B28: 06 04       ld   b,$04
 5B2A: 7E          ld   a,(hl)
@@ -12989,7 +13135,7 @@ special_enemy_cheat_20th_floor_5ADF:
 5B3F: 06 1E       ld   b,$1E
 5B41: DD 7E 07    ld   a,(ix+$07)
 5B44: B8          cp   b
-5B45: CA 13 5D    jp   z,$5D13
+5B45: CA 13 5D    jp   z,player_and_enemy_same_floor_5d13
 5B48: DA 4E 5B    jp   c,$5B4E
 5B4B: C3 52 5C    jp   $5C52
 5B4E: DD 36 1C 03 ld   (ix+$1c),$03
@@ -13212,6 +13358,8 @@ table_5C8D:
 5D0D: D8          ret  c
 5D0E: DD 36 1A E7 ld   (ix+$1a),$E7
 5D12: C9          ret
+
+player_and_enemy_same_floor_5d13:
 5D13: DD 7E 07    ld   a,(ix+$07)
 5D16: FE 14       cp   $14
 5D18: 28 1A       jr   z,$5D34
@@ -13257,7 +13405,7 @@ table_5C8D:
 5D69: 21 BC 84    ld   hl,elevator_tile_address_84BC
 5D6C: 22 0F 85    ld   ($850F),hl
 5D6F: DD 21 A7 84 ld   ix,$84A7
-5D73: CD 44 5F    call $5F44
+5D73: CD 44 5F    call elevator_stuff_5f44
 5D76: 11 EB FF    ld   de,$FFEB
 5D79: DD 19       add  ix,de
 5D7B: 3A 0E 85    ld   a,($850E)
@@ -13270,7 +13418,7 @@ table_5C8D:
 5D8D: C9          ret
 
 5D8E: CD 95 5D    call $5D95
-5D91: CD 29 5F    call $5F29
+5D91: CD 29 5F    call propagate_main_scroll_value_to_elevators_5f29
 5D94: C9          ret
 
 5D95: DD 21 D5 83 ld   ix,$83D5
@@ -13279,10 +13427,10 @@ table_5C8D:
 5DA0: 22 11 85    ld   ($8511),hl
 5DA3: AF          xor  a
 5DA4: 32 0E 85    ld   ($850E),a
-5DA7: CD DB 5D    call $5DDB
+5DA7: CD DB 5D    call handle_automatic_elevator_directions_5ddb
 5DAA: 11 15 00    ld   de,$0015
 5DAD: DD 19       add  ix,de
-5DAF: 11 08 00    ld   de,$0008
+5DAF: 11 08 00    ld   de,protection_crap_0008
 5DB2: FD 19       add  iy,de
 5DB4: 2A 11 85    ld   hl,($8511)
 5DB7: 23          inc  hl
@@ -13301,6 +13449,7 @@ table_5C8D:
 5DD7: 32 B3 84    ld   ($84B3),a
 5DDA: C9          ret
 
+handle_automatic_elevator_directions_5ddb:
 5DDB: 2A 11 85    ld   hl,($8511)
 5DDE: 23          inc  hl
 5DDF: 7E          ld   a,(hl)
@@ -13317,7 +13466,7 @@ table_5C8D:
 5DF8: 06 FF       ld   b,$FF
 5DFA: 09          add  hl,bc
 5DFB: E5          push hl
-5DFC: CD 76 5E    call $5E76
+5DFC: CD 76 5E    call compute_d3w_from_d5w_5e76
 5DFF: C1          pop  bc
 5E00: EB          ex   de,hl
 5E01: AF          xor  a
@@ -13379,6 +13528,7 @@ table_5C8D:
 5E73: 36 00       ld   (hl),$00
 5E75: C9          ret
 
+compute_d3w_from_d5w_5e76:
 5E76: 2A 2A 80    ld   hl,($802A)
 5E79: 3A 0E 85    ld   a,($850E)
 5E7C: B7          or   a
@@ -13478,6 +13628,8 @@ table_5C8D:
 5F20: 2A 2A 80    ld   hl,($802A)
 5F23: 11 20 01    ld   de,$0120
 5F26: C3 C4 5E    jp   $5EC4
+
+propagate_main_scroll_value_to_elevators_5f29:
 5F29: 3A 05 80    ld   a,(main_scroll_value_8005)
 5F2C: 4F          ld   c,a
 5F2D: DD 21 D5 83 ld   ix,$83D5
@@ -13493,6 +13645,7 @@ table_5C8D:
 5F41: 10 F6       djnz $5F39
 5F43: C9          ret
 
+elevator_stuff_5f44:
 5F44: CD 96 5F    call $5F96
 5F47: CD DF 5F    call $5FDF
 5F4A: DD 66 01    ld   h,(ix+character_x_right_01)
@@ -13791,7 +13944,7 @@ table_60DE:
 6143: 23          inc  hl
 6144: 34          inc  (hl)
 6145: 2B          dec  hl
-6146: 01 08 00    ld   bc,$0008
+6146: 01 08 00    ld   bc,protection_crap_0008
 6149: 09          add  hl,bc
 614A: EB          ex   de,hl
 614B: 01 15 00    ld   bc,$0015
@@ -13845,7 +13998,7 @@ feed_elevator_columns_6177:
 
 618A: DD 7E 09    ld   a,(ix+$09)
 618D: 3C          inc  a
-618E: 28 54       jr   z,$61E4
+618E: 28 54       jr   z,disable_enemy_sprite_61e4
 6190: CD 0C 62    call $620C
 6193: 7C          ld   a,h
 6194: B7          or   a
@@ -13865,8 +14018,8 @@ feed_elevator_columns_6177:
 61B4: E1          pop  hl
 61B5: 45          ld   b,l
 61B6: 2A BF 85    ld   hl,($85BF)
-61B9: CD F0 61    call $61F0
-61BC: CD F0 61    call $61F0
+61B9: CD F0 61    call update_character_graphic_properties_61f0
+61BC: CD F0 61    call update_character_graphic_properties_61f0
 61BF: CD 9C 62    call $629C
 61C2: C9          ret
 61C3: 2A BF 85    ld   hl,($85BF)
@@ -13884,6 +14037,8 @@ feed_elevator_columns_6177:
 61DE: 2A BB 85    ld   hl,($85BB)
 61E1: 36 FF       ld   (hl),$FF
 61E3: C9          ret
+
+disable_enemy_sprite_61e4:
 61E4: 2A BF 85    ld   hl,($85BF)
 61E7: 3E FF       ld   a,$FF
 61E9: 77          ld   (hl),a
@@ -13891,6 +14046,8 @@ feed_elevator_columns_6177:
 61ED: 19          add  hl,de
 61EE: 77          ld   (hl),a
 61EF: C9          ret
+
+update_character_graphic_properties_61f0:
 61F0: DD 7E 04    ld   a,(ix+$04)
 61F3: 77          ld   (hl),a
 61F4: 23          inc  hl
@@ -13925,7 +14082,7 @@ feed_elevator_columns_6177:
 6217: DD 46 07    ld   b,(ix+$07)
 621A: 0E 00       ld   c,$00
 621C: DD 56 03    ld   d,(ix+character_y_offset_03)
-621F: C3 6C 1E    jp   $1E6C
+621F: C3 6C 1E    jp   compute_delta_height_1e6c
 6222: CD CE 62    call load_character_elevator_structure_62CE
 6225: FD 46 01    ld   b,(iy+$01)
 6228: C3 32 62    jp   $6232
@@ -13938,10 +14095,10 @@ feed_elevator_columns_6177:
 623A: 57          ld   d,a
 623B: DD 7E 08    ld   a,(ix+$08)
 623E: 17          rla
-623F: D2 6C 1E    jp   nc,$1E6C
+623F: D2 6C 1E    jp   nc,compute_delta_height_1e6c
 6242: 05          dec  b
 6243: 05          dec  b
-6244: C3 6C 1E    jp   $1E6C
+6244: C3 6C 1E    jp   compute_delta_height_1e6c
 6247: 3A BA 85    ld   a,(current_enemy_index_85BA)
 624A: 47          ld   b,a
 624B: AF          xor  a
@@ -13960,7 +14117,7 @@ feed_elevator_columns_6177:
 625E: 29          add  hl,hl
 625F: 29          add  hl,hl
 6260: 29          add  hl,hl
-6261: 11 E2 62    ld   de,$62E2
+6261: 11 E2 62    ld   de,character_sprite_code_table_62E2
 6264: 19          add  hl,de
 6265: EB          ex   de,hl
 6266: 0E 00       ld   c,$00
@@ -14094,6 +14251,7 @@ table_62E2:
 63DB: C3 08 46    jp   $4608
 
 l_64D2:
+music_control_64d2:
 64D2: 3A 79 87    ld   a,($8779)
 64D5: FE FF       cp   $FF
 64D7: 28 26       jr   z,$64FF
@@ -14171,6 +14329,7 @@ handle_music_6500:
 6567: 38 EB       jr   c,$6554
 6569: C9          ret
 
+handle_music_656a:
 656A: 3A 60 87    ld   a,($8760)
 656D: 47          ld   b,a
 656E: 3A 61 87    ld   a,($8761)
@@ -14254,7 +14413,7 @@ handle_music_6500:
 65F3: 13          inc  de
 65F4: DD 66 02    ld   h,(ix+$02)
 65F7: DD 6E 01    ld   l,(ix+character_x_right_01)
-65FA: 01 08 00    ld   bc,$0008
+65FA: 01 08 00    ld   bc,protection_crap_0008
 65FD: ED B0       ldir
 65FF: DD 7E 05    ld   a,(ix+character_delta_x_05)
 6602: DD 77 0C    ld   (ix+$0c),a
@@ -14565,6 +14724,7 @@ table_67CA:
 686A: 28 33       jr   z,$689F
 686C: FD 5E 02    ld   e,(iy+$02)
 686F: FD 56 03    ld   d,(iy+$03)
+string_player_hiscore_6872:
 6872: 1A          ld   a,(de)
 6873: 4F          ld   c,a
 6874: 13          inc  de
@@ -14575,14 +14735,14 @@ table_67CA:
 687E: 28 19       jr   z,$6899
 6880: FD 7E 01    ld   a,(iy+$01)
 6883: E6 0F       and  $0F
-6885: CD D6 68    call $68D6
-6888: CD B9 6B    call $6BB9
+6885: CD D6 68    call compute_d1w_from_d0b_68d6
+6888: CD B9 6B    call compute_d1w_6bb9
 688B: 09          add  hl,bc
 688C: 1A          ld   a,(de)
 688D: 4F          ld   c,a
 688E: FD 7E 01    ld   a,(iy+$01)
 6891: E6 0F       and  $0F
-6893: CD D6 68    call $68D6
+6893: CD D6 68    call compute_d1w_from_d0b_68d6
 6896: 09          add  hl,bc
 6897: 18 04       jr   $689D
 6899: FD CB 00 B6 res  6,(iy+$00)
@@ -14595,7 +14755,7 @@ table_67CA:
 68AB: 28 03       jr   z,$68B0
 68AD: 09          add  hl,bc
 68AE: 18 04       jr   $68B4
-68B0: CD B9 6B    call $6BB9
+68B0: CD B9 6B    call compute_d1w_6bb9
 68B3: 09          add  hl,bc
 68B4: DD E5       push ix
 68B6: 3A 74 87    ld   a,($8774)
@@ -14613,6 +14773,7 @@ table_67CA:
 68D2: DA 06 68    jp   c,$6806
 68D5: C9          ret
 
+compute_d1w_from_d0b_68d6:
 68D6: E5          push hl
 68D7: F5          push af
 68D8: 79          ld   a,c
@@ -14700,7 +14861,10 @@ table_67CA:
 6981: DD 56 10    ld   d,(ix+$10)
 6984: DD E1       pop  ix
 6986: E9          jp   (hl)
-6987: 18 4A       jr   $69D3
+
+jump_6987:
+6987: 18 4A       jr   jump_end_69d3
+jump_6989:
 6989: CD 8D 6A    call $6A8D
 698C: 30 18       jr   nc,$69A6
 698E: DD 7E 03    ld   a,(ix+$03)
@@ -14714,7 +14878,8 @@ table_67CA:
 699F: 20 04       jr   nz,$69A5
 69A1: FD CB 00 AE res  5,(iy+$00)
 69A5: 19          add  hl,de
-69A6: 18 2B       jr   $69D3
+69A6: 18 2B       jr   jump_end_69d3
+jump_69a8:
 69A8: CD CB 6A    call $6ACB
 69AB: 30 0D       jr   nc,$69BA
 69AD: DD 6E 02    ld   l,(ix+$02)
@@ -14722,16 +14887,22 @@ table_67CA:
 69B2: FD 75 01    ld   (iy+$01),l
 69B5: FD CB 00 AE res  5,(iy+$00)
 69B9: 19          add  hl,de
-69BA: 18 17       jr   $69D3
+69BA: 18 17       jr   jump_end_69d3
+jump_69BC:
 69BC: CD 0E 6B    call $6B0E
-69BF: 18 12       jr   $69D3
+69BF: 18 12       jr   jump_end_69d3
+jump_69C1:
 69C1: CD 0E 6B    call $6B0E
-69C4: 18 0D       jr   $69D3
+69C4: 18 0D       jr   jump_end_69d3
+jump_69C6:
 69C6: CD 51 6B    call $6B51
-69C9: 18 08       jr   $69D3
+69C9: 18 08       jr   jump_end_69d3
+jump_69CB:
 69CB: CD 51 6B    call $6B51
-69CE: 18 03       jr   $69D3
+69CE: 18 03       jr   jump_end_69d3
+jump_69D0:
 69D0: CD 7E 6B    call $6B7E
+jump_end_69d3:
 69D3: DD 4E 00    ld   c,(ix+0x00)
 69D6: DD E5       push ix
 69D8: 79          ld   a,c
@@ -14782,14 +14953,14 @@ table_67CA:
 6A47: C9          ret
 
 jump_table_64A8:
-	.word	$6987   
-	.word	$6989   
-	.word	$69A8   
-	.word	$69BC   
-	.word	$69C1   
-	.word	$69C6
-	.word	$69CB
-	.word	$69D0   
+	.word	jump_6987   
+	.word	jump_6989   
+	.word	jump_69a8   
+	.word	jump_69BC   
+	.word	jump_69C1   
+	.word	jump_69C6
+	.word	jump_69CB
+	.word	jump_69D0   
 
 6A58: E5          push hl
 6A59: D5          push de
@@ -14827,7 +14998,7 @@ table_6A7D:
 6A97: 28 02       jr   z,$6A9B
 6A99: 06 FF       ld   b,$FF
 6A9B: C5          push bc
-6A9C: CD B9 6B    call $6BB9
+6A9C: CD B9 6B    call compute_d1w_6bb9
 6A9F: 09          add  hl,bc
 6AA0: EB          ex   de,hl
 6AA1: E1          pop  hl
@@ -14861,7 +15032,7 @@ table_6A7D:
 6AD5: 28 02       jr   z,$6AD9
 6AD7: 06 FF       ld   b,$FF
 6AD9: C5          push bc
-6ADA: CD B9 6B    call $6BB9
+6ADA: CD B9 6B    call compute_d1w_6bb9
 6ADD: 09          add  hl,bc
 6ADE: EB          ex   de,hl
 6ADF: E1          pop  hl
@@ -14869,7 +15040,7 @@ table_6A7D:
 6AE3: E6 0F       and  $0F
 6AE5: 4F          ld   c,a
 6AE6: 06 00       ld   b,$00
-6AE8: CD B9 6B    call $6BB9
+6AE8: CD B9 6B    call compute_d1w_6bb9
 6AEB: 09          add  hl,bc
 6AEC: FD CB 00 AE res  5,(iy+$00)
 6AF0: CB 7C       bit  7,h
@@ -14894,7 +15065,7 @@ table_6A7D:
 6B12: 28 1F       jr   z,$6B33
 6B14: CD 8D 6A    call $6A8D
 6B17: 30 18       jr   nc,$6B31
-6B19: CD B9 6B    call $6BB9
+6B19: CD B9 6B    call compute_d1w_6bb9
 6B1C: 09          add  hl,bc
 6B1D: FD CB 00 B6 res  6,(iy+$00)
 6B21: FD 75 01    ld   (iy+$01),l
@@ -14906,7 +15077,7 @@ table_6A7D:
 6B31: 18 1D       jr   $6B50
 6B33: CD CB 6A    call $6ACB
 6B36: 30 18       jr   nc,$6B50
-6B38: CD B9 6B    call $6BB9
+6B38: CD B9 6B    call compute_d1w_6bb9
 6B3B: 09          add  hl,bc
 6B3C: FD CB 00 F6 set  6,(iy+$00)
 6B40: FD 75 01    ld   (iy+$01),l
@@ -14942,8 +15113,8 @@ table_6A7D:
 6B8A: 4E          ld   c,(hl)
 6B8B: DD 7E 01    ld   a,(ix+character_x_right_01)
 6B8E: E6 0F       and  $0F
-6B90: CD D6 68    call $68D6
-6B93: CD B9 6B    call $6BB9
+6B90: CD D6 68    call compute_d1w_from_d0b_68d6
+6B93: CD B9 6B    call compute_d1w_6bb9
 6B96: EB          ex   de,hl
 6B97: 09          add  hl,bc
 6B98: EB          ex   de,hl
@@ -14959,10 +15130,12 @@ table_6A7D:
 6BAD: 4F          ld   c,a
 6BAE: DD 7E 01    ld   a,(ix+character_x_right_01)
 6BB1: E6 0F       and  $0F
-6BB3: CD D6 68    call $68D6
+6BB3: CD D6 68    call compute_d1w_from_d0b_68d6
 6BB6: EB          ex   de,hl
 6BB7: 09          add  hl,bc
 6BB8: C9          ret
+
+compute_d1w_6bb9:
 6BB9: 78          ld   a,b
 6BBA: 2F          cpl
 6BBB: 47          ld   b,a
@@ -15104,7 +15277,7 @@ run_in_service_mode_70EB:
 7114: 3E 5A       ld   a,$5A
 7116: 32 C5 85    ld   ($85C5),a
 7119: CD C2 26    call reload_8bit_tiimer_26C2
-711C: CD CF 73    call $73CF
+711C: CD CF 73    call game_tick_73cf
 711F: 3A 0C D4    ld   a,(service_mode_D40C)
 7122: CB 6F       bit  5,a
 7124: C2 2C 71    jp   nz,$712C
@@ -15125,10 +15298,10 @@ run_in_service_mode_70EB:
 7142: 22 0E D4    ld   (dip_switches_D40E),hl
 7145: AF          xor  a
 7146: 32 36 82    ld   ($8236),a
-7149: CD E1 71    call $71E1
+7149: CD E1 71    call check_if_must_flip_screen_71e1
 714C: 3E 01       ld   a,$01
 714E: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-7151: CD 0C 26    call $260C
+7151: CD 0C 26    call init_hw_scroll_and_charset_260C
 7154: 3E 02       ld   a,$02
 7156: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
 7159: C9          ret
@@ -15138,16 +15311,17 @@ string_715A:
 		dc.b	31 FF
 
 title_and_insert_coin_sequence_715F:
-715F: CD 9A 71    call $719A                                          
-7162: CD 50 72    call $7250
+715F: CD 9A 71    call init_title_state_719a                                          
+7162: CD 50 72    call init_title_screen_7250
 7165: 21 A3 80    ld   hl,$80A3
 7168: 7E          ld   a,(hl)
 7169: 23          inc  hl
 716A: B6          or   (hl)
-716B: C2 40 29    jp   nz,$2940
+716B: C2 40 29    jp   nz,goto_next_screen_2940
 716E: CD C2 26    call reload_8bit_tiimer_26C2
-7171: CD 61 72    call $7261
-7174: CD 00 74    call $7400
+title_screen_loop_7171:
+7171: CD 61 72    call title_animation_7261
+7174: CD 00 74    call protection_check_7400
 7177: 3A A2 80    ld   a,(nb_credits_80A2)
 717A: B7          or   a
 717B: C0          ret  nz
@@ -15155,30 +15329,32 @@ title_and_insert_coin_sequence_715F:
 717F: 7E          ld   a,(hl)
 7180: 23          inc  hl
 7181: B6          or   (hl)
-7182: C2 40 29    jp   nz,$2940
+7182: C2 40 29    jp   nz,goto_next_screen_2940
 7185: 21 3F 86    ld   hl,$863F
 7188: 34          inc  (hl)
 7189: 7E          ld   a,(hl)
 718A: FE 08       cp   $08
-718C: 38 E3       jr   c,$7171
+718C: 38 E3       jr   c,title_screen_loop_7171
 718E: 36 00       ld   (hl),$00
 7190: 23          inc  hl
 7191: 34          inc  (hl)
 7192: 7E          ld   a,(hl)
 7193: FE 5A       cp   $5A
-7195: 38 DA       jr   c,$7171
-7197: C3 40 29    jp   $2940
+7195: 38 DA       jr   c,title_screen_loop_7171
+7197: C3 40 29    jp   goto_next_screen_2940
+
+init_title_state_719a:
 719A: AF          xor  a
 719B: 32 36 82    ld   ($8236),a
-719E: CD E1 71    call $71E1
+719E: CD E1 71    call check_if_must_flip_screen_71e1
 71A1: 3E 01       ld   a,$01
 71A3: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-71A6: CD 0C 26    call $260C
+71A6: CD 0C 26    call init_hw_scroll_and_charset_260C
 71A9: 3E 01       ld   a,GS_TITLE_01
 71AB: 32 AC 80    ld   (game_state_80AC),a
 71AE: 3E 01       ld   a,$01
 71B0: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
-71B3: CD 39 58    call $5839
+71B3: CD 39 58    call display_status_bars_5839
 71B6: CD C6 57    call update_upper_status_bar_57C6
 71B9: CD B0 10    call display_credit_info_10b0
 71BC: CD F9 71    call $71F9
@@ -15197,6 +15373,8 @@ title_and_insert_coin_sequence_715F:
 71DC: DD E1       pop  ix
 71DE: FD E1       pop  iy
 71E0: C9          ret
+
+check_if_must_flip_screen_71e1:
 71E1: 3A 4E 82    ld   a,(copy_of_dip_switches_1_824E)
 71E4: 57          ld   d,a
 71E5: 3A 36 82    ld   a,($8236)
@@ -15249,10 +15427,11 @@ table_7238:
 722C: 32 0D D5    ld   (watchdog_d50d),a
 722F: 28 F7       jr   z,$7228
 7231: 78          ld   a,b
-7232: 32 46 82    ld   ($8246),a
+7232: 32 46 82    ld   (execute_dynamic_ram_code_8246),a
 7235: DD E5       push ix
 7237: C9          ret
 
+init_title_screen_7250:
 7250: 21 00 00    ld   hl,$0000
 7253: 22 3F 86    ld   ($863F),hl
 7256: 21 2F 86    ld   hl,title_letters_y_scroll_values_862F
@@ -15262,7 +15441,8 @@ table_7238:
 725E: 10 FB       djnz $725B
 7260: C9          ret
 
-7261: CD AF 72    call $72AF
+title_animation_7261:
+7261: CD AF 72    call update_title_y_scroll_value_72af
 7264: 21 08 CC    ld   hl,$CC08
 7267: 22 09 86    ld   ($8609),hl
 726A: 21 61 73    ld   hl,table_7361
@@ -15279,14 +15459,14 @@ table_7238:
 7284: 13          inc  de
 7285: D5          push de
 7286: C5          push bc
-7287: CD 34 73    call $7334
-728A: CD A5 73    call $73A5
+7287: CD 34 73    call animate_elevator_letters_7334
+728A: CD A5 73    call feed_scroll_with_elevator_letters_73a5
 728D: 2A 09 86    ld   hl,($8609)
 7290: 23          inc  hl
 7291: 23          inc  hl
 7292: 22 09 86    ld   ($8609),hl
 7295: 2A 0B 86    ld   hl,($860B)
-7298: 11 08 00    ld   de,$0008
+7298: 11 08 00    ld   de,protection_crap_0008
 729B: 19          add  hl,de
 729C: 22 0B 86    ld   ($860B),hl
 729F: C1          pop  bc
@@ -15300,6 +15480,8 @@ table_7238:
 72AB: 2B          dec  hl
 72AC: 10 FA       djnz $72A8
 72AE: C9          ret
+
+update_title_y_scroll_value_72af:
 72AF: 3A 40 86    ld   a,($8640)
 72B2: 4F          ld   c,a
 72B3: 11 2F 86    ld   de,title_letters_y_scroll_values_862F
@@ -15399,6 +15581,7 @@ table_72D4:
 	dc.B	FF          
 	dc.B	00      
     
+animate_elevator_letters_7334:
 7334: 3A 08 86    ld   a,($8608)
 7337: 3D          dec  a
 7338: 11 A1 73    ld   de,$73A1
@@ -15432,6 +15615,7 @@ table_7361:
 	dc.b	00 00 F8 
 
 73A4: F9          ld   sp,hl
+feed_scroll_with_elevator_letters_73a5:
 73A5: 3A 07 86    ld   a,($8607)
 73A8: E6 F8       and  $F8
 73AA: 6F          ld   l,a
@@ -15457,7 +15641,8 @@ table_7361:
 73CB: 22 0D 86    ld   ($860D),hl
 73CE: C9          ret
 
-73CF: CD EA 0F    call $0FEA
+game_tick_73cf:
+73CF: CD EA 0F    call check_credits_0fea
 73D2: 3E 01       ld   a,$01
 73D4: 32 AB 80    ld   ($80AB),a
 73D7: 21 C6 85    ld   hl,$85C6
@@ -15495,7 +15680,8 @@ table_73F9:
 	dc.b	08   
 	dc.b	5E 
 	
-7400: CD EA 0F    call $0FEA
+protection_check_7400:
+7400: CD EA 0F    call check_credits_0fea
 7403: 3E 01       ld   a,$01
 7405: 32 AB 80    ld   ($80AB),a
 7408: 21 C6 85    ld   hl,$85C6
@@ -15524,8 +15710,9 @@ table_73F9:
 742C: DD E1       pop  ix
 742E: DD E9       jp   (ix)			; indirect call!! looks like a protection!
 
+title_animation_7430:
 7430: CD 37 74    call update_title_elevator_scroll_7437
-7433: CD 75 74    call $7475
+7433: CD 75 74    call display_action_title_7475
 7436: C9          ret
 
 update_title_elevator_scroll_7437:
@@ -15568,28 +15755,29 @@ update_title_elevator_scroll_7437:
 7472: 10 EE       djnz $7462
 7474: C9          ret
 
+display_action_title_7475:
 7475: 3A 40 86    ld   a,($8640)
 7478: 21 98 74    ld   hl,table_7498
 747B: BE          cp   (hl)
-747C: CA 03 75    jp   z,$7503
+747C: CA 03 75    jp   z,clear_screen_block_7503
 747F: 23          inc  hl
 7480: BE          cp   (hl)
-7481: 28 1C       jr   z,$749F
+7481: 28 1C       jr   z,draw_action_a_749f
 7483: 23          inc  hl
 7484: BE          cp   (hl)
-7485: 28 20       jr   z,$74A7
+7485: 28 20       jr   z,draw_action_c_74a7
 7487: 23          inc  hl
 7488: BE          cp   (hl)
-7489: 28 24       jr   z,$74AF
+7489: 28 24       jr   z,draw_action_t_74af
 748B: 23          inc  hl
 748C: BE          cp   (hl)
-748D: 28 40       jr   z,$74CF
+748D: 28 40       jr   z,draw_action_i_74cf
 748F: 23          inc  hl
 7490: BE          cp   (hl)
-7491: 28 24       jr   z,$74B7
+7491: 28 24       jr   z,draw_action_o_74b7
 7493: 23          inc  hl
 7494: BE          cp   (hl)
-7495: 28 4E       jr   z,$74E5
+7495: 28 4E       jr   z,draw_action_n_74e5
 7497: C9          ret
 
 
@@ -15599,15 +15787,19 @@ table_7498:
 	dc.b	3E 42
 	dc.b	46
 	
+draw_action_a_749f:
 749F: 21 17 75    ld   hl,table_7517
 74A2: 11 E6 C9    ld   de,$C9E6
 74A5: 18 16       jr   $74BD
+draw_action_c_74a7:
 74A7: 21 29 75    ld   hl,table_7529
 74AA: 11 E9 C9    ld   de,$C9E9
 74AD: 18 0E       jr   $74BD
+draw_action_t_74af:
 74AF: 21 3B 75    ld   hl,table_753B
 74B2: 11 EC C9    ld   de,$C9EC
 74B5: 18 06       jr   $74BD
+draw_action_o_74b7:
 74B7: 21 59 75    ld   hl,table_7559
 74BA: 11 F1 C9    ld   de,$C9F1		; screen address, first layer
 74BD: 3E 06       ld   a,$06
@@ -15622,6 +15814,7 @@ table_7498:
 74CC: 20 F1       jr   nz,$74BF
 74CE: C9          ret
 
+draw_action_i_74cf:
 74CF: 21 4D 75    ld   hl,table_754D
 74D2: 11 EF C9    ld   de,$C9EF
 74D5: 3E 06       ld   a,$06
@@ -15634,6 +15827,8 @@ table_7498:
 74E1: 3D          dec  a
 74E2: 20 F3       jr   nz,$74D7
 74E4: C9          ret
+
+draw_action_n_74e5:
 74E5: 21 6B 75    ld   hl,table_756B
 74E8: 11 B4 C9    ld   de,$C9B4
 74EB: 3E 08       ld   a,$08
@@ -15650,6 +15845,8 @@ table_7498:
 74FF: 3D          dec  a
 7500: 20 EB       jr   nz,$74ED
 7502: C9          ret
+
+clear_screen_block_7503:
 7503: 21 A8 CF    ld   hl,$CFA8
 7506: 11 D0 FF    ld   de,$FFD0
 7509: AF          xor  a
@@ -15775,14 +15972,15 @@ table_756B:
 	dc.b	00
 	
 start_next_level_759B:
-759B: CD 60 76    call $7660
+759B: CD 60 76    call display_playfield_layout_7660
+start_level_759e:
 759E: CD 7A 76    call $767A
 75A1: AF          xor  a
 75A2: 32 41 86    ld   ($8641),a
 
 mainloop_75A5:
 75A5: CD A2 76    call perform_all_in_game_tasks_76A2
-75A8: CD CF 73    call $73CF
+75A8: CD CF 73    call game_tick_73cf
 75AB: 3A 3B 82    ld   a,(game_in_play_flag_823B)
 75AE: B7          or   a
 75AF: 28 05       jr   z,$75B6		; 0: game really playing (else demo)
@@ -15793,7 +15991,7 @@ mainloop_75A5:
 75BA: CD E8 75    call $75E8
 75BD: DD 7E 09    ld   a,(ix+enemy_state_09)
 75C0: FE FF       cp   $FF
-75C2: CA FE 75    jp   z,$75FE
+75C2: CA FE 75    jp   z,player_died_75fe
 75C5: FE 05       cp   $05
 75C7: D2 A5 75    jp   nc,mainloop_75A5
 75CA: DD 7E 06    ld   a,(ix+character_situation_06)
@@ -15817,6 +16015,7 @@ mainloop_75A5:
 75FA: CD 4D 36    call $364D
 75FD: C9          ret			; reaches here when player is shot
 
+player_died_75fe:
 75FE: CD 4D 36    call $364D
 7601: 11 94 81    ld   de,$8194
 7604: 2E 39       ld   l,$39
@@ -15868,18 +16067,19 @@ ground_floor_reached_764E:
 7657: F1          pop  af
 7658: B7          or   a
 7659: C8          ret  z
-765A: CD 3F 36    call $363F
-765D: C3 9E 75    jp   $759E
+765A: CD 3F 36    call start_music_if_in_game_363f
+765D: C3 9E 75    jp   start_level_759e
 
-7660: CD E1 71    call $71E1
+display_playfield_layout_7660:
+7660: CD E1 71    call check_if_must_flip_screen_71e1
 7663: AF          xor  a
 7664: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-7667: CD 0C 26    call $260C
-766A: CD 2E 58    call $582E
+7667: CD 0C 26    call init_hw_scroll_and_charset_260C
+766A: CD 2E 58    call display_bottom_bricks_582e
 766D: CD B3 28    call $28B3
 7670: CD 68 2A    call $2A68
 7673: CD 93 57    call compute_end_level_points_5793
-7676: CD 72 2F    call $2F72
+7676: CD 72 2F    call set_player_initial_state_2f72
 7679: C9          ret
 
 767A: AF          xor  a
@@ -15888,7 +16088,7 @@ ground_floor_reached_764E:
 7681: CD 3A 2F    call $2F3A
 7684: CD 95 4B    call $4B95
 7687: CD AD 31    call $31AD
-768A: CD 87 12    call $1287
+768A: CD 87 12    call init_moving_door_slots_1287
 768D: CD 93 57    call compute_end_level_points_5793
 7690: CD CA 30    call $30CA
 7693: 3A 33 82    ld   a,($8233)
@@ -15908,9 +16108,9 @@ perform_all_in_game_tasks_76A2:
 76B4: CD E8 2F    call $2FE8
 76B7: CD 27 31    call $3127
 76BA: CD 81 30    call update_enemies_3081
-76BD: CD BA 4B    call $4BBA
+76BD: CD BA 4B    call update_bullets_4bba
 76C0: CD E1 0B    call $0BE1
-76C3: CD A0 15    call $15A0
+76C3: CD A0 15    call update_sprite_shadow_ram_15a0
 76C6: C9          ret
 
 76C7: CD 2F 57    call $572F
@@ -15928,7 +16128,7 @@ perform_all_in_game_tasks_76A2:
 
 76E1: CD F6 76    call $76F6
 76E4: CD C2 26    call reload_8bit_tiimer_26C2
-76E7: CD CF 73    call $73CF
+76E7: CD CF 73    call game_tick_73cf
 76EA: 2A 43 86    ld   hl,($8643)
 76ED: 2B          dec  hl
 76EE: 22 43 86    ld   ($8643),hl
@@ -15939,15 +16139,15 @@ perform_all_in_game_tasks_76A2:
 
 76F6: AF          xor  a
 76F7: 32 AB 80    ld   ($80AB),a
-76FA: CD E1 71    call $71E1
+76FA: CD E1 71    call check_if_must_flip_screen_71e1
 76FD: 3E 01       ld   a,$01
 76FF: 32 D9 81    ld   (menu_or_game_tiles_81D9),a
-7702: CD 0C 26    call $260C
+7702: CD 0C 26    call init_hw_scroll_and_charset_260C
 7705: 3E 08       ld   a,GS_GAME_OVER_08
 7707: 32 AC 80    ld   (game_state_80AC),a
 770A: 3E 02       ld   a,$02
 770C: 32 A9 80    ld   (timer_8bit_reload_value_80A9),a
-770F: CD 39 58    call $5839
+770F: CD 39 58    call display_status_bars_5839
 7712: CD C6 57    call update_upper_status_bar_57C6
 7715: CD B0 10    call display_credit_info_10b0
 7718: 3A 45 86    ld   a,($8645)
@@ -16229,6 +16429,7 @@ recorded_inputs_7DD3:
 ; is called during demo, when lamps are shot, and regularly from then
 
 dynamic_ram_code_805B:
+dynamic_ram_code_805b:
 805B: 36 00    ld   (hl),$00
 805D: 7A       ld   a,d
 805E: B7       or   a
@@ -16253,6 +16454,7 @@ dynamic_ram_code_8071:
 8075: C9       ret
 
 dynamic_ram_code_85CF:
+dynamic_ram_code_85cf:
 85CF: DD 7E 09 ld   a,(ix+enemy_state_09)
 85D2: 06 00    ld   b,$00
 85D4: FE 04    cp   $04
@@ -16264,6 +16466,7 @@ dynamic_ram_code_85CF:
 85DF: C9       ret
 
 dynamic_ram_code_85EF:
+dynamic_ram_code_85ef:
 85EF: DD 7E 09 ld   a,(ix+enemy_state_09)
 85F2: 06 00    ld   b,$00
 85F4: FE 02    cp   $02
