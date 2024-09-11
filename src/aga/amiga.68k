@@ -712,15 +712,6 @@ _vblank:
 	st.b	interrupt_mode
 	jbsr		elevator_irq
 
-	* re-set SR to 0x2300, game calls osd_enable_interrupts from here and if
-	* something is too slow, then game crashes/trashes display because of re-entering
-	* in IRQ! At least with this it just slows down
-	*
-	* we update the graphics now so it's not possible that mpatrol_irq interrupts
-	* itself in the short time of the computations
-	move.w	#0x2300,SR
-	clr.b	interrupt_mode
-
 	
 	* AGA/AA: fmode=3 allows much faster blitter operation
 	* allowing 50 fps without a hitch :)
@@ -1936,11 +1927,13 @@ osd_w_videoram:
 	bra.b	0f
 	.endif
 1:	
-	cmp.b	(a0),d0
+	move.b	(a0),d1
+	cmp.b	d1,d0
 	beq.b	0f		| already the proper value
 3:
 	move.b	d0,(a0)	| update logical grid
 
+	* calls update_bg_tile_game or update_bg_tile_title
 	move.l	update_tile_function(pc),a1
 	jsr		(a1)
 0:
@@ -2158,7 +2151,12 @@ update_title_letters:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
 	jra		update_sprite_bitmap
-	
+
+* < D0: X tile
+* < D1: Y tile
+* < D2: tile code
+* < D3: tile previous code
+
 update_game_elevators:
 	* updating sprite data
 	sub.w	#0x2,d0		| min X elevator (first elevator first col)
@@ -2266,7 +2264,8 @@ blank_row:
 	
 update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
-	move.b	d0,d2
+	move.b	d0,d2	| tile value
+	move.b	d1,d3	| previous tile value (for elevators)
 	bsr		compute_tile_xy
 	
 	move.l		character_tables+4,a0

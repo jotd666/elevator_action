@@ -443,7 +443,7 @@ sound_table:
 	.byte	ENEMY_KILLED_SND  | 0x3a     enemy was shot
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
-	.byte	-1   | 0x3d
+	.byte	EXTRA_LIFE_SND   | 0x3d
 	.byte	-1   | 0x3e
 	.byte	-1   | 0x3f
 	.byte	-1   | 0x40
@@ -582,9 +582,9 @@ sound_table:
 	.byte	PLAYER_CRUSHED_SND   | 0xc5  crushed 1
 	.byte	-1   | 0xc6
 	.byte	LAMP_FALLS_SND   | 0xc7
-	.byte	-1   | 0xc8
+	.byte	CAR_EXIT_SND   | 0xc8
 	.byte	PLAYER_CRUSHED_2_SND   | 0xc9
-	.byte	-1   | 0xca
+	.byte	-1   | 0xca   | game over!
 	.byte	KICKING_ENEMY_SND   | 0xcb
 	.byte	-1   | 0xcc
 	.byte	-1   | 0xcd
@@ -1489,7 +1489,7 @@ display_broken_lamp_if_needed_035f:
 	bcc.b	l_036b                               	| [...]
 	rts                                    	| [$036a: ret  c] [...]
 l_036b:
-	lea	l_81DA(a6),a0                      	| [$036b: ld   hl,$81DA]
+	lea	lamp_state_array_81DA(a6),a0                      	| [$036b: ld   hl,$81DA]
 	add.w	d4,a0                            	| [$036e: add  hl,de]
 	move.b	(a0),d1                         	| [$036f: ld   b,(hl)]
 	move.b	d4,d0                           	| [$0370: ld   a,e]
@@ -2395,7 +2395,7 @@ l_0895:
 	rts                                    	| [$089d: ret  nc] [...]
 0:
 	jbsr	exx                               	| [$089e: exx]
-	lea	l_81DA(a6),a0                      	| [$089f: ld   hl,$81DA]
+	lea	lamp_state_array_81DA(a6),a0                      	| [$089f: ld   hl,$81DA]
 	moveq   #0,d3                               	| [$08a3: ld   d,$00]
 	move.b	d0,d3                           	| [$08a2: ld   e,a]
 	add.w	d3,a0                            	| [$08a5: add  hl,de]
@@ -6161,17 +6161,17 @@ l_26fb:
 	jra	l_26ee                             	| [$26fe: jr   $26EE]
 
 init_building_2700:
-	jbsr	l_270a                            	| [$2700: call $270A]
+	jbsr	init_lamps_270a                            	| [$2700: call $270A]
 	jbsr	l_273f                            	| [$2703: call $273F]
 	jbsr	l_28b3                            	| [$2706: call $28B3]
 	rts                                    	| [$2709: ret]
 
-l_270a:
-	lea	l_81DA(a6),a0                      	| [$270a: ld   hl,$81DA]
+init_lamps_270a:
+	lea	lamp_state_array_81DA(a6),a0                      	| [$270a: ld   hl,$81DA]
 	move.b	#0x17,d1                        	| [$270d: ld   b,$17]
 l_270f:
-	move.b	#0x03,(a0)                      	| [$270f: ld   (hl),$03]
-	addq.w	#1,a0                           	| [$2711: inc  hl]
+	move.b	#0x03,(a0)+                      	| [$270f: ld   (hl),$03]
+											| [$2711: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_270f                             	| [$2712: djnz $270F]
 	move.b	#0x02,d0                        	| [$2714: ld   a,$02]
@@ -8248,7 +8248,7 @@ l_333a:
 	sub.b	#0x08,d0                         	| [$333d: sub  $08]
 	moveq   #0,d3                               	| [$3340: ld   d,$00]
 	move.b	d0,d3                           	| [$333f: ld   e,a]
-	lea	l_81DA(a6),a0                      	| [$3342: ld   hl,$81DA]
+	lea	lamp_state_array_81DA(a6),a0                      	| [$3342: ld   hl,$81DA]
 	add.w	d3,a0                            	| [$3345: add  hl,de]
 	move.b	falling_lamp_x_8241(a6),d0      	| [$3346: ld   a,(falling_lamp_x_8241)]
 	move.b	#0x02,d1                        	| [$3349: ld   b,$02]
@@ -8691,7 +8691,7 @@ switch_players_data_359e:
 	jbsr	swap_memory_increase_pointers_3613	| [$35f7: call swap_memory_increase_pointers_3613]
 	lea	l_8383(a6),a1                      	| [$35fa: ld   de,$8383]
 	jbsr	l_362f                            	| [$35fd: call $362F]
-	lea	l_81DA(a6),a1                      	| [$3600: ld   de,$81DA]
+	lea	lamp_state_array_81DA(a6),a1                      	| [$3600: ld   de,$81DA]
 	jbsr	l_3627                            	| [$3603: call $3627]
 	lea	red_door_position_array_8210(a6),a1	| [$3606: ld   de,red_door_position_array_8210]
 	jbsr	l_362b                            	| [$3609: call $362B]

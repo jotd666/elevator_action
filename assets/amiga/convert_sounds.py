@@ -32,7 +32,7 @@ sound_dict = {
 "FORGOT_DOCUMENTS_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate,"priority":5},
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
 "WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
-"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":30,'loops':False,"ticks":3200},
+"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":30,'loops':False,"ticks":320},
 "DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "RED_DOOR_OPENED_SND"                :{"index":5,"channel":3,"sample_rate":hq_sample_rate,"priority":5},
 "DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
@@ -53,6 +53,8 @@ sound_dict = {
 "ENEMY_KILLED_SND"               :{"index":21,"channel":1,"sample_rate":hq_sample_rate,"priority":10},
 "ELEVATOR_LOOP_SND"               :{"index":22,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10,"loops":True},
 "ELEVATOR_STOPS_SND"               :{"index":23,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
+"CAR_EXIT_SND"               :{"index":24,"channel":0,"sample_rate":hq_sample_rate,"priority":10},
+"EXTRA_LIFE_SND"               :{"index":25,"channel":3,"sample_rate":hq_sample_rate,"priority":20},
 
 
 }

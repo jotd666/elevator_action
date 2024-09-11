@@ -390,7 +390,11 @@ for tile in full_sprite_set:
         for sym in range(2):
             if sym:
                 tile = ImageOps.mirror(tile)
-            planes = bitplanelib.palette_image2raw(tile,None,sprites_palette,forced_nb_planes=nb_planes,
+
+            y_start,ctile = bitplanelib.autocrop_y(tile,mask_color=transparent)
+            height = ctile.size[1]
+
+            planes = bitplanelib.palette_image2raw(ctile,None,sprites_palette,forced_nb_planes=nb_planes,
             generate_mask=True,blit_pad=True,
             mask_color=transparent)
             planesize = len(planes)//(nb_planes+1)
@@ -408,7 +412,7 @@ for tile in full_sprite_set:
                     # empty plane: use index -1
                     plane_list.append(-1)
 
-        bob_list.append(plane_list)
+        bob_list.append((plane_list,y_start,height))
     else:
         bob_list.append(None)
 
@@ -500,14 +504,15 @@ character_tables:
 
         f.write("\n")
 
-    for i,tile in enumerate(bob_list):
-        if tile:
+    for i,triple in enumerate(bob_list):
+        if triple:
+            (tile,y_start,height) = triple
             sn = sprite_names.get(i,"bob_info")
 
             f.write(f"{sn}_{i:02x}:\n")
             for i,p in enumerate(tile):
                 if i%(len(tile)//2) == 0:
-                    f.write("\t.word\t16,4,0\n") # TODO optimize later (shots, small characters)
+                    f.write("\t.word\t{},4,{}\n".format(height,y_start))
                 f.write("\t.long\t")
                 if p==-1:
                     f.write("0")

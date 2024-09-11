@@ -25,7 +25,7 @@ elevator column scroll:
     on 3e: draw 8 pink + 1 green (clipped)
    implemented, not selecting proper column!
 
-- blit bobs: generate proper height instead of fixed 16
+- cycle exact crashes: remove exx calls (will optimize at worst!)
 - if doesn't cut it with chipset exact, use 25FPS
 - command line options are wrong
 - insert coin when game is playing: is_game_playing doesn't work
@@ -43,8 +43,6 @@ SOUND:
 - when does the "ping" sound play?
 - record "hurry up" music for no9
 - record "game over" music for no9 (code: 0xCA)
-- rip end sound (car/bonus): 0xC8
-- sound 3D?
 - 0x39: stops "return to red door" loop
 - return to red door loop doesn't play
 
