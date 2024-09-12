@@ -1181,7 +1181,7 @@ stabilize_view_handle_falls_01BA:
 	jeq	player_above_elevator_01ED         	| [$01c8: jr   z,player_above_elevator_01ED]
 	cmp.b	#CS_IN_ROOM_05-2,d0              	| [$01ca: cp   CS_IN_ROOM_05-2]
 	jeq	l_01da                             	| [$01cc: jp   z,$01DA]
-	move.b	(0x07,a2),d1                    	| [$01cf: ld   b,(ix+$07)]
+	move.b	(current_floor_07,a2),d1                    	| [$01cf: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$01d2: ld   c,$00]
 	move.b	(character_y_offset_03,a2),d3   	| [$01d4: ld   d,(ix+character_y_offset_03)]
 	jra	compute_delta_height_1e6c                             	| [$01d7: jp   $1E6C]
@@ -1189,25 +1189,25 @@ stabilize_view_handle_falls_01BA:
 * player falls
 player_falling_01DA:
 l_01da:
-	move.b	(0x07,a2),d1                    	| [$01da: ld   b,(ix+$07)]
+	move.b	(current_floor_07,a2),d1                    	| [$01da: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$01dd: ld   c,$00]
 	move.b	#0x06,d3                        	| [$01df: ld   d,$06]
 	jra	compute_delta_height_1e6c                             	| [$01e1: jp   $1E6C]
 
 player_inside_elevator_01E4:
 	jbsr	load_character_elevator_structure_62CE	| [$01e4: call load_character_elevator_structure_62CE]
-	move.b	(0x01,a3),d1                    	| [$01e7: ld   b,(iy+$01)]
+	move.b	(character_x_right_01,a3),d1                    	| [$01e7: ld   b,(iy+$01)]
 	jra	player_in_or_on_elevator_01F4      	| [$01ea: jp   player_in_or_on_elevator_01F4]
 
 player_above_elevator_01ED:
 	jbsr	load_character_elevator_structure_62CE	| [$01ed: call load_character_elevator_structure_62CE]
-	move.b	(0x01,a3),d1                    	| [$01f0: ld   b,(iy+$01)]
+	move.b	(character_x_right_01,a3),d1                    	| [$01f0: ld   b,(iy+$01)]
 	addq.b	#1,d1                           	| [$01f3: inc  b]
 player_in_or_on_elevator_01F4:
 	clr.b	d2                               	| [$01f4: ld   c,$00]
 	move.b	(a3),d0                    	| [$01f6: ld   a,(iy+$00)]
 	move.b	d0,d3                           	| [$01f9: ld   d,a]
-	move.b	(0x08,a2),d0                    	| [$01fa: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$01fa: ld   a,(ix+$08)]
 	roxl.b	#1,d0                           	| [$01fd: rla]
 	jcc	compute_delta_height_1e6c                             	| [$01fe: jp   nc,$1E6C]
 	subq.b	#2,d1                           	| [$0201: dec  b] * 2
@@ -3914,18 +3914,18 @@ elevator_irq_1199:
 											| [$119d: push bc]
 											| [$119d: push bc]
 											| [$119e: ex   af,af']
-	jbsr	exx                               	| [$119f: exx]
-	move.w	d0,-(sp)                        	| [$11a0: push af]
-	move.l	a0,-(sp)                        	| [$11a1: push hl]
-	movem.w	d3/d4,-(sp)                    	| [$11a2: push de]
-	move.l	a1,-(sp)                        	| [$11a2: push de]
-	movem.w	d1/d2,-(sp)                    	| [$11a3: push bc]
-	move.l	a4,-(sp)                        	| [$11a3: push bc]
-	move.l	a2,-(sp)                        	| [$11a4: push ix]
-	move.l	a3,-(sp)                        	| [$11a6: push iy]
+											| [$119f: exx]
+											| [$11a0: push af]
+											| [$11a1: push hl]
+										| [$11a2: push de]
+											| [$11a2: push de]
+										| [$11a3: push bc]
+											| [$11a3: push bc]
+											| [$11a4: push ix]
+											| [$11a6: push iy]
 
 
-	bsr		display_column_scroll_values
+	**bsr		display_column_scroll_values
 
 	lea	timer_8bit_80AA(a6),a0             	| [$11a8: ld   hl,timer_8bit_80AA]
 	subq.b	#1,(a0)                         	| [$11ab: dec  (hl)]
@@ -4034,16 +4034,16 @@ l_125a:
 	eor.b	#0x9A,d0                         	| [$1271: xor  $9A]
 l_1273:
 	move.b	d0,(a0)                         	| [$1273: ld   (hl),a]
-	*jbsr	mcu_comm_routine_77CF             	| [$1274: call mcu_comm_routine_77CF]
-	move.l	(sp)+,a3                        	| [$1277: pop  iy]
-	move.l	(sp)+,a2                        	| [$1279: pop  ix]
-	move.l	(sp)+,a4                        	| [$127b: pop  bc]
-	movem.w	(sp)+,d1/d2                    	| [$127b: pop  bc]
-	move.l	(sp)+,a1                        	| [$127c: pop  de]
-	movem.w	(sp)+,d3/d4                    	| [$127c: pop  de]
-	move.l	(sp)+,a0                        	| [$127d: pop  hl]
-	move.w	(sp)+,d0                        	| [$127e: pop  af]
-	jbsr	exx                               	| [$127f: exx]
+						| [$1274: call mcu_comm_routine_77CF]
+	                   	| [$1277: pop  iy]
+	                   	| [$1279: pop  ix]
+	                   	| [$127b: pop  bc]
+	                  	| [$127b: pop  bc]
+	                   	| [$127c: pop  de]
+	                  	| [$127c: pop  de]
+	                   	| [$127d: pop  hl]
+	                   	| [$127e: pop  af]
+	                     	| [$127f: exx]
 												| [$1280: ex   af,af']
 												| [$1281: pop  bc]
 												| [$1281: pop  bc]
@@ -15600,7 +15600,7 @@ l_62cb:
 * < ix: character structure
 * > iy: associated elevator
 load_character_elevator_structure_62CE:
-	jbsr	exx                               	| [$62ce: exx] KILL_EXX
+	exg		d3,d5                               	| [$62ce: exx]
  	move.b	(associated_elevator_08,a2),d0  	| [$62cf: ld   a,(ix+associated_elevator_08)] elevator next to character?
 	and.b	#0x7F,d0                         	| [$62d2: and  $7F]
 	lsl.b	#3,d0                            	| [$62d4: add  a,a]
@@ -15610,7 +15610,7 @@ load_character_elevator_structure_62CE:
 	move.b	d0,d3                           	| [$62d9: ld   e,a]
 	lea	elevator_array_837D(a6),a3         	| [$62da: ld   iy,elevator_array_837D]
 	add.w	d3,a3                            	| [$62de: add  iy,de]
-	jbsr	exx                               	| [$62e0: exx] KILL_EXX
+	exg		d3,d5                               	| [$62e0: exx]
 	rts                                    	| [$62e1: ret]
 
 * sprite table with parts of code "hidden" in it, probably inserted there to save space
@@ -18111,26 +18111,6 @@ ldir_video:
     rts
 
 
-* < all registers d1-d4/a0/a1/a4
-* > all registers swapped
-*: note regscopy must be defined somewhere in RAM
-*: with a size of 56
-exx:
-	move.l	a6,-(a7)
-    lea     regscopy+28,a6
-    * save current regs in region 1
-    movem.l d1-d4/a0/a1/a4,-(a6)
-    * restore old regs from region 2
-    lea     regscopy+28,a6
-    movem.l (a6),d1-d4/a0/a1/a4
-    * now copy region 1 to region 2
-    movem.l d1-d4/a0/a1/a4,-(a7)
-    lea     regscopy,a6
-    movem.l (a6)+,d1-d4/a0/a1/a4
-    movem.l d1-d4/a0/a1/a4,(a6)
-    movem.l (a7)+,d1-d4/a0/a1/a4
-	move.l	(a7)+,a6
-    rts
 
 * the following code is installed in RAM by the protection process
 * I don't know exacty how it's done but it's copied and called from
