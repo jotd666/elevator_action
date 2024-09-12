@@ -4573,7 +4573,7 @@ l_1581:
 update_sprite_shadow_ram_15a0:
 	lea	sprites_shadow_ram_8169(a6),a1     	| [$15a0: ld   de,sprites_shadow_ram_8169]
 												| [$15a6: ld   b,$02]
-	clr.b	d2                               	| [$15a8: ld   c,$00]
+												| [$15a8: ld   c,$00]
 * disabled code (cocktail mode only)
 *	move.b	flip_screen_81D8(a6),d0     | [$15a3: ld   a,($81D8)]
 	                             	| [$15aa: or   a]
@@ -4619,14 +4619,13 @@ next_object_15bf:
 	* compute A0 "msb"
 	move.l	a0,d6
 	sub.l	a6,d6
-	moveq	#0,d2
-	move.b	d6,d2                           	| [$15ce: ld   b,l]
-	subq	#1,d2
+	and.w	#0xFF,d6                           	| [$15ce: ld   b,l]
+	subq	#1,d6
 	* clear rest of shadow ram (old objects get clobbered)
 l_15cf:
 	move.b	d0,(a1)+                         	| [$15cf: ld   (de),a]
 	                           	                | [$15d0: inc  de]
-	dbf	d2,l_15cf                             	| [$15d1: djnz $15CF]
+	dbf	d6,l_15cf                             	| [$15d1: djnz $15CF]
 	rts                                    	    | [$15d3: ret]
 	
 update_sprite_ram_with_object_15d4:
