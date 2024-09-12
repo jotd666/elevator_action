@@ -25,37 +25,29 @@ elevator column scroll:
     on 3e: draw 8 pink + 1 green (clipped)
    implemented, not selecting proper column!
 
-- cycle exact crashes: remove exx calls (will optimize at worst!)
-- if doesn't cut it with chipset exact, use 25FPS
+- if doesn't cut it with chipset exact on ECS, use 25FPS!!
 - command line options are wrong
 - insert coin when game is playing: is_game_playing doesn't work
-- level colors are wrong (level 4 OK??)
+- level colors are wrong (but level 4 OK)
 - priority error when exiting rooms for player/enemy (lower sprite part)
 - priority error in car going to right: player head/car: mockup end!!
 - no exhaust fumes in car???
-- game over: sprites not cleared, red/green remaining elevator sprites: detect gameover/set column and clear??
+- no "BONUS xxxx" message displayed
 
 SOUND:
 
-- intro SFX music module: tune length
-- noisy sfx
-- "forgot documents" sound doesn"t play
 - when does the "ping" sound play?
-- record "hurry up" music for no9
-- record "game over" music for no9 (code: 0xCA)
-- 0x39: stops "return to red door" loop
-- return to red door loop doesn't play
-
-
 
 minor:
 
 - NTSC: menu update is slow
-- some cover-up sprites colors are wrong too
+- some cover-up BOB colors are wrong too
   - when lights are out
   - on levels 2+
-- parasite graphics on top (sprites): to test again
+- parasite graphics on top (sprites)
 - no sound for falling enemy: is there one?
+- "forgot documents" out-of-tune jump sound doesn"t play, should play
+  then proceed to "return to door" loop
 
 to debug:
 	.ifndef	RELEASE

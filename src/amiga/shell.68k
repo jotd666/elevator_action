@@ -273,7 +273,7 @@ graphicsname:
 	.asciz	"graphics.library"
 	
 exe_aga:
-	.asciz	"elevator_aga"
+	.asciz	"elevator_action_aga"
 exe_ocs:
-	.asciz	"elevator_ocs"
+	.asciz	"elevator_action_ocs"
 	

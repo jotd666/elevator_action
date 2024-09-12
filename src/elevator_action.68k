@@ -378,6 +378,7 @@ play_sound:
 	lea		sound_table(pc),a0
 	move.b	(a0,d1.w),d0
 	jmi		0f
+	jeq		1f		| ignore (temp)
 	jbsr	osd_sound_start
 1:
 	move.w	(a7)+,d1
@@ -452,8 +453,8 @@ sound_table:
 	.byte	-1   | 0x35
 	.byte	DOCUMENT_COLLECTED_SND   | 0x36
 	.byte	RED_DOOR_OPENED_SND   | 0x37
-	.byte	FORGOT_DOCUMENTS_SND   | 0x38 missing document (end sound)
-	.byte	-1   | 0x39
+	.byte	RETURN_TO_DOOR_SND   | 0x38 missing document (end sound)
+	.byte	-3   | 0x39
 	.byte	ENEMY_KILLED_SND  | 0x3a     enemy was shot
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
@@ -492,11 +493,11 @@ sound_table:
 	.byte	-1   | 0x5d
 	.byte	-1   | 0x5e
 	.byte	-1   | 0x5f
-	.byte	-2   | 0x60 sound stop
+	.byte	0    | 0x60 stairs sound stop, ignore
 	.byte	-1   | 0x61
 	.byte	UP_THE_STAIRS_SND   | 0x62
 	.byte	DOWN_THE_STAIRS_SND   | 0x63
-	.byte	ELEVATOR_LOOP_SND   | 0x64 elevator start+move sound
+	.byte	0   | 0x64 elevator start+move sound ELEVATOR_LOOP_SND
 	.byte	ELEVATOR_STOPS_SND   | 0x65 elevator sound stop
 	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67
@@ -598,7 +599,7 @@ sound_table:
 	.byte	LAMP_FALLS_SND   | 0xc7
 	.byte	CAR_EXIT_SND   | 0xc8
 	.byte	PLAYER_CRUSHED_2_SND   | 0xc9
-	.byte	-1   | 0xca   | game over!
+	.byte	0   | 0xca   | game over! GAME_OVER_SND
 	.byte	KICKING_ENEMY_SND   | 0xcb
 	.byte	-1   | 0xcc
 	.byte	-1   | 0xcd
@@ -2686,7 +2687,7 @@ l_0a44:
 	cmp.b	#0x14,d0                         	| [$0a45: cp   $14]
 	jcs	l_0a54                             	| [$0a47: jr   c,$0A54]
 	move.b	#0x39,d0                        	| [$0a49: ld   a,$39]
-	jbsr	play_sound             	| [$0a4b: ld   (sound_latch_D50B),a]
+	jbsr	play_sound             	| [$0a4b: ld   (sound_latch_D50B),a] stop "return to door" loop
 	jbsr	set_player_initial_state_2f72                            	| [$0a4e: call $2F72]
 	move.b	#0x01,d0                        	| [$0a51: ld   a,$01]
 	rts                                    	| [$0a53: ret]

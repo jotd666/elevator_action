@@ -14,16 +14,20 @@ subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=os.path.join(progdir,"s
 # create archive
 
 outdir = os.path.join(progdir,f"{gamename}_HD")
+print(outdir)
 if os.path.exists(outdir):
     for x in glob.glob(os.path.join(outdir,"*")):
         os.remove(x)
 else:
     os.mkdir(outdir)
-for file in ["readme.md",gamename,f"{gamename}.slave"]:
+for file in ["readme.md",f"{gamename}_aga.slave"]:  #f"{gamename}.slave",
     shutil.copy(os.path.join(progdir,file),outdir)
 
-    shutil.copy(os.path.join(progdir,"assets","amiga","ElevatorActionGlowIcon.info"),os.path.join(outdir,"Galaga500.info"))
-    #shutil.copy(os.path.join(progdir,"assets","GalaGa Namco.png"),os.path.join(outdir,"boxart.png"))
+#shutil.copy(os.path.join(progdir,"assets","amiga","MoonPatrolGlowIcon.info"),outdir)
 
-# pack the file for floppy
-subprocess.check_output(["cranker_windows.exe","-f",os.path.join(progdir,gamename),"-o",os.path.join(progdir,f"{gamename}.rnc")])
+
+for suffix in ["aga"]:
+    # pack the file for floppy
+    exename = f"{gamename}_{suffix}"
+    shutil.copy(os.path.join(progdir,exename),outdir)
+    subprocess.check_output(["cranker_windows.exe","-f",os.path.join(progdir,exename),"-o",os.path.join(progdir,f"{exename}.rnc")])

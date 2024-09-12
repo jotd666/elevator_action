@@ -1,0 +1,28 @@
+.key nope
+set game elevator_action_ocs
+;copy $game.RNC DF0:$game
+copy no_ecs DF0:$game
+protect DF0:$game RWED
+set game elevator_action_aga
+copy $game.RNC DF0:$game
+protect DF0:$game RWED
+protect DF0:$game RWED
+copy readme.md df0:
+
+; copy startup exe
+set game elevator_action
+copy $game DF0:$game
+
+if exists df0:$game.high
+   delete df0:$game.high
+endif
+
+set arc ${game}_HD.lha
+if exists ${arc}
+    echo deleting ${arc}...
+    delete ${arc}
+endif
+
+; also archive with lha
+lha a -r $arc ${game}_HD
+
