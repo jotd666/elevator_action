@@ -3,7 +3,21 @@
 
 	.include	"elevator_action.inc"
 
-		
+	.macro	SAVE_EXX_REGS
+	movem.l	d1-d4/a0/a1/a4,-(a7)
+	.endm
+	
+	.macro	RESTORE_EXX_REGS
+	movem.l	(a7)+,d1-d4/a0/a1/a4
+	.endm
+	
+	.macro	EXX_DX_SWAP
+	swap	d1
+	swap	d2
+	swap	d3
+	swap	d4
+	.endm
+	
 	.macro	LOAD_D1_16_FROM_D1D2
 	and.l	#0xFFFF,d1
 	lsl.w	#8,d1
@@ -8845,6 +8859,7 @@ l_36c3:
 	tst.b	d7
 	jne	l_36d3                             	| [$36c8: jp   c,$36D3]
  	rts                                    	| [$36cb: ret]
+	
 l_36cc:
 	move.b	#0x03,(0x11,a2)                 	| [$36cc: ld   (ix+$11),$03]
 	jra	l_375a                             	| [$36d0: jp   $375A]
@@ -8862,10 +8877,10 @@ l_36dd:
 	bpl.b	0f                               	| [...]
 	rts                                    	| [$36e9: ret  m] [...]
 0:
-	move.b	(0x07,a2),d0                    	| [$36ea: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$36ea: ld   a,(ix+$07)]
 	cmp.b	#0x1F,d0                         	| [$36ed: cp   $1F]
-	jeq	l_3713                             	| [$36ef: jp   z,$3713]
-	jbsr	exx                               	| [$36f2: exx] KILL_EXX
+	jeq	top_floor_3713                             	| [$36ef: jp   z,$3713]
+	EXX_DX_SWAP                               	| [$36f2: exx]
 	move.b	(character_y_offset_down_02,a2),d1	| [$36f3: ld   b,(ix+character_y_offset_down_02)]
 	move.b	(character_y_offset_03,a2),d2   	| [$36f6: ld   c,(ix+character_y_offset_03)]
 	move.b	(a3),d3                    	| [$36f9: ld   d,(iy+$00)]
@@ -8881,12 +8896,12 @@ l_36dd:
 	cmp.b	#0x34,d0                         	| [$370d: cp   $34]
 	jcc	l_3778                             	| [$370f: jp   nc,$3778]
 l_3712:
-	jbsr	exx                               	| [$3712: exx] KILL_EXX
-l_3713:
+	EXX_DX_SWAP                               	| [$3712: exx]
+top_floor_3713:
 	move.b	#0x04,(0x11,a2)                 	| [$3713: ld   (ix+$11),$04]
 	jra	l_375a                             	| [$3717: jp   $375A]
 l_371a:
-	move.b	(0x09,a2),d0                    	| [$371a: ld   a,(ix+$09)]
+	move.b	(enemy_state_09,a2),d0                    	| [$371a: ld   a,(ix+$09)]
 	cmp.b	#0x08,d0                         	| [$371d: cp   $08]
 	jeq	l_3765                             	| [$371f: jp   z,$3765]
 	move.b	(character_delta_x_05,a2),d0    	| [$3722: ld   a,(ix+character_delta_x_05)]
@@ -8895,10 +8910,10 @@ l_371a:
 	bmi.b	0f                               	| [...]
 	rts                                    	| [$3729: ret  p] [...]
 0:
-	move.b	(0x07,a2),d0                    	| [$372a: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$372a: ld   a,(ix+$07)]
 	cmp.b	#0x1F,d0                         	| [$372d: cp   $1F]
 	jeq	l_3753                             	| [$372f: jp   z,$3753]
-	jbsr	exx                               	| [$3732: exx] KILL_EXX
+	EXX_DX_SWAP                               	| [$3732: exx]
 	move.b	(character_y_offset_down_02,a2),d1	| [$3733: ld   b,(ix+character_y_offset_down_02)]
 	move.b	(character_y_offset_03,a2),d2   	| [$3736: ld   c,(ix+character_y_offset_03)]
 	move.b	(a3),d3                    	| [$3739: ld   d,(iy+$00)]
@@ -8914,7 +8929,7 @@ l_371a:
 	cmp.b	#0x34,d0                         	| [$374d: cp   $34]
 	jcc	l_3778                             	| [$374f: jp   nc,$3778]
 l_3752:
-	jbsr	exx                               	| [$3752: exx] KILL_EXX
+	EXX_DX_SWAP                               	| [$3752: exx]
 l_3753:
 	move.b	#0x04,(0x11,a2)                 	| [$3753: ld   (ix+$11),$04]
 	jra	l_3765                             	| [$3757: jp   $3765]
@@ -8944,29 +8959,29 @@ l_3778:
 	sub.b	#0x30,d0                         	| [$3778: sub  $30]
 	move.b	d0,d2                           	| [$377a: ld   c,a]
 	moveq   #0,d3                               	| [$377b: ld   d,$00]
-	jra	l_3780                             	| [$377d: jp   $3780]
+											| [$377d: jp   $3780]
 l_3780:
-	move.b	(0x01,a3),d0                    	| [$3780: ld   a,(iy+$01)]
-	add.b	(0x06,a2),d0                     	| [$3783: add  a,(ix+$06)]
+	move.b	(character_x_right_01,a3),d0                    	| [$3780: ld   a,(iy+$01)]
+	add.b	(character_situation_06,a2),d0                     	| [$3783: add  a,(ix+$06)]
 	add.b	d3,d0                            	| [$3786: add  a,d]
 	move.b	d0,d1                           	| [$3787: ld   b,a]
-	move.b	(0x08,a2),d0                    	| [$3788: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$3788: ld   a,(ix+$08)]
 	roxl.b	#2,d0                           	| [$378b: rla] * 2
 	and.b	#0x01,d0                         	| [$378d: and  $01]
 	add.b	d0,d0                            	| [$378f: add  a,a]
 	neg.b	d0                               	| [$3790: neg]
 	add.b	d1,d0                            	| [$3792: add  a,b]
-	move.b	d0,(0x07,a2)                    	| [$3793: ld   (ix+$07),a]
+	move.b	d0,(current_floor_07,a2)                    	| [$3793: ld   (ix+$07),a]
 	clr.b	(0x06,a2)                        	| [$3796: ld   (ix+$06),$00]
 	jra	l_379d                             	| [$379a: jp   $379D]
 l_379d:
-	move.b	(0x09,a2),d0                    	| [$379d: ld   a,(ix+$09)]
+	move.b	(enemy_state_09,a2),d0                    	| [$379d: ld   a,(ix+$09)]
 	cmp.b	#0x07,d0                         	| [$37a0: cp   $07]
 	jne	l_37a8                             	| [$37a2: jr   nz,$37A8]
 	jbsr	l_37d4                            	| [$37a4: call $37D4]
 	rts                                    	| [$37a7: ret]
 l_37a8:
-	move.b	#0x03,(0x09,a2)                 	| [$37a8: ld   (ix+$09),$03]
+	move.b	#0x03,(enemy_state_09,a2)                 	| [$37a8: ld   (ix+$09),$03]
 	move.b	#0x05,d1                        	| [$37ac: ld   b,$05]
 	lea	table_44D8-0xD8+0xED,a0                          	| [$37ae: ld   hl,$44ED]
 	move.w	#0x0004,d3                      	| [$37b1: ld   de,$0004] 4
