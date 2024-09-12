@@ -2394,13 +2394,13 @@ l_0895:
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$089d: ret  nc] [...]
 0:
-	jbsr	exx                               	| [$089e: exx]
+	move.l	a0,-(a7)                               	| [$089e: exx]
 	lea	lamp_state_array_81DA(a6),a0                      	| [$089f: ld   hl,$81DA]
-	moveq   #0,d3                               	| [$08a3: ld   d,$00]
-	move.b	d0,d3                           	| [$08a2: ld   e,a]
-	add.w	d3,a0                            	| [$08a5: add  hl,de]
-	move.b	(a0),d0                         	| [$08a6: ld   a,(hl)]
-	jbsr	exx                               	| [$08a7: exx]
+												| [$08a3: ld   d,$00]
+	and.w	#0xFF,d0                           	| [$08a2: ld   e,a]
+	                            	| [$08a5: add  hl,de]
+	move.b	(a0,d0.w),d0                         	| [$08a6: ld   a,(hl)]
+	move.l	(a7)+,a0					| [$08a7: exx]
 	and.b	d1,d0                            	| [$08a8: and  b]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$08a9: ret  z] [...]
@@ -4581,7 +4581,7 @@ update_sprite_shadow_ram_15a0:
 *	st.b	d1                                	| [$15ad: ld   b,$FF]
 *	move.b	#0xFE,d2                        	| [$15af: ld   c,$FE]
 l_15b1:
-	jbsr	exx                               	| [$15b1: exx] save registers (a0/a1)
+												| [$15b1: exx] save registers (a0/a1)
  	move.b	#0x04,d0                        	| [$15b2: ld   a,$04]
 	move.w	#0x0005,d3                      	| [$15b4: ld   de,$0005] 5
 l_15b7:
@@ -4602,12 +4602,12 @@ l_15b7:
 l_15bc:
 	cmp.b	(a0),d0                          	| [$15bc: cp   (hl)]
 	jeq	update_sprite_ram_with_object_15d4      | [$15bd: jr   z,$15D4] layer id/priority matches
-next_object_15bf:
 	add.w	d3,a0                            	| [$15bf: add  hl,de]
+next_object_15bf:
 	dbf	d1,l_15bc                             	| [$15c0: djnz $15BC] next object
 	subq.b	#1,d0                           	| [$15c2: dec  a]
 	jpl	l_15b7                             	    | [$15c3: jp   p,$15B7]
-	jbsr	exx                               	| [$15c6: exx] restore registers (a1)
+												| [$15c6: exx] restore registers (a1)
 	lea	sprites_shadow_ram_8169+0x60(a6),a0     | [$15c7: ld   hl,$81C9] top sprite shadow ram
 	clr.b	d0                               	| [$15ca: xor  a] not useful for 68k sub, but d0 needs to be zero
 	cmp.l	a1,a0                            	| [$15cb: sbc  hl,de] check if sprite address as a1 got past base+0x60
@@ -4630,9 +4630,9 @@ l_15cf:
 	
 update_sprite_ram_with_object_15d4:
 	exg	d0,d7                              	    | [$15d4: ex   af,af'] save d0
-	move.l	a0,-(sp)                        	| [$15d5: push hl]
-	jbsr	exx                               	| [$15d6: exx] restore target shadow ram
- 	move.l	(sp)+,a0                        	| [$15d7: pop  hl]
+	                        	| [$15d5: push hl]
+	                          	| [$15d6: exx] restore target shadow ram
+ 	                        	| [$15d7: pop  hl]
 	addq.w	#1,a0                           	| [$15d8: inc  hl] skip status
 	move.b	(a0)+,d0                         	| [$15d9: ld   a,(hl)]
 	add.b	#2,d0                            	| [$15da: add  a,b] upright, fixed value
@@ -4652,9 +4652,9 @@ update_sprite_ram_with_object_15d4:
 	                      	    | [$15e8: ld   (de),a]
 	                           	| [$15e9: inc  hl]
 	                           	| [$15ea: inc  de]
-	jbsr	exx                               	| [$15eb: exx] save target shadow ram
+	                               	| [$15eb: exx] save target shadow ram
 	exg	d0,d7                              	| [$15ec: ex   af,af'] restore d0
-	jra	next_object_15bf                             	| [$15ed: jp   $15BF]
+	jra	next_object_15bf                    | [$15ed: jp   $15BF] skipping add 5 to a0, already proper value
 
 update_sprites_15F0:
 	lea	sprites_shadow_ram_8169(a6),a0     	| [$15f0: ld   hl,sprites_shadow_ram_8169]
@@ -8865,7 +8865,7 @@ l_36dd:
 	move.b	(0x07,a2),d0                    	| [$36ea: ld   a,(ix+$07)]
 	cmp.b	#0x1F,d0                         	| [$36ed: cp   $1F]
 	jeq	l_3713                             	| [$36ef: jp   z,$3713]
-	jbsr	exx                               	| [$36f2: exx]
+	jbsr	exx                               	| [$36f2: exx] KILL_EXX
 	move.b	(character_y_offset_down_02,a2),d1	| [$36f3: ld   b,(ix+character_y_offset_down_02)]
 	move.b	(character_y_offset_03,a2),d2   	| [$36f6: ld   c,(ix+character_y_offset_03)]
 	move.b	(a3),d3                    	| [$36f9: ld   d,(iy+$00)]
@@ -8881,7 +8881,7 @@ l_36dd:
 	cmp.b	#0x34,d0                         	| [$370d: cp   $34]
 	jcc	l_3778                             	| [$370f: jp   nc,$3778]
 l_3712:
-	jbsr	exx                               	| [$3712: exx]
+	jbsr	exx                               	| [$3712: exx] KILL_EXX
 l_3713:
 	move.b	#0x04,(0x11,a2)                 	| [$3713: ld   (ix+$11),$04]
 	jra	l_375a                             	| [$3717: jp   $375A]
@@ -8898,7 +8898,7 @@ l_371a:
 	move.b	(0x07,a2),d0                    	| [$372a: ld   a,(ix+$07)]
 	cmp.b	#0x1F,d0                         	| [$372d: cp   $1F]
 	jeq	l_3753                             	| [$372f: jp   z,$3753]
-	jbsr	exx                               	| [$3732: exx]
+	jbsr	exx                               	| [$3732: exx] KILL_EXX
 	move.b	(character_y_offset_down_02,a2),d1	| [$3733: ld   b,(ix+character_y_offset_down_02)]
 	move.b	(character_y_offset_03,a2),d2   	| [$3736: ld   c,(ix+character_y_offset_03)]
 	move.b	(a3),d3                    	| [$3739: ld   d,(iy+$00)]
@@ -8914,7 +8914,7 @@ l_371a:
 	cmp.b	#0x34,d0                         	| [$374d: cp   $34]
 	jcc	l_3778                             	| [$374f: jp   nc,$3778]
 l_3752:
-	jbsr	exx                               	| [$3752: exx]
+	jbsr	exx                               	| [$3752: exx] KILL_EXX
 l_3753:
 	move.b	#0x04,(0x11,a2)                 	| [$3753: ld   (ix+$11),$04]
 	jra	l_3765                             	| [$3757: jp   $3765]
@@ -15585,7 +15585,7 @@ l_62cb:
 * < ix: character structure
 * > iy: associated elevator
 load_character_elevator_structure_62CE:
-	jbsr	exx                               	| [$62ce: exx]
+	jbsr	exx                               	| [$62ce: exx] KILL_EXX
  	move.b	(associated_elevator_08,a2),d0  	| [$62cf: ld   a,(ix+associated_elevator_08)] elevator next to character?
 	and.b	#0x7F,d0                         	| [$62d2: and  $7F]
 	lsl.b	#3,d0                            	| [$62d4: add  a,a]
@@ -15595,7 +15595,7 @@ load_character_elevator_structure_62CE:
 	move.b	d0,d3                           	| [$62d9: ld   e,a]
 	lea	elevator_array_837D(a6),a3         	| [$62da: ld   iy,elevator_array_837D]
 	add.w	d3,a3                            	| [$62de: add  iy,de]
-	jbsr	exx                               	| [$62e0: exx]
+	jbsr	exx                               	| [$62e0: exx] KILL_EXX
 	rts                                    	| [$62e1: ret]
 
 * sprite table with parts of code "hidden" in it, probably inserted there to save space
