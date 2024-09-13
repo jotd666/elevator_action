@@ -2192,9 +2192,8 @@ update_sprite_bitmap:
 	add.w	d0,a2		| select proper sprite structure
 	move.l	(_chip_data,a2),a3		| sprite data
 	move.l	(_saved_control_word_address,a2),a5
-	* save control word
-	move.w	(a5),d4
-	move.w	(4,a5),d5
+	*move.w	(a5),d4		| store control word #1 (disabled)
+	
 	add.w	#NB_BYTES_PER_SPRITE_ROW*2,a3		| skip control word (done twice???)
 	add.w	d1,a3		| add X/Y offset
 	
@@ -2202,18 +2201,20 @@ update_sprite_bitmap:
 	* we have to prevent that. Restoring control word isn't an option as
 	* character write is not synced on vbl, so it can make elevators blink
 	
-	moveq	#0,d3
 	move.l	a5,d3
 	sub.l	a3,d3
 	jcs		100f	| a5 below a3: overwrite can't happen
+	lsr.l	#SPRITE_POWER_OF_2,d3	| divide by 4
 	cmp.l	#16,d3
 	jcs		200f
 100:
 	moveq	#0,d3	| a5 way above a3: overwrite can't happen
+	jra		201f
 200:
 	lsr.w	#1,d3
 	bclr	#0,d3
-	
+	addq	#1,d3	| skip first slot (all rows)
+201:	
 	lsl.w	#2,d2
 	jeq		5f		| code 0: clear sprite area
 	* copy character data into sprite
@@ -2236,63 +2237,136 @@ update_sprite_bitmap:
 	move.l	d1,a1
 	
 	* select proper tile copy/clear routine
-	lea		copy_tile_table(pc),a5
-	move.l	(a5,d3.w*4),a5	| 0..32 steps of 4, select proper draw routine
-	jmp		(a5)
+	lea		copy_tile_table(pc),a4
+	move.l	(a4,d3.w*4),a4	| 0..32 steps of 4, select proper draw routine
+	jmp		(a4)
 0:
+* check if control word was clobbered. Now avoided thanks to the
+* 9 different tile update/clear routines!
+*	cmp.w 	(a5),d4
+*	jeq		2222f
+*	jbsr	osd_break
+*2222:
 	move.l	(a7)+,a5
 	move.l	(a7)+,a4
 	rts
 	
-
-copy_all:	
-	.set	offset,0
-	.rept	8
+	.macro	NEXT_OFFSET
+	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2	
+	.endm
+	
+	.macro	CLEAR_TILE_ROW
+	clr.b	(offset,a3)
+	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
+	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW	
+	.endm
+	
+	.macro	COPY_TILE_ROW
 	move.b	(a0)+,d0
 	move.b	d0,(offset,a3)
 	move.b	d0,(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
 	move.b	(a1)+,d0
 	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a3)
 	move.b	d0,((NB_LINES*NB_BYTES_PER_SPRITE_ROW*2)+NB_BYTES_PER_SPRITE_ROW+offset,a3)
-	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2
+	NEXT_OFFSET
+	.endm
+	
+	.macro	COPY_BUT_X	index
+copy_but_\index:	
+	.set	offset,0
+	.rept	\index
+	COPY_TILE_ROW
+	.endr
+	* skip this row
+	NEXT_OFFSET	
+	addq	#1,a0
+	addq	#1,a1
+	.rept	7-\index
+	COPY_TILE_ROW
+	.endr
+	jra		0b
+	.endm
+	
+	.macro	CLEAR_BUT_X	index
+clear_but_\index:
+	.set	offset,0
+	.rept	\index
+	CLEAR_TILE_ROW
+	.endr
+	* skip this row
+	NEXT_OFFSET	
+	.rept	7-\index
+	CLEAR_TILE_ROW
+	.endr
+	jra		0b
+	.endm
+	
+	
+	* declare the "copy/clear but" routines
+	COPY_BUT_X	0
+	COPY_BUT_X	1
+	COPY_BUT_X	2
+	COPY_BUT_X	3
+	COPY_BUT_X	4
+	COPY_BUT_X	5
+	COPY_BUT_X	6
+	COPY_BUT_X	7
+	CLEAR_BUT_X	0
+	CLEAR_BUT_X	1
+	CLEAR_BUT_X	2
+	CLEAR_BUT_X	3
+	CLEAR_BUT_X	4
+	CLEAR_BUT_X	5
+	CLEAR_BUT_X	6
+	CLEAR_BUT_X	7
+	
+
+	
+
+
+	
+copy_all:	
+	.set	offset,0
+	.rept	8
+	COPY_TILE_ROW
 	.endr
 	jra		0b
 	
 5:
-	lea		clear_tile_table(pc),a5
-	move.l	(a5,d3.w*4),a5	| 0..32 steps of 4, select proper draw routine
-	jmp		(a5)
+	lea		clear_tile_table(pc),a4
+	move.l	(a4,d3.w*4),a4	| 0..32 steps of 4, select proper draw routine
+	jmp		(a4)
 
 clear_all:
 	.set	offset,0
 	.rept	16
-	clr.b	(offset,a3)
-	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
-	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW
+	CLEAR_TILE_ROW
 	.endr
 	jra		0b
 
 
 copy_tile_table:
 	.long	copy_all
-	.long	copy_all
-	.long	copy_all
-	.long	copy_all
-	.long	copy_all
-	.long	copy_all
-	.long	copy_all
-	.long	copy_all
+	.long	copy_but_0
+	.long	copy_but_1
+	.long	copy_but_2
+	.long	copy_but_3
+	.long	copy_but_4
+	.long	copy_but_5
+	.long	copy_but_6
+	.long	copy_but_7
 
 
 clear_tile_table:
 	.long	clear_all
-	.long	clear_all
-	.long	clear_all
-	.long	clear_all
-	.long	clear_all
-	.long	clear_all
-	.long	clear_all
-	.long	clear_all
+	.long	clear_but_0
+	.long	clear_but_0
+	.long	clear_but_0
+	.long	clear_but_0
+	.long	clear_but_0
+	.long	clear_but_0
+	.long	clear_but_0
+	.long	clear_but_0
 
 
 
