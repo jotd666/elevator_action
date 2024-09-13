@@ -2200,7 +2200,8 @@ update_sprite_bitmap:
 	* while writing tiles, elevators can overwrite sprite control word
 	* we have to prevent that. Restoring control word isn't an option as
 	* character write is not synced on vbl, so it can make elevators blink
-	
+	* that said, it is very complex, and it's really not sure that it is
+	* better than rewriting the control word immediately after. But it works.
 	move.l	a5,d3
 	sub.l	a3,d3
 	jcs		100f	| a5 below a3: overwrite can't happen

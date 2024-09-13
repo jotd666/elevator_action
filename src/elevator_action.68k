@@ -3250,7 +3250,7 @@ l_0dad:
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$0dbc: ret  c] [...]
 0:
-	lea	l_8041(a6),a0                      	| [$0dbd: ld   hl,$8041]
+	lea	bonus_letters_data_8041(a6),a0                      	| [$0dbd: ld   hl,$8041]
 	move.b	d0,d3                           	| [$0dc0: ld   d,a]
 	move.b	#0x09,d1                        	| [$0dc1: ld   b,$09]
 l_0dc3:
@@ -3328,7 +3328,7 @@ l_0e2a:
 												| [$0e2d: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0e2a                             	| [$0e2e: djnz $0E2A]
-	lea	l_8041(a6),a0                      	| [$0e30: ld   hl,$8041]
+	lea	bonus_letters_data_8041(a6),a0                      	| [$0e30: ld   hl,$8041]
 	clr.b	d0                               	| [$0e33: xor  a]
 	move.b	#0x1A,d1                        	| [$0e34: ld   b,$1A]
 l_0e36:
@@ -3393,16 +3393,18 @@ l_0e7a:
 0:
 	cmp.b	#0x02,d0                         	| [$0e80: cp   $02]
 	jeq	l_0e9f                             	| [$0e82: jr   z,$0E9F]
-	lea	l_8041(a6),a0                      	| [$0e84: ld   hl,$8041]
-	lea	l_C6C1(a6),a1                      	| [$0e87: ld   de,$C6C1]
+	* write "BONUS xxx" big letters on layer 1, this time it's transparent!
+	lea	bonus_letters_data_8041(a6),a0                      	| [$0e84: ld   hl,$8041]
+	lea	bonus_screen_address_C6C1(a6),a1                      	| [$0e87: ld   de,$C6C1]
 	move.w	#0x001A,d1                      	| [$0e8a: ld   bc,$001A] 26
 	jbsr	ldir_video                              	| [$0e8d: ldir]
- 	lea	l_8041(a6),a1                      	| [$0e8f: ld   hl,$8041]
-	lea	l_C6E1(a6),a0                      	| [$0e92: ld   de,$C6E1]
+	* second row, bottom of letters/digits are just shifted by 1
+ 	lea	bonus_letters_data_8041(a6),a1                      	| [$0e8f: ld   hl,$8041]
+	lea	bonus_screen_address_C6E1(a6),a0                      	| [$0e92: ld   de,$C6E1]
 	move.b	#0x1A,d1                        	| [$0e95: ld   b,$1A]
 l_0e97:
 	move.b	(a1)+,d0                         	| [$0e97: ld   a,(hl)]
-	addq.b	#1,d0                           	| [$0e98: inc  a]
+	addq.b	#1,d0                           	| [$0e98: inc  a] select character bottom
 	jbsr	osd_w_videoram                         	| [$0e99: ld   (de),a]
 	addq.w	#1,a0                           	| [$0e9a: inc  hl]
 	                           	| [$0e9b: inc  de]
@@ -13542,7 +13544,7 @@ award_end_of_level_bonus_56F9:
 
 	move.l	a0,-(sp)                        	| [$56fb: push hl]
 	lea	points_awarded_on_level_end_836D(a6),a0	| [$56fc: ld   hl,points_awarded_on_level_end_836D]
-	jra	l_5702                             	| [$56ff: jp   $5702] useless!
+												| [$56ff: jp   $5702] useless!
 l_5702:
 	move.b	game_in_play_flag_823B(a6),d0   	| [$5702: ld   a,(game_in_play_flag_823B)]
 	                             	| [$5705: or   a]
