@@ -667,18 +667,21 @@ _vblank:
 	jra	3f
 1:
 	* has to be copper
-	* is level 1 interrupt set? that would mean that mid-screen interrupt
-	* is the source of the interrupt
-	btst	#2,d0
-	sne		mid_screen_interrupt
 
 	* we're going to ack copper & software interrupt now
 	* do it twice (040/pistorm bug)
 	move.w	#0x14,(intreq,a5)
 	move.w	#0x14,(intreq,a5)
 
+	tst.b	pause_flag
+	bne.b	23f
+
 	* set base for RAM
 	GET_RAM_START_IN_A6
+	* declare that we're in interrupt mode so osd_disable_interrupts/osd_enable_interrupts
+	st.b	interrupt_mode
+	* is level 1 interrupt set? that would mean that mid-screen interrupt
+	* is the source of the interrupt
 	btst	#2,d0
 	beq.b	2f
 	* mid-screen copper interrupt, must occur once every 5 times
@@ -687,11 +690,7 @@ _vblank:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
-	* declare that we're in interrupt mode so osd_disable_interrupts/osd_enable_interrupts
-	* also set SR accordingly
-	st.b	interrupt_mode
 	jbsr		elevator_irq
-	move.w	#0x2300,SR
 	clr.b	interrupt_mode	
 	clr.b	d0
 1:
@@ -702,14 +701,8 @@ _vblank:
 	
 
 	
-	tst.b	pause_flag
-	bne.b	23f
-
 	subq.w	#1,delay_timer
 		
-	* declare that we're in interrupt mode so osd_disable_interrupts/osd_enable_interrupts
-	* also set SR accordingly
-	st.b	interrupt_mode
 	jbsr		elevator_irq
 
 	
@@ -2880,8 +2873,6 @@ current_gfx_bank:
 	.byte	-1
 
 level_palette:
-	.byte	0
-mid_screen_interrupt:
 	.byte	0
 mid_screen_interrupt_count:
 	.byte	0

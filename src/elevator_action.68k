@@ -4635,12 +4635,14 @@ next_object_15bf:
 	move.l	a0,d6
 	sub.l	a6,d6
 	and.w	#0xFF,d6                           	| [$15ce: ld   b,l]
+	jeq		0f								    | all sprites used
 	subq	#1,d6
 	* clear rest of shadow ram (old objects get clobbered)
 l_15cf:
 	move.b	d0,(a1)+                         	| [$15cf: ld   (de),a]
 	                           	                | [$15d0: inc  de]
 	dbf	d6,l_15cf                             	| [$15d1: djnz $15CF]
+0:
 	rts                                    	    | [$15d3: ret]
 	
 update_sprite_ram_with_object_15d4:
