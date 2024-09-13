@@ -1,13 +1,12 @@
 
 - AGA: 16+16 dual playfield
-- ECS: 16 colors, no DPF, background restore
-  sprites for the 4 first elevators, then bobs, bobs
-  have Y translation applied to make up for non shifting!
+- ECS: 16 colors, 
 
 
 
 TODO/ISSUES:
 
+- elevators blinking when sprite longword is overwritten
 - elevator engine sound plays when player EXITS elevator
 - different colors per level, including brick wall at the bottom!
 - elevator dynamic colors: in progress

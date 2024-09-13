@@ -2198,12 +2198,28 @@ update_sprite_bitmap:
 	add.w	#NB_BYTES_PER_SPRITE_ROW*2,a3		| skip control word (done twice???)
 	add.w	d1,a3		| add X/Y offset
 	
+	* while writing tiles, elevators can overwrite sprite control word
+	* we have to prevent that. Restoring control word isn't an option as
+	* character write is not synced on vbl, so it can make elevators blink
+	
+	moveq	#0,d3
+	move.l	a5,d3
+	sub.l	a3,d3
+	jcs		100f	| a5 below a3: overwrite can't happen
+	cmp.l	#16,d3
+	jcs		200f
+100:
+	moveq	#0,d3	| a5 way above a3: overwrite can't happen
+200:
+	lsr.w	#1,d3
+	bclr	#0,d3
+	
 	lsl.w	#2,d2
 	jeq		5f		| code 0: clear sprite area
 	* copy character data into sprite
 	move.l	(8,a0),a0		| third set: elevators/letters
 	move.l	(a0,d2.w),d0
-	jeq		1f		| 0: not registered: clear
+	jeq		0f		| 0: not registered: clear
 	* sprites are only 4 colors, palette is so only 2 first planes
 	* can contain data
 	move.l	d0,a4
@@ -2218,7 +2234,18 @@ update_sprite_bitmap:
 2:
 	move.l	d0,a0
 	move.l	d1,a1
+	
+	* select proper tile copy/clear routine
+	lea		copy_tile_table(pc),a5
+	move.l	(a5,d3.w*4),a5	| 0..32 steps of 4, select proper draw routine
+	jmp		(a5)
+0:
+	move.l	(a7)+,a5
+	move.l	(a7)+,a4
+	rts
+	
 
+copy_all:	
 	.set	offset,0
 	.rept	8
 	move.b	(a0)+,d0
@@ -2228,30 +2255,47 @@ update_sprite_bitmap:
 	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a3)
 	move.b	d0,((NB_LINES*NB_BYTES_PER_SPRITE_ROW*2)+NB_BYTES_PER_SPRITE_ROW+offset,a3)
 	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2
-	.endr	
-0:
-	* re-write control word in case it was overwritten
-	* (too slow to check that the loops below would overwrite it)
-	* not saving/restoring has a nasty effect: sometimes writing a tile
-	* writes over the sprite control word (which is in the middle of the sprite data)
-	* making it disappear...
-	move.w	d4,(a5)
-	move.w	d5,(4,a5)
-	move.l	(a7)+,a5
-	move.l	(a7)+,a4
-	rts
+	.endr
+	jra		0b
+	
 5:
+	lea		clear_tile_table(pc),a5
+	move.l	(a5,d3.w*4),a5	| 0..32 steps of 4, select proper draw routine
+	jmp		(a5)
+
+clear_all:
 	.set	offset,0
 	.rept	16
 	clr.b	(offset,a3)
 	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
 	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW
 	.endr
-	jra	0b
+	jra		0b
 
-1:
-	rts
-	
+
+copy_tile_table:
+	.long	copy_all
+	.long	copy_all
+	.long	copy_all
+	.long	copy_all
+	.long	copy_all
+	.long	copy_all
+	.long	copy_all
+	.long	copy_all
+
+
+clear_tile_table:
+	.long	clear_all
+	.long	clear_all
+	.long	clear_all
+	.long	clear_all
+	.long	clear_all
+	.long	clear_all
+	.long	clear_all
+	.long	clear_all
+
+
+
 blank_row:
 	.skip	8
 	
