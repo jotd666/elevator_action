@@ -676,6 +676,7 @@ _vblank:
 	tst.b	pause_flag
 	bne.b	23f
 
+
 	* set base for RAM
 	GET_RAM_START_IN_A6
 	* declare that we're in interrupt mode so osd_disable_interrupts/osd_enable_interrupts
@@ -697,6 +698,8 @@ _vblank:
 	move.b	d0,mid_screen_interrupt_count
 	jra		3f
 2:
+	* apply column scroll now
+	jbsr		really_set_columns_scroll
 
 	
 
@@ -1784,20 +1787,31 @@ osd_get_column_scroll:
 	move.l	(a7)+,a0
 	rts
 	
+
 * D0: scroll value
 * D1: column index 0-xx
 *
 * depends on gfx bank
 * if title gfx bank, index is letter index
 * if game gfx bank, index is elevator index
+
 osd_set_column_scroll:
-	movem.l	d0-d3/a0-a4,-(a7)
+	movem.l	d0-d1/a0,-(a7)
 	and.w	#0x7,d1
-	and.w	#0xFF,d0
 	lea		column_values,a0
 	move.b	d0,(a0,d1.w)
+	movem.l	(a7)+,d0-d1/a0
+	rts
 	
-	move.w	d1,d2
+really_set_columns_scroll:
+	moveq	#0,d5
+	lea		column_values,a5
+255:
+	moveq	#0,d0
+	move.b	(a5)+,d0
+	
+	move.w	d5,d2
+	move.w	d5,d1
 	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 32: SPRITE_STRUCT_SIZE
 	lea		sprite_table,a0
 	lea		(a0,d1.w),a2		| select proper sprite struct
@@ -1816,7 +1830,9 @@ osd_set_column_scroll:
 	moveq	#5,d4
 	jra		10f
 100:
-	movem.l	(a7)+,d0-d3/a0-a4
+	addq	#1,d5
+	cmp.b	#8,d5
+	jne		255b
 	rts
     
 
@@ -2294,7 +2310,11 @@ clear_but_\index:
 	.rept	\index
 	CLEAR_TILE_ROW
 	.endr
-	* skip this row
+	* skip this row, but clear control word row bitmap data
+	* (we're not doing this for end word, would be horrible
+	* to manage). Is that refinement even noticeable?
+	clr.l	(_control_word_row_save,a2)
+	clr.l	(4+_control_word_row_save,a2)	
 	NEXT_OFFSET	
 	.rept	7-\index
 	CLEAR_TILE_ROW
@@ -3073,11 +3093,8 @@ panel_screen_ptr:
 fg_drawed_screen_ptr:
 	.long	0
 fg_displayed_screen_ptr:
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	.long	0
-	.else
-	.long	0
-	.endif
+
 
 
 	.include	"sound_entries.68k"
@@ -3262,13 +3279,13 @@ game_copperlist:
 	DECL_COLOR_BANK	1
 game_sprite_colors:
 	DECL_COLORS	0,32
+game_sprites:
+	DECL_SPRITES
 
 bobs_bitplanes:
 	DECL_EVEN_BITPLANES	0,4
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-game_sprites:
-	DECL_SPRITES
 	DECL_COLOR_BANK	0
 	DECL_COLORS	0,TOTAL_NB_COLORS   | BOBs black colors
 
@@ -3320,6 +3337,8 @@ dynamic_row_43:
 	.word	0xEC01,0xFFFE
 	* priority: BOBs playfield on bottom (hidden)
 	.word	bplcon2,HIDDEN_BOBS_BPLCON2_VALUE
+	| no bobs from now on, get a LOT of drawing time
+	.word	 intreq,0x8010
 panel_end_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
 panel_end_tiles_colors:
@@ -3332,7 +3351,7 @@ panel_end_tiles_colors:
 	DECL_COLOR_BANK	1
 	DECL_COLORS	0,32
 
-	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
+
 
 	
     *.word  0x1401,0xFFFE		| wait more lines to set to black (big holes!)

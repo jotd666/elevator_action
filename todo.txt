@@ -23,13 +23,15 @@ elevator column scroll:
     on 3e: draw 8 pink + 1 green (clipped)
    implemented, not selecting proper column!
 
+- when avoiding control word, copy elevator tile data too! 
+- get rid of double buffering, racing the beam should work here (AGA) but alignment issue
 - if doesn't cut it with chipset exact on ECS, use 25FPS!!
 - command line options are wrong
 - insert coin when game is playing: is_game_playing doesn't work
 - level colors are wrong (but level 4 OK)
 - priority error when exiting rooms for player/enemy (lower sprite part)
 - priority error in car going to right: player head/car: mockup end!!
-- no exhaust fumes in car???
+- no exhaust fumes in car (probably chars too)
 - no "BONUS xxxx" message displayed: should just be cookie cut blit after the
   sprites have been drawn, copied from the tile bitplane, if "B" is on screen
   at the proper location on 0xC400-0xC7FF
@@ -45,7 +47,6 @@ minor:
   - when lights are out
   - on levels 2+
 - parasite graphics on top (sprites)
-- no sound for falling enemy: is there one?
 - "forgot documents" out-of-tune jump sound doesn"t play, should play
   then proceed to "return to door" loop
 
