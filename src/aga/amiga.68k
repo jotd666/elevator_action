@@ -1803,6 +1803,7 @@ osd_set_column_scroll:
 	movem.l	(a7)+,d0-d1/a0
 	rts
 	
+	* really sets scroll during copper interrupt
 really_set_columns_scroll:
 	moveq	#0,d5
 	lea		column_values,a5
@@ -1889,12 +1890,6 @@ really_set_columns_scroll:
 	move.l	d0,(4,a3)
 	move.l	d0,(NB_BYTES_PER_SPRITE_ROW+4,a3)
 	.endif
-	
-	* mark sprite columns (debug), d2 is the column
-	*lea		 pattern_debug_table(pc),A1
-	*move.l	(a1,d2.w*4),(NB_BYTES_PER_SPRITE_ROW*2,a3)
-	*move.l	(a1,d2.w*4),(NB_BYTES_PER_SPRITE_ROW*3,a3)
-	*move.l	(a1,d2.w*4),(NB_BYTES_PER_SPRITE_ROW*4,a3)
 
 	
 	move.l	(_saved_end_word_address,a2),a4
@@ -1950,16 +1945,6 @@ osd_w_videoram:
     .endif | OPT_DISABLE_BG_LAYER
 	rts
 
-pattern_debug_table:
-	.long	3   | I
-	.long	51	| II
-	.long	819 | III
-	.long	13107 | IIII
-	.long	209715 | IIIII
-	.long	3355443 | IIIIII
-	.long	53687091 | 
-	.long	858993459 | 
-	
 * < D7: 0-0x400
 * > D0: 
 compute_tile_xy:
@@ -2051,7 +2036,6 @@ change_elevator_copper_colors_ascending:
 	add.w	d0,a2		| select proper sprite structure, get current scroll position
 	MOVEQ	#0,d4
 	move.b	(_previous_y_position,a2),d4
-	* TODO take global scroll into account too
 	bsr		add_y_offset
 	sub.w	d4,d1		| sub from d1, get offset for copper rows
 	bmi		0f
@@ -2085,6 +2069,71 @@ change_elevator_copper_colors_ascending:
 0:
 	rts
 
+
+ELEVATOR_FLOOR_TILE = 0x3A
+ELEVATOR_CEILING_TILE = 0x3E
+
+* called when:
+* scroll value changes for that column
+* an elevator floor/ceiling tile is written or erased
+* ATM: called all the time
+
+* < D0: column
+update_elevator_copper_column:
+	* reset dynamic colors to "background"
+	* first compute start column address
+	move.b	d0,d5		| column number saved
+	jbsr	osd_get_column_scroll
+	moveq	#0,d7
+	move.b	d5,d7
+	add.w	d7,d7
+	add.w	d7,d7
+	addq.w	#2,d7
+	add.w	#0x4C00,d7
+	moveq	#0,d1
+	move.b	d0,d1			| column scroll
+							| divide by 8
+	lsl.w	#2,d1			| multiply by 32: this is the char offset
+	add.w	d1,d7
+	add.w	#0x40,d7		| skip 2 first rows, not visible
+	GET_RAM_START_IN_A6
+	lea	(a6,d7.w),a0		| column start memory address, scrolling taken into account
+	lea	(0x5000,a6),a1		| column end memory address, should not scan further than that
+	move.w	#2,d3		    | start of visible columns
+	move.b	d0,d4			| Y of copper
+	and.b	#7,d4			| start fine scroll
+	neg.b	d4				| as negative offset	
+0:
+	* scan the column
+	move.b	(a0),d2
+	cmp.b	#ELEVATOR_FLOOR_TILE,d2
+	jne		1f
+	* floor tile: color the inside starting down
+	* note that this is only enabled when the ceiling is
+	* not in visible screen
+	
+	jra		2f
+1:
+	cmp.b	#ELEVATOR_CEILING_TILE,d2
+	jne		1f
+	* ceil tile: color the inside TODO
+	
+	* then skip floor tile, no need!
+	add.w	#0xC0,a0
+	addq	#6,d3
+	add.b	#6*8,d4		| skip 48 rows
+	jra		2f
+1:
+	add.w	#0x20,a0
+	cmp.l	a0,a1
+	jcc		0f		| out of bounds: exit
+2:
+	addq	#1,d3
+	add.b	#8,d4	| skip 8 rows
+	cmp.w	#0x1F-6,d3
+	jcs		0b
+0:
+	rts
 
 *	cmp.b	#0x3A,d2
 *	jeq		update_sprite_bitmap
@@ -2161,6 +2210,27 @@ update_title_letters:
 	lsr.w	#1,d0
 	jra		update_sprite_bitmap
 
+
+	.macro	NEXT_OFFSET
+	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2	
+	.endm
+	
+	.macro	CLEAR_TILE_ROW
+	clr.b	(offset,a3)
+	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
+	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW	
+	.endm
+	
+	.macro	COPY_TILE_ROW
+	move.b	(a0)+,d0
+	move.b	d0,(offset,a3)
+	move.b	d0,(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
+	move.b	(a1)+,d0
+	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a3)
+	move.b	d0,((NB_LINES*NB_BYTES_PER_SPRITE_ROW*2)+NB_BYTES_PER_SPRITE_ROW+offset,a3)
+	NEXT_OFFSET
+	.endm
+	
 * < D0: X tile
 * < D1: Y tile
 * < D2: tile code
@@ -2208,7 +2278,8 @@ update_sprite_bitmap:
 	add.w	d0,a2		| select proper sprite structure
 	move.l	(_chip_data,a2),a3		| sprite data
 	move.l	(_saved_control_word_address,a2),a5
-	*move.w	(a5),d4		| store control word #1 (disabled)
+	move.w	(a5),d4		| store control word #1
+	move.w	(4,a5),d5		| store control word #2
 	
 	add.w	#NB_BYTES_PER_SPRITE_ROW*2,a3		| skip control word (done twice???)
 	add.w	d1,a3		| add X/Y offset
@@ -2253,56 +2324,27 @@ update_sprite_bitmap:
 	move.l	d0,a0
 	move.l	d1,a1
 	
-	* select proper tile copy/clear routine
-	lea		copy_tile_table(pc),a4
-	move.l	(a4,d3.w*4),a4	| 0..32 steps of 4, select proper draw routine
-	jmp		(a4)
+	
+copy_all:	
+	.set	offset,0
+	.rept	8
+	COPY_TILE_ROW
+	.endr
+	* restore control word just in case it was clobbered by
+	* a tile write
+	* (avoids elevator sprite blinking)
+	move.w 	d4,(a5)
+	clr.w	(2,a5)
+	move.w 	d5,(4,a5)
+	clr.w	(6,a5)
+	
 0:
-* check if control word was clobbered. Now avoided thanks to the
-* 9 different tile update/clear routines!
-*	cmp.w 	(a5),d4
-*	jeq		2222f
-*	jbsr	osd_break
-*2222:
+
 	move.l	(a7)+,a5
 	move.l	(a7)+,a4
 	rts
 	
-	.macro	NEXT_OFFSET
-	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2	
-	.endm
-	
-	.macro	CLEAR_TILE_ROW
-	clr.b	(offset,a3)
-	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
-	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW	
-	.endm
-	
-	.macro	COPY_TILE_ROW
-	move.b	(a0)+,d0
-	move.b	d0,(offset,a3)
-	move.b	d0,(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
-	move.b	(a1)+,d0
-	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a3)
-	move.b	d0,((NB_LINES*NB_BYTES_PER_SPRITE_ROW*2)+NB_BYTES_PER_SPRITE_ROW+offset,a3)
-	NEXT_OFFSET
-	.endm
-	
-	.macro	COPY_BUT_X	index
-copy_but_\index:	
-	.set	offset,0
-	.rept	\index
-	COPY_TILE_ROW
-	.endr
-	* skip this row
-	NEXT_OFFSET	
-	addq	#1,a0
-	addq	#1,a1
-	.rept	7-\index
-	COPY_TILE_ROW
-	.endr
-	jra		0b
-	.endm
+
 	
 	.macro	CLEAR_BUT_X	index
 clear_but_\index:
@@ -2310,11 +2352,7 @@ clear_but_\index:
 	.rept	\index
 	CLEAR_TILE_ROW
 	.endr
-	* skip this row, but clear control word row bitmap data
-	* (we're not doing this for end word, would be horrible
-	* to manage). Is that refinement even noticeable?
-	clr.l	(_control_word_row_save,a2)
-	clr.l	(4+_control_word_row_save,a2)	
+	* skip this row, or it will clobber control word row
 	NEXT_OFFSET	
 	.rept	7-\index
 	CLEAR_TILE_ROW
@@ -2323,15 +2361,8 @@ clear_but_\index:
 	.endm
 	
 	
-	* declare the "copy/clear but" routines
-	COPY_BUT_X	0
-	COPY_BUT_X	1
-	COPY_BUT_X	2
-	COPY_BUT_X	3
-	COPY_BUT_X	4
-	COPY_BUT_X	5
-	COPY_BUT_X	6
-	COPY_BUT_X	7
+	* declare the "clear but" routines
+
 	CLEAR_BUT_X	0
 	CLEAR_BUT_X	1
 	CLEAR_BUT_X	2
@@ -2345,13 +2376,7 @@ clear_but_\index:
 	
 
 
-	
-copy_all:	
-	.set	offset,0
-	.rept	8
-	COPY_TILE_ROW
-	.endr
-	jra		0b
+
 	
 5:
 	lea		clear_tile_table(pc),a4
@@ -2366,16 +2391,6 @@ clear_all:
 	jra		0b
 
 
-copy_tile_table:
-	.long	copy_all
-	.long	copy_but_0
-	.long	copy_but_1
-	.long	copy_but_2
-	.long	copy_but_3
-	.long	copy_but_4
-	.long	copy_but_5
-	.long	copy_but_6
-	.long	copy_but_7
 
 
 clear_tile_table:
