@@ -2016,15 +2016,16 @@ update_elevator_copper_column:
 	and.b	#7,d4			| start fine scroll
 	neg.b	d4				| as negative offset	
 	
+	* sets fill colors
 	lea	elevators_dyn_colors,a2
-	move.w	(a2)+,d6	| temp depends on level
-	move.w	(a2),d7		| temp depends on level
+	move.l	(a2),outside_elevator_color	| temp depends on level
+	*move.w	(a2),inside_elevator_color		| temp depends on level
 
 	lea	dynamic_rows,a2
 	* compute column offset for color, always the same
 	lsl.w	#3,d5		| times 8, select proper copper column
 	add.w	#6,d5		| offset of changeable color
-	
+	st		d6			| first pass
 	
 0:
 	* scan the column
@@ -2037,7 +2038,7 @@ update_elevator_copper_column:
 	
 	move.l	a2,-(a7)
 	move.w	#47,d1
-	move.w	d6,d0
+	move.w	inside_elevator_color,d0
 111:
 	jbsr	write_row_color
 	subq	#4,a2
@@ -2069,13 +2070,18 @@ update_elevator_copper_column:
 	jra		2f
 1:
 	* write background color
-	move.w	d7,d0
+	move.w	outside_elevator_color,d0
 	jbsr	write_row_color
 	addq	#4,a2
 	
 	add.w	#0x20,a0
 	cmp.l	a0,a1
-	jcc		0f		| out of bounds: exit
+	jcs		2f
+	* out of bounds: exit but first we do a second pass!
+	tst.b	d6
+	jeq		0f
+	clr.b	d6
+	sub.w	#0x400,a0		| wrap around
 2:
 	addq	#1,d3
 	add.b	#8,d4	| skip 8 rows
@@ -2913,9 +2919,10 @@ old_actiview:
 	.long	0
 old_stack:
 	.long	0
-return_address:
-	.long	0
-	
+outside_elevator_color:
+	.word	0
+inside_elevator_color:	| MUST FOLLOW outside_elevator_color
+	.word	0
 	
 _tag:
 		.long	WHDLTAG_MONITOR_GET
