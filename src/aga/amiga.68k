@@ -36,6 +36,7 @@ SCREEN_ADDRESS = 0xC400
 
 NB_UPPER_DYN_ROWS = 0x43
 NB_LOWER_DYN_ROWS = NB_UPPER_DYN_ROWS+41
+NB_TOTAL_DYN_ROWS = NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS
 
 * if the alloc_sprite & update_sprite routines
 * are reused, changing those offsets can make
@@ -701,7 +702,6 @@ _vblank:
 	* apply column scroll now
 	jbsr		really_set_columns_scroll
 
-	
 
 	
 	subq.w	#1,delay_timer
@@ -717,7 +717,12 @@ _vblank:
 	* double buffering only in-game
 	tst.b	current_gfx_bank
 	jeq		23f
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	bsr		switch_screen_buffers
+	.endif
+	moveq	#3,d0
+	jbsr	update_elevator_copper_column	
+	
 
 23:
 	* don't blit, but update hw sprites as it doesn't cost a lot
@@ -1958,121 +1963,26 @@ compute_tile_xy:
 	lsl.w	#3,d1		| times 8
 	rts
 
-	.macro	WRITE_ELEVATOR_COLOR
-	.ifndef	RELEASE
-	cmp.w	#color,(-2,a3)
-	jeq		1001f
-	jbsr	osd_break
-1001:
-	.endif
-	move.w	d2,(a3)
-	.endm
-	
-add_y_offset:
-	* main scroll value and elevators scroll values
-	* seem to differ by 0x80
-	move.b	d5,d0
-	jbsr	osd_get_column_scroll
-	sub.b	d0,d1
-	sub.b	#0x20,d1
 
-	rts
-	
-* < D0: sprite number
-* < D1: X/Y offset to apply to data
-* < D2.W: color 1 to draw (8*6 times)
-* < D3.W: color 2 to draw (1 time)
-change_elevator_copper_colors_descending:
-	lsr.w	#SPRITE_POWER_OF_2+1,d1	  | consider only Y offset
-	move.w	d0,d5
-	lsl.w	#SPRITE_POWER_OF_2+3,d0	  | times SPRITE_STRUCT_SIZE
-	lea		sprite_table,a2
-	add.w	d0,a2		| select proper sprite structure, get current scroll position
-	MOVEQ	#0,d4
-	move.b	(_previous_y_position,a2),d4
-	bsr		add_y_offset
-	sub.w	d4,d1		| sub from d1, get offset for copper rows
-	bmi		0f
-	cmp.w	#NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS,d1
-	bcc		0f
-	
-	lea	dynamic_rows,a2
-	add.w	d1,d1
-	add.w	d1,d1
-	lsl.w	#3,d5		| times 8, select proper copper column
-	add.w	#6,d5
-	moveq	#48-1,d4
-	* now write 8 times color 1
-1:
-	move.l	(a2,d1.w),a3	| select proper row
-	add.w	d5,a3		| proper start address
-	WRITE_ELEVATOR_COLOR
-	addq	#4,d1		| next row
-	cmp.w	#(NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS)*4,d1
-	bcc		0f		| clipping
-	dbf		d4,1b
-	* now write 8 times color 2 (temp)
-	moveq	#7,d4
-1:
-	WRITE_ELEVATOR_COLOR
-	add.w	#8,a2			| next row
-	addq	#4,d1
-	cmp.w	#(NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS)*4,d1
-	bcc		0f		| clipping
-	dbf		d4,1b
-	
-0:
-	rts
-	
-* < D0: sprite number
-* < D1: X/Y offset to apply to data
-* < D2.W: color 1 to draw (8*6 times)
-* < D3.W: color 2 to draw (1 time)
-change_elevator_copper_colors_ascending:
-	lsr.w	#SPRITE_POWER_OF_2+1,d1	  | consider only Y offset
-	move.w	d0,d5
-	lsl.w	#SPRITE_POWER_OF_2+3,d0	  | times SPRITE_STRUCT_SIZE
-	lea		sprite_table,a2
-	add.w	d0,a2		| select proper sprite structure, get current scroll position
-	MOVEQ	#0,d4
-	move.b	(_previous_y_position,a2),d4
-	bsr		add_y_offset
-	sub.w	d4,d1		| sub from d1, get offset for copper rows
-	bmi		0f
-	cmp.w	#NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS,d1
-	bcc		0f
-	
-	lea	dynamic_rows,a2
-	add.w	d1,d1
-	add.w	d1,d1
-	lsl.w	#3,d5		| times 8, select proper copper column
-	add.w	#6,d5
-	moveq	#48-1,d4
-	* now write x times color 1
-1:
-	move.l	(a2,d1.w),a3	| select proper row
-	add.w	d5,a3		| proper start address
-	WRITE_ELEVATOR_COLOR
-	
-	subq	#4,d1
-	bmi		0f		| clipping
-	dbf		d4,1b
-	* now write 8 times color 2 (temp)
-	moveq	#7,d4
-1:
-	WRITE_ELEVATOR_COLOR
-	sub.w	#8,a2			| prev row
-	subq	#4,d1
-	bmi		0f		| clipping
-	dbf		d4,1b
-	
-0:
-	rts
 
 
 ELEVATOR_FLOOR_TILE = 0x3A
 ELEVATOR_CEILING_TILE = 0x3E
 
+* < A2: dyn row pointer
+* < D0: color
+* < D5: offset
+write_row_color:
+	move.l	(a2),a3
+	.ifndef	RELEASE
+	cmp.w	#color,(-2,a3,d5.w)
+	jeq		1001f
+	jbsr	osd_break
+1001:
+	.endif
+	move.w	d0,(a3,d5.w)
+	rts
+	
 * called when:
 * scroll value changes for that column
 * an elevator floor/ceiling tile is written or erased
@@ -2080,10 +1990,12 @@ ELEVATOR_CEILING_TILE = 0x3E
 
 * < D0: column
 update_elevator_copper_column:
+	move.b	#0,0x200
 	* reset dynamic colors to "background"
 	* first compute start column address
+	moveq	#0,d5
 	move.b	d0,d5		| column number saved
-	jbsr	osd_get_column_scroll
+	jbsr	osd_get_column_scroll   | problem here with column scroll
 	moveq	#0,d7
 	move.b	d5,d7
 	add.w	d7,d7
@@ -2103,6 +2015,17 @@ update_elevator_copper_column:
 	move.b	d0,d4			| Y of copper
 	and.b	#7,d4			| start fine scroll
 	neg.b	d4				| as negative offset	
+	
+	lea	elevators_dyn_colors,a2
+	move.w	(a2)+,d6	| temp depends on level
+	move.w	(a2),d7		| temp depends on level
+
+	lea	dynamic_rows,a2
+	* compute column offset for color, always the same
+	lsl.w	#3,d5		| times 8, select proper copper column
+	add.w	#6,d5		| offset of changeable color
+	
+	
 0:
 	* scan the column
 	move.b	(a0),d2
@@ -2112,18 +2035,44 @@ update_elevator_copper_column:
 	* note that this is only enabled when the ceiling is
 	* not in visible screen
 	
+	move.l	a2,-(a7)
+	move.w	#47,d1
+	move.w	d6,d0
+111:
+	jbsr	write_row_color
+	subq	#4,a2
+	cmp.l	#dynamic_rows,a2
+	jcs		112f			| out of the screen
+	dbf		d1,111b
+112:
+	move.l	(a7)+,a2
 	jra		2f
 1:
 	cmp.b	#ELEVATOR_CEILING_TILE,d2
 	jne		1f
-	* ceil tile: color the inside TODO
+	* ceil tile: color the inside
 	
 	* then skip floor tile, no need!
 	add.w	#0xC0,a0
 	addq	#6,d3
 	add.b	#6*8,d4		| skip 48 rows
+	
+	move.w	#47,d1
+	move.w	d6,d0
+111:
+	jbsr	write_row_color
+	addq	#4,a2
+	cmp.l	#dynamic_rows+(4*NB_TOTAL_DYN_ROWS),a2
+	jcc		0f			| out of the screen, finished!
+	dbf		d1,111b
+
 	jra		2f
 1:
+	* write background color
+	move.w	d7,d0
+	jbsr	write_row_color
+	addq	#4,a2
+	
 	add.w	#0x20,a0
 	cmp.l	a0,a1
 	jcc		0f		| out of bounds: exit
@@ -2135,31 +2084,6 @@ update_elevator_copper_column:
 0:
 	rts
 
-*	cmp.b	#0x3A,d2
-*	jeq		update_sprite_bitmap
-*	
-*	* bottom of elevator
-*	movem.w	d0-d5,-(a7)
-*	lea		elevators_dyn_colors,a3
-*	move.w	(a3)+,D2	
-*	move.w	(a3),d3
-*	jbsr	change_elevator_copper_colors_ascending
-*	movem.w	(a7)+,d0-d5
-*	
-*	jra		
-*1:
-*	cmp.b	#0x3E,d2
-*	jne		update_sprite_bitmap
-*
-*	* top of elevator: set elevator background color on relevant col/row
-*	movem.w	d0-d5,-(a7)
-*	
-*	lea		elevators_dyn_colors,a3
-*	move.w	(a3)+,D2	
-*	move.w	(a3),d3
-*	
-*	jbsr	change_elevator_copper_colors_descending
-*	movem.w	(a7)+,d0-d5
 
 * < D7: 0-0xC00 address
 * < D0: tile code
