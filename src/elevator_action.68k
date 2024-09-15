@@ -9737,11 +9737,11 @@ character_on_doorstep_3d8e:
 	                                    	| [$3ca2: ret]
 
 character_exited_door_3ca3:
-	lea	player_structure_851A(a6),a5
-	cmp.l	a5,a2
-	bne	44f
-	jbsr	osd_break
-44:
+*	lea	player_structure_851A(a6),a5   | debug this??
+*	cmp.l	a5,a2
+*	bne	44f
+*	jbsr	osd_break
+*44:
 	move.b	#0x02,(character_display_priority_04,a2)                 	| [$3ca3: ld   (ix+$04),$02]
 	move.b	#CS_ON_GROUND_00,(character_situation_06,a2)	| [$3ca7: ld   (ix+character_situation_06),CS_ON_GROUND_00]
 	move.b	#0x1D,(character_y_offset_down_02,a2) | [$3cab: ld   (ix+$02),$1D]

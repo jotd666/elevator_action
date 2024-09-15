@@ -37,6 +37,9 @@ SCREEN_ADDRESS = 0xC400
 NB_UPPER_DYN_ROWS = 0x43
 NB_LOWER_DYN_ROWS = NB_UPPER_DYN_ROWS+41
 NB_TOTAL_DYN_ROWS = NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS
+ELEVATOR_HEIGHT_IN_TILES = 6
+ELEVATOR_FLOOR_TILE = 0x3A
+ELEVATOR_CEILING_TILE = 0x3E
 
 * if the alloc_sprite & update_sprite routines
 * are reused, changing those offsets can make
@@ -1977,13 +1980,13 @@ compute_tile_xy:
 
 
 
-ELEVATOR_FLOOR_TILE = 0x3A
-ELEVATOR_CEILING_TILE = 0x3E
 
 * < A2: dyn row pointer
 * < D0: color
 * < D5: offset in row
 write_row_color:
+	cmp.l	#dynamic_rows,a2
+	jcs		0f				| upper clip, probably can't happen
 	move.l	(a2),a3
 	.ifndef	RELEASE
 	cmp.w	#color,(-2,a3,d5.w)
@@ -1992,6 +1995,7 @@ write_row_color:
 1001:
 	.endif
 	move.w	d0,(a3,d5.w)
+0:
 	rts
 	
 * called when:
@@ -2014,8 +2018,8 @@ update_elevator_copper_column:
 	add.w	#0x4C40,d7
 	moveq	#0,d1
 	move.b	d0,d1			| column scroll
-							| divide by 8
-	lsl.w	#2,d1			| multiply by 32: this is the char offset
+	lsr.w	#3,d1			| divide by 8
+	lsl.w	#5,d1			| multiply by 32: this is the char offset
 	add.w	d1,d7
 	add.w	#0x40,d7		| skip 2 first rows, not visible
 	GET_RAM_START_IN_A6
@@ -2024,8 +2028,10 @@ update_elevator_copper_column:
 	move.w	#2,d3		    | start of visible columns
 	moveq	#0,d4
 	move.b	d0,d4			| Y of copper
+	addq	#1,d4
 	and.b	#7,d4			| start fine scroll
-	neg.b	d4				| as negative offset	
+	add.w	d4,d4
+	add.w	d4,d4
 	
 	* sets fill colors
 	lea	elevators_dyn_colors,a2
@@ -2033,24 +2039,23 @@ update_elevator_copper_column:
 	*move.w	(a2),outside_elevator_color		| temp depends on level
 
 	lea	dynamic_rows,a2
+	sub.w	d4,a2
 	* compute column offset for color, always the same
 	lsl.w	#3,d5		| times 8, select proper copper column
 	add.w	#6,d5		| offset of changeable color
 	st		d6			| first pass
-	move.b	#0,0x200
 	
 0:
 	* scan the column
 	move.b	(a0),d2
 	cmp.b	#ELEVATOR_FLOOR_TILE,d2
 	jne		1f
-	move.b	#0,0x201
 	* floor tile: color the inside starting down
 	* note that this is only enabled when the ceiling is
 	* not in visible screen
 	
 	move.l	a2,-(a7)
-	move.w	#47,d1
+	move.w	#ELEVATOR_HEIGHT_IN_TILES*8-1,d1
 	move.w	inside_elevator_color,d0
 111:
 	jbsr	write_row_color
@@ -2065,13 +2070,12 @@ update_elevator_copper_column:
 	cmp.b	#ELEVATOR_CEILING_TILE,d2
 	jne		1f
 	* ceil tile: color the inside
-	move.b	#0,0x200
 	* then skip floor tile, no need!
-	add.w	#0xC0,a0
-	addq	#6,d3
-	add.b	#6*8,d4		| skip 48 rows
+	add.w	#0x20*ELEVATOR_HEIGHT_IN_TILES,a0
+	addq	#ELEVATOR_HEIGHT_IN_TILES,d3
+	add.b	#ELEVATOR_HEIGHT_IN_TILES*8-1,d4		| skip 48 rows
 	
-	move.w	#47,d1
+	move.w	#ELEVATOR_HEIGHT_IN_TILES*8-1,d1
 	move.w	inside_elevator_color,d0
 111:
 	jbsr	write_row_color
@@ -2098,12 +2102,10 @@ update_elevator_copper_column:
 	* out of bounds: exit but first we do a second pass!
 	tst.b	d6
 	jeq		0f
-	move.b	#0x2,0x202
 	clr.b	d6
 	sub.w	#0x400,a0		| wrap around
 2:
 	addq	#1,d3
-	add.b	#8,d4	| skip 8 rows
 	cmp.w	#0x1F-6,d3
 	jcs		0b
 0:
