@@ -720,8 +720,19 @@ _vblank:
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	bsr		switch_screen_buffers
 	.endif
+	* TEMP TEMP!!!
+*	moveq	#1,d0
+*	jbsr	update_elevator_copper_column	
+*	moveq	#2,d0
+*	jbsr	update_elevator_copper_column	
 	moveq	#3,d0
 	jbsr	update_elevator_copper_column	
+*	moveq	#4,d0
+*	jbsr	update_elevator_copper_column	
+*	moveq	#5,d0
+*	jbsr	update_elevator_copper_column	
+*	moveq	#6,d0
+*	jbsr	update_elevator_copper_column	
 	
 
 23:
@@ -1971,7 +1982,7 @@ ELEVATOR_CEILING_TILE = 0x3E
 
 * < A2: dyn row pointer
 * < D0: color
-* < D5: offset
+* < D5: offset in row
 write_row_color:
 	move.l	(a2),a3
 	.ifndef	RELEASE
@@ -1990,7 +2001,6 @@ write_row_color:
 
 * < D0: column
 update_elevator_copper_column:
-	move.b	#0,0x200
 	* reset dynamic colors to "background"
 	* first compute start column address
 	moveq	#0,d5
@@ -2001,7 +2011,7 @@ update_elevator_copper_column:
 	add.w	d7,d7
 	add.w	d7,d7
 	addq.w	#2,d7
-	add.w	#0x4C00,d7
+	add.w	#0x4C40,d7
 	moveq	#0,d1
 	move.b	d0,d1			| column scroll
 							| divide by 8
@@ -2012,26 +2022,29 @@ update_elevator_copper_column:
 	lea	(a6,d7.w),a0		| column start memory address, scrolling taken into account
 	lea	(0x5000,a6),a1		| column end memory address, should not scan further than that
 	move.w	#2,d3		    | start of visible columns
+	moveq	#0,d4
 	move.b	d0,d4			| Y of copper
 	and.b	#7,d4			| start fine scroll
 	neg.b	d4				| as negative offset	
 	
 	* sets fill colors
 	lea	elevators_dyn_colors,a2
-	move.l	(a2),outside_elevator_color	| temp depends on level
-	*move.w	(a2),inside_elevator_color		| temp depends on level
+	move.l	(a2),inside_elevator_color	| temp depends on level
+	*move.w	(a2),outside_elevator_color		| temp depends on level
 
 	lea	dynamic_rows,a2
 	* compute column offset for color, always the same
 	lsl.w	#3,d5		| times 8, select proper copper column
 	add.w	#6,d5		| offset of changeable color
 	st		d6			| first pass
+	move.b	#0,0x200
 	
 0:
 	* scan the column
 	move.b	(a0),d2
 	cmp.b	#ELEVATOR_FLOOR_TILE,d2
 	jne		1f
+	move.b	#0,0x201
 	* floor tile: color the inside starting down
 	* note that this is only enabled when the ceiling is
 	* not in visible screen
@@ -2052,14 +2065,14 @@ update_elevator_copper_column:
 	cmp.b	#ELEVATOR_CEILING_TILE,d2
 	jne		1f
 	* ceil tile: color the inside
-	
+	move.b	#0,0x200
 	* then skip floor tile, no need!
 	add.w	#0xC0,a0
 	addq	#6,d3
 	add.b	#6*8,d4		| skip 48 rows
 	
 	move.w	#47,d1
-	move.w	d6,d0
+	move.w	inside_elevator_color,d0
 111:
 	jbsr	write_row_color
 	addq	#4,a2
@@ -2070,16 +2083,22 @@ update_elevator_copper_column:
 	jra		2f
 1:
 	* write background color
+	move.w	#7,d1
 	move.w	outside_elevator_color,d0
+111:
 	jbsr	write_row_color
 	addq	#4,a2
-	
+	cmp.l	#dynamic_rows+(4*NB_TOTAL_DYN_ROWS),a2
+	jcc		0f			| out of the screen, finished!
+	dbf		d1,111b
+	* next character row
 	add.w	#0x20,a0
 	cmp.l	a0,a1
-	jcs		2f
+	jcc		2f
 	* out of bounds: exit but first we do a second pass!
 	tst.b	d6
 	jeq		0f
+	move.b	#0x2,0x202
 	clr.b	d6
 	sub.w	#0x400,a0		| wrap around
 2:
@@ -2919,9 +2938,9 @@ old_actiview:
 	.long	0
 old_stack:
 	.long	0
-outside_elevator_color:
+inside_elevator_color:
 	.word	0
-inside_elevator_color:	| MUST FOLLOW outside_elevator_color
+outside_elevator_color:	| MUST FOLLOW inside_elevator_color
 	.word	0
 	
 _tag:
