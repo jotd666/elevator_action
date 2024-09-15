@@ -37,7 +37,7 @@ SCREEN_ADDRESS = 0xC400
 NB_UPPER_DYN_ROWS = 0x43
 NB_LOWER_DYN_ROWS = NB_UPPER_DYN_ROWS+41
 NB_TOTAL_DYN_ROWS = NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS
-ELEVATOR_HEIGHT_IN_TILES = 6
+ELEVATOR_HEIGHT_IN_TILES = 8
 ELEVATOR_FLOOR_TILE = 0x3A
 ELEVATOR_CEILING_TILE = 0x3E
 
@@ -2053,9 +2053,8 @@ update_elevator_copper_column:
 	* floor tile: color the inside starting down
 	* note that this is only enabled when the ceiling is
 	* not in visible screen
-	
 	move.l	a2,-(a7)
-	move.w	#ELEVATOR_HEIGHT_IN_TILES*8-1,d1
+	move.w	#(ELEVATOR_HEIGHT_IN_TILES-2)*8+1,d1
 	move.w	inside_elevator_color,d0
 111:
 	jbsr	write_row_color
@@ -2065,7 +2064,7 @@ update_elevator_copper_column:
 	dbf		d1,111b
 112:
 	move.l	(a7)+,a2
-	jra		2f
+	jra		20f				| next row
 1:
 	cmp.b	#ELEVATOR_CEILING_TILE,d2
 	jne		1f
@@ -2073,9 +2072,8 @@ update_elevator_copper_column:
 	* then skip floor tile, no need!
 	add.w	#0x20*ELEVATOR_HEIGHT_IN_TILES,a0
 	addq	#ELEVATOR_HEIGHT_IN_TILES,d3
-	add.b	#ELEVATOR_HEIGHT_IN_TILES*8-1,d4		| skip 48 rows
 	
-	move.w	#ELEVATOR_HEIGHT_IN_TILES*8-1,d1
+	move.w	#(ELEVATOR_HEIGHT_IN_TILES-2)*8+1,d1
 	move.w	inside_elevator_color,d0
 111:
 	jbsr	write_row_color
@@ -2084,7 +2082,7 @@ update_elevator_copper_column:
 	jcc		0f			| out of the screen, finished!
 	dbf		d1,111b
 
-	jra		2f
+	jra		21f
 1:
 	* write background color
 	move.w	#7,d1
@@ -2096,7 +2094,9 @@ update_elevator_copper_column:
 	jcc		0f			| out of the screen, finished!
 	dbf		d1,111b
 	* next character row
+20:
 	add.w	#0x20,a0
+21:
 	cmp.l	a0,a1
 	jcc		2f
 	* out of bounds: exit but first we do a second pass!
