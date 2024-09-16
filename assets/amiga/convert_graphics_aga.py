@@ -33,19 +33,26 @@ varying_palettes = [
 ((255,176,218),  # pink, inside elevator
 (0x25,0xB0,0xB0),  # blue, walls
 (0X25,0x75,0x75),  # elevator background (around wire)
+(0xFF,0,0)         # brick color (red)
 ),
 # level 2
 ((0xB0,0xFF,0xFF),  # cyan, inside elevator
 (0xDA,0x8A,0xDA),   # pink, walls
-(0xFF,0xDA,0xFF)),  # light pink, elevator background
+(0xFF,0xDA,0xFF),  # light pink, elevator background
+(0xFF,0xFF,0x8A),  # brick color (yellowish)
+),
 # level 3
 ((0xFF,0x8A,0xB0),  # pink, inside elevator
 (0xDA,0xFF,0xFF),   # light gray, walls
-(0,0xB0,0xDA)),  # light blue, elevator background
+(0,0xB0,0xDA),     # light blue, elevator background
+(0xFF,0,0)         # brick color (red)
+),
 # level 4
 ((0x25,0xDA,0xDA),  # blue, inside elevator
 (0x8A,0x8A,0x8A),   # dark gray, walls
-(1,1,1)),  # black, elevator background
+(1,1,1),  # black, elevator background
+(0xB0,0xFF,0)         # brick color (greenish)
+)
 ]
 
 

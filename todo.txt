@@ -7,7 +7,7 @@
 TODO/ISSUES:
 
 - elevator engine sound plays when player EXITS elevator
-- different colors per level, including brick wall at the bottom!
+- different colors per level, **including brick wall at the bottom!**
 
 
 - get rid of double buffering, racing the beam should work here (AGA) but alignment issue
@@ -16,7 +16,6 @@ TODO/ISSUES:
 - insert coin when game is playing: is_game_playing doesn't work
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
-- priority error in car going to right: player head/car: mockup end!!
 - no exhaust fumes in car (probably chars too)
 - no "BONUS xxxx" message displayed: should just be cookie cut blit (using image itself as mask) after the
   sprites have been drawn, copied from the tile bitplane, if "B" is on screen

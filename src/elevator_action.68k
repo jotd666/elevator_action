@@ -267,6 +267,10 @@ hex_table:
 *	map(0xd50f, 0xd50f).mirror(0x00f0).nopw()|
 *	map(0xd600, 0xd600).mirror(0x00ff).writeonly().share(m_video_mode)|
 
+* sprite_and_priority_shadow_ram_80F1 this is the array (5 values per item)
+* where all sprites are handled originally. Then copied by priority into shadow ram
+* then in sprite ram
+
 * moving door slot offsets
 moving_door_x_00 = 0x0
 moving_door_unknown_01 = 0x1
@@ -2988,9 +2992,9 @@ l_0c31:
 	rts                                    	| [$0c36: ret]
 l_0c37:
 	clr.b	d0                               	| [$0c37: ld   a,$00]
-	move.b	d0,l_8035(a6)                   	| [$0c39: ld   ($8035),a]
-	move.b	d0,l_8034(a6)                   	| [$0c3c: ld   ($8034),a]
-	jbsr	l_0ccd                            	| [$0c3f: call $0CCD]
+	move.b	d0,car_x_8035(a6)                   	| [$0c39: ld   ($8035),a]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0c3c: ld   ($8034),a]
+	jbsr	draw_car_0ccd                            	| [$0c3f: call $0CCD]
 	rts                                    	| [$0c42: ret]
 
 protection_0C43:
@@ -3010,62 +3014,64 @@ l_0c43:
 												| [$0c50: pop  de]
 * bootleg: end NOP patch
 	move.b	#0x02,d0                        	| [$0c51: ld   a,$02]
-	move.b	d0,l_8034(a6)                   	| [$0c53: ld   ($8034),a]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0c53: ld   ($8034),a]
 	move.b	l_8036(a6),d0                   	| [$0c56: ld   a,($8036)]
 	cmp.b	#0xFF,d0                         	| [$0c59: cp   $FF]
 	jeq	l_0c68                             	| [$0c5b: jp   z,$0C68]
 	cmp.b	#0xFC,d0                         	| [$0c5e: cp   $FC]
 	jeq	l_0c68                             	| [$0c60: jp   z,$0C68]
 	move.b	#0x01,d0                        	| [$0c63: ld   a,$01]
-	move.b	d0,l_8034(a6)                   	| [$0c65: ld   ($8034),a]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0c65: ld   ($8034),a]
 l_0c68:
-	jbsr	l_0ccd                            	| [$0c68: call $0CCD]
-	*jbsr	l_0d1b                            	| [$0c6b: call $0D1B]
+	jbsr	draw_car_0ccd                       | [$0c68: call $0CCD]
+	jbsr	hide_car_sprite_wraparound_0d1b     | [$0c6b: call $0D1B]
 	move.b	l_8033(a6),d0                   	| [$0c6e: ld   a,($8033)]
 	addq.b	#1,d0                           	| [$0c71: inc  a]
 	move.b	d0,l_8033(a6)                   	| [$0c72: ld   ($8033),a]
-	move.b	l_8035(a6),d0                   	| [$0c75: ld   a,($8035)]
+	move.b	car_x_8035(a6),d0                   	| [$0c75: ld   a,($8035)]
 	cmp.b	#0xE0,d0                         	| [$0c78: cp   $E0]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$0c7a: ret  nz] [...]
 0:
+	* car exited the building
 	st.b	d0                                	| [$0c7b: ld   a,$FF]
 	move.b	d0,l_8033(a6)                   	| [$0c7d: ld   ($8033),a]
 	rts                                    	| [$0c80: ret]
 l_0c81:
 	move.b	#0x01,d0                        	| [$0c81: ld   a,$01]
-	move.b	d0,l_8034(a6)                   	| [$0c83: ld   ($8034),a]
-	move.b	l_8035(a6),d0                   	| [$0c86: ld   a,($8035)]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0c83: ld   ($8034),a]
+	move.b	car_x_8035(a6),d0                   	| [$0c86: ld   a,($8035)]
 	addq.b	#0x04,d0                        	| [$0c89: add  a,$04]
-	move.b	d0,l_8035(a6)                   	| [$0c8b: ld   ($8035),a]
+	move.b	d0,car_x_8035(a6)                   	| [$0c8b: ld   ($8035),a]
 	jra	l_0c68                             	| [$0c8e: jp   $0C68]
 l_0c91:
 	move.b	#0x03,d0                        	| [$0c91: ld   a,$03]
-	move.b	d0,l_8034(a6)                   	| [$0c93: ld   ($8034),a]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0c93: ld   ($8034),a]
 	move.b	l_8036(a6),d0                   	| [$0c96: ld   a,($8036)]
 	cmp.b	#0xFD,d0                         	| [$0c99: cp   $FD]
 	jne	l_0c68                             	| [$0c9b: jp   nz,$0C68]
-	move.b	l_8035(a6),d0                   	| [$0c9e: ld   a,($8035)]
+	move.b	car_x_8035(a6),d0                   	| [$0c9e: ld   a,($8035)]
 	addq.b	#0x04,d0                        	| [$0ca1: add  a,$04]
-	move.b	d0,l_8035(a6)                   	| [$0ca3: ld   ($8035),a]
+	move.b	d0,car_x_8035(a6)                   	| [$0ca3: ld   ($8035),a]
 	move.b	#0x07,d0                        	| [$0ca6: ld   a,$07]
-	move.b	d0,l_8034(a6)                   	| [$0ca8: ld   ($8034),a]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0ca8: ld   ($8034),a]
 	jra	l_0c68                             	| [$0cab: jp   $0C68]
 l_0cae:
 	move.b	#0x04,d0                        	| [$0cae: ld   a,$04]
-	move.b	d0,l_8034(a6)                   	| [$0cb0: ld   ($8034),a]
-	move.b	l_8035(a6),d0                   	| [$0cb3: ld   a,($8035)]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0cb0: ld   ($8034),a]
+	move.b	car_x_8035(a6),d0                   	| [$0cb3: ld   a,($8035)]
 	subq.b	#0x04,d0                        	| [$0cb6: sub  $04]
-	move.b	d0,l_8035(a6)                   	| [$0cb8: ld   ($8035),a]
+	move.b	d0,car_x_8035(a6)                   	| [$0cb8: ld   ($8035),a]
 	cmp.b	#0xE0,d0                         	| [$0cbb: cp   $E0]
 	jcs	l_0c68                             	| [$0cbd: jp   c,$0C68]
 	cmp.b	#0xF0,d0                         	| [$0cc0: cp   $F0]
 	jcc	l_0c68                             	| [$0cc2: jp   nc,$0C68]
 	move.b	#0x06,d0                        	| [$0cc5: ld   a,$06]
-	move.b	d0,l_8034(a6)                   	| [$0cc7: ld   ($8034),a]
+	move.b	d0,player_in_car_state_8034(a6)                   	| [$0cc7: ld   ($8034),a]
 	jra	l_0c68                             	| [$0cca: jp   $0C68]
-l_0ccd:
-	moveq	#0,d1                               	| [$0ccd: ld   b,$00]
+	
+draw_car_0ccd:
+	moveq	#0,d1                               | [$0ccd: ld   b,$00]
 	clr.b	d2                               	| [$0ccf: ld   c,$00]
 	move.b	#0x06,d3                        	| [$0cd1: ld   d,$06]
 	jbsr	compute_delta_height_1e6c                            	| [$0cd3: call $1E6C]
@@ -3074,67 +3080,69 @@ l_0ccd:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$0cd8: ret  nz] [...]
 0:
-	move.b	l_8034(a6),d0                   	| [$0cd9: ld   a,($8034)]
+	move.b	player_in_car_state_8034(a6),d0                   	| [$0cd9: ld   a,($8034)]
 	move.b	d6,d2                           	| [$0cdc: ld   c,l]
-	add.b	d0,d0                            	| [$0cdd: add  a,a]
-	lsl.b	#3,d0                            	| [$0cde: add  a,a]
+												| [$0cdd: add  a,a]
+	lsl.b	#4,d0                            	| [$0cde: add  a,a]
 												| [$0cdf: add  a,a]
 												| [$0ce0: add  a,a]
-	moveq   #0,d3                               	| [$0ce2: ld   d,$00]
+	moveq   #0,d3                               | [$0ce2: ld   d,$00]
 	move.b	d0,d3                           	| [$0ce1: ld   e,a]
 	lea	table_0D2D,a0                          	| [$0ce4: ld   hl,$0D2D]
 	add.w	d3,a0                            	| [$0ce7: add  hl,de]
- 	lea	l_8146(a6),a1                      	| [$0ce8: ld   de,$8146]
+ 	lea	l_8146(a6),a1                      	    | [$0ce8: ld   de,$8146]
 	move.b	#0x03,d1                        	| [$0ceb: ld   b,$03]
-	jbsr	l_0d03                            	| [$0ced: call $0D03]
-	jbsr	l_0d03                            	| [$0cf0: call $0D03]
-	move.b	l_8034(a6),d0                   	| [$0cf3: ld   a,($8034)]
+	jbsr	draw_car_part_0d03                  | [$0ced: call $0D03]
+	jbsr	draw_car_part_0d03                  | [$0cf0: call $0D03]
+	move.b	player_in_car_state_8034(a6),d0                   	| [$0cf3: ld   a,($8034)]
 	                            	| [$0cf6: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0cf7: ret  z] [...]
 0:
+	* != 0: player in car, 2: dampeners bouncing when player enters, 1: car moving
 	lea	l_8123(a6),a1                      	| [$0cf8: ld   de,$8123]
 	move.b	#0x02,d1                        	| [$0cfb: ld   b,$02]
-	jbsr	l_0d03                            	| [$0cfd: call $0D03]
-	lea	l_80F6(a6),a1                      	| [$0d00: ld   de,$80F6]
-l_0d03:
-	move.b	d1,d0                           	| [$0d03: ld   a,b]
-	move.b	d0,(a1)+                         	| [$0d04: ld   (de),a]
+	jbsr	draw_car_part_0d03                  | [$0cfd: call $0D03]
+	lea	 sprite_and_priority_shadow_ram_80F1+5(a6),a1                      	| [$0d00: ld   de,$80F6] car sprite buffer
+* < A0: sprite data pointer
+draw_car_part_0d03:
+	move.b	d1,d0               | [$0d03: ld   a,b]
+	move.b	d0,(a1)+            | [$0d04: ld   (de),a] priority
 	                           	| [$0d05: inc  de]
-	move.b	l_8035(a6),d0                   	| [$0d06: ld   a,($8035)]
-	add.b	(a0)+,d0                          	| [$0d09: add  a,(hl)]
+	move.b	car_x_8035(a6),d0   | [$0d06: ld   a,($8035)]
+	add.b	(a0)+,d0          	| [$0d09: add  a,(hl)]
 	                           	| [$0d0a: inc  hl]
-	move.b	d0,(a1)+                         	| [$0d0b: ld   (de),a]
+	move.b	d0,(a1)+            | [$0d0b: ld   (de),a] X
 	                           	| [$0d0c: inc  de]
-	move.b	d2,d0                           	| [$0d0d: ld   a,c]
-	add.b	(a0)+,d0                          	| [$0d0e: add  a,(hl)]
+	move.b	d2,d0               | [$0d0d: ld   a,c]
+	add.b	(a0)+,d0            | [$0d0e: add  a,(hl)]
 	                           	| [$0d0f: inc  hl]
-	move.b	d0,(a1)+                         	| [$0d10: ld   (de),a]
+	move.b	d0,(a1)+            | [$0d10: ld   (de),a] Y
 	                           	| [$0d11: inc  de]
-	move.b	(a0)+,(a1)+                         	| [$0d12: ld   a,(hl)]
-											| [$0d13: ld   (de),a]
+	move.b	(a0)+,(a1)+         | [$0d12: ld   a,(hl)] sprite attribute
+								| [$0d13: ld   (de),a]
 	                           	| [$0d14: inc  hl]
 	                           	| [$0d15: inc  de]
-	move.b	(a0)+,(a1)+                         	| [$0d16: ld   a,(hl)]
+	move.b	(a0)+,(a1)+         | [$0d16: ld   a,(hl)] sprite code
 	                         	| [$0d17: ld   (de),a]
 	                           	| [$0d18: inc  hl]
 	                           	| [$0d19: inc  de]
 	rts                                    	| [$0d1a: ret]
 	
-* called when document is picked up. Displays a sprite at a fixed location (bottom right)
-* but WTF never shown as probably immediately clobbered. I'd say that was possibly a test
-* and left there
-l_0d1b:
+* called when car is leaving the building
+* Displays a wall sprite at a fixed location (bottom right)
+* to hide the car sprite that wraps around when leaving
+hide_car_sprite_wraparound_0d1b:
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0    | [$0d1b: ld   hl,$80F1]
-	move.b	#0x04,(a0)+         | [$0d1e: ld   (hl),$04] lowest priority
+	move.b	#0x04,(a0)+         | [$0d1e: ld   (hl),$04] highest priority
 	                           	| [$0d20: inc  hl]
-	move.b	#0xF0,(a0)+         | [$0d21: ld   (hl),$F0]
+	move.b	#0xF0,(a0)+         | [$0d21: ld   (hl),$F0] X: rightmost
 	                          	| [$0d23: inc  hl]
-	move.b	#0x3E,(a0)+         | [$0d24: ld   (hl),$3E]
+	move.b	#0x3E,(a0)+         | [$0d24: ld   (hl),$3E] Y: center
 	                          	| [$0d26: inc  hl]
-	move.b	#0x04,(a0)+         | [$0d27: ld   (hl),$04]
+	move.b	#0x04,(a0)+         | [$0d27: ld   (hl),$04] attribute
 	                           	| [$0d29: inc  hl]
-	move.b	#0x03,(a0)          | [$0d2a: ld   (hl),$03]
+	move.b	#0x03,(a0)          | [$0d2a: ld   (hl),$03] code
 	rts                         | [$0d2c: ret]
 
 table_0D2D:
@@ -4604,11 +4612,11 @@ l_15b1:
 l_15b7:
 	move.w	#0x18-1,d1                        	| [$15b7: ld   b,$18] 24 objects total
 	* coords are exactly the same as sprite ram, except that for the leading byte which is
-	* the display priority 0 (highest) ->4 (lowest). It loops 4 times, each time adding to sprite shadow ram but filtering
+	* the display priority 4 (highest) ->0 (lowest). It loops 4 times, each time adding to sprite shadow ram but filtering
 	* by display priority for the 24 possible displayable sprites
 	*
 	* so:
-	* 0: priority 0-4 (lowest)
+	* 0: priority 4 highest, 0 lowest
 	* 1: X coord
 	* 2: Y coord
 	* 3: attribute
@@ -4622,7 +4630,7 @@ l_15bc:
 	add.w	d3,a0                            	| [$15bf: add  hl,de]
 next_object_15bf:
 	dbf	d1,l_15bc                             	| [$15c0: djnz $15BC] next object
-	subq.b	#1,d0                           	| [$15c2: dec  a]
+	subq.b	#1,d0                           	| [$15c2: dec  a] lowers priority
 	jpl	l_15b7                             	    | [$15c3: jp   p,$15B7]
 												| [$15c6: exx] restore registers (a1)
 	lea	sprites_shadow_ram_8169+0x60(a6),a0     | [$15c7: ld   hl,$81C9] top sprite shadow ram
@@ -4648,14 +4656,14 @@ l_15cf:
 	rts                                    	    | [$15d3: ret]
 	
 update_sprite_ram_with_object_15d4:
-	exg	d0,d7                              	    | [$15d4: ex   af,af'] save d0
+	exg	d0,d7                   | [$15d4: ex   af,af'] save d0 (priority/loop counter)
 	                        	| [$15d5: push hl]
 	                          	| [$15d6: exx] restore target shadow ram
  	                        	| [$15d7: pop  hl]
-	addq.w	#1,a0                           	| [$15d8: inc  hl] skip status
-	move.b	(a0)+,d0                         	| [$15d9: ld   a,(hl)]
-	add.b	#2,d0                            	| [$15da: add  a,b] upright, fixed value
-	move.b	d0,(a1)+                         	| [$15db: ld   (de),a] X coord
+	addq.w	#1,a0               | [$15d8: inc  hl] skip status
+	move.b	(a0)+,d0            | [$15d9: ld   a,(hl)]
+	add.b	#2,d0               | [$15da: add  a,b] upright, fixed value
+	move.b	d0,(a1)+            | [$15db: ld   (de),a] X coord
 	                           	| [$15dc: inc  hl]
 	                           	| [$15dd: inc  de]
 	move.b	(a0)+,(a1)+                         	| [$15de: ld   a,(hl)] Y coord
@@ -4671,8 +4679,8 @@ update_sprite_ram_with_object_15d4:
 	                      	    | [$15e8: ld   (de),a]
 	                           	| [$15e9: inc  hl]
 	                           	| [$15ea: inc  de]
-	                               	| [$15eb: exx] save target shadow ram
-	exg	d0,d7                              	| [$15ec: ex   af,af'] restore d0
+	                            | [$15eb: exx] save target shadow ram
+	exg	d0,d7                   | [$15ec: ex   af,af'] restore d0
 	jra	next_object_15bf                    | [$15ed: jp   $15BF] skipping add 5 to a0, already proper value
 
 update_sprites_15F0:
