@@ -10,11 +10,10 @@ TODO/ISSUES:
 - different colors per level, including brick wall at the bottom!
 - elevator dynamic colors: in progress
 
-elevator column scroll:
-- scroll change or tile write: recompute floor/ceiling tiles positions
-  for that column and update copper fully. Maybe optimize: do not reset
-  to bg color if small scroll value change (but later)!
-debug: update_elevator_copper_column
+- if something is written in elevator column, change previous scroll value to
+  force color update
+- simplify: update_elevator_copper_column: if 0x3A then write 8 rows of inside else outside
+- sync issues with elevator colors in cycle exact, put the routine somewhere else?
 
 - get rid of double buffering, racing the beam should work here (AGA) but alignment issue
 

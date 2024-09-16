@@ -39,6 +39,8 @@ NB_LOWER_DYN_ROWS = NB_UPPER_DYN_ROWS+41
 NB_TOTAL_DYN_ROWS = NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS
 ELEVATOR_HEIGHT_IN_TILES = 8
 ELEVATOR_FLOOR_TILE = 0x3A
+ELEVATOR_OUTSIDE_TILE = 0x3F
+ELEVATOR_INSIDE_TILE = 0x3B
 ELEVATOR_CEILING_TILE = 0x3E
 
 * if the alloc_sprite & update_sprite routines
@@ -723,21 +725,31 @@ _vblank:
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	bsr		switch_screen_buffers
 	.endif
-	* TEMP TEMP!!!
-*	moveq	#1,d0
-*	jbsr	update_elevator_copper_column	
-*	moveq	#2,d0
-*	jbsr	update_elevator_copper_column	
-	moveq	#3,d0
-	jbsr	update_elevator_copper_column	
-*	moveq	#4,d0
-*	jbsr	update_elevator_copper_column	
-*	moveq	#5,d0
-*	jbsr	update_elevator_copper_column	
-*	moveq	#6,d0
-*	jbsr	update_elevator_copper_column	
+	
+	* update elevator copper colors only if needed
+	* means: if floor tile is written in the column or
+	* if scroll value changes
+	moveq	#0,d0
+	lea		column_scroll_values,a0
+0:
+	move.b	(a0)+,d1
+	cmp.b	(a0)+,d1
+	jeq		1f
+	move.w	d0,-(a7)
+	move.l	a0,-(a7)
+	jbsr	update_elevator_copper_column
+	move.l	(a7)+,a0
+	move.w	(a7)+,d0
+	* propagate new values to old values
+	move.b	(-2,a0),d1
+	move.b	d1,(-1,a0)
+1:
+	addq	#1,d0
+	cmp.b	#8,d0
+	jne		0b
 	
 
+	
 23:
 	* don't blit, but update hw sprites as it doesn't cost a lot
 
@@ -1550,7 +1562,7 @@ platform_init:
 init_elevator_dyn_colors:
 	lea	elevators_dyn_colors,a0
 	lea	dynamic_rows,a1
-	move.w	#NB_UPPER_DYN_ROWS+NB_LOWER_DYN_ROWS-1,d2
+	move.w	#NB_TOTAL_DYN_ROWS-1,d2
 	move.w	(2,a0),d0		| temp depends on level
 0:
 	moveq	#6,d1		| all rows
@@ -1800,9 +1812,9 @@ set_playfield_bitplanes:
 * > D0: scroll value 	
 osd_get_column_scroll:
 	move.l	a0,-(a7)
-	lea		column_values,a0
+	lea		column_scroll_values,a0
 	and.w	#0xFF,d0
-	move.b	(a0,d0.w),d0
+	move.b	(a0,d0.w*2),d0
 	move.l	(a7)+,a0
 	rts
 	
@@ -1817,18 +1829,19 @@ osd_get_column_scroll:
 osd_set_column_scroll:
 	movem.l	d0-d1/a0,-(a7)
 	and.w	#0x7,d1
-	lea		column_values,a0
-	move.b	d0,(a0,d1.w)
+	lea		column_scroll_values,a0
+	move.b	d0,(a0,d1.w*2)
 	movem.l	(a7)+,d0-d1/a0
 	rts
 	
 	* really sets scroll during copper interrupt
 really_set_columns_scroll:
 	moveq	#0,d5
-	lea		column_values,a5
+	lea		column_scroll_values,a5
 255:
 	moveq	#0,d0
-	move.b	(a5)+,d0
+	move.b	(a5),d0
+	addq	#2,a5
 	
 	move.w	d5,d2
 	move.w	d5,d1
@@ -1985,9 +1998,9 @@ compute_tile_xy:
 * < D0: color
 * < D5: offset in row
 write_row_color:
-	cmp.l	#dynamic_rows,a2
+	move.l	(a2)+,a3
+	cmp.l	#dynamic_rows+4,a2
 	jcs		0f				| upper clip, probably can't happen
-	move.l	(a2),a3
 	.ifndef	RELEASE
 	cmp.w	#color,(-2,a3,d5.w)
 	jeq		1001f
@@ -1997,6 +2010,7 @@ write_row_color:
 	move.w	d0,(a3,d5.w)
 0:
 	rts
+	
 	
 * called when:
 * scroll value changes for that column
@@ -2035,8 +2049,8 @@ update_elevator_copper_column:
 	
 	* sets fill colors
 	lea	elevators_dyn_colors,a2
-	move.l	(a2),inside_elevator_color	| temp depends on level
-	*move.w	(a2),outside_elevator_color		| temp depends on level
+	move.w	(a2)+,inside_elevator_color	| temp depends on level
+	move.w	(a2),d7		| outside: temp depends on level
 
 	lea	dynamic_rows,a2
 	sub.w	d4,a2
@@ -2048,55 +2062,52 @@ update_elevator_copper_column:
 0:
 	* scan the column
 	move.b	(a0),d2
+	move.w	d7,d0
 	cmp.b	#ELEVATOR_FLOOR_TILE,d2
-	jne		1f
-	* floor tile: color the inside starting down
-	* note that this is only enabled when the ceiling is
-	* not in visible screen
-	move.l	a2,-(a7)
-	move.w	#(ELEVATOR_HEIGHT_IN_TILES-2)*8+1,d1
+	jne		3f
+	* one more inside-colored row, to make up for the jittering
 	move.w	inside_elevator_color,d0
+	.rept	2
+	jbsr	write_row_color
+	cmp.l	#dynamic_rows+(NB_TOTAL_DYN_ROWS*4)-4,a2
+	jcc		112f			| out of the screen
+	.endr
+	
+	move.w	d7,d0
+	moveq	#5,d1
+	jra		111f
+3:
+	cmp.b	#ELEVATOR_CEILING_TILE,d2
+	jne		4f
+
+	* ceiling: write one background row to make up for the jittering
+	.rept	2
+	jbsr	write_row_color
+	cmp.l	#dynamic_rows+(NB_TOTAL_DYN_ROWS*4)-4,a2
+	jcc		112f			| out of the screen
+	.endr
+	
+	move.w	inside_elevator_color,d0
+	moveq	#5,d1
+	jra		111f
+	
+4:
+	cmp.b	#ELEVATOR_INSIDE_TILE,d2
+	jne		1f
+2:
+	move.w	inside_elevator_color,d0
+1:
+	moveq	#7,d1
 111:
 	jbsr	write_row_color
-	subq	#4,a2
-	cmp.l	#dynamic_rows,a2
-	jcs		112f			| out of the screen
+	cmp.l	#dynamic_rows+(NB_TOTAL_DYN_ROWS*4)-4,a2
+	jcc		112f			| out of the screen
 	dbf		d1,111b
 112:
-	move.l	(a7)+,a2
-	jra		20f				| next row
-1:
-	cmp.b	#ELEVATOR_CEILING_TILE,d2
-	jne		1f
-	* ceil tile: color the inside
-	* then skip floor tile, no need!
-	add.w	#0x20*ELEVATOR_HEIGHT_IN_TILES,a0
-	addq	#ELEVATOR_HEIGHT_IN_TILES,d3
-	
-	move.w	#(ELEVATOR_HEIGHT_IN_TILES-2)*8+1,d1
-	move.w	inside_elevator_color,d0
-111:
-	jbsr	write_row_color
-	addq	#4,a2
-	cmp.l	#dynamic_rows+(4*NB_TOTAL_DYN_ROWS),a2
-	jcc		0f			| out of the screen, finished!
-	dbf		d1,111b
 
-	jra		21f
-1:
-	* write background color
-	move.w	#7,d1
-	move.w	outside_elevator_color,d0
-111:
-	jbsr	write_row_color
-	addq	#4,a2
-	cmp.l	#dynamic_rows+(4*NB_TOTAL_DYN_ROWS),a2
-	jcc		0f			| out of the screen, finished!
-	dbf		d1,111b
 	* next character row
-20:
+
 	add.w	#0x20,a0
-21:
 	cmp.l	a0,a1
 	jcc		2f
 	* out of bounds: exit but first we do a second pass!
@@ -3066,8 +3077,9 @@ fg_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
-column_values:
-	.skip	8
+* first current scroll value then previous one
+column_scroll_values:
+	.skip	16
 	
 update_tile_function:
 	.long	0
