@@ -385,6 +385,8 @@ _user:
 	jeq		0f
 	bset	#6,dip_switches_3		| "NO HIT" original cheat
 0:
+	BTST	#1,d0
+	sne		infinite_lives_flag
 	btst	#2,d0
 	sne		all_documents_collected_flag
 0:
@@ -448,7 +450,7 @@ _user:
 
 start_floor_table:
 	dc.b	0
-	dc.b	6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+	dc.b	3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 	dc.b	21,22,23,24,25,26,27,28,29
 	dc.b	0,0,0,0,0,0,0
 	.align  2
@@ -1502,7 +1504,7 @@ platform_init:
 	
 	dbf		d0,0b
 	
-	bsr		init_elevator_dyn_colors
+	**bsr		init_elevator_dyn_colors
 	
 	* set bank 0: title screen mode
 	moveq	#0,d0
@@ -2049,8 +2051,12 @@ update_elevator_copper_column:
 	
 	* sets fill colors
 	lea	elevators_dyn_colors,a2
-	move.w	(a2)+,inside_elevator_color	| temp depends on level
-	move.w	(a2),d7		| outside: temp depends on level
+	moveq	#0,d7
+	move.b	level_palette,d7
+	lea	(a2,d7.w*4),a2
+	
+	move.w	(a2)+,inside_elevator_color	| inside FUCK
+	move.w	(a2),d7		| outside
 
 	lea	dynamic_rows,a2
 	sub.w	d4,a2

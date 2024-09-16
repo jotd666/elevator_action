@@ -37,7 +37,7 @@ _expmem
 ;---
 _config
 	dc.b	"C1:X:shot-invincible & infinite lives:0;"
-*	dc.b	"C1:X:infinite lives:1;"
+	dc.b	"C1:X:infinite lives:1;"
 	dc.b	"C1:X:no need to collect documents:2;"
 	dc.b	"C1:X:cheat keys:4;"
 	dc.b    "C2:L:level color:default,2,3,4;"
@@ -46,7 +46,7 @@ _config
 	IFD		CHIP_ONLY
 	dc.b	"C3:X:break at startup:31;"
 	ENDC
-	dc.b    "C4:L:start floor:top,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,"
+	dc.b    "C4:L:start floor:top,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,"
 	dc.b	"21,22,23,24,25,26,27,28,29"
 	dc.b	0
 

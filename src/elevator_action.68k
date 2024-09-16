@@ -17733,6 +17733,8 @@ l_763d:
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$7640: ld   a,(copy_of_dip_switches_3_8250)]
 	btst.b	#6,d0                           	| [$7643: bit  6,a]
 	jne	l_764b                             	| [$7645: jr   nz,$764B] no hit? infinite lives too
+	tst.b	infinite_lives_flag
+	jne	l_764b 
 	lea	nb_lives_8234(a6),a0               	| [$7647: ld   hl,nb_lives_8234]
 	subq.b	#1,(a0)                         	| [$764a: dec  (hl)]
 l_764b:

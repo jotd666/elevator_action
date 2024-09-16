@@ -26,23 +26,25 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 ##;    map(0xd100, 0xd1ff).ram().share(m_spriteram);
 ##;    map(0xd200, 0xd27f).mirror(0x0080).ram().share(m_paletteram);
 
+background_purple = (0xB0,0x8A,0xFF)
+
 varying_palettes = [
 # level 1
 ((255,176,218),  # pink, inside elevator
-(37,176,176),  # blue, walls
-(37,117,117),  # elevator background (around wire)
+(0x25,0xB0,0xB0),  # blue, walls
+(0X25,0x75,0x75),  # elevator background (around wire)
 ),
 # level 2
-((167,242,242),  # cyan, inside elevator
-(207,231,207),   # pink, walls
-(242,207,242)),  # light pink, elevator background
+((0xB0,0xFF,0xFF),  # cyan, inside elevator
+(0xDA,0x8A,0xDA),   # pink, walls
+(0xFF,0xDA,0xFF)),  # light pink, elevator background
 # level 3
-((242,131,167),  # pink, inside elevator
-(207,242,242),   # light gray, walls
-(0,167,207)),  # light blue, elevator background
+((0xFF,0x8A,0xB0),  # pink, inside elevator
+(0xDA,0xFF,0xFF),   # light gray, walls
+(0,0xB0,0xDA)),  # light blue, elevator background
 # level 4
-((35,207,207),  # pink, inside elevator
-(131,131,131),   # dark gray, walls
+((0x25,0xDA,0xDA),  # blue, inside elevator
+(0x8A,0x8A,0x8A),   # dark gray, walls
 (1,1,1)),  # black, elevator background
 ]
 
@@ -440,6 +442,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
         f.write(f"level_palette_{i}:\n")
         p = list(game_playfield_palette)
         if i:
+            print(i,wall_color_index,p[wall_color_index],varying_palettes[i][1])
             # must change palette for walls
             p[wall_color_index] = varying_palettes[i][1]
         bitplanelib.palette_dump(p,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
