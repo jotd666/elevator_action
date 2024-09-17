@@ -445,14 +445,19 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     for i in range(4):
         f.write(f"\t.long\tlevel_palette_{i}\n")
     wall_color_index = game_playfield_palette.index(varying_palettes[0][1])
+    brick_color_index = game_playfield_palette.index(varying_palettes[0][3])
     for i in range(4):
         f.write(f"level_palette_{i}:\n")
         p = list(game_playfield_palette)
         if i:
-            print(i,wall_color_index,p[wall_color_index],varying_palettes[i][1])
-            # must change palette for walls
+            # must change palette for walls & brick (bottom panel)
             p[wall_color_index] = varying_palettes[i][1]
         bitplanelib.palette_dump(p,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+    f.write(f"brick_color_index:\n\t.word\tcolor+{brick_color_index*2+32}\n")
+    f.write("brick_colors:\n")
+    for vp in varying_palettes:
+        f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[3])))
+
     f.write(f"dark_palette:\n")
     bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("sprites_palette:\n")

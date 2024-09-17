@@ -23,7 +23,6 @@ TODO/ISSUES:
 
 SOUND:
 
-- when does the "ping" sound play?
 
 minor:
 
@@ -38,6 +37,8 @@ minor:
   then proceed to "return to door" loop
 - hack: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
+- when does the "ping" sound play?
+
 to debug:
 	.ifndef	RELEASE
 	move.w	#0xC740,d7

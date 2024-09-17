@@ -69,7 +69,8 @@ ONE_TICK = 1
 
 	.endif
 	
-
+* almost good without double buffering, but
+* some flickering at times, so better off left on
 OPT_ENABLE_DOUBLE_BUFFERING = 1
 
 _custom = 0xDFF000
@@ -1264,9 +1265,9 @@ sprite_registers:
 	
 	
 
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 switch_screen_buffers:
 
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	* let's switch screen buffers, background (chars)
 	* toggle fg planes (double buffering)
 	* also toggle previous sprite positions
@@ -1287,10 +1288,9 @@ switch_screen_buffers:
 	move.l	a5,fg_displayed_screen_ptr
 	move.l	a2,bob_previous_drawed_sprites
 
-	jbsr		set_fg_bitplanes
-	.endif
+	jbra		set_fg_bitplanes
 	
-	rts
+	.endif
 	
 store_system:
 	tst.l	_resload
@@ -1654,6 +1654,15 @@ osd_set_color_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
+	
+	* also change brick color
+	moveq	#0,d0
+	move.b	level_palette,d0
+	lea		brick_copper_color,a1
+	
+	lea		brick_colors,a0
+	move.w	brick_color_index,(a1)+
+	move.w	(a0,d0.w*2),(a1)
 0:
 	movem.l	(a7)+,d0-d1/a0-a1
 	rts
@@ -1737,10 +1746,11 @@ osd_set_gfx_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
-	move.l		level_palettes,a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		panel_end_tiles_colors,a1
-	bsr		load_palette
+	* those are already set, no need to re-set them
+	*move.l		level_palettes,a0
+	*move.w	#TOTAL_NB_COLORS,d0
+	*lea		panel_end_tiles_colors,a1
+	*bsr		load_palette
 
 	MOVEQ	#0,d0
 	jbsr	osd_set_color_bank
@@ -1756,9 +1766,11 @@ osd_set_gfx_bank:
 
 	bsr		set_playfield_bitplanes
 	
+	* only useful in non double buffering
     moveq #NB_PLAYFIELD_PLANES-1,d1
     move.l	fg_drawed_screen_ptr(pc),a0
 	move.l	a0,d0
+	addq	#2,d0	| re-align (clipping needs that -2 bytes)
     lea	bobs_bitplanes+2,a0
 	move.l	#FG_SCREEN_PLANE_SIZE,d2
 	bsr		20f
@@ -2605,7 +2617,7 @@ set_static_bitplanes:
 set_fg_bitplanes:
     move.l	fg_displayed_screen_ptr(pc),a0
 	addq.w	#2,a0		| add 16 pixel offset which allows left side clipping
-    moveq #4-1,d1
+	moveq #4-1,d1
 	move.l	a0,d0
     lea	bobs_bitplanes+2,a0
 	moveq	#0,d2
@@ -3039,8 +3051,10 @@ one_out_of_five:
 	.word	0
 fg_screen_data_1:
 	.long	0
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 fg_screen_data_2:
 	.long	0
+	.endif
 	
 	* macro to define a color0 change, synced with elevator shafts
 	* thanks to ross for finetuning this part, it was tricky!
@@ -3326,8 +3340,10 @@ dynamic_row_43:
 	.word	 intreq,0x8010
 panel_end_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-panel_end_tiles_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
+*panel_end_tiles_colors:
+*	DECL_COLORS	16,TOTAL_NB_COLORS
+brick_copper_color:
+	.word	0x1FE,0
 	
 	* pal limit
     .word  0xFFCF,0xFFFE       | PAL wait
