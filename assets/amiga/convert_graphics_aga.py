@@ -26,7 +26,7 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 ##;    map(0xd100, 0xd1ff).ram().share(m_spriteram);
 ##;    map(0xd200, 0xd27f).mirror(0x0080).ram().share(m_paletteram);
 
-background_purple = (0xB0,0x8A,0xFF)
+background_purple_color = (0xB0,0x8A,0xFF)
 
 varying_palettes = [
 # level 1
@@ -329,7 +329,7 @@ if nb_game_colors > 16:
 if nb_sprites_colors > 16:
     raise Exception("sprites: max 16 colors allowed")
 game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
-sprites_palette = sprites_palette + (16-len(sprites_palette)) * (dummy,)
+sprites_palette = list(sprites_palette + (16-len(sprites_palette)) * (dummy,))
 
 current_plane_idx = 0
 
@@ -457,10 +457,16 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("brick_colors:\n")
     for vp in varying_palettes:
         f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[3])))
+    f.write("background_purple_color:\n\t.word\t{}\n".format(bitplanelib.to_rgb4_color(background_purple_color)))
 
     f.write(f"dark_palette:\n")
     bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("sprites_palette:\n")
+    # introduce white color as last color (BONUS letters, all planes set)
+    if sprites_palette[15]==dummy:
+        sprites_palette[15] = (0xFF,0xFF,0xFF)
+    else:
+        raise Exception("Not enough colors to insert last white color")
     bitplanelib.palette_dump(sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("dark_sprites_palette:\n")
     bitplanelib.palette_dump(dark_sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)

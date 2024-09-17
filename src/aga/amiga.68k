@@ -42,6 +42,7 @@ ELEVATOR_FLOOR_TILE = 0x3A
 ELEVATOR_OUTSIDE_TILE = 0x3F
 ELEVATOR_INSIDE_TILE = 0x3B
 ELEVATOR_CEILING_TILE = 0x3E
+VOID_TILE = 0
 
 * if the alloc_sprite & update_sprite routines
 * are reused, changing those offsets can make
@@ -683,7 +684,7 @@ _vblank:
 	move.w	#0x14,(intreq,a5)
 
 	tst.b	pause_flag
-	bne.b	23f
+	jne	23f
 
 
 	* set base for RAM
@@ -722,6 +723,12 @@ _vblank:
 
 	bsr		really_update_sprites
 	
+	* special HUD blit when player in the basement
+	GET_RAM_START_IN_A6
+	tst.b	(player_structure_851A+7,a6)	| player floor: basement
+	jne		0f
+	jbsr	draw_bonus_overlay
+0:
 	* double buffering only in-game
 	tst.b	current_gfx_bank
 	jeq		23f
@@ -761,6 +768,51 @@ _vblank:
     movem.l (a7)+,d0-d7/a0-a6
     rte
 	
+draw_bonus_overlay:
+	* bitplane offset for "BONUS" image. We're going
+	* to blit it from tiles bitplanes to sprites bitplanes
+	move.w	#0xB0*NB_BYTES_PER_ROW+10,d6
+	move.w	#0xA0*NB_BYTES_PER_ROW+12,d5
+	move.l	panel_screen_ptr,a0		| first bitplane contains the data
+	move.l	fg_drawed_screen_ptr,A1
+	add.w	d6,a0			| source
+	add.w	d5,a1
+	
+	move.w	#16*NB_BYTES_PER_ROW,d6
+	
+	move.l	a0,a3			| mask is the same
+	add.w	d6,a1			| destination
+	lea		_custom,a5
+
+	move.w	#NB_BYTES_PER_ROW,d0
+	move.w	#96/8,d2	| 80 pixels wide
+	move.w	#16<<6,D4		| 16 pixels high
+    sub.w   d2,d0       | blit width
+    lsr.w   #1,d2
+    add.w   d2,d4       | blit height
+	move.l	#0xFCA0000,d7	| cookie cut, no shifting
+	moveq	#3,d3			| blit on 4 planes to activate color 15
+0:
+	WAIT_BLIT
+
+	move.w d0,bltamod(a5)		|A modulo=bytes to skip between lines
+	move.w d0,bltbmod(a5)		|B modulo=bytes to skip between lines
+    move.w  d0,bltcmod(a5)	|C modulo
+    move.w  d0,bltdmod(a5)	|D modulo
+
+	move.l a3,bltapt(a5)	|source graphic top left corner (mask)
+	* non-zero: set data source & bltcon
+	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
+	move.l	a0,bltbpt(a5)	|source graphic top left corner
+
+	
+	move.l	a1,bltcpt(a5)	|pristine background top (bottom) left corner
+	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	dbf		D3,0b
+	
+	rts
 	
 osd_blitz:
 	blitz
@@ -1185,7 +1237,7 @@ blit_planes_any_internal_cookie_cut:
 
 	move.w d2,bltamod(a5)		|A modulo=bytes to skip between lines
 	move.w d2,bltbmod(a5)		|B modulo=bytes to skip between lines
-	move.l d7,bltcon0(a5)	| sets con0 and con1: full cookie cut 2 sources & 1 mask
+	move.l d7,bltcon0(a5)	    | sets con0 and con1: full cookie cut 2 sources & 1 mask
 	
     move.w  d0,bltcmod(a5)	|C modulo
     move.w  d0,bltdmod(a5)	|D modulo
@@ -2067,7 +2119,7 @@ update_elevator_copper_column:
 	move.b	level_palette,d7
 	lea	(a2,d7.w*4),a2
 	
-	move.w	(a2)+,inside_elevator_color	| inside FUCK
+	move.w	(a2)+,inside_elevator_color	| inside
 	move.w	(a2),d7		| outside
 
 	lea	dynamic_rows,a2
@@ -2110,6 +2162,12 @@ update_elevator_copper_column:
 	jra		111f
 	
 4:
+*   color door background properly.
+*   Problem is: elevator shaft colors sometimes is also purple
+*	cmp.b	#VOID_TILE,d2
+*	jne	2f
+*	move.w	background_purple_color,d0	
+*2:
 	cmp.b	#ELEVATOR_INSIDE_TILE,d2
 	jne		1f
 2:
@@ -3170,7 +3228,10 @@ tile_log_table:
 
 
 	.section	.datachip
-
+fuckpat:
+	.rept	10000
+	.word	0xAA55
+	.endr
 * title
 .macro	DECL_BITPLANES	bpoff_start,nb_planes
 	.set	bpoff,\bpoff_start

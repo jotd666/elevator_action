@@ -7,22 +7,15 @@
 TODO/ISSUES:
 
 - elevator engine sound plays when player EXITS elevator
-- different colors per level, **including brick wall at the bottom!**
-
-
-- get rid of double buffering, racing the beam should work here (AGA) but alignment issue
-
+- missing music
 - command line options are wrong
 - insert coin when game is playing: is_game_playing doesn't work
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
 - no exhaust fumes in car (probably chars too)
-- no "BONUS xxxx" message displayed: should just be cookie cut blit (using image itself as mask) after the
-  sprites have been drawn, copied from the tile bitplane, if "B" is on screen
-  at the proper location around C6C1
-
-SOUND:
-
+- set palette: erase "bonus" overlay once
+- BONUS XXXX letters aren't properly set (transcode issue)
+- BONUS color is black! change BOB colors??
 
 minor:
 
