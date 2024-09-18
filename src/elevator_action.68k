@@ -2607,7 +2607,7 @@ check_if_all_documents_collected_09A3:
 	clr.b	d0                               	| [$09a3: xor  a]
 	move.b	d0,sync_flag_80AB(a6)                   	| [$09a4: ld   ($80AB),a]
 	jbsr	l_0ad8                            	| [$09a7: call $0AD8]
-	jbsr	l_364d                            	| [$09aa: call $364D]
+	jbsr	stop_music_364d                            	| [$09aa: call $364D]
 	move.b	#0xC0,d0                        	| [$09ad: ld   a,$C0]
 	jbsr	play_sound             	| [$09af: ld   (sound_latch_D50B),a] stop music
 	jbsr	ground_floor_reached_45E5         	| [$09b2: call ground_floor_reached_45E5]
@@ -2636,7 +2636,7 @@ l_09c5:
 	jra	l_0a15                             	| [$09d0: jp   $0A15]
 
 l_09d3:
-	move.b	l_8033(a6),d0                   	| [$09d3: ld   a,($8033)]
+	move.b	moving_car_counter_8033(a6),d0                   	| [$09d3: ld   a,($8033)]
 	                             	| [$09d6: or   a]
 	jne	l_09e8                             	| [$09d7: jr   nz,$09E8]
 	move.b	player_structure_851A(a6),d0    	| [$09d9: ld   a,(player_structure_851A)]
@@ -2652,10 +2652,10 @@ l_09e8:
 	jbsr	handle_elevators_0EBF             	| [$09ee: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$09f1: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$09f4: call $2FE8]
-	jbsr	l_0be1                            	| [$09f7: call $0BE1]
+	jbsr	handle_moving_çar_0be1                            	| [$09f7: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$09fa: call $15A0]
 	jbsr	game_tick_73cf                            	| [$09fd: call $73CF]
-	move.b	l_8033(a6),d0                   	| [$0a00: ld   a,($8033)]
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0a00: ld   a,($8033)]
 	cmp.b	#0xFF,d0                         	| [$0a03: cp   $FF]
 	jne	l_09d3                             	| [$0a05: jr   nz,$09D3]
 	jbsr	award_end_of_level_bonus_56F9     	| [$0a07: call award_end_of_level_bonus_56F9]
@@ -2701,7 +2701,7 @@ l_0a54:
 	jbsr	l_0af0                            	| [$0a57: call $0AF0]
 	jbsr	handle_elevators_0EBF             	| [$0a5a: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$0a5d: call handle_moving_doors_12A2]
-	jbsr	l_0be1                            	| [$0a60: call $0BE1]
+	jbsr	handle_moving_çar_0be1                            	| [$0a60: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$0a63: call $15A0]
 	jbsr	game_tick_73cf                            	| [$0a66: call $73CF]
 	jra	l_0a15                             	| [$0a69: jp   $0A15]
@@ -2753,7 +2753,7 @@ l_0ab5:
 	jbsr	handle_elevators_0EBF             	| [$0abb: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$0abe: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$0ac1: call $2FE8]
-	jbsr	l_0be1                            	| [$0ac4: call $0BE1]
+	jbsr	handle_moving_çar_0be1                            	| [$0ac4: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$0ac7: call $15A0]
 	jbsr	game_tick_73cf                            	| [$0aca: call $73CF]
 	jra	l_0a15                             	| [$0acd: jp   $0A15]
@@ -2848,7 +2848,7 @@ l_0b4c:
 	move.b	d0,l_851E(a6)                   	| [$0b4e: ld   ($851E),a]
 	move.b	d0,player_structure_851A+9(a6)  	| [$0b51: ld   (player_structure_851A+9),a]
 	move.b	#0x01,d0                        	| [$0b54: ld   a,$01]
-	move.b	d0,l_8033(a6)                   	| [$0b56: ld   ($8033),a]
+	move.b	d0,moving_car_counter_8033(a6)                   	| [$0b56: ld   ($8033),a]
 	move.b	#0x03,d0                        	| [$0b59: ld   a,$03]
 	move.b	d0,timer_8bit_reload_value_80A9(a6)	| [$0b5b: ld   (timer_8bit_reload_value_80A9),a]
 	subq.b	#1,d0                           	| [$0b5e: dec  a]
@@ -2939,26 +2939,27 @@ l_0bd1:
 	rts                                    	| [$0bdb: ret]
 l_0bdc:
 	clr.b	d0                               	| [$0bdc: xor  a]
-	move.b	d0,l_8033(a6)                   	| [$0bdd: ld   ($8033),a]
+	move.b	d0,moving_car_counter_8033(a6)                   	| [$0bdd: ld   ($8033),a]
 	rts                                    	| [$0be0: ret]
-l_0be1:
-	jbsr	l_0dad                            	| [$0be1: call $0DAD]
+handle_moving_çar_0be1:
+	jbsr	draw_bonus_letters_and_car_trail_0dad                            	| [$0be1: call $0DAD]
 	st.b	d0                                	| [$0be4: ld   a,$FF]
 	move.b	d0,l_8146(a6)                   	| [$0be6: ld   ($8146),a]
 	move.b	d0,l_814B(a6)                   	| [$0be9: ld   ($814B),a]
-	move.b	l_8033(a6),d0                   	| [$0bec: ld   a,($8033)]
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0bec: ld   a,($8033)]
 	cmp.b	#0xFF,d0                         	| [$0bef: cp   $FF]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0bf1: ret  z] [...]
 0:
-	move.b	l_8033(a6),d0                   	| [$0bf2: ld   a,($8033)]
+	* car is active
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0bf2: ld   a,($8033)]
 	                             	| [$0bf5: or   a]
 	jeq	l_0c37                             	| [$0bf6: jp   z,$0C37]
 	cmp.b	#0x01,d0                         	| [$0bf9: cp   $01]
 	bne.b	0f                               	| [...]
 	jbsr	l_0c31                            	| [$0bfb: call z,$0C31]
 0:
-	move.b	l_8033(a6),d0                   	| [$0bfe: ld   a,($8033)]
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0bfe: ld   a,($8033)]
 	subq.b	#0x05,d0                        	| [$0c01: sub  $05]
 	scs		d7
 	move.b	d0,l_8036(a6)                   	| [$0c03: ld   ($8036),a]
@@ -3026,9 +3027,9 @@ l_0c43:
 l_0c68:
 	jbsr	draw_car_0ccd                       | [$0c68: call $0CCD]
 	jbsr	hide_car_sprite_wraparound_0d1b     | [$0c6b: call $0D1B]
-	move.b	l_8033(a6),d0                   	| [$0c6e: ld   a,($8033)]
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0c6e: ld   a,($8033)]
 	addq.b	#1,d0                           	| [$0c71: inc  a]
-	move.b	d0,l_8033(a6)                   	| [$0c72: ld   ($8033),a]
+	move.b	d0,moving_car_counter_8033(a6)                   	| [$0c72: ld   ($8033),a]
 	move.b	car_x_8035(a6),d0                   	| [$0c75: ld   a,($8035)]
 	cmp.b	#0xE0,d0                         	| [$0c78: cp   $E0]
 	beq.b	0f                               	| [...]
@@ -3036,7 +3037,7 @@ l_0c68:
 0:
 	* car exited the building
 	st.b	d0                                	| [$0c7b: ld   a,$FF]
-	move.b	d0,l_8033(a6)                   	| [$0c7d: ld   ($8033),a]
+	move.b	d0,moving_car_counter_8033(a6)                   	| [$0c7d: ld   ($8033),a]
 	rts                                    	| [$0c80: ret]
 l_0c81:
 	move.b	#0x01,d0                        	| [$0c81: ld   a,$01]
@@ -3243,8 +3244,8 @@ table_0D2D:
 	.byte	0x00
 	.byte	0x00
 
-l_0dad:
-	move.b	l_8033(a6),d0                   	| [$0dad: ld   a,($8033)]
+draw_bonus_letters_and_car_trail_0dad:
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0dad: ld   a,($8033)]
 	cmp.b	#0xFF,d0                         	| [$0db0: cp   $FF]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0db2: ret  z] [...]
@@ -3259,11 +3260,12 @@ l_0dad:
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$0dbc: ret  c] [...]
 0:
-	lea	bonus_letters_data_8041(a6),a0                      	| [$0dbd: ld   hl,$8041]
+	LOG_REGS		0dbd
+	lea	bonus_letters_data_8041(a6),a0          | [$0dbd: ld   hl,$8041]
 	move.b	d0,d3                           	| [$0dc0: ld   d,a]
 	move.b	#0x09,d1                        	| [$0dc1: ld   b,$09]
 l_0dc3:
-	jbsr	dynamic_ram_code_805b                        	| [$0dc3: call $805B]
+	jbsr	bonus_letter_anim_ram_code_805b               | [$0dc3: call $805B]
 	subq.b	#2,d3                           	| [$0dc6: dec  d] * 2
 	addq.w	#1,a0                           	| [$0dc8: inc  hl]
 	subq.b	#1,d1                           	| [...]
@@ -3271,13 +3273,14 @@ l_0dc3:
 	move.b	#0x05,d1                        	| [$0dcb: ld   b,$05]
 	clr.b	d2                               	| [$0dcd: ld   c,$00]
 l_0dcf:
+	LOG_REGS		0dcf
 	jbsr	l_0e3b                            	| [$0dcf: call $0E3B]
-	addq.w	#1,d2                           	| [$0dd2: inc  c]
+	addq.b	#1,d2                           	| [$0dd2: inc  c]
 	subq.b	#2,d3                           	| [$0dd3: dec  d] * 2
 	addq.w	#1,a0                           	| [$0dd5: inc  hl]
 	subq.b	#1,d1                           	| [...]
 	jne	l_0dcf                             	| [$0dd6: djnz $0DCF]
-	jbsr	dynamic_ram_code_805b                        	| [$0dd8: call $805B]
+	jbsr	bonus_letter_anim_ram_code_805b                        	| [$0dd8: call $805B]
 	subq.b	#2,d3                           	| [$0ddb: dec  d] * 2
 	addq.w	#1,a0                           	| [$0ddd: inc  hl]
 	move.b	#0x05,d1                        	| [$0dde: ld   b,$05]
@@ -3291,7 +3294,7 @@ l_0de2:
 	jne	l_0de2                             	| [$0de9: djnz $0DE2]
 	move.b	#0x06,d1                        	| [$0deb: ld   b,$06]
 l_0ded:
-	jbsr	dynamic_ram_code_805b                	| [$0ded: call $805B]
+	jbsr	bonus_letter_anim_ram_code_805b                	| [$0ded: call $805B]
 	subq.b	#2,d3                           	| [$0df0: dec  d] * 2
 	addq.w	#1,a0                           	| [$0df2: inc  hl]
 	subq.b	#1,d1                           	| [...]
@@ -3353,7 +3356,7 @@ l_0e3b:
 	rts                                    	| [$0e3d: ret  m] [...]
 0:
 	cmp.b	#0x08,d0                         	| [$0e3e: cp   $08]
-	jcs	dynamic_ram_code_8071                         	| [$0e40: jp   c,$8071]
+	jcs	dynamic_ram_code_8071                   | [$0e40: jp   c,$8071]
 	sub.b	#0x08,d0                         	| [$0e43: sub  $08]
 	move.b	d0,d4                           	| [$0e45: ld   e,a]
 	cmp.b	#0x14,d0                         	| [$0e46: cp   $14]
@@ -3365,10 +3368,11 @@ l_0e3b:
 	move.l	a0,-(sp)                        	| [$0e4b: push hl]
 	movem.w	d1/d2,-(sp)                    	| [$0e4c: push bc]
 	lea	table_0E66,a0                          	| [$0e4d: ld   hl,$0E66]
-	moveq	#0,d1                               	| [$0e50: ld   b,$00]
+	moveq	#0,d1                               | [$0e50: ld   b,$00]
 	move.b	d4,d1                           	| [$0e52: ld   c,e]
 	add.w	d1,a0                            	| [$0e53: add  hl,bc]
 	move.b	(a0),d0                         	| [$0e54: ld   a,(hl)]
+	LOG_REGS		e55
 	movem.w	(sp)+,d1/d2                    	| [$0e55: pop  bc]
 	move.l	(sp)+,a0                        	| [$0e56: pop  hl]
 	move.b	d0,(a0)                         	| [$0e57: ld   (hl),a]
@@ -3381,6 +3385,7 @@ l_0e59:
 	and.w	#0xFF,d1                               	| [$0e5e: ld   b,$00]
 	add.w	d1,a0                            	| [$0e60: add  hl,bc]
 	move.b	(a0),d0                         	| [$0e61: ld   a,(hl)]
+	LOG_REGS		0e62
 	movem.w	(sp)+,d1/d2                    	   | [$0e62: pop  bc]
 	move.l	(sp)+,a0                        	| [$0e63: pop  hl]
 	move.b	d0,(a0)                         	| [$0e64: ld   (hl),a]
@@ -3392,7 +3397,7 @@ table_0E66:
 	.align	2
 	
 l_0e7a:
-	move.b	l_8033(a6),d0                   	| [$0e7a: ld   a,($8033)]
+	move.b	moving_car_counter_8033(a6),d0                   	| [$0e7a: ld   a,($8033)]
 											| [$0e7d: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$0e7e: ret  z] [...]
@@ -3403,6 +3408,7 @@ l_0e7a:
 	cmp.b	#0x02,d0                         	| [$0e80: cp   $02]
 	jeq	l_0e9f                             	| [$0e82: jr   z,$0E9F]
 	* write "BONUS xxx" big letters on layer 1, this time it's transparent!
+	jbsr	osd_break
 	lea	bonus_letters_data_8041(a6),a0                      	| [$0e84: ld   hl,$8041]
 	lea	bonus_screen_address_C6C1(a6),a1                      	| [$0e87: ld   de,$C6C1]
 	move.w	#0x001A,d1                      	| [$0e8a: ld   bc,$001A] 26
@@ -8376,7 +8382,7 @@ l_33e4:
 	jbsr	l_3529                            	| [$33e4: call $3529]
 	move.b	#0xC0,d0                        	| [$33e7: ld   a,$C0]
 	jbsr	play_sound             	| [$33e9: ld   (sound_latch_D50B),a] no sound?
-	jbsr	l_364d                            	| [$33ec: call $364D]
+	jbsr	stop_music_364d                            	| [$33ec: call $364D]
 	move.b	copy_of_dip_switches_1_824E(a6),d0	| [$33ef: ld   a,(copy_of_dip_switches_1_824E)]
 	btst.b	#2,d0                           	| [$33f2: bit  2,a]
 	jne	l_33e4                             	| [$33f4: jr   nz,$33E4]
@@ -8434,7 +8440,7 @@ l_344c:
 	move.b	d0,bank_switch_copy_824D(a6)    	| [$3450: ld   (bank_switch_copy_824D),a]
 	move.b	#0xC0,d0                        	| [$3453: ld   a,$C0]
 	jbsr	play_sound             	| [$3455: ld   (sound_latch_D50B),a]
-	jbsr	l_364d                            	| [$3458: call $364D]
+	jbsr	stop_music_364d                            	| [$3458: call $364D]
 	move.b	copy_of_dip_switches_1_824E(a6),d0	| [$345b: ld   a,(copy_of_dip_switches_1_824E)]
 	ror.b	#3,d0                            	| [$345e: rrca] * 3
 	and.b	#0x03,d0                         	| [$3461: and  $03]
@@ -8780,7 +8786,7 @@ start_music_if_in_game_363f:
 	jbsr	music_control_64d2                            	| [$3649: call music_control_64d2]
 	rts                                    	| [$364c: ret]
 
-l_364d:
+stop_music_364d:
 	move.b	#0x80,d0                        	| [$364d: ld   a,$80]
 	move.b	d0,music_state_8779(a6)                   	| [$364f: ld   ($8779),a]
 	jbsr	music_control_64d2                            	| [$3652: call music_control_64d2]
@@ -11055,7 +11061,7 @@ l_4608:
 	jbsr	handle_elevators_0EBF             	| [$460b: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$460e: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$4611: call $2FE8]
-	jbsr	l_0be1                            	| [$4614: call $0BE1]
+	jbsr	handle_moving_çar_0be1                            	| [$4614: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$4617: call $15A0]
 	jbsr	game_tick_73cf                            	| [$461a: call $73CF]
 	jra	l_45ea                             	| [$461d: jp   $45EA]
@@ -11092,7 +11098,7 @@ l_4649:
 * switch to hurry up music as soon as fine timer is 0xFF
 	move.b	level_timer_16bit_8231(a6),d0   	| [$464f: ld   a,(level_timer_16bit_8231)]
 	                             	| [$4652: or   a]
-	jeq	l_4665                             	| [$4653: jp   z,$4665]
+	jeq	stop_music_4665                             	| [$4653: jp   z,$4665]
 	subq.b	#1,d0                           	| [$4656: dec  a]
 	jeq	switch_to_hurry_up_music_466E      	| [$4657: jp   z,switch_to_hurry_up_music_466E]
 	subq.b	#1,d0                           	| [$465a: dec  a]
@@ -11104,7 +11110,7 @@ l_4649:
 	jbsr	music_control_64d2                            	| [$4661: call music_control_64d2]
 	rts                                    	| [$4664: ret]
 
-l_4665:
+stop_music_4665:
 	move.b	#0x80,d0                        	| [$4665: ld   a,$80]
 	move.b	d0,music_state_8779(a6)                   	| [$4667: ld   ($8779),a]
 	jbsr	music_control_64d2                            	| [$466a: call music_control_64d2]
@@ -12225,7 +12231,7 @@ l_4e57:
 	jbsr	handle_elevators_0EBF             	| [$4e5a: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$4e5d: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$4e60: call $2FE8]
-	jbsr	l_0be1                            	| [$4e63: call $0BE1]
+	jbsr	handle_moving_çar_0be1                            	| [$4e63: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$4e66: call $15A0]
 	jbsr	game_tick_73cf                            	| [$4e69: call $73CF]
 	jra	l_4e30                             	| [$4e6c: jp   $4E30]
@@ -15428,13 +15434,13 @@ l_618a:
 
 l_61c3:
 	LOAD_POINTER	ram_pointer_85BF(a6),a0             	| [$61c3: ld   hl,($85BF)]
-	st.b	d0                                	| [$61c6: ld   a,$FF]
-	move.b	d0,(a0)                         	| [$61c8: ld   (hl),a]
-	move.w	#0x0005,d3                      	| [$61c9: ld   de,$0005] 5
-	add.w	d3,a0                            	| [$61cc: add  hl,de]
-	move.b	d0,(a0)                         	| [$61cd: ld   (hl),a]
-	move.b	d0,(character_display_priority_04,a2)                    	| [$61ce: ld   (ix+$04),a]
-	move.b	d0,(enemy_state_09,a2)                    	| [$61d1: ld   (ix+$09),a]
+	                                	| [$61c6: ld   a,$FF]
+	st.b	(a0)                         	| [$61c8: ld   (hl),a]
+											| [$61c9: ld   de,$0005] 5
+											| [$61cc: add  hl,de]
+	st.b	(5,a0)                         	| [$61cd: ld   (hl),a]
+	st.b	(character_display_priority_04,a2)                    	| [$61ce: ld   (ix+$04),a]
+	st.b	(enemy_state_09,a2)                    	| [$61d1: ld   (ix+$09),a]
 	clr.b	(0x10,a2)                        	| [$61d4: ld   (ix+$10),$00]
 	move.b	(character_situation_06,a2),d0  	| [$61d8: ld   a,(ix+character_situation_06)]
 	cmp.b	#CS_IN_STAIRS_04,d0                         	| [$61db: cp   $04]
@@ -15447,11 +15453,11 @@ l_61c3:
 
 disable_enemy_sprite_61e4:
 	LOAD_POINTER	ram_pointer_85BF(a6),a0             	| [$61e4: ld   hl,($85BF)]
- 	st.b	d0                                	| [$61e7: ld   a,$FF]
-	move.b	d0,(a0)                         	| [$61e9: ld   (hl),a]
-	move.w	#0x0005,d3                      	| [$61ea: ld   de,$0005] 5
-	add.w	d3,a0                            	| [$61ed: add  hl,de]
-	move.b	d0,(a0)                         	| [$61ee: ld   (hl),a]
+ 	                                	| [$61e7: ld   a,$FF]
+	st.b	(a0)                         	| [$61e9: ld   (hl),a]
+											| [$61ea: ld   de,$0005] 5
+											| [$61ed: add  hl,de]
+	st.b	(5,a0)                         	| [$61ee: ld   (hl),a]
 	rts                                    	| [$61ef: ret]
 
 * < A0: output buffer for graphic properties	
@@ -15493,7 +15499,7 @@ l_620c:
 * not in elevator
 	subq.b	#1,d0                           	| [$6213: dec  a]
 	jeq	l_622b                             	| [$6214: jp   z,$622B]
-	move.b	(0x07,a2),d1                    	| [$6217: ld   b,(ix+$07)]
+	move.b	(current_floor_07,a2),d1                    	| [$6217: ld   b,(ix+$07)]
 	clr.b	d2                               	| [$621a: ld   c,$00]
 	move.b	(character_y_offset_03,a2),d3   	| [$621c: ld   d,(ix+character_y_offset_03)]
 	jra	compute_delta_height_1e6c                             	| [$621f: jp   $1E6C]
@@ -15701,16 +15707,27 @@ l_63d2:
 	jra	l_4608                             	| [$63db: jp   $4608]
 
 
-music_control_64d2:
-	rts
+music_control_64d2:	
+	move.b	music_state_8779(a6),d0                   	| [$64d2: ld   a,($8779)]
+* 0x81: start music, 0x80: stop,, 0x82: ??, 0xFF: do nothing
+	cmp.b	#0xFF,d0                         	| [$64d5: cp   $FF]
+	jeq	l_64ff                             	| [$64d7: jr   z,$64FF]
+	move.b	d0,d1                           	| [$64d9: ld   b,a]
+	st.b	d0                                	| [$64da: ld   a,$FF]
+	move.b	d0,music_state_8779(a6)                   	| [$64dc: ld   ($8779),a]
 	
-*	move.b	music_state_8779(a6),d0                   	| [$64d2: ld   a,($8779)]
-* 1: start music, 0x80: stop, 0xFF ???
-*	cmp.b	#0xFF,d0                         	| [$64d5: cp   $FF]
-*	jeq	l_64ff                             	| [$64d7: jr   z,$64FF]
-*	move.b	d0,d1                           	| [$64d9: ld   b,a]
-*	st.b	d0                                	| [$64da: ld   a,$FF]
-*	move.b	d0,music_state_8779(a6)                   	| [$64dc: ld   ($8779),a]
+	cmp.b	#0x81,d1
+	jne		0f
+	move.w	#MAIN_THEME_SND,D0
+	jbsr	osd_sound_start
+	jra		1f
+0:
+	cmp.b	#0x80,d1
+	jne		0f
+	jbsr	osd_sound_stop
+0:
+1:
+	rts
 *	move.b	l_8761(a6),d0                   	| [$64df: ld   a,($8761)]
 *	move.b	d0,d2                           	| [$64e2: ld   c,a]
 *	move.b	l_8760(a6),d0                   	| [$64e3: ld   a,($8760)]
@@ -15730,7 +15747,7 @@ music_control_64d2:
 *	lea	l_8762(a6),a0                      	| [$64fa: ld   bc,$8762]
 *	add.w	d5,a0                            	| [$64fd: add  hl,bc]
 * 	move.b	d0,(a0)                         	| [$64fe: ld   (hl),a]
-*l_64ff:
+l_64ff:
 	rts                                    	| [$64ff: ret]
 
 handle_music_6500:
@@ -17689,11 +17706,11 @@ l_75e8:
 0:
 	addq.b	#1,d0                           	| [$75f6: inc  a]
 	move.b	d0,l_8641(a6)                   	| [$75f7: ld   ($8641),a]
-	jbsr	l_364d                            	| [$75fa: call $364D]
+	jbsr	stop_music_364d                            	| [$75fa: call $364D]
 	rts                                    	| [$75fd: ret] reaches here when player is shot
 
 player_died_75fe:
-	jbsr	l_364d                            	| [$75fe: call $364D]
+	jbsr	stop_music_364d                            	| [$75fe: call $364D]
 	
 	* looks like a RAM checksum... removing it
                   	| [$7601: ld   de,$8194]
@@ -17804,7 +17821,7 @@ perform_all_in_game_tasks_76A2:
 	jbsr	l_3127                            	| [$76b7: call $3127]
 	jbsr	update_enemies_3081               	| [$76ba: call update_enemies_3081]
 	jbsr	update_bullets_4bba                 | [$76bd: call update_bullets_4bba]
-	jbsr	l_0be1                            	| [$76c0: call $0BE1]
+	jbsr	handle_moving_çar_0be1                            	| [$76c0: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$76c3: call $15A0]
 	rts                                    	| [$76c6: ret]
 
@@ -18145,13 +18162,15 @@ ldir_video:
 * going to freeze/crash. For instance dynamic_ram_code_85EF
 * is called during demo after a few seconds of play and regularly from then
 
-dynamic_ram_code_805b:
+bonus_letter_anim_ram_code_805b:
+	LOG_REGS	805b
 	clr.b	(a0)                             	| [$805b: ld   (hl),$00]
 	move.b	d3,d0                           	| [$805d: ld   a,d]
 	                             	| [$805e: or   a]
 	bpl.b	0f                               	| [...]
 	rts                                    	| [$805f: ret  m] [...]
 0:
+	LOG_REGS	8060
 	cmp.b	#0x0C,d0                         	| [$8060: cp   $0C]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$8062: ret  nc] [...]
@@ -18162,12 +18181,14 @@ dynamic_ram_code_805b:
 	add.b	d0,d0                            	| [$8069: add  a,a]
 	add.b	d0,d0                            	| [$806a: add  a,a]
 	move.b	d0,d4                           	| [$806b: ld   e,a]
+	LOG_REGS	806c
 	move.b	#0xFA,d0                        	| [$806c: ld   a,$FA]
 	sub.b	d4,d0                            	| [$806e: sub  e]
 	move.b	d0,(a0)                         	| [$806f: ld   (hl),a]
 	rts                                    	| [$8070: ret]
 
 dynamic_ram_code_8071:
+	LOG_REGS	8071
 	add.b	d0,d0                            	| [$8071: add  a,a]
 	add.b	#0xEC,d0                         	| [$8072: add  a,$EC]
 	move.b	d0,(a0)                         	| [$8074: ld   (hl),a]

@@ -55,6 +55,7 @@ sound_dict = {
 "ELEVATOR_STOPS_SND"               :{"index":23,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
 "CAR_EXIT_SND"               :{"index":24,"channel":0,"sample_rate":hq_sample_rate,"priority":10},
 "EXTRA_LIFE_SND"               :{"index":25,"channel":3,"sample_rate":hq_sample_rate,"priority":20},
+"MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":30,'loops':True},
 
 
 }
@@ -149,9 +150,11 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
             maxsigned = max(signed_data)
             minsigned = min(signed_data)
 
-            amp_ratio = max(maxsigned,abs(minsigned))/128
-
+            amp_ratio = max(maxsigned,abs(minsigned))/32
             wav = os.path.splitext(wav_name)[0]
+            if amp_ratio > 1:
+                print(f"{wav}: volume peaked {amp_ratio}")
+                amp_ratio = 1
             sound_table[sound_index] = "    SOUND_ENTRY {},{},{},{},{},{}\n".format(wav,len(signed_data)//2,channel,used_sampling_rate,int(64*amp_ratio),used_priority)
             sound_table_set_1[sound_index] = f"\t.word\t1,{int(details.get('loops',0))}\n\t.long\t{wav}_sound"
 

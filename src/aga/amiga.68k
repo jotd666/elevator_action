@@ -717,6 +717,11 @@ _vblank:
 		
 	jbsr		elevator_irq
 
+	GET_RAM_START_IN_A6
+	tst.b	(player_structure_851A+7,a6)	| player floor: basement
+	jne		0f
+	jbsr	erase_bonus_overlay
+0:
 	
 	* AGA/AA: fmode=3 allows much faster blitter operation
 	* allowing 50 fps without a hitch :)
@@ -768,20 +773,49 @@ _vblank:
     movem.l (a7)+,d0-d7/a0-a6
     rte
 	
+erase_bonus_overlay:
+	* bitplane offset for "BONUS" image.
+	move.w	#0xB0*NB_BYTES_PER_ROW+12,d5
+	move.l	panel_screen_ptr,a0		| first bitplane contains the data
+	move.l	fg_drawed_screen_ptr,A1
+	add.w	d5,a1
+	
+	lea		_custom,a5
+
+	move.w	#NB_BYTES_PER_ROW,d0
+	move.w	#96/8,d2	| 80 pixels wide
+	move.w	#16<<6,D4		| 16 pixels high
+    sub.w   d2,d0       | blit width
+    lsr.w   #1,d2
+    add.w   d2,d4       | blit height
+	move.l	#0x01000000,d7	| erase
+	moveq	#3,d3			| blit on 4 planes to remove color 15
+0:
+	WAIT_BLIT
+
+    move.w  d0,bltdmod(a5)	|D modulo
+
+	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
+
+	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	dbf		D3,0b
+	
+	rts
+
 draw_bonus_overlay:
 	* bitplane offset for "BONUS" image. We're going
 	* to blit it from tiles bitplanes to sprites bitplanes
 	move.w	#0xB0*NB_BYTES_PER_ROW+10,d6
-	move.w	#0xA0*NB_BYTES_PER_ROW+12,d5
+	move.w	#0xB0*NB_BYTES_PER_ROW+12,d5
 	move.l	panel_screen_ptr,a0		| first bitplane contains the data
 	move.l	fg_drawed_screen_ptr,A1
 	add.w	d6,a0			| source
 	add.w	d5,a1
-	
-	move.w	#16*NB_BYTES_PER_ROW,d6
+
 	
 	move.l	a0,a3			| mask is the same
-	add.w	d6,a1			| destination
 	lea		_custom,a5
 
 	move.w	#NB_BYTES_PER_ROW,d0
@@ -1798,11 +1832,12 @@ osd_set_gfx_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
-	* those are already set, no need to re-set them
-	*move.l		level_palettes,a0
-	*move.w	#TOTAL_NB_COLORS,d0
-	*lea		panel_end_tiles_colors,a1
-	*bsr		load_palette
+	* those are already set, no need to re-set them, except
+	* when the lights are shot!
+	move.l		level_palettes,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		panel_end_tiles_colors,a1
+	bsr		load_palette
 
 	MOVEQ	#0,d0
 	jbsr	osd_set_color_bank
@@ -3228,10 +3263,7 @@ tile_log_table:
 
 
 	.section	.datachip
-fuckpat:
-	.rept	10000
-	.word	0xAA55
-	.endr
+
 * title
 .macro	DECL_BITPLANES	bpoff_start,nb_planes
 	.set	bpoff,\bpoff_start
@@ -3401,8 +3433,8 @@ dynamic_row_43:
 	.word	 intreq,0x8010
 panel_end_bitplanes:
 	DECL_EVEN_BITPLANES	4,4
-*panel_end_tiles_colors:
-*	DECL_COLORS	16,TOTAL_NB_COLORS
+panel_end_tiles_colors:
+	DECL_COLORS	16,TOTAL_NB_COLORS
 brick_copper_color:
 	.word	0x1FE,0
 	

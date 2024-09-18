@@ -7,15 +7,16 @@
 TODO/ISSUES:
 
 - elevator engine sound plays when player EXITS elevator
-- missing music
+- missing music at start
+- player killed: stops music after killed playing: kills sound too
 - command line options are wrong
 - insert coin when game is playing: is_game_playing doesn't work
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
 - no exhaust fumes in car (probably chars too)
 - set palette: erase "bonus" overlay once
-- BONUS XXXX letters aren't properly set (transcode issue)
-- BONUS color is black! change BOB colors??
+- BONUS XXXX letters aren't properly set (transcode issue): trace 
+
 
 minor:
 
