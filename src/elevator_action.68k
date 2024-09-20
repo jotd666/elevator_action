@@ -463,7 +463,7 @@ sound_table:
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
 	.byte	EXTRA_LIFE_SND   | 0x3d
-	.byte	-1   | 0x3e
+	.byte	HURRY_UP_THEME_SND   | 0x3e
 	.byte	-1   | 0x3f
 	.byte	-1   | 0x40
 	.byte	-1   | 0x41
@@ -603,7 +603,7 @@ sound_table:
 	.byte	LAMP_FALLS_SND   | 0xc7
 	.byte	CAR_EXIT_SND   | 0xc8
 	.byte	PLAYER_CRUSHED_2_SND   | 0xc9
-	.byte	0   | 0xca   | game over! GAME_OVER_SND
+	.byte	GAME_OVER_SND   | 0xca
 	.byte	KICKING_ENEMY_SND   | 0xcb
 	.byte	-1   | 0xcc
 	.byte	-1   | 0xcd
@@ -3090,7 +3090,7 @@ draw_car_0ccd:
 												| [$0ce0: add  a,a]
 	moveq   #0,d3                               | [$0ce2: ld   d,$00]
 	move.b	d0,d3                           	| [$0ce1: ld   e,a]
-	lea	table_0D2D,a0                          	| [$0ce4: ld   hl,$0D2D]
+	lea	car_sprite_table_0D2D,a0                          	| [$0ce4: ld   hl,$0D2D]
 	add.w	d3,a0                            	| [$0ce7: add  hl,de]
  	lea	l_8146(a6),a1                      	    | [$0ce8: ld   de,$8146]
 	move.b	#0x03,d1                        	| [$0ceb: ld   b,$03]
@@ -3147,7 +3147,7 @@ hide_car_sprite_wraparound_0d1b:
 	move.b	#0x03,(a0)          | [$0d2a: ld   (hl),$03] code
 	rts                         | [$0d2c: ret]
 
-table_0D2D:
+car_sprite_table_0D2D:
 	.byte	0x10,0x00
 	.byte	0x01,0x6D,0x20
 	.byte	0x00
@@ -3260,7 +3260,6 @@ draw_bonus_letters_and_car_trail_0dad:
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$0dbc: ret  c] [...]
 0:
-	LOG_REGS		0dbd
 	lea	bonus_letters_data_8041(a6),a0          | [$0dbd: ld   hl,$8041]
 	move.b	d0,d3                           	| [$0dc0: ld   d,a]
 	move.b	#0x09,d1                        	| [$0dc1: ld   b,$09]
@@ -3273,7 +3272,6 @@ l_0dc3:
 	move.b	#0x05,d1                        	| [$0dcb: ld   b,$05]
 	clr.b	d2                               	| [$0dcd: ld   c,$00]
 l_0dcf:
-	LOG_REGS		0dcf
 	jbsr	l_0e3b                            	| [$0dcf: call $0E3B]
 	addq.b	#1,d2                           	| [$0dd2: inc  c]
 	subq.b	#2,d3                           	| [$0dd3: dec  d] * 2
@@ -3367,7 +3365,7 @@ l_0e3b:
 
 	move.l	a0,-(sp)                        	| [$0e4b: push hl]
 	movem.w	d1/d2,-(sp)                    	| [$0e4c: push bc]
-	lea	table_0E66,a0                          	| [$0e4d: ld   hl,$0E66]
+	lea	smoke_table_0E66,a0                          	| [$0e4d: ld   hl,$0E66]
 	moveq	#0,d1                               | [$0e50: ld   b,$00]
 	move.b	d4,d1                           	| [$0e52: ld   c,e]
 	add.w	d1,a0                            	| [$0e53: add  hl,bc]
@@ -3382,7 +3380,8 @@ l_0e59:
 	move.l	a0,-(sp)                        	| [$0e59: push hl]
 	movem.w	d1/d2,-(sp)                    	| [$0e5a: push bc]
 	lea	l_8037(a6),a0                      	| [$0e5b: ld   hl,$8037]
-	and.w	#0xFF,d1                               	| [$0e5e: ld   b,$00]
+	moveq	#0,d1                               	| [$0e5e: ld   b,$00]
+	move.b	d2,d1
 	add.w	d1,a0                            	| [$0e60: add  hl,bc]
 	move.b	(a0),d0                         	| [$0e61: ld   a,(hl)]
 	LOG_REGS		0e62
@@ -3391,8 +3390,11 @@ l_0e59:
 	move.b	d0,(a0)                         	| [$0e64: ld   (hl),a]
 	rts                                    	| [$0e65: ret]
 
-table_0E66:
-	.byte	0xE4,0xE6,0xE8,0xE8,0xE6,0xE4,0xE6,0xEA,0xEA,0xE6,0xE4,0xE6,0xE8,0xE8,0xE6,0xE4
+smoke_table_0E66:
+	.byte	0xE4,0xE6,0xE8,0xE8
+	.byte	0xE6,0xE4,0xE6,0xEA
+	.byte	0xEA,0xE6,0xE4,0xE6
+	.byte	0xE8,0xE8,0xE6,0xE4
 	.byte	0xE6,0xEA,0xEA,0xE6
 	.align	2
 	
@@ -3408,7 +3410,6 @@ l_0e7a:
 	cmp.b	#0x02,d0                         	| [$0e80: cp   $02]
 	jeq	l_0e9f                             	| [$0e82: jr   z,$0E9F]
 	* write "BONUS xxx" big letters on layer 1, this time it's transparent!
-	jbsr	osd_break
 	lea	bonus_letters_data_8041(a6),a0                      	| [$0e84: ld   hl,$8041]
 	lea	bonus_screen_address_C6C1(a6),a1                      	| [$0e87: ld   de,$C6C1]
 	move.w	#0x001A,d1                      	| [$0e8a: ld   bc,$001A] 26
@@ -18163,36 +18164,32 @@ ldir_video:
 * is called during demo after a few seconds of play and regularly from then
 
 bonus_letter_anim_ram_code_805b:
-	LOG_REGS	805b
 	clr.b	(a0)                             	| [$805b: ld   (hl),$00]
 	move.b	d3,d0                           	| [$805d: ld   a,d]
 	                             	| [$805e: or   a]
 	bpl.b	0f                               	| [...]
 	rts                                    	| [$805f: ret  m] [...]
 0:
-	LOG_REGS	8060
 	cmp.b	#0x0C,d0                         	| [$8060: cp   $0C]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$8062: ret  nc] [...]
 0:
 	cmp.b	#0x08,d0                         	| [$8063: cp   $08]
-	jcs	dynamic_ram_code_8071              	| [$8065: jr   c,dynamic_ram_code_8071]
+	jcs	dynamic_ram_code_8071              	    | [$8065: jr   c,dynamic_ram_code_8071]
 	sub.b	#0x08,d0                         	| [$8067: sub  $08]
 	add.b	d0,d0                            	| [$8069: add  a,a]
 	add.b	d0,d0                            	| [$806a: add  a,a]
 	move.b	d0,d4                           	| [$806b: ld   e,a]
-	LOG_REGS	806c
 	move.b	#0xFA,d0                        	| [$806c: ld   a,$FA]
 	sub.b	d4,d0                            	| [$806e: sub  e]
 	move.b	d0,(a0)                         	| [$806f: ld   (hl),a]
-	rts                                    	| [$8070: ret]
+	rts                                    	    | [$8070: ret]
 
 dynamic_ram_code_8071:
-	LOG_REGS	8071
 	add.b	d0,d0                            	| [$8071: add  a,a]
 	add.b	#0xEC,d0                         	| [$8072: add  a,$EC]
 	move.b	d0,(a0)                         	| [$8074: ld   (hl),a]
-	rts                                    	| [$8075: ret]
+	rts                                    	    | [$8075: ret]
 
 dynamic_ram_code_85cf:
 	move.b	(enemy_state_09,a2),d0          	| [$85cf: ld   a,(ix+enemy_state_09)]

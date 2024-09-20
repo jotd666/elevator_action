@@ -8,14 +8,19 @@ TODO/ISSUES:
 
 - elevator engine sound plays when player EXITS elevator
 - missing music at start
-- player killed: stops music after killed playing: kills sound too
+- player killed: stops music after killed playing: kills sfx too, sfx should play
+  maybe delayed (easier than hardcoding music end: too many ways to end music)
 - command line options are wrong
 - insert coin when game is playing: is_game_playing doesn't work
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
-- no exhaust fumes in car (probably chars too)
 - set palette: erase "bonus" overlay once
-- BONUS XXXX letters aren't properly set (transcode issue): trace 
+- should be able to turn off music with a key
+- double elevators doesn't seem to appear anywhere. Seem to depend on difficulty setting too!
+  ex on floors 15->10 there are double elevators on "easy" but not on "easiest". Here there are
+  NO double elevators anywhere (even in lower floors!)
+- test hurry up music
+
 
 
 minor:
@@ -25,12 +30,14 @@ minor:
 - some cover-up BOB colors are wrong too
   - when lights are out
   - on levels 2+
-- parasite graphics on top (sprites)
+- parasite graphics on top (sprites): still there?
 - discontinuous elevator cables (control word mixup)
 - "forgot documents" out-of-tune jump sound doesn"t play, should play
   then proceed to "return to door" loop
 - hack: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
+- exhaust fumes in the end are only white (limitation of overlay implementation)
+  not a big deal!
 - when does the "ping" sound play?
 
 to debug:
