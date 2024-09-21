@@ -302,6 +302,14 @@ _user:
 * no multitask
 	
 	move.l	4.W,A6
+	
+	* system-friendly PAL/NTSC detect
+	cmp.b #50,0x212(a6)		| vblankfrequency
+	jeq	0f
+	* set NTSC
+	move.l	#NTSC_MONITOR_ID,monitor
+0:
+	
 	lea graphicsname,a1
     moveq.l #0,d0
     jsr _LVOOpenLibrary(a6)
@@ -309,6 +317,7 @@ _user:
     move.l	d0,a6
 	move.l	38(a6),old_syscoplist
 	move.l	34(A6),old_actiview		| gb_ActiView
+
 
 	sub.l	a1,a1
 	jsr	_LVOLoadView(a6)
@@ -943,6 +952,20 @@ is_game_playing:
 	movem.l	(a7)+,d0/a6
 	rts
 	
+lose_all_lives:
+	movem.l	a6,-(a7)
+	GET_RAM_START_IN_A6
+	clr.b	nb_lives_8234(a6)
+	movem.l	(a7)+,a6
+	rts
+
+set_hurry_up:
+	movem.l	a6,-(a7)
+	GET_RAM_START_IN_A6
+	move.b	#0xF,level_timer_16bit_msb_8232(a6)
+	move.b	#0xE0,level_timer_16bit_8231(a6)
+	movem.l	(a7)+,a6
+	rts
 
 	
 
@@ -2899,8 +2922,6 @@ osd_read_dsw3:
 	not.b	d0		| active low
 	rts
 
-	
-
 
 	
 
@@ -2973,11 +2994,18 @@ handle_keyboard:
 *
 10:
 	.ifndef	RELEASE
+	cmp.b	#0x56,d0	| F7 key: hurry up!
+	bne.b	0f
+	move.w	#0x0FF,_custom+color
+	bsr		set_hurry_up
+	
+0:
+	* last life, if killed, direct game over
 	cmp.b	#0x57,d0	| F8 key: lose all lives
 	bne.b	0f
 	move.w	#0x0FF,_custom+color
 	* last life, if killed, direct game over
-	
+	bsr		lose_all_lives
 0:
 	cmp.b	#0x58,d0	| F9 key crashes game (restarts whdload)
 	bne.b	0f
