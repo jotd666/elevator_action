@@ -26,7 +26,7 @@ import os,sys,bitplanelib
 
 
 
-dumpdir = os.path.join(this_dir,os.pardir,"dumps","aga")
+dumpdir = os.path.join(this_dir,os.pardir,"dumps","ocs")
 
 dump_it = True
 
@@ -229,7 +229,7 @@ for tile in full_sprite_set:
     else:
         bob_list.append(None)
 
-src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","aga")
+src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","ocs")
 
 dark_color_rep = {(255,0,0):(255,0,0), (255,255,255):(111,111,111), (176, 176, 176):(0,111,167)}
 

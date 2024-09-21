@@ -2943,6 +2943,12 @@ handle_keyboard:
 
     bsr	toggle_pause
 0:
+    cmp.b   #55,d0	| "M" key
+    bne.b   0f
+
+    eor.b   #1,music_off_flag
+	jbsr	osd_sound_stop
+0:
 
 	btst	#4,cheat_flags+3
 	jeq		10f
@@ -3012,6 +3018,7 @@ handle_keyboard:
 1:
 	movem.l	(a7)+,d0/a0/a5
 	rts
+	
 	
 toggle_pause:
 	* pause only within game
@@ -3142,7 +3149,6 @@ interrupt_mode:
 	
 pause_flag:
 	.word	0
-
 
 vbl_counter:
 	.word	0

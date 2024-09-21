@@ -11122,8 +11122,11 @@ stop_music_4665:
 	rts                                    	| [$466d: ret]
 
 switch_to_hurry_up_music_466E:
+	tst.b	music_off_flag
+	jne		1f
 	move.b	#0x3E,d0                        	| [$466e: ld   a,$3E]
 	jbsr	play_sound             	| [$4670: ld   (sound_latch_D50B),a]
+1:
 	rts                                    	| [$4673: ret]
 
 l_4674:
@@ -15724,6 +15727,8 @@ music_control_64d2:
 	
 	cmp.b	#0x81,d1
 	jne		0f
+	tst.b	music_off_flag
+	jne		1f
 	move.w	#MAIN_THEME_SND,D0
 	jbsr	osd_sound_start
 	jra		1f

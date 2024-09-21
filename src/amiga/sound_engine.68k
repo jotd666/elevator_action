@@ -5,7 +5,6 @@
 		.global osd_write_high_scores
 		.global	load_highscores
 		.global	save_highscores
-
 * sound engine and also highscore management, common to all versions
 	
 .include "dos_lvos.i"
@@ -177,7 +176,6 @@ osd_sound_start:
 
 	* music
 4:
-	
 	* don't play if already playing
 	* (music_tick value is not important for looped tunes
 	* as long as it's not zero)
@@ -251,6 +249,7 @@ highscore_needs_saving:
 	.byte	0
 highscore_loaded:
 	.byte	0
+
 normal_hiscorename:
 	.asciz	"elevator_action.high"
 

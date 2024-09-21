@@ -20,6 +20,7 @@
 	.global vbl_sync_counter
 	.global vbl_sync_flag
 	.global no_sync_flag
+	.global	music_off_flag
 	.ifndef	RELEASE
 	.global ram_start_8000
 	.endif
@@ -70,6 +71,8 @@ infinite_lives_flag:
 	.byte	0
 infinite_time_flag:
 	.byte	0
+music_off_flag:
+	.byte 	0
 
 	.ifndef	RELEASE
 log_ptr:

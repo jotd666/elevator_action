@@ -17,13 +17,14 @@ TODO/ISSUES:
   NO double elevators anywhere (even in lower floors!)
 - handle difficulty level!!
 - command line options are wrong
-
+- handle NTSC in non-whdload mode
+- load/save highs
 
 
 minor:
 
 - sync issues with elevator colors in cycle exact, put the routine somewhere else?
-- NTSC: menu update is slow
+- NTSC: menu/title  update is slow completely broken copper int???
 - some cover-up BOB colors are wrong too
   - when lights are out
   - on levels 2+
