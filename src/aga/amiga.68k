@@ -1019,6 +1019,8 @@ update_bobs:
 	.ifndef	RELEASE
 	* not known/registered: we should log that!
 	move.b	(TARGET_SPRITE_CODE,a0),d2
+	cmp.b	#3,d2		| some fake wall sprite in an obscure sprite sheet
+	jeq		2f
 	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
 	move.w	#0xF00,0xDFF180
 	.endif

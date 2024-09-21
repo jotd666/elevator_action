@@ -1,0 +1,74 @@
+Taito SJ3 hardware is quite powerful for the time, and allows 3 horizontal scrollable
+layers (not used in the game) and those layers can also scroll vertically BY TILE
+which is used ONLY for layer #2 for the elevators. 
+The character set is also redefinable (used between some BONUS letters and floor tiles),
+and was implemented differently on amiga.
+There's also an extra protection chip which checks itself, and also indirectly installs
+some functional code in RAM. I adapted the bootleg version and ripped & converted 
+the RAM code so it's permanent. Without the bootleg version, it would have been
+much harder to convert.
+
+If the hardware was fully used, the game would become very difficult to render on amiga,
+even AGA.
+
+Like on Moon Patrol, the rendering strategies were different for AGA or OCS.
+
+AGA:
+
+HARDWARE SPRITES STRATEGY:
+
+"ELEVATOR" letters and elevator themselves use sprites. Title uses 16 bit wide
+data, but elevators are 24 bit wide so 32 bit wide sprites are used (AGA only)
+The handling is not trivial because of the control word that often conflicts with
+the displayed data (clipping, wrapping...). Also sprites can only display 3 colors,
+and we already have black, light gray and gray for the cabin. The background can be 
+dark green but then we're short by 1 color for the inside (pink). 
+  
+By using copper tricks and the fact that sprites are only 24 bit wide, we can use
+the 8-bit gap to position a copper color change for the cabin, changing background
+color. Thanks to Ross for helping me calibrate the copper waits. Then a column scan
+is triggered when column scroll value changes to set such or such color depending
+on cabin tile positions and current scroll. It works quite well but was tricky!
+  
+Using the sprites here allows to emulate the independent color scrolling of the Taito
+hardware without any blitting. AGA really rules for that game. 
+
+TILES STRATEGY:
+
+Top and bottom areas of game phase use a different bitplane & palette set, with a trivial
+usage of the copper. The game uses dual playfield so BOBs don't have to redraw the background.
+The central tile layer scrolls horizontally using hardware scrolling. Each tile is drawn twice
+to emulate the "wrap" (512 pixel wide playfield). No double buffering is needed
+
+BOBS:
+
+The characters are composed of 2 16x16 bobs. Since there aren't a lot of BOBs, the game is pretty
+smooth, also thanks to the refresh that just clears the previous bob position (dual playfield rules!)
+Double buffering is barely needed since copper interrupt can occur soon enough, but occasional
+flickering happened without it, so it's better with it.
+
+The end sequence uses tiles overlay from tile screen #1 (BONUS letters). The amiga version
+detects that we're on the basement, and just blits that normally hidden screen 1 zone
+at the proper location above the sprites, reproducing the BONUS letters almost perfectly.
+
+PALETTE:
+
+When level changes, the amiga version knows which level it is and changes the wall colors.
+When a lamp is shot down, the palette changes to almost black.
+
+So the blitter is not overused and we achieve 50 FPS on a vanilla A1200.
+
+PAL:
+
+To emulate 60Hz, we use an extra mid-screen interrupt that does something only once
+out of 5 times.
+
+NTSC:
+
+That time a NTSC version was possible. Just sacrifice 2 bottom brick rows and we have
+full NTSC display at 60Hz (no mid screen interrupt)
+
+Conclusion: With a few tricks, AGA is a perfect fit for this game, even if it would have
+a much harder time rendering Jungle King for instance, because of the different usage of the
+same hardware.
+

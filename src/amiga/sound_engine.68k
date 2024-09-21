@@ -115,6 +115,12 @@ save_highscores:
     
 	
 osd_sound_stop:
+*	movem.l	d0/a0/a6,-(a7)
+*	lea		_custom,a6
+*	move.w	#3,d0
+*	jbsr	_mt_stopfx
+*	movem.l	(a7)+,d0/a0/a6
+
 	tst.b	music_playing
 	jne		force_sound_stop
 rts

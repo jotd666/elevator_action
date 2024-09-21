@@ -459,7 +459,7 @@ sound_table:
 	.byte	DOCUMENT_COLLECTED_SND   | 0x36
 	.byte	RED_DOOR_OPENED_SND   | 0x37
 	.byte	RETURN_TO_DOOR_SND   | 0x38 missing document (end sound)
-	.byte	-3   | 0x39
+	.byte	ELEVATOR_STOPS_SND   | 0x39 stop "return to door loop" actually
 	.byte	ENEMY_KILLED_SND  | 0x3a     enemy was shot
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
@@ -3135,11 +3135,8 @@ draw_car_part_0d03:
 * called when car is leaving the building
 * Displays a wall sprite at a fixed location (bottom right)
 * to hide the car sprite that wraps around when leaving
+* on amiga, the car is properly clipped but the player head briefly appears
 hide_car_sprite_wraparound_0d1b:
-	* we don't need that on amiga, sprite engine doesn't wrap around
-	* and it works properly with only 16-bit clipping, so we don't need
-	* to display the proper fake wall sprite, with the proper color code
-	.ifndef	__amiga__
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0    | [$0d1b: ld   hl,$80F1]
 	move.b	#0x04,(a0)+         | [$0d1e: ld   (hl),$04] highest priority
 	                           	| [$0d20: inc  hl]
@@ -3150,7 +3147,7 @@ hide_car_sprite_wraparound_0d1b:
 	move.b	#0x04,(a0)+         | [$0d27: ld   (hl),$04] attribute
 	                           	| [$0d29: inc  hl]
 	move.b	#0x03,(a0)          | [$0d2a: ld   (hl),$03] code
-	.endif
+
 	rts                         | [$0d2c: ret]
 
 car_sprite_table_0D2D:

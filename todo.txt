@@ -6,9 +6,8 @@
 
 TODO/ISSUES:
 
-- priority: reinstate wall redraw at end, just ignore sprite 3
+video link https://youtu.be/-M_eCRoL1d4
 - elevator engine sound plays when player EXITS elevator
-- missing intro sounds at start (module issue, wait for fix)
 - hurry up music not playing after player killed
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens

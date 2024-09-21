@@ -32,7 +32,7 @@ sound_dict = {
 "FORGOT_DOCUMENTS_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate,"priority":5},
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
 "WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
-"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":30,'loops':True},
+"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":20,'loops':True},
 "DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "RED_DOOR_OPENED_SND"                :{"index":5,"channel":3,"sample_rate":hq_sample_rate,"priority":5},
 "DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
@@ -55,8 +55,8 @@ sound_dict = {
 "ELEVATOR_STOPS_SND"               :{"index":23,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
 "CAR_EXIT_SND"               :{"index":24,"channel":0,"sample_rate":hq_sample_rate,"priority":10},
 "EXTRA_LIFE_SND"               :{"index":25,"channel":1,"sample_rate":hq_sample_rate,"priority":20},
-"MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":15,'loops':True},
-"HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":15,'loops':True},
+"MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":13,'loops':True},
+"HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":13,'loops':True},
 "GAME_OVER_SND"                :{"index":28,"pattern":10,"volume":25,'loops':False, "ticks":150},
 
 
@@ -133,7 +133,7 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
             wav_file = os.path.join(sound_dir,wav_name+".wav")
 
             def get_sox_cmd(sr,output):
-                return [sox,"--volume","1.0",wav_file,"--channels","1","--bits","8","-r",str(sr),"--encoding","signed-integer",output]
+                return [sox,"--volume","1.0",wav_file,"--channels","1","-D","--bits","8","-r",str(sr),"--encoding","signed-integer",output]
 
 
             used_sampling_rate = details["sample_rate"]
