@@ -55,9 +55,9 @@ sound_dict = {
 "ELEVATOR_STOPS_SND"               :{"index":23,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
 "CAR_EXIT_SND"               :{"index":24,"channel":0,"sample_rate":hq_sample_rate,"priority":10},
 "EXTRA_LIFE_SND"               :{"index":25,"channel":1,"sample_rate":hq_sample_rate,"priority":20},
-"MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":20,'loops':True},
-"HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":20,'loops':True},
-"GAME_OVER_SND"                :{"index":28,"pattern":10,"volume":30,'loops':False, "ticks":150},
+"MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":15,'loops':True},
+"HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":15,'loops':True},
+"GAME_OVER_SND"                :{"index":28,"pattern":10,"volume":25,'loops':False, "ticks":150},
 
 
 }
