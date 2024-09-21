@@ -6,28 +6,28 @@
 
 TODO/ISSUES:
 
+- some cover-up BOB colors are wrong too
+  - when lights are out
+  - on levels 2+
+- double elevators doesn't seem to appear anywhere. Seem to depend on difficulty setting too!
+  ex on floors 7->11 there are double elevators on "easy" but not on "easiest". Here there are
+  NO double elevators anywhere (even in lower floors!): structs aren't initialized
+   properly: no "1" at offset 6!!!
 - elevator engine sound plays when player EXITS elevator
 - missing intro sounds at start (module issue?)
 - hurry up music not playing after player killed
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
 - should be able to turn off music with a key
-- double elevators doesn't seem to appear anywhere. Seem to depend on difficulty setting too!
-  ex on floors 7->11 there are double elevators on "easy" but not on "easiest". Here there are
-  NO double elevators anywhere (even in lower floors!)
-- handle difficulty level!!
 - command line options are wrong
 - handle NTSC in non-whdload mode
 - load/save highs
+- NTSC: menu/title  update is slow completely broken copper int???
 
 
 minor:
 
 - sync issues with elevator colors in cycle exact, put the routine somewhere else?
-- NTSC: menu/title  update is slow completely broken copper int???
-- some cover-up BOB colors are wrong too
-  - when lights are out
-  - on levels 2+
 - parasite graphics on top (sprites): still there?
 - discontinuous elevator cables (control word mixup)
 - "forgot documents" out-of-tune jump sound doesn"t play, should play

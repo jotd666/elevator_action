@@ -287,17 +287,13 @@ _user:
 *	bsr		bcpl_string_to_int
 *	move.l	d0,dip_switch_start_course
 *2:
-	move.l	(A0)+,D0	| STARTLIVES/S
+	move.l	(A0)+,D0	| SKILL/S
 	beq.b	2f
 	bsr		bcpl_string_to_int
 	subq.b	#1,d0
 	bmi.b	2f
-	move.l	d0,dip_switch_start_lives
-	bra.b	3f
+	move.l	d0,difficulty_level
 2:
-	move.l	#2,dip_switch_start_lives		| 3 lives default
-3:
-
 
 	lea		_custom,a5
 	lea		debug_copperlist,a0
@@ -393,15 +389,9 @@ _user:
 	sne		all_documents_collected_flag
 0:
 1:
-*	moveq	#0,d1
-*	move.b	dip_switch_start_lives+3(pc),d1
-*	bne.b	1f
-*	moveq	#3,d1	| 3 lives is default
-*1:
-*	* DSW 0 = 2 lives
-*	move.b	(a0,d1.w),d0
-*	not.b	d0
-*	move.b	d0,dip_switches_1
+	move.b	difficulty_level+3,d0
+	and.b	#3,d0
+	or.b	d0,dip_switches_3
 	
 	move.l	start_floor_option,d1
 	lea		start_floor_table(pc),A0
@@ -3111,7 +3101,7 @@ misc_options:
 start_floor_option:
 		.long	0
 		.long	WHDLTAG_CUSTOM5_GET
-dip_switch_start_lives:
+difficulty_level:
 		.long	0
 	.long	0
 dip_switches_1:

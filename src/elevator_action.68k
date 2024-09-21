@@ -304,11 +304,12 @@ enemy_aggressivity_13 = 0x13
 player_unknown_13 = 0x13
 enemy_shoot_timeout_19 = 0x19   | smaller: shoots more often
 
-* elevator structs offsets (size=8)
+* elevator structs offsets (size=8) based at 837D
 current_floor_01 = 0x1
 max_floor_02 = 0x2
 min_floor_03 = 0x3
-player_control_07 = 0x7		| when player can control elevator
+is_double_decker_06 = 0x6
+player_control_07 = 0x7		| when player can control elevator 0xFE/0x02 control directions else 0x80
 
 * character situations
 CS_ON_GROUND_00 = 0
@@ -2231,7 +2232,7 @@ l_07ab:
 	rts                                    	| [$07b1: ret  nc] [...]
 0:
 	move.b	#0x01,d3                        	| [$07b2: ld   d,$01]
-	move.b	(0x06,a3),d0                    	| [$07b4: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$07b4: ld   a,(iy+$06)]
 	                             	| [$07b7: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$07b8: ret  nz] [...]
@@ -3451,9 +3452,9 @@ l_0eb9:
 	
 handle_elevators_0EBF:
 	jbsr	l_0ed2                            	| [$0ebf: call $0ED2]
-	jbsr	l_0efd                            	| [$0ec2: call $0EFD]
+	jbsr	elevator_player_control_0efd                            	| [$0ec2: call $0EFD]
 	jbsr	update_elevator_directions_0F65   	| [$0ec5: call update_elevator_directions_0F65]
-	jbsr	l_0f31                            	| [$0ec8: call $0F31]
+	jbsr	handle_elevator_block_by_character_0f31                            	| [$0ec8: call $0F31]
 	jbsr	l_5d61                            	| [$0ecb: call $5D61]
 	jbsr	set_elevators_neutral_controls_0F99	| [$0ece: call set_elevators_neutral_controls_0F99]
 	rts                                    	| [$0ed1: ret]
@@ -3482,7 +3483,8 @@ l_0ef3:
 	move.b	d0,l_8384(a6)                   	| [$0ef9: ld   ($8384),a]
 	rts                                    	| [$0efc: ret]
 
-l_0efd:
+* without this routine, 1) RAM code isn't installed and 2) player cannot control the elevators
+elevator_player_control_0efd:
 	lea	l_8384(a6),a0                      	| [$0efd: ld   hl,$8384]
 	lea	elevator_directions_array_8081(a6),a1	| [$0f00: ld   de,elevator_directions_array_8081]
 	move.b	#0x07,d1                        	| [$0f03: ld   b,$07]
@@ -3532,7 +3534,10 @@ l_0f0f:
 	sub.w	d1,a0                            	| [$0f2d: sbc  hl,bc]
 	move.b	d0,(a0)                         	| [$0f2f: ld   (hl),a]
 	rts                                    	| [$0f30: ret]
-l_0f31:
+	
+* without that routine, character is still squashed by elevator, but elevator doesn't
+* stop and character crosses the floors
+handle_elevator_block_by_character_0f31:
 	move.b	l_809E(a6),d0                   	| [$0f31: ld   a,($809E)]
 	cmp.b	#0x80,d0                         	| [$0f34: cp   $80]
 	jeq	l_0f3b                             	| [$0f36: jr   z,$0F3B]
@@ -6268,7 +6273,7 @@ position_red_doors_on_lower_floors_2753:
 	move.b	d0,-(a0)                         	| [$2775: ld   (hl),a]
 	rts                                    	| [$2776: ret]
 l_2777:
-	* high level of difficulty at start: add more red doors
+	* high level of difficulty (3) at start: add more red doors
 	lea	red_door_position_array_8210(a6),a0	| [$2777: ld   hl,red_door_position_array_8210]
 	jbsr	l_2784                            	| [$277a: call $2784]
 	move.b	d0,d1                           	| [$277d: ld   b,a]
@@ -6793,13 +6798,13 @@ init_level_skill_params_2A2E:
  	move.b	#0x04,d0                        	| [$2a44: ld   a,$04]
 	move.b	d0,game_speed_8233(a6)                   	| [$2a46: ld   ($8233),a]
 	move.b	skill_level_8237(a6),d0         	| [$2a49: ld   a,(skill_level_8237)]
-	lsr.b	#2,d0                            	| [$2a4c: srl  a] * 2
+	lsr.b	#2,d0                            	| [$2a4c: srl  a] divide by 4
 	addq.b	#0x06,d0                        	| [$2a50: add  a,$06]
 	cmp.b	#0x08,d0                         	| [$2a52: cp   $08]
 	jcs	l_2a58                             	| [$2a54: jr   c,$2A58]
 	move.b	#0x08,d0                        	| [$2a56: ld   a,$08] maxed out
 l_2a58:
-	move.b	d0,l_834C(a6)                   	| [$2a58: ld   ($834C),a]
+	move.b	d0,enemy_shots_speed_834C(a6)                   	| [$2a58: ld   ($834C),a]
 	move.b	#0x46,d0                        	| [$2a5b: ld   a,$46]
 	move.b	d0,l_82ED(a6)                   	| [$2a5d: ld   ($82ED),a]
 	clr.b	d0                               	| [$2a60: xor  a]
@@ -7252,7 +7257,7 @@ l_2ce2:
 	lea	elevator_array_837D(a6),a3         	| [$2ce6: ld   iy,elevator_array_837D]
 	move.b	#0x0B,d1                        	| [$2cea: ld   b,$0B]
 l_2cec:
-	move.b	(0x06,a3),d0                    	| [$2cec: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$2cec: ld   a,(iy+$06)]
 	move.b	d0,(0x0e,a2)                    	| [$2cef: ld   (ix+$0e),a]
 	move.w	#0x0015,d3                      	| [$2cf2: ld   de,$0015] 21
 	add.w	d3,a2                            	| [$2cf5: add  ix,de]
@@ -8713,7 +8718,7 @@ switch_players_data_359e:
 	jbsr	swap_memory_increase_pointers_3613	| [$35d9: call swap_memory_increase_pointers_3613]
 	lea	l_8000(a6),a1                      	| [$35dc: ld   de,$8000]
 	jbsr	swap_memory_increase_pointers_3613	| [$35df: call swap_memory_increase_pointers_3613]
-	lea	l_834C(a6),a1                      	| [$35e2: ld   de,$834C]
+	lea	enemy_shots_speed_834C(a6),a1                      	| [$35e2: ld   de,$834C]
 	jbsr	swap_memory_increase_pointers_3613	| [$35e5: call swap_memory_increase_pointers_3613]
 	lea	l_82ED(a6),a1                      	| [$35e8: ld   de,$82ED]
 	jbsr	swap_memory_increase_pointers_3613	| [$35eb: call swap_memory_increase_pointers_3613]
@@ -9307,8 +9312,8 @@ character_on_ground_397F:
 	jbsr	load_character_elevator_structure_62CE	| [$3985: call load_character_elevator_structure_62CE]
 	move.b	(0x06,a3),d0                    	| [$3988: ld   a,(iy+$06)]
 	add.b	d0,d0                            	| [$398b: add  a,a]
-	add.b	(0x07,a2),d0                     	| [$398c: add  a,(ix+$07)]
-	sub.b	(0x01,a3),d0                     	| [$398f: sub  (iy+$01)]
+	add.b	(current_floor_07,a2),d0                     	| [$398c: add  a,(ix+$07)]
+	sub.b	(current_floor_01,a3),d0                     	| [$398f: sub  (iy+$01)]
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$3992: ret  c] [...]
 0:
@@ -9323,7 +9328,7 @@ character_on_ground_397F:
 	jbsr	l_3b07                            	| [$39a3: call $3B07]
 	rts                                    	| [$39a6: ret]
 l_39a7:
-	move.b	(0x08,a2),d0                    	| [$39a7: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$39a7: ld   a,(ix+$08)]
 	and.b	#0x7F,d0                         	| [$39aa: and  $7F]
 	clr.w	d5                               	| [$39ad: ld   h,$00]
 	move.b	d0,d5                          	| [$39ac: ld   l,a]
@@ -9331,7 +9336,7 @@ l_39a7:
 	add.w	d5,a0                            	| [$39b2: add  hl,de]
  	rts                                    	| [$39b3: ret]
 l_39b4:
-	move.b	#0x0C,(0x08,a2)                 	| [$39b4: ld   (ix+$08),$0C]
+	move.b	#0x0C,(associated_elevator_08,a2)                 	| [$39b4: ld   (ix+$08),$0C]
 	clr.b	(character_delta_x_05,a2)        	| [$39b8: ld   (ix+character_delta_x_05),$00]
 	jbsr	l_4aad                            	| [$39bc: call $4AAD]
 	move.b	(character_x_00,a2),d1          	| [$39bf: ld   b,(ix+character_x_00)]
@@ -9352,7 +9357,7 @@ l_39d2:
 	subq.b	#1,d0                           	| [$39d5: dec  a]
 	sub.b	d2,d0                            	| [$39d6: sub  c]
 	jcs	l_39e4                             	| [$39d7: jp   c,$39E4]
-	move.b	d3,(0x08,a2)                    	| [$39da: ld   (ix+$08),d]
+	move.b	d3,(associated_elevator_08,a2)                    	| [$39da: ld   (ix+$08),d]
 	move.b	d3,d0                           	| [$39dd: ld   a,d]
 	cmp.b	#0x0C,d0                         	| [$39de: cp   $0C]
 	jne	l_3a08                             	| [$39e0: jp   nz,$3A08]
@@ -9380,8 +9385,8 @@ l_39fe:
 	rts                                    	| [$3a07: ret]
 l_3a08:
 	jbsr	load_character_elevator_structure_62CE	| [$3a08: call load_character_elevator_structure_62CE]
-	move.b	(0x03,a3),d0                    	| [$3a0b: ld   a,(iy+$03)]
-	cmp.b	(0x07,a2),d0                     	| [$3a0e: cp   (ix+$07)]
+	move.b	(min_floor_03,a3),d0                    	| [$3a0b: ld   a,(iy+$03)]
+	cmp.b	(current_floor_07,a2),d0                     	| [$3a0e: cp   (ix+$07)]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$3a11: ret  z] [...]
 0:
@@ -9390,27 +9395,27 @@ l_3a08:
 	move.b	#CS_FALLING_03,(character_situation_06,a2)	| [$3a1a: ld   (ix+character_situation_06),CS_FALLING_03]
 	rts                                    	| [$3a1e: ret]
 l_3a1f:
-	move.b	d0,(0x08,a2)                    	| [$3a1f: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$3a1f: ld   (ix+$08),a]
 	jbsr	load_character_elevator_structure_62CE	| [$3a22: call load_character_elevator_structure_62CE]
-	move.b	(0x07,a2),d0                    	| [$3a25: ld   a,(ix+$07)]
-	cmp.b	(0x03,a3),d0                     	| [$3a28: cp   (iy+$03)]
+	move.b	(current_floor_07,a2),d0                    	| [$3a25: ld   a,(ix+$07)]
+	cmp.b	(min_floor_03,a3),d0                     	| [$3a28: cp   (iy+$03)]
 	jeq	l_3a4b                             	| [$3a2b: jr   z,$3A4B]
 	move.b	d0,d1                           	| [$3a2d: ld   b,a]
-	move.b	(0x01,a3),d0                    	| [$3a2e: ld   a,(iy+$01)]
+	move.b	(current_floor_01,a3),d0                    	| [$3a2e: ld   a,(iy+$01)]
 	addq.b	#1,d0                           	| [$3a31: inc  a]
 	cmp.b	d1,d0                            	| [$3a32: cp   b]
 	jcs	l_3a7d                             	| [$3a33: jr   c,$3A7D]
 	move.b	d1,d0                           	| [$3a35: ld   a,b]
-	add.b	(0x06,a3),d0                     	| [$3a36: add  a,(iy+$06)]
-	add.b	(0x06,a3),d0                     	| [$3a39: add  a,(iy+$06)]
-	cmp.b	(0x01,a3),d0                     	| [$3a3c: cp   (iy+$01)]
+	add.b	(is_double_decker_06,a3),d0                     	| [$3a36: add  a,(iy+$06)]
+	add.b	(is_double_decker_06,a3),d0                     	| [$3a39: add  a,(iy+$06)]
+	cmp.b	(current_floor_01,a3),d0                     	| [$3a3c: cp   (iy+$01)]
 	jcs	l_3a7d                             	| [$3a3f: jr   c,$3A7D]
 	jne	l_3a4b                             	| [$3a41: jr   nz,$3A4B]
 	move.b	(0x02,a2),d0                    	| [$3a43: ld   a,(ix+$02)]
 	cmp.b	(a3),d0                     	| [$3a46: cp   (iy+$00)]
 	jcs	l_3a7d                             	| [$3a49: jr   c,$3A7D]
 l_3a4b:
-	move.b	#0x0C,(0x08,a2)                 	| [$3a4b: ld   (ix+$08),$0C]
+	move.b	#0x0C,(associated_elevator_08,a2)                 	| [$3a4b: ld   (ix+$08),$0C]
 	move.b	(character_x_00,a2),d0          	| [$3a4f: ld   a,(ix+character_x_00)]
 	add.b	(character_x_right_01,a2),d0     	| [$3a52: add  a,(ix+character_x_right_01)]
 	roxr.b	#1,d0                           	| [$3a55: rr   a]
@@ -9543,7 +9548,7 @@ l_3b2b:
 	jbsr	l_3ba7                            	| [$3b31: call $3BA7]
 	jbsr	l_3bbb                            	| [$3b34: call $3BBB]
 	jbsr	load_character_elevator_structure_62CE	| [$3b37: call load_character_elevator_structure_62CE]
-	move.b	(0x01,a3),d0                    	| [$3b3a: ld   a,(iy+$01)]
+	move.b	(current_floor_01,a3),d0                    	| [$3b3a: ld   a,(iy+$01)]
 	sub.b	(current_floor_07,a2),d0                     	| [$3b3d: sub  (ix+$07)]
 	jcc	l_3b62                             	| [$3b40: jp   nc,$3B62]
 	moveq	#0,d1                               	| [$3b43: ld   b,$00]
@@ -9569,7 +9574,7 @@ l_3b5c:
 	jra	l_3b73                             	| [$3b60: jr   $3B73]
 l_3b62:
 	move.b	(current_floor_07,a2),d0                    	| [$3b62: ld   a,(ix+$07)]
-	cmp.b	(0x03,a3),d0                     	| [$3b65: cp   (iy+$03)]
+	cmp.b	(min_floor_03,a3),d0                     	| [$3b65: cp   (iy+$03)]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3b68: ret  nz] [...]
 0:
@@ -9630,7 +9635,7 @@ l_3bbb:
 	move.b	d0,(character_y_offset_03,a2)   	| [$3bc5: ld   (ix+character_y_offset_03),a]
 	add.b	#0x0F,d0                         	| [$3bc8: add  a,$0F]
 	move.b	d0,(0x02,a2)                    	| [$3bca: ld   (ix+$02),a]
-	subq.b	#1,(0x07,a2)                    	| [$3bcd: dec  (ix+$07)]
+	subq.b	#1,(current_floor_07,a2)                    	| [$3bcd: dec  (ix+$07)]
 	rts                                    	| [$3bd0: ret]
 l_3bd1:
 	move.b	d0,(character_y_offset_03,a2)   	| [$3bd1: ld   (ix+character_y_offset_03),a]
@@ -11089,11 +11094,11 @@ l_4635:
 	move.b	d0,l_82F0(a6)                   	| [$4635: ld   ($82F0),a]
 	and.b	#0x04,d0                         	| [$4638: and  $04]
 	jne	l_4649                             	| [$463a: jp   nz,$4649]
-	move.b	l_834C(a6),d0                   	| [$463d: ld   a,($834C)]
+	move.b	enemy_shots_speed_834C(a6),d0                   	| [$463d: ld   a,($834C)]
 	cmp.b	#0x08,d0                         	| [$4640: cp   $08]
 	jcc	l_4649                             	| [$4642: jp   nc,$4649]
 	addq.b	#1,d0                           	| [$4645: inc  a]
-	move.b	d0,l_834C(a6)                   	| [$4646: ld   ($834C),a]
+	move.b	d0,enemy_shots_speed_834C(a6)                   	| [$4646: ld   ($834C),a]
 l_4649:
 	move.b	level_timer_16bit_msb_8232(a6),d0	| [$4649: ld   a,(level_timer_16bit_msb_8232)]
 	cmp.b	#0x10,d0                         	| [$464c: cp   $10]
@@ -11383,7 +11388,7 @@ l_484c:
 	move.b	#CS_IN_ELEVATOR_01,(character_situation_06,a2)	| [$485a: ld   (ix+character_situation_06),CS_IN_ELEVATOR_01]
 	rts                                    	| [$485e: ret]
 l_485f:
-	move.b	(0x06,a3),d0                    	| [$485f: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$485f: ld   a,(iy+$06)]
 	                             	| [$4862: or   a]
 	jeq	l_4891                             	| [$4863: jp   z,$4891]
 	move.b	(character_delta_x_05,a2),d0    	| [$4866: ld   a,(ix+character_delta_x_05)]
@@ -11396,9 +11401,9 @@ l_485f:
 	jpl	l_481b                             	| [$4876: jp   p,$481B]
 	add.b	#0x30,d0                         	| [$4879: add  a,$30]
 	move.b	d0,d6                           	| [$487b: ld   l,a]
-	move.b	(0x08,a2),d0                    	| [$487c: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$487c: ld   a,(ix+$08)]
 	or.b	#0x80,d0                          	| [$487f: or   $80]
-	move.b	d0,(0x08,a2)                    	| [$4881: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$4881: ld   (ix+$08),a]
 	move.b	(0x02,a2),d0                    	| [$4884: ld   a,(ix+$02)]
 	sub.b	(a3),d0                     	| [$4887: sub  (iy+$00)]
 	jcc	l_47c8                             	| [$488a: jp   nc,$47C8]
@@ -11413,14 +11418,14 @@ l_4891:
 	move.b	(0x02,a2),d0                    	| [$489d: ld   a,(ix+$02)]
 	sub.b	(a3),d0                     	| [$48a0: sub  (iy+$00)]
 	jcc	l_47c8                             	| [$48a3: jp   nc,$47C8]
-	move.b	(0x07,a2),d0                    	| [$48a6: ld   a,(ix+$07)]
-	cmp.b	(0x03,a3),d0                     	| [$48a9: cp   (iy+$03)]
+	move.b	(current_floor_07,a2),d0                    	| [$48a6: ld   a,(ix+$07)]
+	cmp.b	(min_floor_03,a3),d0                     	| [$48a9: cp   (iy+$03)]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$48ac: ret  z] [...]
 0:
 	jra	l_4999                             	| [$48ad: jp   $4999]
 l_48b0:
-	move.b	(0x06,a3),d0                    	| [$48b0: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$48b0: ld   a,(iy+$06)]
 	                             	| [$48b3: or   a]
 	jeq	l_48e2                             	| [$48b4: jp   z,$48E2]
 	move.b	(character_delta_x_05,a2),d0    	| [$48b7: ld   a,(ix+character_delta_x_05)]
@@ -11433,9 +11438,9 @@ l_48b0:
 	jpl	l_484c                             	| [$48c7: jp   p,$484C]
 	add.b	#0x30,d0                         	| [$48ca: add  a,$30]
 	move.b	d0,d6                           	| [$48cc: ld   l,a]
-	move.b	(0x08,a2),d0                    	| [$48cd: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$48cd: ld   a,(ix+$08)]
 	or.b	#0x80,d0                          	| [$48d0: or   $80]
-	move.b	d0,(0x08,a2)                    	| [$48d2: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$48d2: ld   (ix+$08),a]
 	move.b	(0x02,a2),d0                    	| [$48d5: ld   a,(ix+$02)]
 	sub.b	(a3),d0                     	| [$48d8: sub  (iy+$00)]
 	jcc	l_47f6                             	| [$48db: jp   nc,$47F6]
@@ -11450,23 +11455,23 @@ l_48e2:
 	move.b	(0x02,a2),d0                    	| [$48ee: ld   a,(ix+$02)]
 	sub.b	(a3),d0                     	| [$48f1: sub  (iy+$00)]
 	jcc	l_47f6                             	| [$48f4: jp   nc,$47F6]
-	move.b	(0x07,a2),d0                    	| [$48f7: ld   a,(ix+$07)]
-	cmp.b	(0x03,a3),d0                     	| [$48fa: cp   (iy+$03)]
+	move.b	(current_floor_07,a2),d0                    	| [$48f7: ld   a,(ix+$07)]
+	cmp.b	(min_floor_03,a3),d0                     	| [$48fa: cp   (iy+$03)]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$48fd: ret  z] [...]
 0:
 	jra	l_496b                             	| [$48fe: jp   $496B]
 l_4901:
-	move.b	(0x06,a3),d0                    	| [$4901: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$4901: ld   a,(iy+$06)]
 	                             	| [$4904: or   a]
 	jeq	l_4913                             	| [$4905: jp   z,$4913]
-	move.b	(0x08,a2),d0                    	| [$4908: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$4908: ld   a,(ix+$08)]
 	or.b	#0x80,d0                          	| [$490b: or   $80]
-	move.b	d0,(0x08,a2)                    	| [$490d: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$490d: ld   (ix+$08),a]
 	jra	l_47fd                             	| [$4910: jp   $47FD]
 l_4913:
-	move.b	(0x03,a3),d0                    	| [$4913: ld   a,(iy+$03)]
-	cmp.b	(0x07,a2),d0                     	| [$4916: cp   (ix+$07)]
+	move.b	(min_floor_03,a3),d0                    	| [$4913: ld   a,(iy+$03)]
+	cmp.b	(current_floor_07,a2),d0                     	| [$4916: cp   (ix+$07)]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$4919: ret  z] [...]
 0:
@@ -11475,16 +11480,16 @@ l_4913:
 	jeq	l_47c8                             	| [$491e: jp   z,$47C8]
 	jra	l_4999                             	| [$4921: jp   $4999]
 l_4924:
-	move.b	(0x06,a3),d0                    	| [$4924: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$4924: ld   a,(iy+$06)]
 	                             	| [$4927: or   a]
 	jeq	l_4936                             	| [$4928: jp   z,$4936]
-	move.b	(0x08,a2),d0                    	| [$492b: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$492b: ld   a,(ix+$08)]
 	or.b	#0x80,d0                          	| [$492e: or   $80]
-	move.b	d0,(0x08,a2)                    	| [$4930: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$4930: ld   (ix+$08),a]
 	jra	l_482e                             	| [$4933: jp   $482E]
 l_4936:
-	move.b	(0x03,a3),d0                    	| [$4936: ld   a,(iy+$03)]
-	cmp.b	(0x07,a2),d0                     	| [$4939: cp   (ix+$07)]
+	move.b	(min_floor_03,a3),d0                    	| [$4936: ld   a,(iy+$03)]
+	cmp.b	(current_floor_07,a2),d0                     	| [$4939: cp   (ix+$07)]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$493c: ret  z] [...]
 0:
@@ -11493,20 +11498,20 @@ l_4936:
 	jeq	l_47f6                             	| [$4941: jp   z,$47F6]
 	jra	l_496b                             	| [$4944: jp   $496B]
 l_4947:
-	move.b	(0x06,a3),d0                    	| [$4947: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$4947: ld   a,(iy+$06)]
 	                             	| [$494a: or   a]
 	jeq	l_4913                             	| [$494b: jp   z,$4913]
-	move.b	(0x08,a2),d0                    	| [$494e: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$494e: ld   a,(ix+$08)]
 	or.b	#0x80,d0                          	| [$4951: or   $80]
-	move.b	d0,(0x08,a2)                    	| [$4953: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$4953: ld   (ix+$08),a]
 	jra	l_4891                             	| [$4956: jp   $4891]
 l_4959:
-	move.b	(0x06,a3),d0                    	| [$4959: ld   a,(iy+$06)]
+	move.b	(is_double_decker_06,a3),d0                    	| [$4959: ld   a,(iy+$06)]
 	                             	| [$495c: or   a]
 	jeq	l_4936                             	| [$495d: jp   z,$4936]
-	move.b	(0x08,a2),d0                    	| [$4960: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$4960: ld   a,(ix+$08)]
 	or.b	#0x80,d0                          	| [$4963: or   $80]
-	move.b	d0,(0x08,a2)                    	| [$4965: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$4965: ld   (ix+$08),a]
 	jra	l_48e2                             	| [$4968: jp   $48E2]
 l_496b:
 	move.b	(0x09,a2),d0                    	| [$496b: ld   a,(ix+$09)]
@@ -11526,9 +11531,9 @@ l_4984:
 	clr.b	(exiting_room_timer_0a,a2)                        	| [$4984: ld   (ix+$0a),$00]
 	move.b	#CS_FALLING_03,(character_situation_06,a2)	| [$4988: ld   (ix+character_situation_06),CS_FALLING_03]
 	clr.b	(character_delta_x_05,a2)        	| [$498c: ld   (ix+character_delta_x_05),$00]
-	move.b	(0x08,a2),d0                    	| [$4990: ld   a,(ix+$08)]
+	move.b	(associated_elevator_08,a2),d0                    	| [$4990: ld   a,(ix+$08)]
 	and.b	#0x7F,d0                         	| [$4993: and  $7F]
-	move.b	d0,(0x08,a2)                    	| [$4995: ld   (ix+$08),a]
+	move.b	d0,(associated_elevator_08,a2)                    	| [$4995: ld   (ix+$08),a]
 	rts                                    	| [$4998: ret]
 l_4999:
 	move.b	(0x09,a2),d0                    	| [$4999: ld   a,(ix+$09)]
@@ -11558,7 +11563,7 @@ l_49b5:
 	cmp.b	#0x03,d0                         	| [$49c7: cp   $03]
 	jcc	l_49d7                             	| [$49c9: jr   nc,$49D7]
 	move.b	player_structure_851A+8(a6),d0  	| [$49cb: ld   a,(player_structure_851A+8)]
-	move.b	(0x08,a2),d7
+	move.b	(associated_elevator_08,a2),d7
 	eor.b	d7,d0                            	| [$49ce: xor  (ix+$08)]
 	and.b	#0x7F,d0                         	| [$49d1: and  $7F]
 	jne	l_49d7                             	| [$49d3: jr   nz,$49D7]
@@ -11585,41 +11590,41 @@ l_49df:
 	move.b	(0x1e,a2),d0                    	| [$49f4: ld   a,(ix+$1e)]
 	                             	| [$49f7: or   a]
 	jeq	l_4a15                             	| [$49f8: jr   z,$4A15]
-	move.b	(0x07,a2),d0                    	| [$49fa: ld   a,(ix+$07)]
-	sub.b	(0x03,a3),d0                     	| [$49fd: sub  (iy+$03)]
+	move.b	(current_floor_07,a2),d0                    	| [$49fa: ld   a,(ix+$07)]
+	sub.b	(min_floor_03,a3),d0                     	| [$49fd: sub  (iy+$03)]
 	cmp.b	#0x03,d0                         	| [$4a00: cp   $03]
 	jcc	l_49dd                             	| [$4a02: jp   nc,$49DD]
-	move.b	(0x07,a2),d0                    	| [$4a05: ld   a,(ix+$07)]
-	sub.b	(0x01,a3),d0                     	| [$4a08: sub  (iy+$01)]
+	move.b	(current_floor_07,a2),d0                    	| [$4a05: ld   a,(ix+$07)]
+	sub.b	(current_floor_01,a3),d0                     	| [$4a08: sub  (iy+$01)]
 	jeq	l_49d5                             	| [$4a0b: jp   z,$49D5]
 	subq.b	#1,d0                           	| [$4a0e: dec  a]
 	jeq	l_49d5                             	| [$4a0f: jp   z,$49D5]
 	jra	l_49dd                             	| [$4a12: jp   $49DD]
 l_4a15:
-	move.b	(0x02,a3),d0                    	| [$4a15: ld   a,(iy+$02)]
-	sub.b	(0x07,a2),d0                     	| [$4a18: sub  (ix+$07)]
+	move.b	(max_floor_02,a3),d0                    	| [$4a15: ld   a,(iy+$02)]
+	sub.b	(current_floor_07,a2),d0                     	| [$4a18: sub  (ix+$07)]
 	cmp.b	#0x03,d0                         	| [$4a1b: cp   $03]
 	jcc	l_49dd                             	| [$4a1d: jp   nc,$49DD]
-	move.b	(0x07,a2),d0                    	| [$4a20: ld   a,(ix+$07)]
-	sub.b	(0x01,a3),d0                     	| [$4a23: sub  (iy+$01)]
+	move.b	(current_floor_07,a2),d0                    	| [$4a20: ld   a,(ix+$07)]
+	sub.b	(current_floor_01,a3),d0                     	| [$4a23: sub  (iy+$01)]
 	jeq	l_49dd                             	| [$4a26: jp   z,$49DD]
 	subq.b	#1,d0                           	| [$4a29: dec  a]
 	jeq	l_49dd                             	| [$4a2a: jp   z,$49DD]
 	jra	l_49d5                             	| [$4a2d: jp   $49D5]
 l_4a30:
-	move.b	d3,(0x08,a2)                    	| [$4a30: ld   (ix+$08),d]
+	move.b	d3,(associated_elevator_08,a2)                    	| [$4a30: ld   (ix+$08),d]
 	jbsr	load_character_elevator_structure_62CE	| [$4a33: call load_character_elevator_structure_62CE]
 	jbsr	l_4a78                            	| [$4a36: call $4A78]
-	move.b	(0x07,a2),d0                    	| [$4a39: ld   a,(ix+$07)]
-	cmp.b	(0x03,a3),d0                     	| [$4a3c: cp   (iy+$03)]
+	move.b	(current_floor_07,a2),d0                    	| [$4a39: ld   a,(ix+$07)]
+	cmp.b	(min_floor_03,a3),d0                     	| [$4a3c: cp   (iy+$03)]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$4a3f: ret  z] [...]
 0:
 	move.b	(0x09,a2),d0                    	| [$4a40: ld   a,(ix+$09)]
 	cmp.b	#0x07,d0                         	| [$4a43: cp   $07]
 	jne	l_4a5e                             	| [$4a45: jr   nz,$4A5E]
-	move.b	(0x01,a3),d0                    	| [$4a47: ld   a,(iy+$01)]
-	cmp.b	(0x07,a2),d0                     	| [$4a4a: cp   (ix+$07)]
+	move.b	(current_floor_01,a3),d0                    	| [$4a47: ld   a,(iy+$01)]
+	cmp.b	(current_floor_07,a2),d0                     	| [$4a4a: cp   (ix+$07)]
 	bcs.b	0f                               	| [...]
 	rts                                    	| [$4a4d: ret  nc] [...]
 0:
@@ -11649,10 +11654,10 @@ l_4a72:
 	move.b	d0,l_82EB(a6)                   	| [$4a74: ld   ($82EB),a]
 	rts                                    	| [$4a77: ret]
 l_4a78:
-	move.b	(0x07,a2),d0                    	| [$4a78: ld   a,(ix+$07)]
-	add.b	(0x06,a3),d0                     	| [$4a7b: add  a,(iy+$06)]
-	add.b	(0x06,a3),d0                     	| [$4a7e: add  a,(iy+$06)]
-	cmp.b	(0x01,a3),d0                     	| [$4a81: cp   (iy+$01)]
+	move.b	(current_floor_07,a2),d0                    	| [$4a78: ld   a,(ix+$07)]
+	add.b	(is_double_decker_06,a3),d0                     	| [$4a7b: add  a,(iy+$06)]
+	add.b	(is_double_decker_06,a3),d0                     	| [$4a7e: add  a,(iy+$06)]
+	cmp.b	(current_floor_01,a3),d0                     	| [$4a81: cp   (iy+$01)]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$4a84: ret  nz] [...]
 0:
@@ -11684,7 +11689,7 @@ l_4a78:
 	rts                                    	| [$4aac: ret]
 l_4aad:
 	lea	l_81CE(a6),a0                      	| [$4aad: ld   hl,$81CE]
-	move.b	(0x07,a2),d0                    	| [$4ab0: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$4ab0: ld   a,(ix+$07)]
 	                             	| [$4ab3: or   a]
 	bne.b	0f                               	| [...]
 	rts                                    	| [$4ab4: ret  z] [...]
@@ -11716,7 +11721,7 @@ l_4ac2:
 	beq.b	0f                               	| [...]
 	rts                                    	| [$4ad2: ret  nz] [...]
 0:
-	move.b	(0x07,a2),d0                    	| [$4ad3: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$4ad3: ld   a,(ix+$07)]
 	cmp.b	#0x10,d0                         	| [$4ad6: cp   $10]
 	jeq	l_4af7                             	| [$4ad8: jp   z,$4AF7]
 	bcc.b	0f                               	| [...]
@@ -11781,7 +11786,7 @@ l_4b0f:
 l_4b2b:
 	move.b	#CS_IN_STAIRS_04,(character_situation_06,a2)	| [$4b2b: ld   (ix+character_situation_06),CS_IN_STAIRS_04]
 	clr.b	d0                               	| [$4b2f: xor  a]
-	move.b	d0,(0x04,a2)                    	| [$4b30: ld   (ix+$04),a]
+	move.b	d0,(character_display_priority_04,a2)                    	| [$4b30: ld   (ix+$04),a]
 	move.b	d0,(exiting_room_timer_0a,a2)                    	| [$4b33: ld   (ix+$0a),a]
 	rts                                    	| [$4b36: ret]
 l_4b37:
@@ -11830,7 +11835,7 @@ l_4b77:
 	jcs	l_4b37                             	| [$4b83: jp   c,$4B37]
 	cmp.b	#0x0C,d0                         	| [$4b86: cp   $0C]
 	jcc	l_4b37                             	| [$4b88: jp   nc,$4B37]
-	move.b	#0x01,(0x0b,a2)                 	| [$4b8b: ld   (ix+$0b),$01]
+	move.b	#0x01,(character_facing_direction_0b,a2)                 	| [$4b8b: ld   (ix+$0b),$01]
 	move.b	#0xFF,(character_delta_x_05,a2) 	| [$4b8f: ld   (ix+character_delta_x_05),$FF]
 	jra	l_4b2b                             	| [$4b93: jr   $4B2B]
 l_4b95:
@@ -12599,7 +12604,7 @@ l_506b:
 	move.b	(current_floor_07,a2),d0            | [$5085: ld   a,(ix+$07)]
 	                             	            | [$5088: or   a]
 	jeq	l_5099                             	    | [$5089: jp   z,$5099]
-	move.b	l_834C(a6),d0                   	| [$508c: ld   a,($834C)]
+	move.b	enemy_shots_speed_834C(a6),d0       | [$508c: ld   a,($834C)]
 	move.b	d0,d1                           	| [$508f: ld   b,a]
 	neg.b	d0                               	| [$5090: neg]
 	move.b	d0,d2                           	| [$5092: ld   c,a]
@@ -13698,6 +13703,7 @@ l_579d:
 	jeq	l_579d                             	| [$579e: jr   z,$579D]
 	cmp.b	#0x0B,d0                         	| [$57a0: cp   $0B]
 	jcs	l_57a6                             	| [$57a2: jr   c,$57A6]
+	* max 10000 points
 	move.b	#0x0A,d0                        	| [$57a4: ld   a,$0A]
 l_57a6:
 	move.b	d0,d2                           	| [$57a6: ld   c,a]
@@ -14982,7 +14988,7 @@ l_5f39:
 	jne	l_5f39                             	| [$5f41: djnz $5F39]
 	rts                                    	| [$5f43: ret]
 
-* < IX (ex: $8492???)
+* < IX (elevator-related structure, ex: $8492???)
 elevator_stuff_5f44:
 	jbsr	l_5f96                            	| [$5f44: call $5F96]
 	jbsr	l_5fdf                            	| [$5f47: call $5FDF]
@@ -15034,7 +15040,8 @@ l_5f83:
 l_5f96:
 	LOAD_WORD	l_8028(a6),d5             	| [$5f96: ld   hl,($8028)]
 	move.w	d5,d1                           	| [$5f99: ld   b,h]
-	move.b	(0x05,a2),d3    	| [$5f9b: ld   d,(ix+character_delta_x_05)]
+												| [$5f9a: ld   c,l]
+	move.b	(0x05,a2),d3    	| [$5f9b: ld   d,(ix+$05)]
 	move.b	(0x04,a2),d4                    	| [$5f9e: ld   e,(ix+$04)]
 	LOAD_D3_16_FROM_D3D4
 	                               	| [$5fa1: xor  a]
