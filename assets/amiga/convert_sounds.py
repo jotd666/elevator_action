@@ -32,7 +32,7 @@ sound_dict = {
 "FORGOT_DOCUMENTS_SND"               :{"index":0,"channel":0,"sample_rate":hq_sample_rate,"priority":5},
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
 "WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
-"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":30,'loops':False,"ticks":380},
+"HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":30,'loops':True},
 "DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "RED_DOOR_OPENED_SND"                :{"index":5,"channel":3,"sample_rate":hq_sample_rate,"priority":5},
 "DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
@@ -127,7 +127,7 @@ with open(sndfile,"w") as fst,open(outfile,"w") as fw:
         if channel is None:
             # if music loops, ticks are set to 1 so sound orders only can happen once (else music is started 50 times per second!!)
 
-            sound_table_set_1[sound_index] = "\t.word\t{},{},{}\n\t.byte\t{},{}".format(2,details["pattern"],details.get("ticks",0),details["volume"],int(details["loops"]))
+            sound_table_set_1[sound_index] = "\t.word\t{},{},{}\n\t.byte\t{},{}".format(2,details["pattern"]+1,details.get("ticks",0),details["volume"],int(details["loops"]))
         else:
             wav_name = os.path.basename(wav_entry).lower()[:-4]
             wav_file = os.path.join(sound_dir,wav_name+".wav")
