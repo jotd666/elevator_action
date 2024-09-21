@@ -716,10 +716,16 @@ _vblank:
 	subq.w	#1,delay_timer
 		
 	jbsr		elevator_irq
-
+	
+	tst.b	force_erase_overlay
+	jeq		0f
+	subq.b	#1,force_erase_overlay
+	jra		1f
+0:
 	GET_RAM_START_IN_A6
 	tst.b	(player_structure_851A+7,a6)	| player floor: basement
 	jne		0f
+1:
 	jbsr	erase_bonus_overlay
 0:
 	
@@ -930,11 +936,20 @@ really_update_sprites:
 
 	rts
 	
+* 2 conditions I can think of:
+* - gfx set: game tiles
+* - not demo mode
+* Z: set if not playing
 is_game_playing:
 	movem.l	d0/a6,-(a7)
 	GET_RAM_START_IN_A6
-	move.b	game_in_play_flag_823B(a6),d0
-	not.b	d0
+	tst.b	this_is_a_demo_game_823B(a6)
+	bne		0f
+	tst.b	current_gfx_bank
+	jne		1f
+0:
+	moveq	#0,d0
+1:
 	movem.l	(a7)+,d0/a6
 	rts
 	
@@ -1680,6 +1695,7 @@ load_palette:
 
 
 osd_set_level_palette:
+	move.b	#2,force_erase_overlay		| will erase "BONUS 1000" twice
 	add.b	level_color+3,d0
 	and.b	#3,d0
 	
@@ -2785,7 +2801,7 @@ osd_read_inputs_2:
 0:	
 
 	bsr		is_game_playing
-	jeq	1f
+	jne	1f
 	move.l	_joypad_state,d1
 	* game not playing, we can insert coin/start with joypad
 	btst	#JPB_BTN_RED,d1		| "5" key like in MAME
@@ -3097,6 +3113,8 @@ dip_switches_2:
 		.byte	0
 dip_switches_3:
 		.byte	0
+force_erase_overlay:
+	.byte	0
 current_gfx_bank:
 	.byte	-1
 

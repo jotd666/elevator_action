@@ -3370,7 +3370,6 @@ l_0e3b:
 	move.b	d4,d1                           	| [$0e52: ld   c,e]
 	add.w	d1,a0                            	| [$0e53: add  hl,bc]
 	move.b	(a0),d0                         	| [$0e54: ld   a,(hl)]
-	LOG_REGS		e55
 	movem.w	(sp)+,d1/d2                    	| [$0e55: pop  bc]
 	move.l	(sp)+,a0                        	| [$0e56: pop  hl]
 	move.b	d0,(a0)                         	| [$0e57: ld   (hl),a]
@@ -3384,7 +3383,6 @@ l_0e59:
 	move.b	d2,d1
 	add.w	d1,a0                            	| [$0e60: add  hl,bc]
 	move.b	(a0),d0                         	| [$0e61: ld   a,(hl)]
-	LOG_REGS		0e62
 	movem.w	(sp)+,d1/d2                    	   | [$0e62: pop  bc]
 	move.l	(sp)+,a0                        	| [$0e63: pop  hl]
 	move.b	d0,(a0)                         	| [$0e64: ld   (hl),a]
@@ -3849,7 +3847,7 @@ l_111b:
 	                                    	| [$111e: nop]
 	                                    	| [$111f: nop]
 	move.b	#0x02,d0                        	| [$1120: ld   a,$02]
-	move.b	d0,game_in_play_flag_823B(a6)   	| [$1122: ld   (game_in_play_flag_823B),a]
+	move.b	d0,this_is_a_demo_game_823B(a6)   	| [$1122: ld   (this_is_a_demo_game_823B),a]
 	move.b	l_8251(a6),d0                   	| [$1125: ld   a,($8251)]
 	                             	| [$1128: or   a]
 	jeq	l_1167                             	| [$1129: jp   z,$1167]
@@ -3888,7 +3886,7 @@ l_1167:
 
 	
 fix_random_seed_for_demo_1175:
-	move.b	game_in_play_flag_823B(a6),d0   	| [$1175: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$1175: ld   a,(this_is_a_demo_game_823B)]
 	                          	| [$1178: dec  a]
 	                         	| [$1179: jr   z,$118A]
 	jbsr		get_recorded_input             	| [$117b: ld   hl,($823C)]
@@ -6162,7 +6160,7 @@ set_level_palette_26ca:
 l_26d3:
 	
 	lea	palette_data_77E3,a0                          	| [$26d3: ld   hl,$77E3]
-	move.b	game_in_play_flag_823B(a6),d0   	| [$26d6: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$26d6: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$26d9: or   a]
 	jne	l_26ee                             	| [$26da: jr   nz,$26EE]
 	* game in play, adjust palette to level
@@ -6793,7 +6791,7 @@ init_level_skill_params_2A2E:
 	moveq	#0,d5                      	| [$2a3e: ld   hl,$0000] 0
 	STORE_WORD	d5,level_timer_16bit_8231(a6)	| [$2a41: ld   (level_timer_16bit_8231),hl] reset timer
  	move.b	#0x04,d0                        	| [$2a44: ld   a,$04]
-	move.b	d0,l_8233(a6)                   	| [$2a46: ld   ($8233),a]
+	move.b	d0,game_speed_8233(a6)                   	| [$2a46: ld   ($8233),a]
 	move.b	skill_level_8237(a6),d0         	| [$2a49: ld   a,(skill_level_8237)]
 	lsr.b	#2,d0                            	| [$2a4c: srl  a] * 2
 	addq.b	#0x06,d0                        	| [$2a50: add  a,$06]
@@ -7882,7 +7880,7 @@ l_30ca:
 	rts                                    	| [$30ce: ret]
 
 handle_player_controls_30CF:
-	move.b	game_in_play_flag_823B(a6),d0   	| [$30cf: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$30cf: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$30d2: or   a]
 	jne	demo_controls_310C                             	| [$30d3: jp   nz,$310C]
 	move.b	copy_of_dip_switches_1_824E(a6),d0	| [$30d6: ld   a,(copy_of_dip_switches_1_824E)]
@@ -8013,14 +8011,14 @@ unknown_enemy_handling_3164:
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$3183: ret  c] [...]
 0:
-	clr.b	(0x0a,a2)                        	| [$3184: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$3184: ld   (ix+$0a),$00]
 	move.b	#0x05,(enemy_state_09,a2)                 	| [$3188: ld   (ix+$09),$05]
 	jbsr	l_56b9                            	| [$318c: call $56B9]
 	move.b	#0xCB,d0                        	| [$318f: ld   a,$CB] jumped/killed enemy
 	jbsr	play_sound_3656                   	| [$3191: call play_sound_3656]
 	clr.b	d0                               	| [$3194: xor  a]
 	move.b	d0,l_82EC(a6)                   	| [$3195: ld   ($82EC),a]
-	move.b	game_in_play_flag_823B(a6),d0   	| [$3198: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$3198: ld   a,(this_is_a_demo_game_823B)]
 	                            	| [$319b: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$319c: ret  nz] [...]
@@ -8153,7 +8151,7 @@ make_building_dark_3265:
 											| [$3271: ld   (colorbank_D507),a]
 	move.b	#0x01,d0                        	| [$3274: ld   a,$01]
 	move.b	d0,building_is_dark_8242(a6)                   	| [$3276: ld   ($8242),a]
-	move.b	game_in_play_flag_823B(a6),d0   	| [$3279: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$3279: ld   a,(this_is_a_demo_game_823B)]
 												| [$327c: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$327d: ret  nz] [...]
@@ -8180,7 +8178,7 @@ restore_building_lights_3292:
 	jbsr	osd_set_color_bank               	| [$3297: ld   (colorbank_D506),a]
 											| [$329a: ld   a,$32]
 											| [$329c: ld   (colorbank_D507),a]
-	move.b	game_in_play_flag_823B(a6),d0   	| [$329f: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$329f: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$32a2: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$32a3: ret  nz] [...]
@@ -8268,7 +8266,7 @@ enemy_hit_by_lamp_331b:
 	rts                                      	| [$3323: ret  z] already hit [...]
 0:
 	move.b	#0x05,(enemy_state_09,a2)       	| [$3324: ld   (ix+enemy_state_09),$05]
-	clr.b	(0x0a,a2)                        	| [$3328: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$3328: ld   (ix+$0a),$00]
 	jbsr	l_56de                            	| [$332c: call $56DE]
 	move.b	#0xCB,d0                        	| [$332f: ld   a,$CB]
 	jbsr	play_sound_3656                   	| [$3331: call play_sound_3656]
@@ -8633,7 +8631,7 @@ cache_dip_switches_3503:
 l_3529:
 	jbsr	l_2dee                            	| [$3529: call $2DEE]
 	clr.b	d0                               	| [$352c: ld   a,$00]
-	move.b	d0,game_in_play_flag_823B(a6)   	| [$352e: ld   (game_in_play_flag_823B),a]
+	move.b	d0,this_is_a_demo_game_823B(a6)   	| [$352e: ld   (this_is_a_demo_game_823B),a]
 l_3531:
 	move.b	l_824A(a6),d0                   	| [$3531: ld   a,($824A)]
 	                             	| [$3534: or   a]
@@ -8711,7 +8709,7 @@ switch_players_data_359e:
 	lea	level_timer_16bit_8231(a6),a1      	| [$35cd: ld   de,level_timer_16bit_8231]
 	jbsr	swap_memory_increase_pointers_3613	| [$35d0: call swap_memory_increase_pointers_3613]
 	jbsr	swap_memory_increase_pointers_3613	| [$35d3: call swap_memory_increase_pointers_3613]
-	lea	l_8233(a6),a1                      	| [$35d6: ld   de,$8233]
+	lea	game_speed_8233(a6),a1                      	| [$35d6: ld   de,$8233]
 	jbsr	swap_memory_increase_pointers_3613	| [$35d9: call swap_memory_increase_pointers_3613]
 	lea	l_8000(a6),a1                      	| [$35dc: ld   de,$8000]
 	jbsr	swap_memory_increase_pointers_3613	| [$35df: call swap_memory_increase_pointers_3613]
@@ -8776,7 +8774,7 @@ l_3631:
 	rts                                    	| [$363e: ret]
 
 start_music_if_in_game_363f:
-	move.b	game_in_play_flag_823B(a6),d0   	| [$363f: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$363f: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$3642: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3643: ret  nz] [...]
@@ -8795,7 +8793,7 @@ stop_music_364d:
 
 play_sound_3656:
 	                           	| [$3656: ld   b,a]
-	tst.b	game_in_play_flag_823B(a6)   	| [$3657: ld   a,(game_in_play_flag_823B)]
+	tst.b	this_is_a_demo_game_823B(a6)   	| [$3657: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$365a: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$365b: ret  nz] [...]
@@ -9026,7 +9024,7 @@ l_37bf:
 	move.b	d0,(0x0c,a2)                    	| [$37cb: ld   (ix+$0c),a]
 	                           	| [$37ce: inc  hl]
 	move.b	(a0),d0                         	| [$37cf: ld   a,(hl)]
-	move.b	d0,(0x0a,a2)                    	| [$37d0: ld   (ix+$0a),a]
+	move.b	d0,(exiting_room_timer_0a,a2)                    	| [$37d0: ld   (ix+$0a),a]
 	rts                                    	| [$37d3: ret]
 l_37d4:
 	move.b	d2,d0                           	| [$37d4: ld   a,c]
@@ -9066,7 +9064,7 @@ l_37e9:
 	rts                                    	| [$3805: ret  c] [...]
 0:
 	move.b	#0x06,(enemy_state_09,a2)       	| [$3806: ld   (ix+enemy_state_09),$06]
-	clr.b	(0x0a,a2)                        	| [$380a: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$380a: ld   (ix+$0a),$00]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$380e: ld   a,(current_enemy_index_85BA)]
 	                             	| [$3811: or   a]
 	jeq	l_382a                             	| [$3812: jr   z,$382A]
@@ -9091,12 +9089,12 @@ l_382a:
 	move.b	d0,l_82EB(a6)                   	| [$382c: ld   ($82EB),a]
 	rts                                    	| [$382f: ret]
 l_3830:
-	move.b	(0x0a,a2),d0                    	| [$3830: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$3830: ld   a,(ix+$0a)]
 	                             	| [$3833: or   a]
 	jeq	l_3876                             	| [$3834: jp   z,$3876]
 	cmp.b	#0x01,d0                         	| [$3837: cp   $01]
 	jeq	l_3880                             	| [$3839: jp   z,$3880]
-	addq.b	#1,(0x0a,a2)                    	| [$383c: inc  (ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$383c: inc  (ix+$0a)]
 	move.b	d0,d1                           	| [$383f: ld   b,a]
 	move.b	#0x11,d2                        	| [$3840: ld   c,$11]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$3842: ld   a,(current_enemy_index_85BA)]
@@ -9143,7 +9141,7 @@ l_388b:
 	rts                                    	| [$388e: ret]
 l_388f:
 	move.b	#0x05,(0x0c,a2)                 	| [$388f: ld   (ix+$0c),$05]
-	addq.b	#1,(0x0a,a2)                    	| [$3893: inc  (ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$3893: inc  (ix+$0a)]
 	move.b	(0x02,a2),d0                    	| [$3896: ld   a,(ix+$02)]
 	sub.b	#0x0F,d0                         	| [$3899: sub  $0F]
 	jcs	l_38a4                             	| [$389b: jp   c,$38A4]
@@ -9173,7 +9171,7 @@ l_38bb:
 	jcc	l_38d9                             	| [$38ca: jp   nc,$38D9]
 	move.b	#0x06,(character_y_offset_03,a2)	| [$38cd: ld   (ix+character_y_offset_03),$06]
 	move.b	#0x15,(0x02,a2)                 	| [$38d1: ld   (ix+$02),$15]
-	addq.b	#1,(0x0a,a2)                    	| [$38d5: inc  (ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$38d5: inc  (ix+$0a)]
 	rts                                    	| [$38d8: ret]
 l_38d9:
 	move.b	d0,(character_y_offset_03,a2)   	| [$38d9: ld   (ix+character_y_offset_03),a]
@@ -9388,7 +9386,7 @@ l_3a08:
 	rts                                    	| [$3a11: ret  z] [...]
 0:
 	clr.b	(0x09,a2)                        	| [$3a12: ld   (ix+$09),$00]
-	clr.b	(0x0a,a2)                        	| [$3a16: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$3a16: ld   (ix+$0a),$00]
 	move.b	#CS_FALLING_03,(character_situation_06,a2)	| [$3a1a: ld   (ix+character_situation_06),CS_FALLING_03]
 	rts                                    	| [$3a1e: ret]
 l_3a1f:
@@ -9437,7 +9435,7 @@ l_3a70:
 	rts                                    	| [$3a7c: ret]
 l_3a7d:
 	clr.b	(0x09,a2)                        	| [$3a7d: ld   (ix+$09),$00]
-	clr.b	(0x0a,a2)                        	| [$3a81: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$3a81: ld   (ix+$0a),$00]
 	move.b	#CS_FALLING_03,(character_situation_06,a2)	| [$3a85: ld   (ix+character_situation_06),CS_FALLING_03]
 	move.b	(character_x_00,a2),d0          	| [$3a89: ld   a,(ix+character_x_00)]
 	add.b	(character_x_right_01,a2),d0     	| [$3a8c: add  a,(ix+character_x_right_01)]
@@ -9508,8 +9506,9 @@ l_3af7:
 	bne.b	0f                               	| [...]
 	rts                                    	| [$3b00: ret  z] [...]
 0:
+	jbsr	osd_sound_stop
 	move.b	#0xC5,d0                        	| [$3b01: ld   a,$C5] player crushed by elevator (loop)
-	jbsr	play_sound_3656                   	| [$3b03: call play_sound_3656]
+	jbsr	play_sound_3656                   	| [$3b03: call play_sound_3656] crushed by elevator
 	rts                                    	| [$3b06: ret]
 
 l_3b07:
@@ -9534,12 +9533,13 @@ l_3b1c:
 0:
 	addq.b	#1,d0                           	| [$3b21: inc  a]
 	move.b	d0,l_82EB(a6)                   	| [$3b22: ld   ($82EB),a]
+	jbsr	osd_sound_stop
 	move.b	#0xC5,d0                        	| [$3b25: ld   a,$C5]
 	jbsr	play_sound_3656                   	| [$3b27: call play_sound_3656]
 	rts                                    	| [$3b2a: ret]
 l_3b2b:
 	jbsr	l_3b9a                            	| [$3b2b: call $3B9A]
-	addq.b	#1,(0x0a,a2)                    	| [$3b2e: inc  (ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$3b2e: inc  (ix+$0a)]
 	jbsr	l_3ba7                            	| [$3b31: call $3BA7]
 	jbsr	l_3bbb                            	| [$3b34: call $3BBB]
 	jbsr	load_character_elevator_structure_62CE	| [$3b37: call load_character_elevator_structure_62CE]
@@ -9568,7 +9568,7 @@ l_3b5c:
 	move.b	#CS_ABOVE_ELEVATOR_02,(character_situation_06,a2)	| [$3b5c: ld   (ix+character_situation_06),CS_ABOVE_ELEVATOR_02]
 	jra	l_3b73                             	| [$3b60: jr   $3B73]
 l_3b62:
-	move.b	(0x07,a2),d0                    	| [$3b62: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$3b62: ld   a,(ix+$07)]
 	cmp.b	(0x03,a3),d0                     	| [$3b65: cp   (iy+$03)]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3b68: ret  nz] [...]
@@ -9581,32 +9581,36 @@ l_3b62:
 	move.b	#CS_ON_GROUND_00,(character_situation_06,a2)	| [$3b6f: ld   (ix+character_situation_06),CS_ON_GROUND_00]
 l_3b73:
 	move.b	#0x06,(character_y_offset_03,a2)	| [$3b73: ld   (ix+character_y_offset_03),$06]
-	move.b	#0x15,(0x02,a2)                 	| [$3b77: ld   (ix+$02),$15]
-	move.b	#0x05,(0x09,a2)                 	| [$3b7b: ld   (ix+$09),$05]
-	clr.b	(0x0a,a2)                        	| [$3b7f: ld   (ix+$0a),$00]
+	move.b	#0x15,(character_y_offset_down_02,a2)                 	| [$3b77: ld   (ix+$02),$15]
+	move.b	#0x05,(enemy_state_09,a2)                 	| [$3b7b: ld   (ix+$09),$05]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$3b7f: ld   (ix+$0a),$00]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$3b83: ld   a,(current_enemy_index_85BA)]
 	                             	| [$3b86: or   a]
-	jeq	l_3b8f                             	| [$3b87: jr   z,$3B8F]
+	jeq	it_is_the_player_who_is_killed_3b8f                             	| [$3b87: jr   z,$3B8F]
 	move.b	#0x01,d0                        	| [$3b89: ld   a,$01]
 	move.b	d0,l_82EC(a6)                   	| [$3b8b: ld   ($82EC),a]
 	rts                                    	| [$3b8e: ret]
-l_3b8f:
+
+it_is_the_player_who_is_killed_3b8f:
 	move.b	#0x01,d0                        	| [$3b8f: ld   a,$01]
 	move.b	d0,l_82EB(a6)                   	| [$3b91: ld   ($82EB),a]
+	jbsr	osd_sound_stop		| preventively stops music, so sfx aren't shut by a subsequent call (amiga)
 	move.b	#0xC4,d0                        	| [$3b94: ld   a,$C4] player killed, death music
 	jbsr	play_sound_3656                   	| [$3b96: call play_sound_3656]
 	rts                                    	| [$3b99: ret]
 l_3b9a:
 	move.b	current_enemy_index_85BA(a6),d0 	| [$3b9a: ld   a,(current_enemy_index_85BA)]
-	or.b	(0x0a,a2),d0                      	| [$3b9d: or   (ix+$0a)]
+	or.b	(exiting_room_timer_0a,a2),d0                      	| [$3b9d: or   (ix+$0a)]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3ba0: ret  nz] [...]
 0:
+	jbsr	osd_sound_stop		| preventively stops music, so sfx aren't shut by a subsequent call (amiga)
+
 	move.b	#0xC3,d0                        	| [$3ba1: ld   a,$C3] player falling sound
 	jbsr	play_sound_3656                   	| [$3ba3: call play_sound_3656]
 	rts                                    	| [$3ba6: ret]
 l_3ba7:
-	move.b	(0x0a,a2),d0                    	| [$3ba7: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$3ba7: ld   a,(ix+$0a)]
 	* carry is irrelevant as masked out below
 	roxr.b	#1,d0                           	| [$3baa: rra]
 	move.b	d0,d1                           	| [$3bab: ld   b,a]
@@ -9667,7 +9671,7 @@ l_3c07:
 	jcc	l_3c26                             	| [$3c15: jp   nc,$3C26]
 	move.b	#CS_IN_ROOM_05,(character_situation_06,a2)	| [$3c18: ld   (ix+character_situation_06),CS_IN_ROOM_05]
 	clr.b	d0                               	| [$3c1c: xor  a]
-	clr.b	(0x0a,a2)                        	| [$3c1d: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$3c1d: ld   (ix+$0a),$00]
 	clr.b	(0x04,a2)                        	| [$3c21: ld   (ix+$04),$00]
 	rts                                    	| [$3c25: ret]
 l_3c26:
@@ -10155,7 +10159,7 @@ l_3f86:
 	add.b	(a0),d0                          	| [$3f9a: add  a,(hl)]
 	move.b	d0,(a0)                         	| [$3f9b: ld   (hl),a]
 l_3f9c:
-	move.b	(0x0a,a2),d0                    	| [$3f9c: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$3f9c: ld   a,(ix+$0a)]
 	cmp.b	#0x0B,d0                         	| [$3f9f: cp   $0B]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3fa1: ret  nz] [...]
@@ -10551,7 +10555,7 @@ l_42b3:
 	move.b	d0,(0x02,a2)                    	| [$42d7: ld   (ix+$02),a]
 	move.b	(a0),d0                         	| [$42da: ld   a,(hl)]
 	move.b	d0,(0x0c,a2)                    	| [$42db: ld   (ix+$0c),a]
-	addq.b	#1,(0x0a,a2)                    	| [$42de: inc  (ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$42de: inc  (ix+$0a)]
 	rts                                    	| [$42e1: ret]
 
 table_42E2:
@@ -10690,12 +10694,12 @@ l_43b2:
 	tst.b	d0                             	| [$43b9: or   a]
 	jne	l_439f                             	| [$43ba: jp   nz,$439F]
 l_43bd:
-	move.b	(0x0a,a2),d0                    	| [$43bd: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$43bd: ld   a,(ix+$0a)]
 	eor.b	#0x01,d0                         	| [$43c0: xor  $01]
 	beq.b	0f                               	| [...]
 	jbsr	l_441c                            	| [$43c2: call nz,$441C]
 0:
-	move.b	d0,(0x0a,a2)                    	| [$43c5: ld   (ix+$0a),a]
+	move.b	d0,(exiting_room_timer_0a,a2)                    	| [$43c5: ld   (ix+$0a),a]
 	move.b	d0,(0x0c,a2)                    	| [$43c8: ld   (ix+$0c),a]
 	move.b	d0,d1                           	| [$43cb: ld   b,a]
 	move.b	#0x06,d0                        	| [$43cc: ld   a,$06]
@@ -10735,7 +10739,7 @@ is_jumping_43F5:
 	move.b	#0x02,d2                        	| [$4409: ld   c,$02]
 l_440b:
 	move.b	d2,(character_delta_x_05,a2)    	| [$440b: ld   (ix+character_delta_x_05),c]
-	clr.b	(0x0a,a2)                        	| [$440e: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$440e: ld   (ix+$0a),$00]
 	move.b	#0x07,(0x09,a2)                 	| [$4412: ld   (ix+$09),$07]
 	move.b	#0x33,d0                        	| [$4416: ld   a,$33] player jump sound
 	jbsr	play_sound_3656                   	| [$4418: call play_sound_3656]
@@ -10776,13 +10780,13 @@ handle_character_ground_controls_442A:
 move_character_left_4450:
 	move.b	#0xFE,(character_delta_x_05,a2) 	| [$4450: ld   (ix+character_delta_x_05),$FE]
 	move.b	#0x01,(0x09,a2)                 	| [$4454: ld   (ix+$09),$01]
-	clr.b	(0x0a,a2)                        	| [$4458: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$4458: ld   (ix+$0a),$00]
 	jra	l_43b2                             	| [$445c: jp   $43B2]
 
 move_character_right_445F:
 	move.b	#0x02,(character_delta_x_05,a2) 	| [$445f: ld   (ix+character_delta_x_05),$02]
 	move.b	#0x01,(0x09,a2)                 	| [$4463: ld   (ix+$09),$01]
-	clr.b	(0x0a,a2)                        	| [$4467: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$4467: ld   (ix+$0a),$00]
 	jra	l_43e7                             	| [$446b: jp   $43E7]
 
 handle_character_entering_elevator_446E:
@@ -10803,7 +10807,7 @@ l_4482:
 	move.b	d0,(character_x_00,a2)          	| [$4490: ld   (ix+character_x_00),a]
 	add.b	#0x08,d0                         	| [$4493: add  a,$08]
 	move.b	d0,(character_x_right_01,a2)    	| [$4495: ld   (ix+character_x_right_01),a]
-	move.b	(0x0a,a2),d0                    	| [$4498: ld   a,(ix+$0a)]
+	move.b	(exiting_room_timer_0a,a2),d0                    	| [$4498: ld   a,(ix+$0a)]
 	cmp.b	#0x0E,d0                         	| [$449b: cp   $0E]
 	jeq	l_439f                             	| [$449d: jp   z,$439F]
 	clr.w	d5                               	| [$44a0: ld   h,$00]
@@ -10820,10 +10824,10 @@ l_4482:
 	                           	                | [$44b2: inc  hl]
 	move.b	(a0),d0                         	| [$44b3: ld   a,(hl)]
 	move.b	d0,(0x0c,a2)                    	| [$44b4: ld   (ix+$0c),a]
-	addq.b	#1,(0x0a,a2)                    	| [$44b7: inc  (ix+$0a)]
+	addq.b	#1,(exiting_room_timer_0a,a2)                    	| [$44b7: inc  (ix+$0a)]
 	rts                                    	| [$44ba: ret]
 l_44bb:
-	clr.b	(0x0a,a2)                        	| [$44bb: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$44bb: ld   (ix+$0a),$00]
 	move.b	#0x07,(0x09,a2)                 	| [$44bf: ld   (ix+$09),$07]
 	move.b	#0x06,d0                        	| [$44c3: ld   a,$06]
 	sub.b	(character_y_offset_03,a2),d0    	| [$44c5: sub  (ix+character_y_offset_03)]
@@ -11516,7 +11520,7 @@ l_496b:
 	sub.b	#0x08,d0                         	| [$497f: sub  $08]
 	move.b	d0,(character_x_00,a2)          	| [$4981: ld   (ix+character_x_00),a]
 l_4984:
-	clr.b	(0x0a,a2)                        	| [$4984: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$4984: ld   (ix+$0a),$00]
 	move.b	#CS_FALLING_03,(character_situation_06,a2)	| [$4988: ld   (ix+character_situation_06),CS_FALLING_03]
 	clr.b	(character_delta_x_05,a2)        	| [$498c: ld   (ix+character_delta_x_05),$00]
 	move.b	(0x08,a2),d0                    	| [$4990: ld   a,(ix+$08)]
@@ -11629,7 +11633,7 @@ l_4a30:
 0:
 l_4a5e:
 	move.b	#0x05,(0x09,a2)                 	| [$4a5e: ld   (ix+$09),$05]
-	clr.b	(0x0a,a2)                        	| [$4a62: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$4a62: ld   (ix+$0a),$00]
 l_4a66:
 	move.b	current_enemy_index_85BA(a6),d0 	| [$4a66: ld   a,(current_enemy_index_85BA)]
 	                             	| [$4a69: or   a]
@@ -11655,7 +11659,7 @@ l_4a78:
 	rts                                    	| [$4a8b: ret  c] [...]
 0:
 	move.b	#0x05,(0x09,a2)                 	| [$4a8c: ld   (ix+$09),$05]
-	clr.b	(0x0a,a2)                        	| [$4a90: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$4a90: ld   (ix+$0a),$00]
 	jbsr	l_4a66                            	| [$4a94: call $4A66]
 	move.b	current_enemy_index_85BA(a6),d0 	| [$4a97: ld   a,(current_enemy_index_85BA)]
 	                             	| [$4a9a: or   a]
@@ -11775,7 +11779,7 @@ l_4b2b:
 	move.b	#CS_IN_STAIRS_04,(character_situation_06,a2)	| [$4b2b: ld   (ix+character_situation_06),CS_IN_STAIRS_04]
 	clr.b	d0                               	| [$4b2f: xor  a]
 	move.b	d0,(0x04,a2)                    	| [$4b30: ld   (ix+$04),a]
-	move.b	d0,(0x0a,a2)                    	| [$4b33: ld   (ix+$0a),a]
+	move.b	d0,(exiting_room_timer_0a,a2)                    	| [$4b33: ld   (ix+$0a),a]
 	rts                                    	| [$4b36: ret]
 l_4b37:
 	move.b	#0x01,d0                        	| [$4b37: ld   a,$01]
@@ -12050,9 +12054,10 @@ l_4d0a:
 	jcc	l_4d58                             	| [$4d0f: jp   nc,$4D58]
 	clr.b	(0x0a,a3)                        	| [$4d12: ld   (iy+$0a),$00]
 	move.b	#0x05,(0x09,a3)                 	| [$4d16: ld   (iy+$09),$05] character (player or enemy) hit: set death state
-	move.b	(0x07,a2),d0                    	| [$4d1a: ld   a,(ix+$07)]
+	move.b	(current_floor_07,a2),d0                    	| [$4d1a: ld   a,(ix+$07)]
 	                             	| [$4d1d: or   a]
 	jeq	l_4d28                             	| [$4d1e: jr   z,$4D28]
+	jbsr	osd_sound_stop		| preventively stops music, so sfx aren't shut by a subsequent call (amiga)
 	move.b	#0xC4,d0                        	| [$4d20: ld   a,$C4] player killed (shot) sound
 	jbsr	play_sound_3656                   	| [$4d22: call play_sound_3656]
 	jra	l_4d58                             	| [$4d25: jp   $4D58]
@@ -12082,8 +12087,8 @@ l_4d53:
 l_4d58:
 	move.b	#0xFC,(0x02,a2)                 	| [$4d58: ld   (ix+$02),$FC]
 	move.b	l_8338(a6),d0                   	| [$4d5c: ld   a,($8338)]
-	move.b	(0x04,a2),d1                    	| [$4d5f: ld   b,(ix+$04)]
-	move.b	d0,(0x04,a2)                    	| [$4d62: ld   (ix+$04),a]
+	move.b	(character_display_priority_04,a2),d1                    	| [$4d5f: ld   b,(ix+$04)]
+	move.b	d0,(character_display_priority_04,a2)                    	| [$4d62: ld   (ix+$04),a]
 	sub.b	d1,d0                            	| [$4d65: sub  b]
 	sub.b	(character_y_offset_03,a2),d0    	| [$4d66: sub  (ix+character_y_offset_03)]
 	LOAD_POINTER	ram_pointer_8336(a6),a0             	| [$4d69: ld   hl,($8336)]
@@ -13324,7 +13329,7 @@ l_55b0:
 	move.b	(0x16,a2),d0                    	| [$55b0: ld   a,(ix+$16)]
 	cmp.b	#0xCF,d0                         	| [$55b3: cp   $CF]
 	jcc	l_55ca                             	| [$55b5: jr   nc,$55CA]
-	clr.b	(0x0a,a2)                        	| [$55b7: ld   (ix+$0a),$00]
+	clr.b	(exiting_room_timer_0a,a2)                        	| [$55b7: ld   (ix+$0a),$00]
 	clr.b	(0x04,a2)                        	| [$55bb: ld   (ix+$04),$00]
 	move.b	#CS_IN_ROOM_05,(character_situation_06,a2)	| [$55bf: ld   (ix+character_situation_06),CS_IN_ROOM_05]
 	move.b	(0x1d,a2),d0                    	| [$55c3: ld   a,(ix+$1d)]
@@ -13570,7 +13575,7 @@ award_end_of_level_bonus_56F9:
 	lea	points_awarded_on_level_end_836D(a6),a0	| [$56fc: ld   hl,points_awarded_on_level_end_836D]
 												| [$56ff: jp   $5702] useless!
 l_5702:
-	move.b	game_in_play_flag_823B(a6),d0   	| [$5702: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$5702: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$5705: or   a]
 	jne	l_5716                             	| [$5706: jr   nz,$5716]
 	lea	current_player_score_834D(a6),a1                      	| [$5708: ld   de,$834D]
@@ -17666,7 +17671,7 @@ start_level_759e:
 mainloop_75A5:
 	jbsr	perform_all_in_game_tasks_76A2    	| [$75a5: call perform_all_in_game_tasks_76A2]
 	jbsr	game_tick_73cf                            	| [$75a8: call $73CF]
-	move.b	game_in_play_flag_823B(a6),d0   	| [$75ab: ld   a,(game_in_play_flag_823B)]
+	move.b	this_is_a_demo_game_823B(a6),d0   	| [$75ab: ld   a,(this_is_a_demo_game_823B)]
 												| [$75ae: or   a]
 	jeq	l_75b6                             	| [$75af: jr   z,$75B6] 0: game really playing (else demo)
 	move.b	nb_credits_80A2(a6),d0          	| [$75b1: ld   a,(nb_credits_80A2)]
@@ -17804,7 +17809,7 @@ l_767a:
 	jbsr	init_moving_door_slots_1287                            	| [$768a: call $1287]
 	jbsr	compute_end_level_points_5793     	| [$768d: call compute_end_level_points_5793]
 	jbsr	l_30ca                            	| [$7690: call $30CA]
-	move.b	l_8233(a6),d0                   	| [$7693: ld   a,($8233)]
+	move.b	game_speed_8233(a6),d0                   	| [$7693: ld   a,($8233)]
 	move.b	d0,timer_8bit_reload_value_80A9(a6)	| [$7696: ld   (timer_8bit_reload_value_80A9),a]
 	move.b	#GS_IN_GAME_05,d0               	| [$7699: ld   a,GS_IN_GAME_05]
 	move.b	d0,game_state_80AC(a6)          	| [$769b: ld   (game_state_80AC),a]

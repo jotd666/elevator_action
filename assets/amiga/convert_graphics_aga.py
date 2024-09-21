@@ -82,7 +82,7 @@ def dump_asm_bytes(*args,**kwargs):
  # note 'U', 'S' and rotating '0' on palette 0 is dynamic in the game. Fortunately,
  # color 0 is used fot "status" layer ("U","S" letters) for tiles E0,E1,...
  # and color 1 is used for "building" layer (floor marks for doors & stairs)
-used_game_tiles = {"status":set(range(16,52)) | {1,0x4E} | set(range(0xC6,0x100)),
+used_game_tiles = {"status":set(range(16,52)) | {1,0x4E,0x4F} | set(range(0xC6,0x100)),
   "building": set(range(0x40,0xC0)) | set(range(0xE0,0xED))
    | {148,
   197,

@@ -7,19 +7,16 @@
 TODO/ISSUES:
 
 - elevator engine sound plays when player EXITS elevator
-- missing music at start
-- player killed: stops music after killed playing: kills sfx too, sfx should play
-  maybe delayed (easier than hardcoding music end: too many ways to end music)
-- command line options are wrong
-- insert coin when game is playing: is_game_playing doesn't work
+- missing intro sounds at start (module issue?)
+- hurry up music not playing after player killed
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
-- set palette: erase "bonus" overlay once
 - should be able to turn off music with a key
 - double elevators doesn't seem to appear anywhere. Seem to depend on difficulty setting too!
-  ex on floors 15->10 there are double elevators on "easy" but not on "easiest". Here there are
+  ex on floors 7->11 there are double elevators on "easy" but not on "easiest". Here there are
   NO double elevators anywhere (even in lower floors!)
-- test hurry up music
+- handle difficulty level!!
+- command line options are wrong
 
 
 

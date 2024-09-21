@@ -115,9 +115,12 @@ save_highscores:
     rts
     
 	
-
-
 osd_sound_stop:
+	tst.b	music_playing
+	jne		force_sound_stop
+rts
+
+force_sound_stop:
 	movem.l	d0/a0/a6,-(a7)
 	lea		_custom,a6
 	move.b	#-1,music_track_start_number
@@ -188,7 +191,7 @@ osd_sound_start:
 	beq.b	1b		| same track, skip
 
     movem.l d0-a6,-(a7)
-	bsr		osd_sound_stop
+	bsr		force_sound_stop
     lea _custom,a6
  	movem.l	d0/a0,-(a7)
     lea	elevator_action_tunes,a0
@@ -223,8 +226,6 @@ osd_sound_start:
 	clr.b	looped_sound_enabled
 	jbsr	_mt_stopfx
 	jra	1b
-	tst.b	music_playing
-	jeq	1b
 	bsr		osd_sound_stop
 	jra	1b
 
