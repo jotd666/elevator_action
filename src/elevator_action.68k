@@ -3136,6 +3136,10 @@ draw_car_part_0d03:
 * Displays a wall sprite at a fixed location (bottom right)
 * to hide the car sprite that wraps around when leaving
 hide_car_sprite_wraparound_0d1b:
+	* we don't need that on amiga, sprite engine doesn't wrap around
+	* and it works properly with only 16-bit clipping, so we don't need
+	* to display the proper fake wall sprite, with the proper color code
+	.ifndef	__amiga__
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0    | [$0d1b: ld   hl,$80F1]
 	move.b	#0x04,(a0)+         | [$0d1e: ld   (hl),$04] highest priority
 	                           	| [$0d20: inc  hl]
@@ -3146,6 +3150,7 @@ hide_car_sprite_wraparound_0d1b:
 	move.b	#0x04,(a0)+         | [$0d27: ld   (hl),$04] attribute
 	                           	| [$0d29: inc  hl]
 	move.b	#0x03,(a0)          | [$0d2a: ld   (hl),$03] code
+	.endif
 	rts                         | [$0d2c: ret]
 
 car_sprite_table_0D2D:
@@ -5967,7 +5972,7 @@ random_1E2A:
 	move.b	#0x07,d6                        	| [$1e30: ld   l,$07]
 	jra	some_arith_op_1E1D                 	| [$1e32: jp   some_arith_op_1E1D]
 
-* random dollowed by some kind of division to get a small
+* random followed by some kind of division to get a small
 * number in A
 random_1E35:
 
@@ -6812,7 +6817,7 @@ l_2a58:
 	rts                                    	| [$2a64: ret]
 
 init_elevators_2a65:
-	jbsr	l_2a75                            	| [$2a65: call $2A75]
+	jbsr	init_some_double_deckers_2a75                            	| [$2a65: call $2A75]
 l_2a68:
 	jbsr	l_2a9a                            	| [$2a68: call $2A9A]
 	jbsr	l_2c20                            	| [$2a6b: call $2C20]
@@ -6820,29 +6825,32 @@ l_2a68:
 	jbsr	initialize_elevator_screen_2dac                            	| [$2a71: call $2DAC]
 	rts                                    	| [$2a74: ret]
 
-l_2a75:
+init_some_double_deckers_2a75:
 	move.b	#0x0B,d1                        	| [$2a75: ld   b,$0B]
-	lea	l_8383(a6),a0                      	| [$2a77: ld   hl,$8383]
+	* first set all elevators to simple deck
+	lea	elevator_array_837D+is_double_decker_06(a6),a0                      	| [$2a77: ld   hl,$8383]
 	move.w	#0x0008,d3                      	| [$2a7a: ld   de,$0008] 8
 l_2a7d:
 	clr.b	(a0)                             	| [$2a7d: ld   (hl),$00]
 	add.w	d3,a0                            	| [$2a7f: add  hl,de]
 	subq.b	#1,d1                           	| [...]
 	jne	l_2a7d                             	| [$2a80: djnz $2A7D]
+	* 2 elevators are double decker (randomly picked among a few ones,
+	* as not all elevators can be double decker)
 	move.b	#0x02,d1                        	| [$2a82: ld   b,$02]
 l_2a84:
 	jbsr	random_1E35                       	| [$2a84: call random_1E35]
-	move.b	d0,d5                           	| [$2a89: ld   l,a]
 	clr.w	d5                               	| [$2a87: ld   h,$00]
-	add.w	d5,a0                            	| [$2a8a: add  hl,hl]
-	add.w	d5,a0                            	| [$2a8b: add  hl,hl]
-	add.w	d5,a0                            	| [$2a8c: add  hl,hl]
-	lea	l_8383(a6),a1                      	| [$2a8d: ld   de,$8383]
-	add.w	d3,a0                            	| [$2a90: add  hl,de]
-	move.b	(a0),d0                         	| [$2a91: ld   a,(hl)]
-	                             	| [$2a92: or   a]
-	jne	l_2a84                             	| [$2a93: jp   nz,$2A84]
-	addq.b	#1,(a0)                         	| [$2a96: inc  (hl)]
+	move.b	d0,d5                           	| [$2a89: ld   l,a]
+	lsl.w	#3,d5                            	| [$2a8a: add  hl,hl]
+												| [$2a8b: add  hl,hl]
+												| [$2a8c: add  hl,hl]
+	lea	elevator_array_837D+is_double_decker_06(a6),a0                     	| [$2a8d: ld   de,$8383]
+	add.w	d5,a0                            	| [$2a90: add  hl,de]
+	tst.b	(a0)                         	| [$2a91: ld   a,(hl)]
+	                             	           | [$2a92: or   a]
+	jne	l_2a84                             	| [$2a93: jp   nz,$2A84] already double decker
+	addq.b	#1,(a0)                         	| [$2a96: inc  (hl)] make elevator double decker!
 	subq.b	#1,d1                           	| [...]
 	jne	l_2a84                             	| [$2a97: djnz $2A84]
 	rts                                    	| [$2a99: ret]
@@ -6864,7 +6872,7 @@ l_2ab3:
 	move.b	d0,(min_floor_03,a2)            	| [$2ab4: ld   (ix+min_floor_03),a]
 	                           	| [$2ab7: inc  de]
 	move.b	(a1)+,d0                         	| [$2ab8: ld   a,(de)]
-	move.b	d0,(0x02,a2)                    	| [$2ab9: ld   (ix+$02),a]
+	move.b	d0,(max_floor_02,a2)                    	| [$2ab9: ld   (ix+$02),a]
 	                           	| [$2abc: inc  de]
 	move.b	l_802D(a6),d0                   	| [$2abd: ld   a,($802D)]
 	addq.b	#1,d0                           	| [$2ac0: inc  a]
@@ -8726,7 +8734,7 @@ switch_players_data_359e:
 	jbsr	l_3623                            	| [$35f1: call $3623]
 	lea	l_802D(a6),a1                      	| [$35f4: ld   de,$802D]
 	jbsr	swap_memory_increase_pointers_3613	| [$35f7: call swap_memory_increase_pointers_3613]
-	lea	l_8383(a6),a1                      	| [$35fa: ld   de,$8383]
+	lea	elevator_array_837D+is_double_decker_06(a6),a1                      	| [$35fa: ld   de,$8383]
 	jbsr	l_362f                            	| [$35fd: call $362F]
 	lea	lamp_state_array_81DA(a6),a1                      	| [$3600: ld   de,$81DA]
 	jbsr	l_3627                            	| [$3603: call $3627]
@@ -13703,7 +13711,8 @@ l_579d:
 	jeq	l_579d                             	| [$579e: jr   z,$579D]
 	cmp.b	#0x0B,d0                         	| [$57a0: cp   $0B]
 	jcs	l_57a6                             	| [$57a2: jr   c,$57A6]
-	* max 10000 points
+	* max 10000 points (wow! so difficult to get there, I had to test
+	* if it worked by forcing the value)
 	move.b	#0x0A,d0                        	| [$57a4: ld   a,$0A]
 l_57a6:
 	move.b	d0,d2                           	| [$57a6: ld   c,a]

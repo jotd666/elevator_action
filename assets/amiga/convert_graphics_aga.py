@@ -239,6 +239,7 @@ dark_palette = [dark_color_rep.get(c,(0,0,0)) for c in game_playfield_palette]
 dark_color_rep = {(79,79,79):(0,0,0), (0,0,255):(0,0,176), # enemy skin and blue doors are dark/darker,
  (176, 176, 176):(0,111,167),
  (37,176,176):(0,0,0),
+ (0xDA,0xDA,0xDA):(0,0,0),
  (255,255,255):(111,111,111)}  # fake building front sprites follow tiles rules
 
 dark_sprites_palette = [dark_color_rep.get(c,c) for c in sprites_palette]
@@ -261,7 +262,14 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("brick_colors:\n")
     for vp in varying_palettes:
         f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[3])))
-    f.write("background_purple_color:\n\t.word\t{}\n".format(bitplanelib.to_rgb4_color(background_purple_color)))
+
+    fake_wall_color_index = sprites_palette.index(varying_palettes[0][1])
+    f.write(f"sprite_wall_color_index:\n\t.word\tcolor+{fake_wall_color_index*2}\n")
+
+    f.write("sprite_wall_colors:\n")
+    for vp in varying_palettes:
+        f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[1])))
+    f.write("background_purple_color:\n\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(background_purple_color)))
 
     f.write(f"dark_palette:\n")
     bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
@@ -271,6 +279,8 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
         sprites_palette[15] = (0xFF,0xFF,0xFF)
     else:
         raise Exception("Not enough colors to insert last white color")
+
+    # note down the color to change in sprites
     bitplanelib.palette_dump(sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("dark_sprites_palette:\n")
     bitplanelib.palette_dump(dark_sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)

@@ -1595,7 +1595,6 @@ platform_init:
 	
 	dbf		d0,0b
 	
-	**bsr		init_elevator_dyn_colors
 	
 	* set bank 0: title screen mode
 	moveq	#0,d0
@@ -1652,21 +1651,6 @@ platform_init:
 	
     rts
 	
-init_elevator_dyn_colors:
-	lea	elevators_dyn_colors,a0
-	lea	dynamic_rows,a1
-	move.w	#NB_TOTAL_DYN_ROWS-1,d2
-	move.w	(2,a0),d0		| temp depends on level
-0:
-	moveq	#6,d1		| all rows
-	move.l	(a1)+,a2	| pointer on row on copperlist
-1:
-	addq	#6,a2
-	move.w	d0,(a2)+	| change row color
-	dbf		d1,1b
-	dbf		d2,0b
-	
-	rts
 
 * < A0: palette
 * < A1: copperlist
@@ -1755,6 +1739,15 @@ osd_set_color_bank:
 	lea		brick_colors,a0
 	move.w	brick_color_index,(a1)+
 	move.w	(a0,d0.w*2),(a1)
+
+	* also change sprite fake wall color
+	moveq	#0,d0
+	move.b	level_palette,d0
+	lea		bob_copper_color,a1
+	
+	lea		sprite_wall_colors,a0
+	move.w	sprite_wall_color_index,(a1)+
+	move.w	(a0,d0.w*2),(a1)
 0:
 	movem.l	(a7)+,d0-d1/a0-a1
 	rts
@@ -1764,6 +1757,9 @@ osd_set_color_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		bob_colors,a1
 	bsr		load_palette
+	
+	lea		sprite_wall_colors,a0
+	move.w	#0x1FE,(a1)
 	
 	lea	dark_palette,a0
 	move.w	#TOTAL_NB_COLORS,d0
@@ -3362,9 +3358,8 @@ intreq_block_intro:
 	* black color sprites
 	DECL_COLORS	0,32
 
-	.word	0x1001,0xFFFE
 	
-	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
+	.word	 intreq,0x8010
 
 
     .long    -2					
@@ -3413,6 +3408,9 @@ playfield_tiles_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
 bob_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
+bob_copper_color:
+	.word	0x1FE,0
+	
 	* now set color bank 1
 
 	DECL_COLOR_BANK	0

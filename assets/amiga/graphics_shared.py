@@ -123,7 +123,7 @@ def load_tileset(image_name,game_gfx,side,used_tiles,tileset_name,dumpdir,dump=F
  # note 'U', 'S' and rotating '0' on palette 0 is dynamic in the game. Fortunately,
  # color 0 is used fot "status" layer ("U","S" letters) for tiles E0,E1,...
  # and color 1 is used for "building" layer (floor marks for doors & stairs)
-used_game_tiles = {"status":set(range(16,52)) | {1,0x4E,0x4F} | set(range(0xC6,0x100)),
+used_game_tiles = {"status":set(range(16,52)) | {1,0x4E} | set(range(0xC6,0x100)),
   "building": set(range(0x40,0xC0)) | set(range(0xE0,0xED))
    | {148,
   197,
@@ -132,8 +132,8 @@ used_game_tiles = {"status":set(range(16,52)) | {1,0x4E,0x4F} | set(range(0xC6,0
   0x90,0x91,0x93,0x34,0x35,0x36,0x28,0x29,0x24,0x26,0x6,0xC4,0xA0
   },"elevators":{252, 55, 56, 58, 59, 60, 61, 62, 63}}
 
-used_title_tiles = {"status":set(range(16,50)) | {4,5,6,7,8,51,0x4F},
-"big_letters": set(range(80,128)) | {64,0x4B,0x4C,0x4D,0x4E,0x94} | set(range(158,256)),
+used_title_tiles = {"status":set(range(16,50)) | {4,5,6,7,8,51},
+"big_letters": set(range(80,128)) | {64,0x4B,0x4C,0x4D,0x4E,0x4F,0x94} | set(range(158,256)),
 "elevator_letters": set(range(128,181)) | {248, 249}}
 
 game_layer_names = ["status","building","elevators"]
