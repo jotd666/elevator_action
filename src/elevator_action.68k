@@ -330,6 +330,8 @@ GS_NEXT_LIFE_07 = 7
 GS_GAME_OVER_08 = 8
 GS_INSERT_COIN_09 = 9
 
+HURRY_UP_TIMEOUT = 0x10
+
 * utility functions
 set_recorded_input:
 	move.l 	a0,d5
@@ -464,7 +466,7 @@ sound_table:
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
 	.byte	EXTRA_LIFE_SND   | 0x3d
-	.byte	HURRY_UP_THEME_SND   | 0x3e
+	.byte	-1   | 0x3e  HURRY_UP_WARNING_SND
 	.byte	-1   | 0x3f
 	.byte	-1   | 0x40
 	.byte	-1   | 0x41
@@ -8783,13 +8785,14 @@ l_3631:
 	jne	l_3631                             	| [$363c: djnz $3631]
 	rts                                    	| [$363e: ret]
 
+* starts the music at level start or after game resume when player is killed
 start_music_if_in_game_363f:
 	move.b	this_is_a_demo_game_823B(a6),d0   	| [$363f: ld   a,(this_is_a_demo_game_823B)]
 	                             	| [$3642: or   a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$3643: ret  nz] [...]
 0:
-	jbsr	increase_difficulty_if_late_46b7        | [$3644: call $46B7]
+	jbsr	switch_to_hurryup_music_46b7        | [$3644: call $46B7]
 	                                    	| [$3647: nop]
 	                                    	| [$3648: nop]
 	jbsr	music_control_64d2                            	| [$3649: call music_control_64d2]
@@ -11106,7 +11109,7 @@ l_4635:
 	move.b	d0,enemy_shots_speed_834C(a6)                   	| [$4646: ld   ($834C),a]
 l_4649:
 	move.b	level_timer_16bit_msb_8232(a6),d0	| [$4649: ld   a,(level_timer_16bit_msb_8232)]
-	cmp.b	#0x10,d0                         	| [$464c: cp   $10]
+	cmp.b	#HURRY_UP_TIMEOUT,d0                         	| [$464c: cp   $10]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$464e: ret  nz] [...]
 0:
@@ -11115,7 +11118,7 @@ l_4649:
 	                             	| [$4652: or   a]
 	jeq	stop_music_4665                             	| [$4653: jp   z,$4665]
 	subq.b	#1,d0                           	| [$4656: dec  a]
-	jeq	switch_to_hurry_up_music_466E      	| [$4657: jp   z,switch_to_hurry_up_music_466E]
+	jeq	play_hurry_up_warning_466E      	| [$4657: jp   z,play_hurry_up_warning_466E]
 	subq.b	#1,d0                           	| [$465a: dec  a]
 	beq.b	0f                               	| [...]
 	rts                                    	| [$465b: ret  nz] [...]
@@ -11131,12 +11134,9 @@ stop_music_4665:
 	jbsr	music_control_64d2                            	| [$466a: call music_control_64d2]
 	rts                                    	| [$466d: ret]
 
-switch_to_hurry_up_music_466E:
-	tst.b	music_off_flag
-	jne		1f
+play_hurry_up_warning_466E:
 	move.b	#0x3E,d0                        	| [$466e: ld   a,$3E]
-	jbsr	play_sound             	| [$4670: ld   (sound_latch_D50B),a]
-1:
+	jbsr	play_sound             	            | [$4670: ld   (sound_latch_D50B),a]
 	rts                                    	| [$4673: ret]
 
 l_4674:
@@ -11180,11 +11180,11 @@ get_sprite_shadow_ram_46a9:
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0                      	| [$46b3: ld   hl,$80F1]
 	rts                                    	| [$46b6: ret]
 
-increase_difficulty_if_late_46b7:
+switch_to_hurryup_music_46b7:
 	lea	music_state_8779(a6),a0                      	| [$46b7: ld   hl,$8779]
 	move.b	#0x81,(a0)                      	| [$46ba: ld   (hl),$81]
 	move.b	level_timer_16bit_msb_8232(a6),d0	| [$46bc: ld   a,(level_timer_16bit_msb_8232)]
-	cmp.b	#0x10,d0                         	| [$46bf: cp   $10]
+	cmp.b	#HURRY_UP_TIMEOUT,d0                         	| [$46bf: cp   $10]
 	bcc.b	0f                               	| [...]
 	rts                                    	| [$46c1: ret  c] [...]
 0:
@@ -12200,7 +12200,7 @@ l_4dfd:
 	move.b	d0,viewed_floor_802C(a6)                   	| [$4d76: ld   ($802C),a]
 	jbsr	init_everything_4e6f                | [$4d79: call $4E6F]
 101:
-	jbsr	start_music_if_in_game_363f                            	| [$4e0d: call $363F]
+	jbsr	start_music_if_in_game_363f           	| [$4e0d: call $363F]
 	                            	| [$4e10: call $4E14]
 		    | [$4e13: ret]
 * when entering here, player is on the roof, about to enter the elevator (automatically)
@@ -15731,7 +15731,7 @@ l_63d2:
 
 music_control_64d2:	
 	move.b	music_state_8779(a6),d0                   	| [$64d2: ld   a,($8779)]
-* 0x81: start music, 0x80: stop,, 0x82: ??, 0xFF: do nothing
+* 0x81: start music, 0x80: stop,, 0x82: ??, 0X83: hurry up, 0xFF: do nothing
 	cmp.b	#0xFF,d0                         	| [$64d5: cp   $FF]
 	jeq	l_64ff                             	| [$64d7: jr   z,$64FF]
 	move.b	d0,d1                           	| [$64d9: ld   b,a]
@@ -15743,6 +15743,14 @@ music_control_64d2:
 	tst.b	music_off_flag
 	jne		1f
 	move.w	#MAIN_THEME_SND,D0
+	jbsr	osd_sound_start
+	jra		1f
+0:
+	cmp.b	#0x83,d1
+	jne		0f
+	tst.b	music_off_flag
+	jne		1f
+	move.w	#HURRY_UP_THEME_SND,D0
 	jbsr	osd_sound_start
 	jra		1f
 0:

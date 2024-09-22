@@ -33,7 +33,7 @@ sound_dict = {
 "CREDIT_SND"               :{"index":1,"channel":0,"sample_rate":hq_sample_rate},
 "WALK_SND"                 :{"index":2,"channel":2,"sample_rate":hq_sample_rate,"priority":2},
 "HOOK_SHOT_SND"                :{"index":3,"pattern":0,"volume":20,'loops':True},
-"DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
+"DOCUMENT_COLLECTED_SND"                :{"index":4,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
 "RED_DOOR_OPENED_SND"                :{"index":5,"channel":3,"sample_rate":hq_sample_rate,"priority":5},
 "DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "UP_THE_STAIRS_SND"                :{"index":7,"channel":2,"sample_rate":hq_sample_rate,"priority":5},

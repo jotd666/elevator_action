@@ -67,9 +67,9 @@ $(AMIGA_OCS_SRC)/graphics.68k: $(ASSETS)/convert_graphics_ecs.py $(ASSETS)/share
 $(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py
 	cmd /c $(ASSETS)\convert_graphics_aga.py
 
-$(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_conv.mod
+$(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_action_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
-$(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py
+$(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_action_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
 	
 $(MAIN_OCS): $(OBJS_OCS)

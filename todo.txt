@@ -6,9 +6,9 @@
 
 TODO/ISSUES:
 
-video link https://youtu.be/-M_eCRoL1d4
+for itch video link https://youtu.be/-M_eCRoL1d4
 - elevator engine sound plays when player EXITS elevator
-- hurry up music not playing after player killed: test when no9 fixed loop
+- record hurry up warning sound!! into a module?
 - priority error when exiting rooms for player/enemy (only lower sprite part)
   better experienced with enemy going out when player is on the door when it opens
 - command line options are wrong
