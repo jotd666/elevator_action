@@ -115,7 +115,7 @@ FG_SCREEN_SIZE =  FG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 
 NB_HOST_SPRITES = 8
 
-NB_TARGET_SPRITES = 48
+NB_TARGET_SPRITES = 32
 
 SPRITE_X = 0
 SPRITE_Y = 1
@@ -662,6 +662,7 @@ _vblank:
 	* here music doesn't loop. We have to stop it when it ends
 	move.w	music_tick,d1
 	beq.b	13f
+	bmi.b	13f		| negative: infinite, not interruptible
 	
 	subq	#1,d1
 
@@ -978,9 +979,11 @@ update_bobs:
 	move.l	bob_previous_drawed_sprites(pc),a4
 	lea		_custom,a5
 	
-
+	* MAME driver notes that some sprite positions (0x10->0x17)
+	* aren't used, but this is not very clear. I'm updating everything
+	* no matter what...
 	* clear previous positions
-	moveq	#NB_TARGET_SPRITES-1,d7
+	move.w	#NB_TARGET_SPRITES-1,d7
 1:
 	move.w	(2,a4),d1
 	beq.b	11f		| y=0: inactive
@@ -995,18 +998,31 @@ update_bobs:
 	move.w	(2,a4),d4		| height
 	clr.l	(a4)+			| ack deletion
 	bsr		clear_fg_planes_any_blitter_internal
+	dbf		d7,1b	
 	bra.b	12f
 11:
 	addq	#8,a4
-12:
 	dbf		d7,1b
-	
+12:	
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
-	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| start by the end (drawing priority)
-	moveq	#NB_TARGET_SPRITES-1,d7
+	| start by the end (drawing priority), except for last sprite
+	| which has top priority (strange hardware!)
+	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| last sprite
+	move.l	a0,-(a7)
+	moveq	#NB_TARGET_SPRITES-2,d7
 1:
+	subq.w	#4,a0
+	jbsr	update_one_bob
+	dbf		d7,1b
+	move.l	(a7)+,a0
+	* last sprite
+	jbsr	update_one_bob
+	
+	rts
+
+update_one_bob:
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
@@ -1103,12 +1119,8 @@ update_bobs:
 2:
 	addq.w	#8,a6
 3:
-	subq.w	#4,a0
-	dbf		d7,1b
-	
 	rts
-
-
+	
 * < A5: custom
 * < D0,D1: x,y
 * < A1: plane pointer

@@ -185,6 +185,7 @@ osd_sound_start:
 	* don't play if already playing
 	* (music_tick value is not important for looped tunes
 	* as long as it's not zero)
+
 	tst.w	music_tick
 	bne.b	1b
 	* play the proper module pattern

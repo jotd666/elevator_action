@@ -8,12 +8,9 @@ TODO/ISSUES:
 
 for itch video link https://youtu.be/-M_eCRoL1d4
 - elevator engine sound plays when player EXITS elevator
-- record hurry up warning sound!! into a module?
-- priority error when exiting rooms for player/enemy (only lower sprite part)
-  better experienced with enemy going out when player is on the door when it opens
 - command line options are wrong
 - load/save highs
-
+- convert version 6.4, see if vibratos work
 
 minor:
 
@@ -25,6 +22,7 @@ minor:
 - exhaust fumes in the end are only white (limitation of 
   monochrome overlay implementation, barely noticeable)
 - when does the "ping" sound play?
+- hurry up siren into the module
 
 to debug:
 	.ifndef	RELEASE
@@ -54,3 +52,8 @@ bpset 4418,,{PC=PC+3;g}  jump
 
 bpset 3656,,{PC=4429;g}  all!!
 bpset 3656,,{A=$3A;g}    force all sounds to $3A!!!
+
+
+to play an isolated sound at start instead of intro sfx:
+
+bpset 4d92,,{A=$3E;g}

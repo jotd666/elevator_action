@@ -466,7 +466,7 @@ sound_table:
 	.byte	-1   | 0x3b
 	.byte	-1   | 0x3c
 	.byte	EXTRA_LIFE_SND   | 0x3d
-	.byte	-1   | 0x3e  HURRY_UP_WARNING_SND
+	.byte	HURRY_UP_SND   | 0x3e  
 	.byte	-1   | 0x3f
 	.byte	-1   | 0x40
 	.byte	-1   | 0x41
@@ -2655,7 +2655,7 @@ l_09e8:
 	jbsr	handle_elevators_0EBF             	| [$09ee: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$09f1: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$09f4: call $2FE8]
-	jbsr	handle_moving_çar_0be1                            	| [$09f7: call $0BE1]
+	jbsr	handle_moving_car_0be1                            	| [$09f7: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$09fa: call $15A0]
 	jbsr	game_tick_73cf                            	| [$09fd: call $73CF]
 	move.b	moving_car_counter_8033(a6),d0                   	| [$0a00: ld   a,($8033)]
@@ -2704,7 +2704,7 @@ l_0a54:
 	jbsr	l_0af0                            	| [$0a57: call $0AF0]
 	jbsr	handle_elevators_0EBF             	| [$0a5a: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$0a5d: call handle_moving_doors_12A2]
-	jbsr	handle_moving_çar_0be1                            	| [$0a60: call $0BE1]
+	jbsr	handle_moving_car_0be1                            	| [$0a60: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$0a63: call $15A0]
 	jbsr	game_tick_73cf                            	| [$0a66: call $73CF]
 	jra	l_0a15                             	| [$0a69: jp   $0A15]
@@ -2756,7 +2756,7 @@ l_0ab5:
 	jbsr	handle_elevators_0EBF             	| [$0abb: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$0abe: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$0ac1: call $2FE8]
-	jbsr	handle_moving_çar_0be1                            	| [$0ac4: call $0BE1]
+	jbsr	handle_moving_car_0be1                            	| [$0ac4: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$0ac7: call $15A0]
 	jbsr	game_tick_73cf                            	| [$0aca: call $73CF]
 	jra	l_0a15                             	| [$0acd: jp   $0A15]
@@ -2944,7 +2944,7 @@ l_0bdc:
 	clr.b	d0                               	| [$0bdc: xor  a]
 	move.b	d0,moving_car_counter_8033(a6)                   	| [$0bdd: ld   ($8033),a]
 	rts                                    	| [$0be0: ret]
-handle_moving_çar_0be1:
+handle_moving_car_0be1:
 	jbsr	draw_bonus_letters_and_car_trail_0dad                            	| [$0be1: call $0DAD]
 	st.b	d0                                	| [$0be4: ld   a,$FF]
 	move.b	d0,l_8146(a6)                   	| [$0be6: ld   ($8146),a]
@@ -4631,16 +4631,17 @@ l_15b7:
 	* by display priority for the 24 possible displayable sprites
 	*
 	* so:
-	* 0: priority 4 highest, 0 lowest
+	* 0: priority 4 highest, 0 lowest, 0xFF inactive
 	* 1: X coord
 	* 2: Y coord
 	* 3: attribute
 	* 4: code
 	
+	
 	lea	sprite_and_priority_shadow_ram_80F1(a6),a0               | [$15b9: ld   hl,$80F1] 5 bytes per object
 * loop
 l_15bc:
-	cmp.b	(a0),d0                          	| [$15bc: cp   (hl)]
+	cmp.b	(a0),d0                          	| [$15bc: cp   (hl)] check priority against current priority pass
 	jeq	update_sprite_ram_with_object_15d4      | [$15bd: jr   z,$15D4] layer id/priority matches
 	add.w	d3,a0                            	| [$15bf: add  hl,de]
 next_object_15bf:
@@ -4675,22 +4676,22 @@ update_sprite_ram_with_object_15d4:
 	                        	| [$15d5: push hl]
 	                          	| [$15d6: exx] restore target shadow ram
  	                        	| [$15d7: pop  hl]
-	addq.w	#1,a0               | [$15d8: inc  hl] skip status
-	move.b	(a0)+,d0            | [$15d9: ld   a,(hl)]
+	addq.w	#1,a0               | [$15d8: inc  hl] skip priority
+	move.b	(a0)+,d0            | [$15d9: ld   a,(hl)] load X
 	add.b	#2,d0               | [$15da: add  a,b] upright, fixed value
 	move.b	d0,(a1)+            | [$15db: ld   (de),a] X coord
 	                           	| [$15dc: inc  hl]
 	                           	| [$15dd: inc  de]
-	move.b	(a0)+,(a1)+                         	| [$15de: ld   a,(hl)] Y coord
+	move.b	(a0)+,(a1)+                         	| [$15de: ld   a,(hl)] copy Y coord as-is
 	* no cocktail mode, no Y offset  	| [$15df: add  a,c]
 									| [$15e0: ld   (de),a]
 	                           	| [$15e1: inc  hl]
 	                           	| [$15e2: inc  de]
-	move.b	(a0)+,(a1)+         | [$15e3: ld   a,(hl)] sprite attributes
+	move.b	(a0)+,(a1)+         | [$15e3: ld   a,(hl)] copy sprite attributes
 	                         	| [$15e4: ld   (de),a]
 	                           	| [$15e5: inc  hl]
 	                           	| [$15e6: inc  de]
-	move.b	(a0)+,(a1)+         | [$15e7: ld   a,(hl)] sprite code
+	move.b	(a0)+,(a1)+         | [$15e7: ld   a,(hl)] copy sprite code
 	                      	    | [$15e8: ld   (de),a]
 	                           	| [$15e9: inc  hl]
 	                           	| [$15ea: inc  de]
@@ -4715,13 +4716,13 @@ update_sprites_15F0:
     * X,Y, P properties: 1: mirror, 0: normal, C: code, with bit 1 set (select tileset?)
 	*
 	lea	sprite_ram_d100,a1                 	| [$15fe: ld   de,sprite_ram_d100]
-	.rept	0x40/4										| [$1601: ldi]
-	move.l	(a0)+,(a1)+									| [...]
+	.rept	0x40										| [$1601: ldi]
+	move.b	(a0)+,(a1)+									| [...]
 	.endr										| [$167f: ldi]
 
 	lea	sprite_ram_d100+0x60,a1            	| [$1681: ld   de,sprite_ram_d100+$60]
-	.rept	0x1C/4                               	| [$1684: ldi]
-	move.l	(a0)+,(a1)+                               	| [$1686: ldi]
+	.rept	0x1C                               	| [$1684: ldi]
+	move.b	(a0)+,(a1)+                               	| [$1686: ldi]
 	.endr								| [...]
 	                               	| [$16ba: ldi]
 
@@ -11079,7 +11080,7 @@ l_4608:
 	jbsr	handle_elevators_0EBF             	| [$460b: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$460e: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$4611: call $2FE8]
-	jbsr	handle_moving_çar_0be1                            	| [$4614: call $0BE1]
+	jbsr	handle_moving_car_0be1                            	| [$4614: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$4617: call $15A0]
 	jbsr	game_tick_73cf                            	| [$461a: call $73CF]
 	jra	l_45ea                             	| [$461d: jp   $45EA]
@@ -11137,7 +11138,7 @@ stop_music_4665:
 play_hurry_up_warning_466E:
 	move.b	#0x3E,d0                        	| [$466e: ld   a,$3E]
 	jbsr	play_sound             	            | [$4670: ld   (sound_latch_D50B),a]
-	rts                                    	| [$4673: ret]
+	rts                                    	    | [$4673: ret]
 
 l_4674:
 	tst.b	d0                             	| [$4674: or   a]
@@ -12250,7 +12251,7 @@ l_4e57:
 	jbsr	handle_elevators_0EBF             	| [$4e5a: call handle_elevators_0EBF]
 	jbsr	handle_moving_doors_12A2               	| [$4e5d: call handle_moving_doors_12A2]
 	jbsr	l_2fe8                            	| [$4e60: call $2FE8]
-	jbsr	handle_moving_çar_0be1                            	| [$4e63: call $0BE1]
+	jbsr	handle_moving_car_0be1                            	| [$4e63: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$4e66: call $15A0]
 	jbsr	game_tick_73cf                            	| [$4e69: call $73CF]
 	jra	l_4e30                             	| [$4e6c: jp   $4E30]
@@ -15731,7 +15732,11 @@ l_63d2:
 
 music_control_64d2:	
 	move.b	music_state_8779(a6),d0                   	| [$64d2: ld   a,($8779)]
-* 0x81: start music, 0x80: stop,, 0x82: ??, 0X83: hurry up, 0xFF: do nothing
+* 0x80: stop,
+* 0x81: start music
+* 0x82: stopped, waiting for hurry up
+* 0x83: hurry up
+* 0xFF: do nothing
 	cmp.b	#0xFF,d0                         	| [$64d5: cp   $FF]
 	jeq	l_64ff                             	| [$64d7: jr   z,$64FF]
 	move.b	d0,d1                           	| [$64d9: ld   b,a]
@@ -15750,6 +15755,8 @@ music_control_64d2:
 	jne		0f
 	tst.b	music_off_flag
 	jne		1f
+	* on the real machine, the order is given, but the song waits
+	* for the siren to end (code: 0x3E)
 	move.w	#HURRY_UP_THEME_SND,D0
 	jbsr	osd_sound_start
 	jra		1f
@@ -17853,7 +17860,7 @@ perform_all_in_game_tasks_76A2:
 	jbsr	l_3127                            	| [$76b7: call $3127]
 	jbsr	update_enemies_3081               	| [$76ba: call update_enemies_3081]
 	jbsr	update_bullets_4bba                 | [$76bd: call update_bullets_4bba]
-	jbsr	handle_moving_çar_0be1                            	| [$76c0: call $0BE1]
+	jbsr	handle_moving_car_0be1                            	| [$76c0: call $0BE1]
 	jbsr	update_sprite_shadow_ram_15a0                            	| [$76c3: call $15A0]
 	rts                                    	| [$76c6: ret]
 

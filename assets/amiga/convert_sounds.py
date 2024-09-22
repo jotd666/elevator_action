@@ -58,6 +58,7 @@ sound_dict = {
 "MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":13,'loops':True},
 "HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":13,'loops':True},
 "GAME_OVER_SND"                :{"index":28,"pattern":10,"volume":25,'loops':False, "ticks":150},
+"HURRY_UP_SND"                :{"index":29,"pattern":12,"volume":25,'loops':False, "ticks":-1},  # not zero but music is not interruptible
 
 
 }
