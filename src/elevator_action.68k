@@ -504,7 +504,7 @@ sound_table:
 	.byte	-1   | 0x61
 	.byte	UP_THE_STAIRS_SND   | 0x62
 	.byte	DOWN_THE_STAIRS_SND   | 0x63
-	.byte	0   | 0x64 elevator start+move sound ELEVATOR_LOOP_SND
+	.byte	ELEVATOR_LOOP_SND    | 0x64 elevator start+move sound 
 	.byte	ELEVATOR_STOPS_SND   | 0x65 elevator sound stop
 	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67
@@ -7808,7 +7808,7 @@ l_303d:
 	rts                                    	| [$3045: ret]
 
 handle_elevator_sound_3046:
-	moveq   #0,d4                               	| [$3046: ld   d,$00]
+	moveq   #0,d3                               	| [$3046: ld   d,$00]
 	move.b	player_structure_851A+character_situation_06(a6),d0	| [$3048: ld   a,(player_structure_851A+character_situation_06)]
 												| [$304b: or   a]
 	jeq	l_306f                             	| [$304c: jr   z,$306F]
@@ -7822,17 +7822,17 @@ handle_elevator_sound_3046:
 l_305d:
 	move.b	player_structure_851A+8(a6),d0  	| [$305d: ld   a,(player_structure_851A+8)]
 	and.b	#0x7F,d0                         	| [$3060: and  $7F]
-	move.b	d0,d4                           	| [$3062: ld   e,a]
+	move.b	d0,d3                           	| [$3062: ld   e,a]
 	add.b	d0,d0                            	| [$3063: add  a,a]
 	add.b	d0,d0                            	| [$3064: add  a,a]
-	add.b	d4,d0                            	| [$3065: add  a,e]
+	add.b	d3,d0                            	| [$3065: add  a,e]
 	add.b	d0,d0                            	| [$3066: add  a,a]
 	add.b	d0,d0                            	| [$3067: add  a,a]
-	add.b	d4,d0                            	| [$3068: add  a,e]
-	moveq	#0,d4
-	move.b	d0,d4                           	| [$3069: ld   e,a]
+	add.b	d3,d0                            	| [$3068: add  a,e]
+	moveq	#0,d3
+	move.b	d0,d3                           	| [$3069: ld   e,a]
 	lea	l_83E1(a6),a0                      	| [$306a: ld   hl,$83E1]
-	add.w	d4,a0                            	| [$306d: add  hl,de]
+	add.w	d3,a0                            	| [$306d: add  hl,de]
 	move.b	(a0),d3                         	| [$306e: ld   d,(hl)]
 l_306f:
 	lea	l_8238(a6),a0                      	| [$306f: ld   hl,$8238]
@@ -7845,7 +7845,7 @@ l_306f:
 	move.b	d3,d0                           	| [$3076: ld   a,d]
 	move.b	#0x64,d0                        	| [$3078: ld   a,$64] elevator move sound
 	tst.b	d3                             	| [$3077: or   a]
-	jne	l_307d                             	| [$307a: jr   nz,$307D]
+	jne	l_307d                             	| [$307a: jr   nz,$307D]	
 	addq.b	#1,d0                           	| [$307c: inc  a] elevator sound stop
 l_307d:
 	jbsr	play_sound_3656                   	| [$307d: call play_sound_3656]
@@ -8360,7 +8360,7 @@ l_3399:
 	                           	| [$339b: bit  3,h]
 	dbf	d5,l_3399                             	| [$339d: jr   z,$3399] until 8800
 	clr.b	coin_counter_lock_82EA(a6)   	| [$339f: ld   (coin_counter_lock_82EA),a]
-	jbsr	read_dip_switches_3417             	| [$33a2: call $3417]
+	jbsr	read_dip_switches_init_high_3417             	| [$33a2: call $3417]
 	lea	table_171E,a0                          	| [$33a5: ld   hl,table_171E]
 	lea	l_81C9(a6),a1                      	    | [$33a8: ld   de,$81C9]
 	move.w	#0x0005,d1                      	| [$33ab: ld   bc,$0005] 5
@@ -8416,15 +8416,20 @@ l_3401:
 	clr.b	(a0)                             	| [$3413: ld   (hl),$00]
 	jra	l_33d2                             	| [$3415: jr   $33D2]
 
-read_dip_switches_3417:
+read_dip_switches_init_high_3417:
 	jbsr	cache_dip_switches_3503           	| [$3417: call cache_dip_switches_3503]
 	lea	highest_score_8350(a6),a0                      	| [$341a: ld   hl,$8350]
 	clr.b	d0                               	| [$341d: xor  a]
+	* default high score: 10000
 	move.b	d0,(a0)+                         	| [$341e: ld   (hl),a]
 	                           	| [$341f: inc  hl]
 	move.b	d0,(a0)+                         	| [$3420: ld   (hl),a]
 	                           	| [$3421: inc  hl]
 	move.b	#0x01,(a0)                      	| [$3422: ld   (hl),$01]
+	
+	lea	highest_score_8350(a6),a0
+	jbsr	osd_read_high_scores
+	
 	lea	current_player_score_834D(a6),a0                      	| [$3424: ld   hl,$834D]
 	lea	l_8254(a6),a1                      	| [$3427: ld   de,$8254]
 	move.b	#0x03,d1                        	| [$342a: ld   b,$03]
@@ -13621,7 +13626,7 @@ l_5725:
 	movem.w	(sp)+,d1/d2                    	| [$572d: pop  bc]
 	rts                                    	| [$572e: ret]
 
-l_572f:
+update_high_score_if_needed_572f:
 	lea	highest_score_8350(a6),a0                      	| [$572f: ld   hl,$8350]
 	lea	current_player_score_834D(a6),a1                      	| [$5732: ld   de,$834D]
 	move.b	#0x03,d1                        	| [$5735: ld   b,$03]
@@ -13642,6 +13647,7 @@ l_5738:
 	move.w	#0x0003,d1                      	| [$5745: ld   bc,$0003] 3
 	jbsr	ldir                              	| [$5748: ldir]
 	lea	highest_score_8350(a6),a0                      	| [$574a: ld   hl,$8350]
+	jbsr	osd_write_high_scores
 	lea	l_8362(a6),a1                      	| [$574d: ld   de,$8362]
 	jbsr	encode_score_as_tiles_58d3                            	| [$5750: call $58D3]
 	rts                                    	| [$5753: ret]
@@ -17865,7 +17871,7 @@ perform_all_in_game_tasks_76A2:
 	rts                                    	| [$76c6: ret]
 
 l_76c7:
-	jbsr	l_572f                            	| [$76c7: call $572F]
+	jbsr	update_high_score_if_needed_572f                            	| [$76c7: call $572F]
 	move.b	#0xC0,d0                        	| [$76ca: ld   a,$C0]
 	jbsr	play_sound             	| [$76cc: ld   (sound_latch_D50B),a]
 	clr.b	d0                               	| [$76cf: xor  a]

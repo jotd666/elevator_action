@@ -387,7 +387,12 @@ _user:
 
 	move.l	cheat_flags,d0
 	jeq		1f
+	move.b	d0,d1
+	and.b	#3,d1
+	jeq		2f
+	* cheat key disable highscore only if used
 	st.b	cheat_used
+2:
 	btst	#0,d0
 	jeq		0f
 	bset	#6,dip_switches_3		| "NO HIT" original cheat

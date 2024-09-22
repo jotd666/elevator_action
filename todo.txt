@@ -7,10 +7,7 @@
 TODO/ISSUES:
 
 for itch video link https://youtu.be/-M_eCRoL1d4
-- elevator engine sound plays when player EXITS elevator
 - command line options are wrong
-- load/save highs
-- convert version 6.4, see if vibratos work
 
 minor:
 

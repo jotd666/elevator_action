@@ -10,7 +10,7 @@
 .include "dos_lvos.i"
 .include "elevator_action.inc"
 
-SCORE_FILE_SIZE = 44
+SCORE_FILE_SIZE = 3
 
 	
 osd_read_high_scores:
@@ -43,8 +43,10 @@ osd_read_high_scores:
 	
 osd_write_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
+	.ifdef	RELEASE
 	tst.b	cheat_used		| don't save score if cheat on
 	bne.b	1f
+	.endif
 	move.l	_resload,d0
 	beq.b	0f
 	move.l	d0,a2

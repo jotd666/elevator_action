@@ -38,7 +38,7 @@ sound_dict = {
 "DOWN_THE_STAIRS_SND"                :{"index":6,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "UP_THE_STAIRS_SND"                :{"index":7,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
 "KICKING_ENEMY_SND"                :{"index":8,"channel":2,"sample_rate":hq_sample_rate,"priority":5},
-"PING_SND"                :{"index":9,"channel":2,"sample_rate":hq_sample_rate,"priority":20},
+"HURRY_UP_SND"                :{"index":9,"pattern":12,"volume":25,'loops':False, "ticks":-1},  # not zero but music is not interruptible
 "JUMPING_SND"                :{"index":10,"channel":2,"sample_rate":hq_sample_rate,"priority":10},
 "BULLET_HITS_WALL_SND"                :{"index":11,"channel":2,"sample_rate":hq_sample_rate,"priority":1},
 "KICKING_ENEMY_SND"                :{"index":12,"channel":1,"sample_rate":hq_sample_rate,"priority":20},
@@ -58,7 +58,7 @@ sound_dict = {
 "MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":13,'loops':True},
 "HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":13,'loops':True},
 "GAME_OVER_SND"                :{"index":28,"pattern":10,"volume":25,'loops':False, "ticks":150},
-"HURRY_UP_SND"                :{"index":29,"pattern":12,"volume":25,'loops':False, "ticks":-1},  # not zero but music is not interruptible
+#"PING_SND"                :{"index":9,"channel":2,"sample_rate":hq_sample_rate,"priority":20},  not sure when or why it's played...
 
 
 }
