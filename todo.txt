@@ -8,6 +8,8 @@ TODO/ISSUES:
 
 for itch video link https://youtu.be/-M_eCRoL1d4
 
+- with fastmem: lamps are all broken, memory corruption happening!!
+
 minor:
 
 - discontinuous elevator cables (control word mixup)
