@@ -87,6 +87,46 @@
 	movem.w	(a7)+,d7
 	.endm
 
+	.ifdef	M68020
+	* faster 16-bit access, ignore alignment
+	.macro	STORE_POINTER  src,dest
+	move.l	d7,-(a7)
+	move.l	\src,d7
+	sub.l	a6,d7
+	add.l	#0x8000,d7 
+	rol.w	#8,d7
+	move.w	d7,\dest
+	move.l	(a7)+,d7
+	.endm
+
+	.macro	LOAD_POINTER  src,dest
+	move.l	d7,-(a7)
+	moveq	#0,d7
+	move.w	\src,d7
+	rol.w	#8,d7
+	sub.l	#0x8000,d7
+	.ifndef	RELEASE
+	bcc		ok\@
+	illegal
+ok\@:
+	.endc
+	add.l	a6,d7
+	move.l	d7,\dest
+	move.l	(a7)+,d7
+	.endm
+
+	.macro	STORE_WORD  src,dest
+	rol.w	#8,\src
+	move.w	\src,\dest
+	rol.w	#8,\src
+	.endm
+
+	.macro	LOAD_WORD  src,dest
+	move.w	\src,\dest
+	rol.w	#8,\dest
+	.endm
+
+	.else
 	.macro	STORE_POINTER  src,dest
 	move.l	d7,-(a7)
 	move.l	\src,d7
@@ -127,7 +167,8 @@ ok\@:
 	rol.w	#8,\dest
 	move.b	\src,\dest
 	.endm
-
+	.endif
+	
 	.include	"data_offsets.inc"
 	.ifdef	__amiga__
 	.include	"elevator_action_ram.68k"
@@ -4703,18 +4744,43 @@ update_sprites_15F0:
 	lea	sprites_shadow_ram_8169(a6),a0     	| [$15f0: ld   hl,sprites_shadow_ram_8169]
 	* jotd: simplified/faster code
 	lea	sprite_ram_d100+0x7C,a1            	| [$15f3: ld   de,sprite_ram_d100+$7C]
+	.ifdef	M68020
+	move.l	(a0)+,(a1)+						| source is not word-aligned
+	.else
 	.rept	4											
 	move.b	(a0)+,(a1)+                               	| [$15f6: ldi]
 												| [$15f8: ldi]
 												
 												| [$15fa: ldi]
 	.endr										| [$15fc: ldi]
-											
+	.endif
+	
     * main character sprite is in D100-D108 ex:
 	* 77 72 01 40 77 82 01 4E
     * X   Y  P  C
     * X,Y, P properties: 1: mirror, 0: normal, C: code, with bit 1 set (select tileset?)
 	*
+	.ifdef	M68020
+	
+	lea	sprite_ram_d100,a1                 	| [$15fe: ld   de,sprite_ram_d100]
+	
+	* 0x40 bytes to copy, semi-unrolled loop 0x10*4 times, try to benefit from cache
+	moveq	#0x3,d0
+0:
+											
+	move.l	(a0)+,(a1)+							| [$1601: ldi]
+	move.l	(a0)+,(a1)+							| [$1601: ldi]
+	move.l	(a0)+,(a1)+							| [$1601: ldi]
+	move.l	(a0)+,(a1)+							| [$1601: ldi]
+	dbf		d0,0b
+
+	lea	sprite_ram_d100+0x60,a1            	| [$1681: ld   de,sprite_ram_d100+$60]
+	.rept	0x1C/4                               	| [$1684: ldi]
+	move.l	(a0)+,(a1)+                               	| [$1686: ldi]
+	.endr								| [...]
+	                               	| [$16ba: ldi]
+	.else
+	* plain 68000, loop unrolling, need to use byte copy for alignment issues
 	lea	sprite_ram_d100,a1                 	| [$15fe: ld   de,sprite_ram_d100]
 	.rept	0x40										| [$1601: ldi]
 	move.b	(a0)+,(a1)+									| [...]
@@ -4724,8 +4790,8 @@ update_sprites_15F0:
 	.rept	0x1C                               	| [$1684: ldi]
 	move.b	(a0)+,(a1)+                               	| [$1686: ldi]
 	.endr								| [...]
-	                               	| [$16ba: ldi]
-
+	
+	.endif
 	rts                                    	| [$16bc: ret]
 
 l_16bd:
@@ -13627,21 +13693,21 @@ l_5725:
 	rts                                    	| [$572e: ret]
 
 update_high_score_if_needed_572f:
-	lea	highest_score_8350(a6),a0                      	| [$572f: ld   hl,$8350]
-	lea	current_player_score_834D(a6),a1                      	| [$5732: ld   de,$834D]
-	move.b	#0x03,d1                        	| [$5735: ld   b,$03]
-	clr.b	d0                               	| [$5737: xor  a]
+	lea	highest_score_8350(a6),a0                   | [$572f: ld   hl,$8350]
+	lea	current_player_score_834D(a6),a1            | [$5732: ld   de,$834D]
+	move.w	#0x03-1,d1                        	| [$5735: ld   b,$03]
+	CLEAR_XC_FLAGS                              	| [$5737: xor  a]
 l_5738:
 	move.b	(a1)+,d0                         	| [$5738: ld   a,(de)]
 	move.b	(a0)+,d7                         	| [$5739: sbc  a,(hl)]
 	subx.b	d7,d0
 	                           	| [$573a: inc  hl]
 	                           	| [$573b: inc  de]
-	subq.b	#1,d1                           	| [...]
-	jne	l_5738                             	| [$573c: djnz $5738]
-	bcc.b	0f                               	| [...]
+	dbf		d1,l_5738           | [$573c: djnz $5738]
+	bcc.b	0f                  | [...]
 	rts                                    	| [$573e: ret  c] [...]
 0:
+	* high score beaten, replace by player score
 	lea	current_player_score_834D(a6),a0                      	| [$573f: ld   hl,$834D]
 	lea	highest_score_8350(a6),a1                      	| [$5742: ld   de,$8350]
 	move.w	#0x0003,d1                      	| [$5745: ld   bc,$0003] 3

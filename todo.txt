@@ -7,12 +7,11 @@
 TODO/ISSUES:
 
 for itch video link https://youtu.be/-M_eCRoL1d4
-- command line options are wrong
 
 minor:
 
 - discontinuous elevator cables (control word mixup)
-- "forgot documents" out-of-tune jump sound doesn"t play, should play
+- "forgot documents" out-of-tune jump sound doesn't play, should play
   then proceed to "return to door" loop
 - hack: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back

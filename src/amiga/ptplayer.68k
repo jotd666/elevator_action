@@ -2710,7 +2710,7 @@ mt_vibrvolslide:
 	bsr	mt_vibrato_nc
 
 	move.w	d3,d4
-	bra	mt_volumeslide
+	bra	mt_volumeslide_noperiod
 
 
 mt_tremolo:
@@ -2808,6 +2808,45 @@ vol_slide_down:
 set_pervol:
 	move.w	n_period(a2),AUDPER(a5)
 set_vol:
+	move.w	d0,n_volume(a2)
+	.ifeq	MINIMAL
+	move.l	mt_MasterVolTab(a4),a0
+	move.b	(a0,d0.w),d0
+	and.b	n_enable(a2),d0
+	.endif
+	move.w	d0,AUDVOL(a5)
+	.ifdef	VOL0_UNLOOPS
+	bne	1f
+	move.b	d7,n_looped(a2)
+	.endif
+1:	rts
+
+
+mt_volumeslide_noperiod:
+* cmd A x y (x = volume-up, y = volume-down)
+* d4 = xy
+
+	move.w	n_volume(a2),d0
+	moveq	#0x0f,d1
+	and.b	d4,d1
+	lsr.b	#4,d4
+	beq	1f
+
+	* slide up, until 64
+	add.b	d4,d0
+
+	cmp.b	#64,d0
+	bls	0f
+	moveq	#64,d0
+	bra	0f
+
+	* slide down, until 0
+1:
+	sub.b	d1,d0
+	bpl	0f
+	moveq	#0,d0
+
+0:
 	move.w	d0,n_volume(a2)
 	.ifeq	MINIMAL
 	move.l	mt_MasterVolTab(a4),a0

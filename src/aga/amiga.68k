@@ -257,7 +257,6 @@ _user:
 	
 
 	bsr	get_args_BCPL
-
 0:	
 	lea		program_args,a0
 
@@ -271,9 +270,9 @@ _user:
 	or.l	#2,cheat_flags
 	st.b	cheat_used
 2:
-	move.l	(A0)+,D0	| SECTORSELECT/S
+	move.l	(A0)+,D0	| NODOCUMENTS/S
 	beq.b	2f
-	or.l	#8,cheat_flags
+	or.l	#4,cheat_flags
 	st.b	cheat_used
 2:
 	move.l	(A0)+,D0	| CHEATKEYS/S
@@ -282,16 +281,14 @@ _user:
 	or.l	#0x10,cheat_flags
 2:
 
-*	move.l	(A0)+,D0	| STARTFLOOR/K/N
-*	beq.b	2f
-*	bsr		bcpl_string_to_int
-*	move.l	d0,dip_switch_start_course
-*2:
-	move.l	(A0)+,D0	| SKILL/S
+	move.l	(A0)+,D0	| STARTFLOOR/K/N
 	beq.b	2f
 	bsr		bcpl_string_to_int
-	subq.b	#1,d0
-	bmi.b	2f
+	move.l	d0,start_floor_option
+2:
+	move.l	(A0)+,D0	| SKILL/K/N
+	beq.b	2f
+	bsr		bcpl_string_to_int
 	move.l	d0,difficulty_level
 2:
 
@@ -3086,8 +3083,8 @@ program_args_end:
 	.align	4
 read_args_string:
 	.byte	read_args_string_end-read_args_string
-	.ascii	"INVINCIBLE/S,INFLIVES/S,STARTLEVEL/S,"
-	.ascii	"CHEATKEYS/S,STARTLIVES/K/N"
+	.ascii	"INVINCIBLE/S,INFLIVES/S,NODOCUMENTS/S,"
+	.ascii	"CHEATKEYS/S,STARTFLOOR/K/N,SKILL/K/N"
 read_args_string_end:
 	.align	2
 
