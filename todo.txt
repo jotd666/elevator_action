@@ -1,24 +1,29 @@
 
-- AGA: 16+16 dual playfield
-- ECS: 16 colors, if doesn't cut it with chipset exact on ECS, use 25FPS!!
 
 ECS dual playfield:
 
 TODO/ISSUES:
 
+- ECS: 16 colors, if doesn't cut it with chipset exact on ECS, use 25FPS!!
+- hardware sprites: gather them and compute 6 color palette, in the game,
+  allocate half colors for 4 sprites and other half for 4 sprites. Each displayed
+  16x16 sprite tile is made of 2 sprites (dump the images and the image parts to debug)
+- wall color: replaced by piss yellow, to fix
+- brick colors: not correct
+- re-merge amiga.68k AGA => ECS
 
 minor:
 
-- discontinuous elevator cables (control word mixup)
-- "forgot documents" out-of-tune jump sound doesn't play, should play
-  then proceed to "return to door" loop
-- hack: when opening door, instead of clearing background, use a special tile
+- AGA: discontinuous elevator cables (control word mixup)
+- AGA: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
-- exhaust fumes in the end are only white (limitation of 
+- AGA: exhaust fumes in the end are only white (limitation of 
   monochrome overlay implementation, barely noticeable)
-- when does the "ping" sound play?
+- sound: when does the "ping" sound play?
+- sound: "forgot documents" out-of-tune jump sound doesn't play, should play
+  then proceed to "return to door" loop
 
-to debug:
+to debug a value in game, use the following:
 	.ifndef	RELEASE
 	move.w	#0xC740,d7
 	jbsr	display_debug_value
@@ -35,8 +40,9 @@ to debug:
 	jbsr	display_debug_value
 	move.w	(a7)+,d0
 	.endif
-298A <= state:coin screen**title_screen_16bit_timer_836F increases and switches screen at 7188
+
  
+to control sounds from MAME debugger:
 
 bpset 125d,,{PC=1263;g}  music
 bpset 307d,,{PC=PC+3;g}  elevator
