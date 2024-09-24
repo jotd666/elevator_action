@@ -42,14 +42,8 @@ title_playfield_palette = title_playfield_palette + (16-len(title_playfield_pale
 game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it,dumpdir=dumpdir,) for i,layer_name in enumerate(game_layer_names)]
 
 # insert black color to elevator layer
-elevators_palette = game_layer[2][0]
-
-elevators_palette.append((0,0,0))
-suppressed_elevator_colors = {(37, 117, 117),(255, 176, 218)}
-elevators_palette[:] = sorted(set(elevators_palette) - suppressed_elevator_colors)
-
-
-
+elevators_palette = game_layer[2][0]+[background_purple_color]
+elevators_palette = elevators_palette + [[0xF,0xF,0xF]]*(8-len(elevators_palette))
 
 # make a color correspondence dictionary
 color_translation_dict = {}
@@ -93,13 +87,22 @@ for x in range(sprites_2_sheet.size[0]):
 # take all from main sheet except some tiles that are never present on that CLUT
 all_sprites = set(range(64)) - {0x3E,0x2A,0x29,0x28}
 
+# make main character a hardware sprite
+hardware_sprites = {k for k,v in sprite_names.items() if "player" in v or "car" in v}
+
+all_sprites -= hardware_sprites
+
 sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,all_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names)
 
 # dark floor enemies + blue door
 sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43,)) | set(range(50,56)) | {0x3E},"sprites",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64,dumpdir=dumpdir)
 
-sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,{1,8,48,47},"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
+
+other_sprites = {1,8,48,47}
+other_sprites -= {x-192 for x in hardware_sprites}
+
+sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,other_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
 
 
 
@@ -109,42 +112,75 @@ full_sprite_set = sprites_set + sprites_set_2
 full_sprite_set += [None]*(192-len(full_sprite_set)) + sprites_set_0
 
 # playfield+status+sprites
-game_playfield_palette = tuple(sorted(set(x for tl in game_layer[0:2] for x in tl[0])))
+game_status_palette = tuple(sorted(set(game_layer[0][0])))
+game_playfield_palette = tuple(sorted(set(x for tl in game_layer[1:2] for x in tl[0])))
 
 sprites_palette = sorted(set(sprites_palette) |
   set(sprites_palette_2))
 
-sprites_palette[0] = (0x10,0x20,0x30)  # invalid color, ignored by dual playfield anyway since it's color 0
-sprites_palette.insert(1,(0,0,0))
-
-sprites_palette = tuple(sprites_palette)
 # elevators
 game_background_palette = tuple(sorted(game_layer[2][0]))
 
 nb_game_colors = len(game_playfield_palette)
 print(f"nb tiles colors in-game: {nb_game_colors}")
 nb_sprites_colors = len(sprites_palette)
-print(f"nb sprites colors in-game: {nb_sprites_colors}")
-# with elevator colors as sprites, the number of colors is around 14
-# we could go down using dynamic color change between status & main
-# we'll sort that out later
-if nb_game_colors > 16:
-    raise Exception("game tiles: max 16 colors allowed")
-if nb_sprites_colors > 16:
-    raise Exception("sprites: max 16 colors allowed")
-game_playfield_palette = game_playfield_palette + (16-len(game_playfield_palette)) * (dummy,)
-sprites_palette = list(sprites_palette + (16-len(sprites_palette)) * (dummy,))
+print(f"nb bob colors in-game: {nb_sprites_colors}")
+
+total_colors = sorted(set(game_playfield_palette) | set(sprites_palette))
+print(f"original nb total colors in game playfield: {len(total_colors)}")
+
+blue = (0,0,200)
+brown = (255,218,138)
+
+# we have to severely reduce palette from 17 colors to 7!!
+color_replacement_dict = {
+(218,218,218):(255,255,255),  # bright gray => white
+(255,218,176):brown,  # brown => skin brown
+(218,176,138):brown,  # brown => skin brown
+(255, 138, 218):(0, 0, 0),  # pink => black (is it used??)
+(0, 0, 176):blue,
+(37, 37, 218):blue,
+(0, 0, 255):blue,
+(16, 32, 48):(0,0,0),
+(254, 0, 254):(0,0,0),  # magenta used???
+(37, 176, 176):brown,   # gun flame, alternate palette
+(176, 117, 0):brown,    # red door edge
+}
+
+game_playfield_palette = sorted({color_replacement_dict.get(x,x) for x in total_colors})
+
+if len(game_playfield_palette)>7:
+    raise Exception(f"Too many colors for playfield palette. Needs max 7 found {len(playfield_palette)}")
+print(f"nb total playfield colors after reduction: {len(game_playfield_palette)}")
+
+# put meaningless color in first pos, dual playfield will ignore it
+game_playfield_palette.insert(0,(0x10,0x20,0x30))
+
+# we need to rework all tiles to replace colors, but not magenta which is transparent color
+color_replacement_dict.pop((254, 0, 254))
+
+if dump_it:
+    new_color_dir = os.path.join(dumpdir,"game","recolored")
+    ensure_empty(new_color_dir)
+
+idx = 0
+
+game_tiles = game_layer[1][1]  # list of tiles
+for tile in game_tiles+full_sprite_set:
+    if tile:
+        bitplanelib.replace_color_from_dict(tile,color_replacement_dict)
+        tile = ImageOps.scale(tile,5,resample=Image.Resampling.NEAREST)
+        tile.save(os.path.join(new_color_dir,f"img_{idx}.png"))
+        idx += 1
 
 current_plane_idx = 0
 
 layer_bitmaps = {}
 
-nb_planes = 4
+nb_planes = 3
 
 elev_tiles = game_layer[2][1]
-# remove inside/outside elevator colors
-for c in [0x3A,0x3E,0X3C,0x3F,0x37,0x38,0x3B]:
-    bitplanelib.replace_color(elev_tiles[c],suppressed_elevator_colors,(0,0,0))
+
 
 
 for tn,tc in (["title",title_layer],["game",game_layer]):
@@ -153,17 +189,23 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
     for lidx,(_,ts) in enumerate(tc):  # for each layer
         if tn=="title":
             palette = title_playfield_palette
-        elif lidx < 2:
+            the_nb_planes = 4
+        elif lidx == 1:
             palette = game_playfield_palette
+            the_nb_planes = 3
+        elif lidx == 0:
+            palette = game_status_palette
+            the_nb_planes = 3
         else:
             palette = game_background_palette
+            the_nb_planes = 3
 
         tile_list = layer_bitmaps[tn][lidx]
 
         for tidx,tile in enumerate(ts):  # for each tile
             if tile:
                 try:
-                    planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=nb_planes)
+                    planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=the_nb_planes)
                 except bitplanelib.BitplaneException as e:
                     print(tn,lidx,tidx,e)
                     print(palette)
@@ -207,7 +249,7 @@ for tile in full_sprite_set:
             y_start,ctile = bitplanelib.autocrop_y(tile,mask_color=transparent)
             height = ctile.size[1]
 
-            planes = bitplanelib.palette_image2raw(ctile,None,sprites_palette,forced_nb_planes=nb_planes,
+            planes = bitplanelib.palette_image2raw(ctile,None,game_playfield_palette,forced_nb_planes=nb_planes,
             generate_mask=True,blit_pad=True,
             mask_color=transparent)
             planesize = len(planes)//(nb_planes+1)
@@ -231,25 +273,23 @@ for tile in full_sprite_set:
 
 src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","ocs")
 
-dark_color_rep = {(255,0,0):(255,0,0), (255,255,255):(111,111,111), (176, 176, 176):(0,111,167)}
+#dark_color_rep = {(255,0,0):(255,0,0), (255,255,255):(111,111,111), (176, 176, 176):(0,111,167)}
 
-
-dark_palette = [dark_color_rep.get(c,(0,0,0)) for c in game_playfield_palette]
 
 dark_color_rep = {(79,79,79):(0,0,0), (0,0,255):(0,0,176), # enemy skin and blue doors are dark/darker,
  (176, 176, 176):(0,111,167),
  (37,176,176):(0,0,0),
  (255,255,255):(111,111,111)}  # fake building front sprites follow tiles rules
 
-dark_sprites_palette = [dark_color_rep.get(c,c) for c in sprites_palette]
+dark_palette = [dark_color_rep.get(c,(0,0,0)) for c in game_playfield_palette]
 
 # dump palettes
 with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("level_palettes:\n")
     for i in range(4):
         f.write(f"\t.long\tlevel_palette_{i}\n")
-    wall_color_index = game_playfield_palette.index(varying_palettes[0][1])
-    brick_color_index = game_playfield_palette.index(varying_palettes[0][3])
+    wall_color_index = 6 #game_playfield_palette.index(varying_palettes[0][1]) TEMP
+    brick_color_index = 6  #game_playfield_palette.index(varying_palettes[0][3])
     for i in range(4):
         f.write(f"level_palette_{i}:\n")
         p = list(game_playfield_palette)
@@ -261,19 +301,17 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("brick_colors:\n")
     for vp in varying_palettes:
         f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[3])))
-    f.write("background_purple_color:\n\t.word\t{}\n".format(bitplanelib.to_rgb4_color(background_purple_color)))
 
     f.write(f"dark_palette:\n")
     bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
-    f.write("sprites_palette:\n")
+    f.write("playfield_palette:\n")
     # introduce white color as last color (BONUS letters, all planes set)
-    if sprites_palette[15]==dummy:
-        sprites_palette[15] = (0xFF,0xFF,0xFF)
-    else:
-        raise Exception("Not enough colors to insert last white color")
-    bitplanelib.palette_dump(sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
-    f.write("dark_sprites_palette:\n")
-    bitplanelib.palette_dump(dark_sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+##    if sprites_palette[15]==dummy:
+##        sprites_palette[15] = (0xFF,0xFF,0xFF)
+##    else:
+##        raise Exception("Not enough colors to insert last white color")
+    bitplanelib.palette_dump(game_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
     f.write("elevators_palette:\n")

@@ -4689,7 +4689,6 @@ next_object_15bf:
 	subq.b	#1,d0                           	| [$15c2: dec  a] lowers priority
 	jpl	l_15b7                             	    | [$15c3: jp   p,$15B7]
 												| [$15c6: exx] restore registers (a1)
-	move.b	#1,0x200
 	lea	sprites_shadow_ram_8169+0x60(a6),a0     | [$15c7: ld   hl,$81C9] top sprite shadow ram
 	clr.b	d0                               	| [$15ca: xor  a] not useful for 68k sub, but d0 needs to be zero
 	cmp.l	a1,a0                            	| [$15cb: sbc  hl,de] check if sprite address as a1 got past base+0x60

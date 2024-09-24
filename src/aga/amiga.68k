@@ -956,10 +956,10 @@ is_game_playing:
 	rts
 	
 lose_all_lives:
-	movem.l	a6,-(a7)
+	move.l	a6,-(a7)
 	GET_RAM_START_IN_A6
 	clr.b	nb_lives_8234(a6)
-	movem.l	(a7)+,a6
+	move.l	(a7)+,a6
 	rts
 
 set_hurry_up:
@@ -1029,6 +1029,18 @@ update_one_bob:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
+	cmp.b	#0x4E,d2
+	jne		0f
+	move.b	(TARGET_SPRITE_X,a0),d0
+	cmp.b	#0xE8,D0
+	jcs	0f
+	* check if basement
+	move.l	a6,-(a7)
+	GET_RAM_START_IN_A6
+	tst.b	(player_structure_851A+7,a6)	| player floor: basement
+	movem.l	(a7)+,a6
+	jeq		2f	| skip head sprite wrapping when car is leaving
+0:
 	cmp.b	#0x2,D2
 	jeq		2f			| fake BOB at start
 	BCLR	#6,d2

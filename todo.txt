@@ -2,11 +2,10 @@
 - AGA: 16+16 dual playfield
 - ECS: 16 colors, if doesn't cut it with chipset exact on ECS, use 25FPS!!
 
-
+ECS dual playfield:
 
 TODO/ISSUES:
 
-for itch video link https://youtu.be/-M_eCRoL1d4
 
 minor:
 
@@ -18,7 +17,6 @@ minor:
 - exhaust fumes in the end are only white (limitation of 
   monochrome overlay implementation, barely noticeable)
 - when does the "ping" sound play?
-- hurry up siren into the module
 
 to debug:
 	.ifndef	RELEASE
