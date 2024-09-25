@@ -1293,6 +1293,7 @@ blit_planes_any_internal_cookie_cut:
 	add.w	d6,d6
 	add.w	d6,d6
 	move.l	(a4,d6.w),d7
+	lea		cookie_cut_mask_blit_table(pc),a4
 	move.l	(a4,d6.w),d6
 	.else
 	move.l	(a4,d6.w*4),d7
