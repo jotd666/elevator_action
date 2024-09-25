@@ -66,7 +66,7 @@ ONE_TICK = 1
 	.endif
 	
 
-OPT_ENABLE_DOUBLE_BUFFERING = 1
+OPT_ENABLE_DOUBLE_BUFFERING = 0
 
 _custom = 0xDFF000
 
@@ -338,8 +338,9 @@ _user:
 	move.l	a0,fg_drawed_screen_ptr
 	move.l	a0,fg_displayed_screen_ptr
 	
-	lea		bg_screen_buffer,a0
-	move.l	a0,bg_screen_ptr
+	lea		bg_screen_buffer_1,a0
+	move.l	a0,bg_drawed_screen_ptr
+	move.l	a0,bg_displayed_screen_ptr
 
 	lea		panel_screen_buffer,a0
 	move.l	a0,panel_screen_ptr
@@ -349,15 +350,17 @@ _user:
 	subq	#2,a0			| de-align
 	move.l	a0,fg_screen_data_2
 	move.l	a0,fg_displayed_screen_ptr
+	lea		bg_screen_buffer_2,a0
+	move.l	a0,bg_screen_data_2
+	move.l	a0,bg_displayed_screen_ptr
 	.endif
 		
 	* set them even if reset by game afterwards
 	* avoiding ugly stripe bitplane effect at startup
-	movem.l	a0/a1,-(a7)
-    move.l	bg_screen_ptr(pc),a1
-	lea	title_bitplanes+2,a0
-	bsr		set_static_bitplanes
-	movem.l	(a7)+,a0/a1
+
+	bsr		set_fg_bitplanes
+	bsr		set_bg_bitplanes
+
 
 
 
@@ -1373,7 +1376,9 @@ switch_screen_buffers:
 	lea		bob_previous_positions_1(pc),a2
 	lea		bob_previous_positions_2(pc),a3
 	move.l	fg_screen_data_1,a1
+	move.l	bg_screen_data_1,a4
 	move.l	fg_screen_data_2,a5
+	move.l	bg_screen_data_2,a6
 	* also switch previous state memory
 	cmp.l	(a0),a1
 	bne.b	2f
@@ -1381,11 +1386,14 @@ switch_screen_buffers:
 	* set it to drawn screen
 	exg		a1,a5
 	exg		a2,a3
+	exg		a4,a6
 2:
 	move.l	a1,(a0)
+	move.l	a6,bg_displayed_screen_ptr
 	move.l	a5,fg_displayed_screen_ptr
 	move.l	a2,bob_previous_drawed_sprites
 
+	jbsr		set_bg_bitplanes
 	jbra		set_fg_bitplanes
 	.endif
 	
@@ -1581,14 +1589,7 @@ platform_init:
 	addq	#4,a1
 	dbf		d1,1b
 	dbf		d0,0b
-	moveq	#3,d1
-1:
-	move.w	(a0)+,d2
-	move.w	d2,(a1)
-	addq	#4,a1
-	dbf		d1,1b
-	
-	dbf		d0,0b
+
 	
 	
 	* set bank 0: title screen mode
@@ -1711,11 +1712,7 @@ osd_set_color_bank:
 	tst.b	d0
 	jne		1f
 	
-	lea		sprites_palette,a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		bob_colors,a1
-	bsr		load_palette
-	
+
 	lea		level_palettes,a0
 	moveq	#0,d0
 	move.b	level_palette,d0
@@ -1729,35 +1726,35 @@ osd_set_color_bank:
 	* also change brick color
 	moveq	#0,d0
 	move.b	level_palette,d0
-	lea		brick_copper_color,a1
-	lea		brick_colors,a0
-	move.w	brick_color_index,(a1)+
-	add.w	d0,d0
-	move.w	(a0,d0.w),(a1)
+*	lea		brick_copper_color,a1
+*	lea		brick_colors,a0
+*	move.w	brick_color_index,(a1)+
+*	add.w	d0,d0
+*	move.w	(a0,d0.w),(a1)
 	* also change sprite fake wall color
-	moveq	#0,d0
-	move.b	level_palette,d0
-	lea		bob_copper_color,a1
-	lea		sprite_wall_colors,a0
-	move.w	sprite_wall_color_index,(a1)+
-	add.w	d0,d0
-	move.w	(a0,d0.w),(a1)
+*	moveq	#0,d0
+*	move.b	level_palette,d0
+*	lea		bob_copper_color,a1
+*	lea		sprite_wall_colors,a0
+*	move.w	sprite_wall_color_index,(a1)+
+*	add.w	d0,d0
+*	move.w	(a0,d0.w),(a1)
 0:
 	movem.l	(a7)+,d0-d1/a0-a1
 	rts
 1:
 	* dark mode
-	lea		dark_sprites_palette,a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		bob_colors,a1
-	bsr		load_palette
-	lea		sprite_wall_colors,a0
-	move.w	#0x1FE,(a1)
-	
-	lea	dark_palette,a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		playfield_tiles_colors,a1
-	bsr		load_palette
+*	lea		dark_sprites_palette,a0
+*	move.w	#TOTAL_NB_COLORS,d0
+*	lea		bob_colors,a1
+*	bsr		load_palette
+*	lea		sprite_wall_colors,a0
+*	move.w	#0x1FE,(a1)
+*	
+*	lea	dark_palette,a0
+*	move.w	#TOTAL_NB_COLORS,d0
+*	lea		playfield_tiles_colors,a1
+*	bsr		load_palette
 	jra		0b
 	
 osd_set_gfx_bank:
@@ -1794,7 +1791,7 @@ osd_set_gfx_bank:
 	* set bitplanes (non-dual)
     moveq #NB_PLAYFIELD_PLANES-1,d1
 0:
-    move.l	bg_screen_ptr(pc),a0
+    move.l	bg_drawed_screen_ptr(pc),a0
 	move.l	a0,d0
     lea	title_bitplanes+2,a0
 	moveq	#0,d2
@@ -1852,8 +1849,8 @@ osd_set_gfx_bank:
     moveq #NB_PLAYFIELD_PLANES-1,d1
     move.l	fg_drawed_screen_ptr(pc),a0
 	move.l	a0,d0
-    lea	bobs_bitplanes+2,a0
-	move.l	#FG_SCREEN_PLANE_SIZE,d2
+    lea	elevator_bitplanes+2,a0
+	move.l	#BG_SCREEN_PLANE_SIZE,d2
 	bsr		20f
 
 	
@@ -1883,7 +1880,7 @@ set_playfield_bitplanes:
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 	add.w	d0,d0
 	move.w	(a0,d0.w),d0
-    add.l	bg_screen_ptr(pc),d0
+    add.l	bg_drawed_screen_ptr(pc),d0
 	
     lea	playfield_bitplanes+2,a0
 	move.l	#BG_SCREEN_PLANE_SIZE,d2
@@ -2120,7 +2117,7 @@ update_bg_tile_title:
 	
 	* updating bitplanes
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
-	move.l	bg_screen_ptr,a1
+	move.l	bg_drawed_screen_ptr,a1
 	subq	#2,d0 | not sure??
 	add.w	d0,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2
@@ -2371,7 +2368,7 @@ update_bg_tile_game:
 	jeq	0f
 	move.l	(4,a0),a0	
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
-	move.l	bg_screen_ptr,a1
+	move.l	bg_drawed_screen_ptr,a1
 	add.w	d1,a1
 	jra		end_update_playfield_tile
 0:
@@ -2546,6 +2543,23 @@ HW_SpriteYTable_\height:
 
 
 
+set_static_bitplanes:
+	movem.l	a0-a1/d0-d2,-(a7)
+ 	lea	title_bitplanes+2,a0
+	move.l	bg_displayed_screen_ptr(pc),a0
+    moveq #NB_PLAYFIELD_PLANES-1,d1
+ 	move.l	#BG_SCREEN_PLANE_SIZE,d2
+    move.l	bg_displayed_screen_ptr(pc),d0
+1:
+    swap d0
+    move.w d0,(a0)
+    swap d0
+    move.w d0,(4,a0)    
+    addq.w  #8,a0
+    add.l d2,d0
+    dbf d1,1b
+	movem.l	(a7)+,a0-a1/d0-d2
+    rts
 
 	
 * set_bg_bitplanes
@@ -2553,11 +2567,14 @@ HW_SpriteYTable_\height:
 * < A0: copperlist pointer on first bitplane nibble
 * < A1: first bg plane address
 
-set_static_bitplanes:
+set_bg_bitplanes:
 	movem.l	d0-d2,-(a7)
     moveq #NB_PLAYFIELD_PLANES-1,d1
-	move.l	a1,d0
+
+
  	move.l	#BG_SCREEN_PLANE_SIZE,d2
+    move.l	bg_displayed_screen_ptr(pc),d0
+	lea	elevator_bitplanes+2,a0 
 1:
     swap d0
     move.w d0,(a0)
@@ -2582,7 +2599,7 @@ set_fg_bitplanes:
 	addq.w	#2,a0		| add 16 pixel offset which allows left side clipping
     moveq #4-1,d1
 	move.l	a0,d0
-    lea	bobs_bitplanes+2,a0
+    lea	playfield_bitplanes+2,a0
 	moveq	#0,d2
 	move.w	#FG_SCREEN_PLANE_SIZE,d2
 1:
@@ -3027,8 +3044,12 @@ one_out_of_five:
 	.word	0
 fg_screen_data_1:
 	.long	0
+bg_screen_data_1:
+	.long	0
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 fg_screen_data_2:
+	.long	0
+bg_screen_data_2:
 	.long	0
 	.endif
 	
@@ -3059,7 +3080,9 @@ color_row_start:
 	DYN_COLOR_ROW	0
 color_row_end:
 
-bg_screen_ptr:
+bg_drawed_screen_ptr:
+	.long	0
+bg_displayed_screen_ptr:
 	.long	0
 panel_screen_ptr:
 	.long	0
@@ -3256,7 +3279,7 @@ game_sprite_colors:
 game_sprites:
 	DECL_SPRITES
 
-bobs_bitplanes:
+elevator_bitplanes:
 	DECL_EVEN_BITPLANES	0,3
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	3,3
@@ -3341,6 +3364,11 @@ panel_end_tiles_colors:
 		.section .bsschip
 		
 	
+sprite_buffer:
+	.skip	(SPRITE_SIZE+(1<<SPRITE_POWER_OF_2))*8		| 32 more bytes for control word and end zeroes
+	.skip	8
+	.skip	8
+		
 bg_screen_buffer_1:
 	.skip	BG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
