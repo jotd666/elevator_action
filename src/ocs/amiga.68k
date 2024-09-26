@@ -29,7 +29,6 @@ HW_SPRITE_Y_CORRECTION = 0
 PANEL_Y_GAP = 208
 Y_MAX = 260
 
-BASE_BPLCON3_VALUE = (1<<12)+(BORDERBLANK<<5)  | dpf second playfield palette starts at color 16!
 BASE_BPLCON2_VALUE = 0x0000
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
@@ -75,6 +74,7 @@ OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 * background scrolls (in-game)
 * foreground is static and contains bobs
 
+NB_TITLE_PLANES = 3
 NB_PLAYFIELD_PLANES = 3
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
@@ -1769,16 +1769,16 @@ osd_set_gfx_bank:
 	tst.b	d0
 	bne		10f
 	* title gfx bank, set title palette
-    move.w #0x200+(NB_PLAYFIELD_PLANES<<12)+BORDERBLANK,bplcon0(a5)
+    move.w #0x200+(NB_TITLE_PLANES<<12)+BORDERBLANK,bplcon0(a5)
 	
 	lea		update_bg_tile_title(pc),a0
 	move.l	a0,update_tile_function
 	
 	lea		title_palette(pc),a0
 
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		panel_tiles_colors,a1
-	bsr		load_palette
+	*move.w	#TOTAL_NB_COLORS,d0
+	*lea		panel_tiles_colors,a1
+	*bsr		load_palette
 		
 	* set copperlist
 	move.l	#title_copperlist,cop1lc(a5)
@@ -1790,7 +1790,7 @@ osd_set_gfx_bank:
 	bsr		load_palette
 	
 	* set bitplanes (non-dual)
-    moveq #NB_PLAYFIELD_PLANES-1,d1
+    moveq #NB_TITLE_PLANES-1,d1
 0:
     move.l	bg_drawed_screen_ptr(pc),a0
 	move.l	a0,d0
@@ -2119,14 +2119,16 @@ update_bg_tile_title:
 	* updating bitplanes
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.l	bg_drawed_screen_ptr,a1
-	subq	#2,d0 | not sure??
+	*subq	#2,d0 | not sure??
 	add.w	d0,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2
 	add.w	d1,d1
 	add.w	(a2,d1.w),a1
 	
 	jra		end_update_bg_tile
-	
+
+
+		
 update_title_letters:
 	* updating sprite data
 	sub.w	#0x8,d0		| min X letter
@@ -3191,9 +3193,6 @@ tile_log_table:
 	.endr
 	.endm
 
-.macro	DECL_COLOR_BANK	bankno
-	.word	bplcon3,BASE_BPLCON3_VALUE+(\bankno<<13)
-	.endm
 	
 .macro	DECL_COLORS	offset,nb_colors
 	.set	colidx,\offset
@@ -3233,16 +3232,13 @@ title_bitplanes:
 	DECL_COLORS	16,16
 title_sprites:
 	DECL_SPRITES
-	* back to color bank 0
-	DECL_COLOR_BANK	0
+
 title_colors:
 	DECL_COLORS	0,16
 
 	.word	0x3C01,0xFFFE
-	DECL_COLOR_BANK	1
 title_sprite_colors:
-	DECL_COLORS	0,32
-	DECL_COLOR_BANK	0
+	DECL_COLORS	16,16
 	
     .word  0x100*120+1,0xFFFE	| mid screen wait
 intreq_block_intro:
@@ -3250,7 +3246,7 @@ intreq_block_intro:
 
 	* pal limit
     .word  0xFFCF,0xFFFE       | PAL wait
-	DECL_COLOR_BANK	1
+
 	* black color sprites
 	DECL_COLORS	16,16
 
@@ -3271,12 +3267,12 @@ game_copperlist:
 	.word	bplcon2,HIDDEN_BOBS_BPLCON2_VALUE
 	
 	* black color sprites
-	*DECL_COLOR_BANK	1
+
 	*DECL_COLORS	0,32
 	* enable sprite colors now
-	DECL_COLOR_BANK	1
+
 game_sprite_colors:
-	DECL_COLORS	0,32
+	DECL_COLORS	16,16
 game_sprites:
 	DECL_SPRITES
 
@@ -3298,15 +3294,12 @@ panel_tiles_colors:
 	.word	bplcon2,BASE_BPLCON2_VALUE
 playfield_bitplanes:
 	DECL_EVEN_BITPLANES	3,3
-	* default color bank
-	DECL_COLOR_BANK	0
+
 playfield_tiles_colors:
 	DECL_COLORS	16,TOTAL_NB_COLORS
 bob_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
-	* now set color bank 1
 
-	DECL_COLOR_BANK	0
 
 dynamic_row_00:
 	.set	dynrow,0x3D
