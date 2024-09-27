@@ -74,7 +74,7 @@ OPT_ENABLE_MULTIPLEXED_SPRITES = 0
 * background scrolls (in-game)
 * foreground is static and contains bobs
 
-NB_TITLE_PLANES = 3
+NB_TITLE_PLANES = 4
 NB_PLAYFIELD_PLANES = 3
 TOTAL_NB_COLORS = 1<<NB_PLAYFIELD_PLANES
 NB_BYTES_PER_ROW = 40
@@ -1785,7 +1785,7 @@ osd_set_gfx_bank:
 
 	* set palette
 	lea		title_palette,a0
-	move.w	#TOTAL_NB_COLORS,d0
+	move.w	#16,d0
 	lea		title_colors,a1
 	bsr		load_palette
 	
@@ -2111,6 +2111,7 @@ update_bg_tile_title:
 	
 	* updating bitplanes
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.w	#NB_TITLE_PLANES-1,d4
 	move.l	bg_drawed_screen_ptr,a1
 	*subq	#2,d0 | not sure??
 	add.w	d0,a1
@@ -2364,6 +2365,7 @@ update_bg_tile_game:
 	jeq	0f
 	move.l	(4,a0),a0	
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.w	#NB_PLAYFIELD_PLANES-1,d4
 	move.l	bg_drawed_screen_ptr,a1
 	add.w	d1,a1
 	jra		end_update_playfield_tile
@@ -2392,7 +2394,6 @@ end_update_bg_tile:
 	
 	* just copy
 	move.l	d0,a2
-	move.w	#NB_PLAYFIELD_PLANES-1,d4
 4:
 	move.l	(a2)+,d0
 	jeq		5f
@@ -2419,7 +2420,6 @@ end_update_bg_tile:
 	* clear tile
 
 11:
-	move.w	#NB_PLAYFIELD_PLANES-1,d4
 111:
 	.set	offset,0
 	.rept	8
