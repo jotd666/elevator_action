@@ -81,16 +81,16 @@ NB_BYTES_PER_ROW = 40
 
 SPRITE_POWER_OF_2 = 2
 
-NB_BYTES_PER_SPRITE_ROW = 1<<SPRITE_POWER_OF_2
+NB_BYTES_PER_SPRITE_ROW = 2
 NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
 SPRITE_DISPLAYED_HEIGHT = 240
 SPRITE_HEIGHT = NB_LINES*2
 * sprite band: 16 bit * 2 planes * 2*screen size + control words
-SPRITE_SIZE = NB_BYTES_PER_SPRITE_ROW*(2*SPRITE_HEIGHT+2)
+SPRITE_SIZE = 4*(SPRITE_HEIGHT+2)
 
-SPRITE_STRUCT_SIZE = 1<<(SPRITE_POWER_OF_2+3)
+SPRITE_STRUCT_SIZE = 32
 
 BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
@@ -1897,9 +1897,7 @@ set_playfield_bitplanes:
     rts
 		
 	.macro	COPY_SPRITE_ROW
-	.rept	(_end_word_row_save-_control_word_row_save)/4
 	move.l	(a3)+,(a4)+
-	.endr	
 	.endm
 
 * < D0: column number
@@ -1941,7 +1939,7 @@ really_set_columns_scroll:
 	
 	move.w	d5,d2
 	move.w	d5,d1
-	lsl.w	#SPRITE_POWER_OF_2+3,d1		| times 32: SPRITE_STRUCT_SIZE
+	lsl.w	#5,d1		| times 32: SPRITE_STRUCT_SIZE
 	lea		sprite_table,a0
 	lea		(a0,d1.w),a2		| select proper sprite struct
 	cmp.w	(_previous_y_position,a2),d0
@@ -1984,8 +1982,10 @@ really_set_columns_scroll:
 	* now compute where the control word / end word will be
 	* depending on scroll value
 	move.l	(_chip_data,a2),a3
-	
-	lsl.w	#SPRITE_POWER_OF_2+1,d0	| times 16 for fmode=3
+
+
+	add.w 	d0,d0
+	add.w 	d0,d0	| times 16
 	add.w	d0,a3
 	move.l	a3,(_saved_control_word_address,a2)
 	* now save the rows
@@ -2007,21 +2007,14 @@ really_set_columns_scroll:
 
 	bsr		store_column_sprite_pos
 	
-	move.w	d0,(NB_BYTES_PER_SPRITE_ROW,a3)   | fmode=3
-	swap	d0
-	move.w	d0,(a3)
-	moveq	#0,d0
-	* clear remaining data
-	move.w	d0,(2,a3)
-	move.w	d0,(NB_BYTES_PER_SPRITE_ROW+2,a3)
+	move.l	d0,(a3)
 
-	
+
 	move.l	(_saved_end_word_address,a2),a4
 	
 	* end word
-	.rept	NB_BYTES_PER_SPRITE_ROW/2
 	clr.l	(a4)+
-	.endr
+
 	
 	move.l	a3,d1
 	lsl.w	#3,d2		| nb col * 8 (copperlist entry)
@@ -2137,7 +2130,7 @@ update_title_letters:
 	jcc		0f
 	* compute sprite Y offset: x bytes per row, starting at x
 	addq	#1,d1		| skip control words row
-	lsl.w	#SPRITE_POWER_OF_2+1,d1
+	lsl.w	#2,d1
 	* compute sprite X offset: 1 byte per pixel, 16 pixels per letter
 	btst	#0,d0
 	jeq	1f
@@ -2149,22 +2142,22 @@ update_title_letters:
 
 
 	.macro	NEXT_OFFSET
-	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW*2	
+	.set	offset,offset+4	
 	.endm
 	
 	.macro	CLEAR_TILE_ROW
 	clr.b	(offset,a3)
-	clr.b	(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
-	.set	offset,offset+NB_BYTES_PER_SPRITE_ROW	
+	clr.b	(offset+(NB_LINES*4),a3)
+	NEXT_OFFSET	
 	.endm
 	
 	.macro	COPY_TILE_ROW
 	move.b	(a0)+,d0
 	move.b	d0,(offset,a3)
-	move.b	d0,(offset+(NB_LINES*NB_BYTES_PER_SPRITE_ROW*2),a3)
+	move.b	d0,(offset+(NB_LINES*4),a3)
 	move.b	(a1)+,d0
-	move.b	d0,(NB_BYTES_PER_SPRITE_ROW+offset,a3)
-	move.b	d0,((NB_LINES*NB_BYTES_PER_SPRITE_ROW*2)+NB_BYTES_PER_SPRITE_ROW+offset,a3)
+	move.b	d0,(2+offset,a3)
+	move.b	d0,((NB_LINES*4)+2+offset,a3)
 	NEXT_OFFSET
 	.endm
 	
@@ -3359,7 +3352,7 @@ panel_end_tiles_colors:
 		
 	
 sprite_buffer:
-	.skip	(SPRITE_SIZE+(1<<SPRITE_POWER_OF_2))*8		| 32 more bytes for control word and end zeroes
+	.skip	(SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+2)))*8		| 8 more bytes for control word and end zeroes
 	.skip	8
 	.skip	8
 		

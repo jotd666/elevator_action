@@ -3532,7 +3532,7 @@ brick_copper_color:
 		.section .bsschip
 		
 sprite_buffer:
-	.skip	(SPRITE_SIZE+(1<<SPRITE_POWER_OF_2))*8		| 32 more bytes for control word and end zeroes
+	.skip	(SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+1)))*8		| 32 more bytes for control word and end zeroes
 	.skip	8
 	.skip	8
 	
