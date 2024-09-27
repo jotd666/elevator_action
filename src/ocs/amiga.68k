@@ -2379,6 +2379,7 @@ end_update_bg_tile:
 	.ifndef	RELEASE
 	jne		12f
 	add.w	#0xC400,d7
+	lsr.w	#2,d2
 	lea		title_tile_not_registered_error,a0
 	tst.b	current_gfx_bank
 	jeq		111f

@@ -215,7 +215,7 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
                     continue
 
                 plane_list = []
-                planesize = len(planes)//nb_planes
+                planesize = len(planes)//the_nb_planes
                 for sl in range(0,len(planes),planesize):
                     plane = planes[sl:sl+planesize]
                     if any(plane):
