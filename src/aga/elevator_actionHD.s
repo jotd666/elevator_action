@@ -9,7 +9,7 @@ _base	SLAVE_HEADER					; ws_security + ws_id
 	dc.w	17					; ws_version (was 10)
 	dc.w	WHDLF_NoError|WHDLF_ReqAGA|WHDLF_Req68020
     IFD CHIP_ONLY
-	dc.l	$200000					; ws_basememsize
+	dc.l	$1E0000					; ws_basememsize
 	ELSE
 	dc.l	$100000
 	ENDC
@@ -25,7 +25,7 @@ _expmem
     IFD CHIP_ONLY
     dc.l    $0
     ELSE
-	dc.l	$100000					; ws_expmem
+	dc.l	$E0000					; ws_expmem
     ENDC
 	dc.w	_name-_base				; ws_name
 	dc.w	_copy-_base				; ws_copy
