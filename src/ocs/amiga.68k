@@ -29,7 +29,7 @@ HW_SPRITE_Y_CORRECTION = 0
 PANEL_Y_GAP = 208
 Y_MAX = 260
 
-BASE_BPLCON2_VALUE = 0x0000
+BASE_BPLCON2_VALUE = 0x0046
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
 
@@ -1774,11 +1774,10 @@ osd_set_gfx_bank:
 	lea		update_bg_tile_title(pc),a0
 	move.l	a0,update_tile_function
 	
-	lea		title_palette(pc),a0
-
-	*move.w	#TOTAL_NB_COLORS,d0
-	*lea		panel_tiles_colors,a1
-	*bsr		load_palette
+	lea		game_status_palette(pc),a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		panel_tiles_colors,a1
+	bsr		load_palette
 		
 	* set copperlist
 	move.l	#title_copperlist,cop1lc(a5)
@@ -1821,13 +1820,14 @@ osd_set_gfx_bank:
 
 
 	* set panel palette (top & bottom)
-	move.l		level_palettes,a0
+	lea		game_status_palette,a0
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
+	
 	* those are already set, no need to re-set them, except
 	* when the lights are shot!
-	move.l		level_palettes,a0
+	lea		game_status_palette,a0
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_end_tiles_colors,a1
 	bsr		load_palette
@@ -3276,6 +3276,8 @@ panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
 	DECL_COLORS	0,TOTAL_NB_COLORS   | BOBs black colors
 
+elevator_colors:
+	DECL_COLORS	0,TOTAL_NB_COLORS
 
 	.word	0x2C01,0xFFFE
 
@@ -3290,9 +3292,8 @@ playfield_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
 
 playfield_tiles_colors:
-	DECL_COLORS	16,TOTAL_NB_COLORS
-bob_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
+	DECL_COLORS	8,TOTAL_NB_COLORS
+
 
 
 dynamic_row_00:
@@ -3326,7 +3327,7 @@ dynamic_row_43:
 panel_end_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
 panel_end_tiles_colors:
-	DECL_COLORS	0,TOTAL_NB_COLORS
+	DECL_COLORS	8,TOTAL_NB_COLORS
 	
 	* pal limit
     .word  0xFFCF,0xFFFE       | PAL wait

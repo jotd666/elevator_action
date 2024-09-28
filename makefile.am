@@ -61,7 +61,7 @@ shell.o: $(AMIGA_SHARED_SRC)/shell.68k
 
 $(AMIGA_OCS_SRC)/graphics.68k: $(ASSETS)/convert_graphics_ocs.py $(ASSETS)/graphics_shared.py
 	cmd /c $(ASSETS)\convert_graphics_ocs.py
-	# $(ASSETS)/shared.py
+
 $(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py $(ASSETS)/graphics_shared.py
 	cmd /c $(ASSETS)\convert_graphics_aga.py
 

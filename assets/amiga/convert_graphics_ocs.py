@@ -132,25 +132,27 @@ print(f"original nb total colors in game playfield: {len(total_colors)}")
 blue = (0,0,200)
 brown = (255,218,138)
 
+
 # we have to severely reduce palette from 17 colors to 7!!
 color_replacement_dict = {
 (218,218,218):(255,255,255),  # bright gray => white
 (255,218,176):brown,  # brown => skin brown
 (218,176,138):brown,  # brown => skin brown
-(255, 138, 218):(0, 0, 0),  # pink => black (is it used??)
 (0, 0, 176):blue,
 (37, 37, 218):blue,
 (0, 0, 255):blue,
+(79, 79, 79):(0,0,0),   # temp dark gray => black
 (16, 32, 48):(0,0,0),
-(254, 0, 254):(0,0,0),  # magenta used???
-(37, 176, 176):brown,   # gun flame, alternate palette
+(254, 0, 254):(0,0,0),  # magenta is mask
+#(37, 176, 176):(0,200,0),   # gun flame, alternate palette also walls...
 (176, 117, 0):brown,    # red door edge
+(255,218,138):brown
 }
 
 game_playfield_palette = sorted({color_replacement_dict.get(x,x) for x in total_colors})
 
 if len(game_playfield_palette)>7:
-    raise Exception(f"Too many colors for playfield palette. Needs max 7 found {len(playfield_palette)}")
+    raise Exception(f"Too many colors for playfield palette. Needs max 7 found {len(game_playfield_palette)}")
 print(f"nb total playfield colors after reduction: {len(game_playfield_palette)}")
 
 # put meaningless color in first pos, dual playfield will ignore it
@@ -301,6 +303,9 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("brick_colors:\n")
     for vp in varying_palettes:
         f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[3])))
+
+    f.write("game_status_palette:\n")
+    bitplanelib.palette_dump(game_status_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
     f.write(f"dark_palette:\n")
     bitplanelib.palette_dump(dark_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
