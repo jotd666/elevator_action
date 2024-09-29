@@ -333,12 +333,12 @@ _user:
 .no_forbid:
 	* align bitplanes
 	lea		fg_screen_buffer_1,a0
-	subq	#2,a0			| de-align
 	move.l	a0,fg_screen_data_1
 	move.l	a0,fg_drawed_screen_ptr
 	move.l	a0,fg_displayed_screen_ptr
 	
 	lea		bg_screen_buffer_1,a0
+	addq	#2,a0	| leave 32 bits hidden for  left side clipping
 	move.l	a0,bg_drawed_screen_ptr
 	move.l	a0,bg_displayed_screen_ptr
 
@@ -347,7 +347,6 @@ _user:
 	
 	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 	lea		fg_screen_buffer_2,a0
-	subq	#2,a0			| de-align
 	move.l	a0,fg_screen_data_2
 	move.l	a0,fg_displayed_screen_ptr
 	lea		bg_screen_buffer_2,a0
@@ -949,7 +948,7 @@ update_bobs:
 	move.w	(a4),d0
 	and.w	#0x1F0,d0		| align on 16 lower bound
 	* clear area where the sprite was
-	move.l	fg_drawed_screen_ptr(pc),a1
+	move.l	bg_drawed_screen_ptr(pc),a1
 	move.w	#4,d2
 	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+ 			| ack deletion
@@ -1047,6 +1046,8 @@ update_one_bob:
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
 	beq.b	2f			| Y set to 0: not shown
 	not.b	d1
+	* add scroll value at the time of the draw
+	add.b	main_scroll_value,d1
 	
 	
 	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
@@ -1058,7 +1059,7 @@ update_one_bob:
 	.endif
 
 	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
-	* todo yflip
+	* yflip support isn't required
 	and.b	#0x0F,d3	| get attributes
 
 	
@@ -1069,12 +1070,13 @@ update_one_bob:
 	add.w	(a0)+,d1		| add offset to Y
 	* A0 points on the first bitplane of the bob
 
-	move.l		fg_drawed_screen_ptr(pc),a1
+	move.l		bg_drawed_screen_ptr(pc),a1
 	* D0 and D1 are already set
 	move.l	(NB_PLAYFIELD_PLANES*4,a0),d2
 	beq.b	2f		| mask is zero: blank tile => skip
 	move.l	d2,a3
 	moveq	#0,d2	| no y-clip
+	sub.w	#16,d0	| move each bob 16 bits to the left
 	* note down that this bob will have to be erased
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
@@ -1167,7 +1169,7 @@ clear_fg_planes_any_blitter_internal:
 3:
 	move.l a1,bltdpt(a5)	|destination top left corner
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	lea		(BG_SCREEN_PLANE_SIZE,a1),a1
 	WAIT_BLIT
 	dbf		d3,3b
 4:
@@ -1302,7 +1304,7 @@ blit_planes_any_internal_cookie_cut:
 	move.l	a1,bltcpt(a5)	|pristine background top (bottom) left corner
 	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	lea		(BG_SCREEN_PLANE_SIZE,a1),a1
 	WAIT_BLIT
 	dbf		d3,6b
 7:
@@ -2363,12 +2365,7 @@ update_bg_tile_game:
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 
 	btst	#10,d7		| second layer?
-	jeq	0f
-	move.l	#BG_SCREEN_PLANE_SIZE,d5
-	move.l	(4,a0),a0	
-	move.l	bg_drawed_screen_ptr,a1
-	add.w	d1,a1
-	jra		end_update_playfield_tile
+	jne		end_update_playfield_tile	
 0:
 	move.l	(a0),a0	
 	add.w	d1,a1
@@ -2431,8 +2428,18 @@ end_update_bg_tile:
 2:
 	rts
 	
-* almost the same but we need to write at 2 locations (barrel scroll)
+* almost the same but we need to write at 3 locations
+* (barrel scroll plus pristine background)
+* in double buffering mode this is even worse as 5 locations
+* need to be updated, we'll see that later
+
 end_update_playfield_tile:
+	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.l	(4,a0),a0	
+	move.l	bg_drawed_screen_ptr,a1
+	add.w	d1,a1
+	lea		background_restore_buffer,a4
+	add.w	d1,a2
 	lea		(BG_SCREEN_PLANE_SIZE/2,a1),a3
 	add.w	d2,d2
 	add.w	d2,d2
@@ -2451,11 +2458,13 @@ end_update_playfield_tile:
 	move.b	(a0)+,d0
 	move.b	d0,(offset,a1)
 	move.b	d0,(offset,a3)
+	move.b	d0,(offset,a4)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 41:
 	add.l	d5,a1
 	add.l	d5,a3
+	add.l	d5,a4
 	dbf		d4,4b
 0:
 	rts
@@ -2464,6 +2473,7 @@ end_update_playfield_tile:
 	.rept	8
 	clr.b	(offset,a1)
 	clr.b	(offset,a3)
+	clr.b	(offset,a4)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 	jra		41b
@@ -2477,10 +2487,12 @@ end_update_playfield_tile:
 	.rept	8
 	clr.b	(offset,a1)
 	clr.b	(offset,a3)
+	clr.b	(offset,a4)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 	add.w	d5,a1
 	add.w	d5,a3
+	add.w	d5,a4
 	dbf		d4,111b
 2:
 	rts
@@ -3357,6 +3369,10 @@ sprite_buffer:
 	.skip	(SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+2)))*8		| 8 more bytes for control word and end zeroes
 	.skip	8
 	.skip	8
+	
+background_restore_buffer:
+	.skip	BG_SCREEN_SIZE
+	.skip	NB_BYTES_PER_ROW*12*3
 		
 bg_screen_buffer_1:
 	.skip	BG_SCREEN_SIZE
