@@ -94,8 +94,7 @@ SPRITE_STRUCT_SIZE = 32
 
 BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
-FG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
-FG_SCREEN_SIZE =  FG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
+
 
 NB_HOST_SPRITES = 8
 
@@ -338,7 +337,7 @@ _user:
 	move.l	a0,fg_displayed_screen_ptr
 	
 	lea		bg_screen_buffer_1,a0
-	addq	#2,a0	| leave 32 bits hidden for  left side clipping
+	addq	#2,a0	| leave 16 bits hidden for left side clipping
 	move.l	a0,bg_drawed_screen_ptr
 	move.l	a0,bg_displayed_screen_ptr
 
@@ -359,8 +358,6 @@ _user:
 
 	bsr		set_fg_bitplanes
 	bsr		set_bg_bitplanes
-
-
 
 
 	move.l	cheat_flags,d0
@@ -774,7 +771,7 @@ erase_bonus_overlay:
 	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
 	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	lea		(BG_SCREEN_PLANE_SIZE,a1),a1
 	dbf		D3,0b
 	rts
 draw_bonus_overlay:
@@ -809,7 +806,7 @@ draw_bonus_overlay:
 	move.l	a1,bltcpt(a5)	|pristine background top (bottom) left corner
 	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	lea		(FG_SCREEN_PLANE_SIZE,a1),a1
+	lea		(BG_SCREEN_PLANE_SIZE,a1),a1
 	dbf		D3,0b
 	rts
 	
@@ -1780,6 +1777,15 @@ osd_set_gfx_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
+	lea		elevators_palette(pc),a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		elevator_colors,a1
+	bsr		load_palette
+		
+	lea		hw_sprites_palette(pc),a0
+	move.w	#16,d0
+	lea		game_sprite_colors,a1
+	bsr		load_palette
 		
 	* set copperlist
 	move.l	#title_copperlist,cop1lc(a5)
@@ -1843,7 +1849,7 @@ osd_set_gfx_bank:
     move.l	panel_screen_ptr(pc),a0
 	move.l	a0,d0
     lea	panel_bitplanes+2,a0
-	move.l	#FG_SCREEN_PLANE_SIZE,d2
+	move.l	#BG_SCREEN_PLANE_SIZE,d2
 	bsr		20f
 
 	bsr		set_playfield_bitplanes
@@ -1866,7 +1872,7 @@ osd_set_gfx_bank:
 0:
 	move.l	a0,d0
     lea	panel_end_bitplanes+2,a0
-	move.l	#FG_SCREEN_PLANE_SIZE,d2
+	move.l	#BG_SCREEN_PLANE_SIZE,d2
 	bsr		20f
 	
 100:
@@ -2360,7 +2366,7 @@ update_bg_tile_game:
 	add.w	d1,d1
 	move.w	(a2,d1.w),d1
 	add.w	d0,d1
-	move.l	#FG_SCREEN_PLANE_SIZE,d5
+	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 
@@ -2610,7 +2616,7 @@ set_fg_bitplanes:
 	move.l	a0,d0
     lea	playfield_bitplanes+2,a0
 	moveq	#0,d2
-	move.w	#FG_SCREEN_PLANE_SIZE,d2
+	move.w	#BG_SCREEN_PLANE_SIZE,d2
 1:
     swap d0
     move.w d0,(a0)
@@ -3063,31 +3069,14 @@ bg_screen_data_2:
 	.endif
 	
 	* macro to define a color0 change, synced with elevator shafts
-	* thanks to ross for finetuning this part, it was tricky!
 	.macro	 DYN_COLOR_ROW	hpos
     .word    0x35+(\hpos<<8),0xFFFE
-    .word    color,0
-    .word    0x55+(\hpos<<8),0xFFFE
-    .word    color,0
-    .word    0x01fe,0xFFFE
-    .word    color,0
-    .word    0x75+(\hpos<<8),0xFFFE
-    .word    color,0
-    .word    0x01fe,0xFFFE
-    .word    color,0
-    .word    0x95+(\hpos<<8),0xFFFE
-    .word    color,0
-    .word    0x01fe,0xFFFE
-    .word    color,0
+    .word    color,0xB8F		| purple
     .word    0xB5+(\hpos<<8),0xFFFE
-    .word    color,0
+    .word    color,0	| black
  	.word	 0x01+((\hpos+1)<<8),0xFFFE
   	.endm
 	
-	* just to get the size of the color row
-color_row_start:
-	DYN_COLOR_ROW	0
-color_row_end:
 
 bg_drawed_screen_ptr:
 	.long	0
@@ -3137,20 +3126,7 @@ _end_of_ng_code:
 
 	.align 2
 
-* table of pointers on dynamic rows. Almost contiguous
-* no thanks to mid screen interrupt
-dynamic_rows:
-	.set	addr,dynamic_row_00
-	.rept	NB_UPPER_DYN_ROWS
-	.long	addr
-	.set	addr,addr+34*2
-	.endr
-	.set	addr,dynamic_row_43
-	.rept	NB_LOWER_DYN_ROWS
-	.long	addr
-	.set	addr,addr+34*2
-	.endr
-	
+
 
 sprite_table:
 	.skip	SPRITE_STRUCT_SIZE*8
@@ -3272,9 +3248,8 @@ game_copperlist:
 	* on color bank 1
 	.word	bplcon2,HIDDEN_BOBS_BPLCON2_VALUE
 	
-	* black color sprites
+	* black color background plane
 
-	*DECL_COLORS	0,32
 	* enable sprite colors now
 
 game_sprite_colors:
@@ -3286,7 +3261,7 @@ elevator_bitplanes:
 	DECL_EVEN_BITPLANES	0,3
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
-	DECL_COLORS	0,TOTAL_NB_COLORS   | BOBs black colors
+	DECL_COLORS	0,TOTAL_NB_COLORS*2	| all black
 
 elevator_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS
@@ -3307,11 +3282,10 @@ playfield_tiles_colors:
 	DECL_COLORS	8,TOTAL_NB_COLORS
 
 
-
 dynamic_row_00:
 	.set	dynrow,0x3D
 	.rept	NB_UPPER_DYN_ROWS
-	* elevator dynamic color per row (0-6)
+	* elevator layer dynamic color
 	DYN_COLOR_ROW	dynrow
 	.set		dynrow,dynrow+1
 	.endr
@@ -3325,7 +3299,7 @@ intreq_block_game:
 
 dynamic_row_43:
 	.rept	NB_LOWER_DYN_ROWS
-	* elevator dynamic color per row (0-6)
+	* elevator layer dynamic color
 	DYN_COLOR_ROW	dynrow
 	.set		dynrow,dynrow+1
 	.endr
@@ -3371,7 +3345,7 @@ sprite_buffer:
 	.skip	8
 	
 background_restore_buffer:
-	.skip	BG_SCREEN_SIZE
+	.skip	BG_SCREEN_SIZE/2
 	.skip	NB_BYTES_PER_ROW*12*3
 		
 bg_screen_buffer_1:
@@ -3381,16 +3355,16 @@ bg_screen_buffer_2:
 	.skip	BG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 panel_screen_buffer:
-	.skip	FG_SCREEN_SIZE
+	.skip	BG_SCREEN_SIZE
 
 	
 fg_screen_buffer_1:
-	.skip	FG_SCREEN_SIZE
+	.skip	BG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING
 fg_screen_buffer_2:
-	.skip	FG_SCREEN_SIZE
+	.skip	BG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 	.skip	8
 	.endif

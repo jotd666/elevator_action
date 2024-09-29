@@ -3,26 +3,16 @@ from PIL import Image,ImageOps
 import os,sys,bitplanelib
 
 
-# AGA version uses dual playfield 16+16 plus AGA sprites for elevators (with palette tricks)
-# status can use any palette (in game) as copper can reload building palette
-# building palette changes with levels. There are 4 versions of building palettes. We'll cheat as the
-# game palette is 64 colors but doesn't really use that much
+# for title, ECS and AGA versions use the same layout: 16 color + sprites for elevator letters
+
+# for game, ECS version is completely different from AGA.
+# uses dual playfield 8+8 plus sprites for player/car (to add more colors)
+# some compromises were done on the tiles/bobs but it's still OK
+# tiles+BOBs use the upper playfield
+# elevators use the lower playfield
 #
-# Front playfield displays the building
-# Back/front playfield displays the sprites (sprites can be behind in stairs, DPF is a nice way to handle this)
-# Sprites display the elevators, with lowest priority
 
-##;    map(0xc400, 0xc7ff).ram().share(m_videoram[0]);
-##;    map(0xc800, 0xcbff).ram().share(m_videoram[1]);
-##;    map(0xcc00, 0xcfff).ram().share(m_videoram[2]);
-##;    map(0xd000, 0xd05f).ram().share(m_colscrolly); 0x20 values per layer
-##;    map(0xd100, 0xd1ff).ram().share(m_spriteram);
-##;    map(0xd200, 0xd27f).mirror(0x0080).ram().share(m_paletteram);
 
-#varying_palettes_rgb4_str = [
-#["{:03x}".format(bitplanelib.to_rgb4_color(x)) for x in lst] for lst in varying_palettes]
-
-# 167,131,242: color behind the doors (when doors are opening)
 
 
 
@@ -42,7 +32,7 @@ title_playfield_palette = title_playfield_palette + (16-len(title_playfield_pale
 game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name],layer_name,dump=dump_it,dumpdir=dumpdir,) for i,layer_name in enumerate(game_layer_names)]
 
 # insert black color to elevator layer
-elevators_palette = game_layer[2][0]+[background_purple_color]
+elevators_palette = [(0,0,0)]+game_layer[2][0]
 elevators_palette = elevators_palette + [[0xF,0xF,0xF]]*(8-len(elevators_palette))
 
 # make a color correspondence dictionary
@@ -92,17 +82,30 @@ hardware_sprites = {k for k,v in sprite_names.items() if "player" in v or "car" 
 
 all_sprites -= hardware_sprites
 
-sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,all_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names)
+sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,all_sprites,"bobs",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names)
+
+hw_sprites_palette,hw_sprites_set = load_tileset(sprites_1_sheet,True,16,hardware_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names)
+
+hw_sprites_palette.remove(transparent)
+
+hw_sprites_palette = [transparent]+hw_sprites_palette
+
+hw_sprites_palette = hw_sprites_palette + [(0x10,0x20,0x30)]*(16-len(hw_sprites_palette))
+
+
+# in right facing car sprite (personal opinion) the windshield background should be
+# transparent instead of this brown color that turns player hair into Jackson's five hair.
+# bitplanelib.replace_color(hw_sprites_set[0x2F],{(255,218,138)},transparent)
 
 # dark floor enemies + blue door
-sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43,)) | set(range(50,56)) | {0x3E},"sprites",dump=dump_it,
+sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43,)) | set(range(50,56)) | {0x3E},"bobs",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64,dumpdir=dumpdir)
 
 
 other_sprites = {1,8,48,47}
 other_sprites -= {x-192 for x in hardware_sprites}
 
-sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,other_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
+sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,other_sprites,"bobs",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
 
 
 
@@ -141,7 +144,7 @@ color_replacement_dict = {
 (0, 0, 176):blue,
 (37, 37, 218):blue,
 (0, 0, 255):blue,
-(79, 79, 79):(0,0,0),   # temp dark gray => black
+(79, 79, 79):(0,0,0),   # dark gray => black
 (16, 32, 48):(0,0,0),
 (254, 0, 254):(0,0,0),  # magenta is mask
 #(37, 176, 176):(0,200,0),   # gun flame, alternate palette also walls...
@@ -174,6 +177,9 @@ for tile in game_tiles+full_sprite_set:
         tile = ImageOps.scale(tile,5,resample=Image.Resampling.NEAREST)
         tile.save(os.path.join(new_color_dir,f"img_{idx}.png"))
         idx += 1
+# the HW sprite we recolored slightly
+tile = ImageOps.scale(hw_sprites_set[0x2F],5,resample=Image.Resampling.NEAREST)
+tile.save(os.path.join(new_color_dir,"facing_car.png"))
 
 current_plane_idx = 0
 
@@ -234,6 +240,7 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
                 tile_list.append(plane_list)
             else:
                 tile_list.append(None)
+
 
 #BOBs
 
@@ -316,6 +323,9 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
 ##    else:
 ##        raise Exception("Not enough colors to insert last white color")
     bitplanelib.palette_dump(game_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+
+    f.write("hw_sprites_palette:\n")
+    bitplanelib.palette_dump(hw_sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)

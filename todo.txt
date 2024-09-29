@@ -8,9 +8,7 @@ TODO/ISSUES:
 - hardware sprites: gather them and compute 6 color palette, in the game,
   allocate half colors for 4 sprites and other half for 4 sprites. Each displayed
   16x16 sprite tile is made of 2 sprites (dump the images and the image parts to debug)
-- wall color: replaced by piss yellow, to fix
-- brick colors: not correct
-- re-merge amiga.68k AGA => ECS
+- black color not registered on upper playfield, even if it's color #1
 
 minor:
 
