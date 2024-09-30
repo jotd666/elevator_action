@@ -5,7 +5,7 @@
 
 ;CHIP_ONLY
 
-EXPMEM = $100000
+EXPMEM = $120000
 
 _base	SLAVE_HEADER					; ws_security + ws_id
 	dc.w	17					; ws_version (was 10)

@@ -924,7 +924,68 @@ set_hurry_up:
 	movem.l	(a7)+,a6
 	rts
 	
+	
+* what: blits 32x16 data on bg plane, no horizontal shifting (erase)
+* args:
+* < A0: pristine background
+* < D0: X (rounded to smaller 8-multiple)
+* < D1: Y
+* < D4: height
 
+* trashes: D0-D1
+
+blit_16x_background:
+	movem.l	d2-d6/a0-a5,-(a7)
+	lea		_custom,a5
+	move.l	bg_drawed_screen_ptr(pc),a1
+	* adjust offset X: X//8
+	lsr.w	#3,d0
+	lea		mulNB_BYTES_PER_ROW_table(pc),a4
+	add.w	d1,d1
+	* add Y offset: Y*40
+	add.w	(a4,d1.w),d0
+	* same offset for source and destination
+	add.w	d0,a1
+	add.w	d0,a0
+	
+
+    move.l  #0x09f00000,d3    | A->D copy, ascending mode
+	moveq	#4,d2			| 32 bits blit
+	move.w	#NB_BYTES_PER_ROW,d1		| blit modulo
+
+    sub.w   d2,d1       | blit modulo
+    lsl.w   #6,d4
+    lsr.w   #1,d2		| blit width
+    add.w   d2,d4       | blit height
+	
+    * always the same settings
+
+    * now just wait for blitter ready to write all registers
+	WAIT_BLIT
+    
+    * blitter registers set
+
+	move.l d3,bltcon0(a5)	| sets con0 and con1
+
+    move.w  d1,bltamod(a5)	|A modulo
+    move.w  d1,bltdmod(a5)	|D modulo
+							
+	move.l a0,bltapt(a5)	|source graphic top left corner
+	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	
+	.rept	NB_PLAYFIELD_PLANES-1
+	lea	(BG_SCREEN_PLANE_SIZE/2,a0),a0
+	lea	(BG_SCREEN_PLANE_SIZE,a1),a1
+	WAIT_BLIT
+	* second bitplane
+	move.l a0,bltapt(a5)	|source graphic top left corner
+	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	.endr
+	
+	movem.l	(a7)+,d2-d6/a0-a5
+	rts
 	
 
 * drawing order is a bit strange. The last sprite has to be moved at the start of the list.
@@ -945,14 +1006,18 @@ update_bobs:
 	move.w	(a4),d0
 	and.w	#0x1F0,d0		| align on 16 lower bound
 	* clear area where the sprite was
-	move.l	bg_drawed_screen_ptr(pc),a1
-	move.w	#4,d2
+	lea	background_restore_buffer,a0
 	moveq	#NB_PLAYFIELD_PLANES,d3
-	clr.l	(a4)+ 			| ack deletion
-	move.w	(a4),d2			| width in bytes (16 pixels: 4 bytes)
+	clr.l	(a4)+			| ack deletion
+	move.b	(a4),d2			| previous scroll value
+	cmp.b	#0x80,d2
+	jcs		0f
+	sub.w	#BG_SCREEN_PLANE_SIZE/2,a0	| make up for high scroll
+0:
 	move.w	(2,a4),d4		| height
 	clr.l	(a4)+			| ack deletion
-	bsr		clear_fg_planes_any_blitter_internal
+	move.b	#0,0x200
+	bsr		blit_16x_background
 	dbf		d7,1b	
 	bra.b	12f
 11:
@@ -1077,7 +1142,8 @@ update_one_bob:
 	* note down that this bob will have to be erased
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
-	move.w	d5,(a6)+			| store width
+	move.b	main_scroll_value,(a6)+			| store current scroll value
+	addq	#1,a6
 	move.w	d4,(a6)+			| store height
 	
 	move.w	d5,d2			| width in bytes, 4 for 16 pixels+shift
@@ -2121,7 +2187,6 @@ update_bg_tile_title:
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.w	#NB_TITLE_PLANES-1,d4
 	move.l	bg_drawed_screen_ptr,a1
-	*subq	#2,d0 | not sure??
 	add.w	d0,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2
 	add.w	d1,d1
@@ -2147,7 +2212,6 @@ update_title_letters:
 1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
-	jra		update_sprite_bitmap
 
 
 	.macro	NEXT_OFFSET
@@ -2170,45 +2234,10 @@ update_title_letters:
 	NEXT_OFFSET
 	.endm
 	
-* < D0: X tile
-* < D1: Y tile
-* < D2: tile code
-* < D3: tile previous code
-
-update_game_elevators:
-	* updating sprite data
-	sub.w	#0x2,d0		| min X elevator (first elevator first col)
-	jcs		0f
-	cmp.w	#0x1D-2,d0	| max X elevator (7th elevator last col.)
-	jcc		0f
-
-	* 0 <= D0 < 27
-	* compute sprite Y offset: x bytes per row, starting at x
-	lsl.w	#SPRITE_POWER_OF_2+1,d1
-	* compute sprite X offset: 1 byte per pixel, 32 pixels per elevator
-	move.w	d0,d3
-	and.b	#3,d3
-	add.w	d3,d1	| proper part of the elevator
-	* d0: 4*sprite number
-	lsr.w	#2,d0	| divide by 4 to get elevator number
-	* TODO: for elevators, we need to store positions of elevator
-	* pink area start so we can change colors dynamically
-	* there can be 2 elevators per column
 	
-	* "inside elevator" and "outside elevator, no cable" tiles are
-	* only 1 color, we have to handle this color dynamically so just
-	* blank it
-	cmp.b	#0x3B,d2
-	jeq		0f
-	cmp.b	#0x3f,d2
-	jeq		0f
-
-	jra		update_sprite_bitmap		
-0:
-	MOVEQ	#0,d2		| inside elevator or outside without wire: clear tile!
 * < D0: sprite number
 * < D1: X/Y offset to apply to data
-update_sprite_bitmap:
+
 	* save extra registers
 	move.l	a4,-(a7)
 	move.l	a5,-(a7)
@@ -2348,6 +2377,10 @@ clear_tile_table:
 
 blank_row:
 	.skip	8
+
+
+	
+
 	
 update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
@@ -2356,19 +2389,25 @@ update_bg_tile_game:
 	bsr		compute_tile_xy
 	
 	move.l		character_tables+4,a0
-
-	btst	#11,d7		| third layer? sprites
-	jne	update_game_elevators
-
-	
-	move.l	panel_screen_ptr,a1
 	lea		mulNB_BYTES_PER_ROW_table,A2
 	add.w	d1,d1
+	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.w	#NB_PLAYFIELD_PLANES-1,d4
+
+	btst	#11,d7		| third layer? sprites
+	jeq	0f
+	move.l		(8,a0),a0		| elevator layer
+	lea	elevator_back_screen,a1
 	move.w	(a2,d1.w),d1
 	add.w	d0,d1
-	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	add.w	d1,a1
+	jra		end_update_bg_tile
 	
-	move.w	#NB_PLAYFIELD_PLANES-1,d4
+0:
+	move.l	panel_screen_ptr,a1
+	move.w	(a2,d1.w),d1
+	add.w	d0,d1
+	
 
 	btst	#10,d7		| second layer?
 	jne		end_update_playfield_tile	
@@ -2440,13 +2479,21 @@ end_update_bg_tile:
 * need to be updated, we'll see that later
 
 end_update_playfield_tile:
-	move.l	#BG_SCREEN_PLANE_SIZE,d5
+	move.l	#BG_SCREEN_PLANE_SIZE/2,d5
+	move.l	d5,d6
+	add.l	d6,d6
 	move.l	(4,a0),a0	
 	move.l	bg_drawed_screen_ptr,a1
 	add.w	d1,a1
 	lea		background_restore_buffer,a4
 	add.w	d1,a2
-	lea		(BG_SCREEN_PLANE_SIZE/2,a1),a3
+	cmp.w	d1,d5
+	jcc		0f
+	sub.w	d5,d1
+0:
+	add.w 	d1,a4
+	
+	lea		(a1,d5.l),a3		| mirror
 	add.w	d2,d2
 	add.w	d2,d2
 	move.l	(a0,d2.w),d0
@@ -2468,8 +2515,8 @@ end_update_playfield_tile:
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 41:
-	add.l	d5,a1
-	add.l	d5,a3
+	add.l	d6,a1
+	add.l	d6,a3
 	add.l	d5,a4
 	dbf		d4,4b
 0:
@@ -2496,8 +2543,8 @@ end_update_playfield_tile:
 	clr.b	(offset,a4)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
-	add.w	d5,a1
-	add.w	d5,a3
+	add.w	d6,a1
+	add.w	d6,a3
 	add.w	d5,a4
 	dbf		d4,111b
 2:
@@ -3357,6 +3404,10 @@ bg_screen_buffer_2:
 panel_screen_buffer:
 	.skip	BG_SCREEN_SIZE
 
+	
+elevator_back_screen:
+	.skip	BG_SCREEN_SIZE
+	.skip	NB_BYTES_PER_ROW*12*3
 	
 fg_screen_buffer_1:
 	.skip	BG_SCREEN_SIZE
