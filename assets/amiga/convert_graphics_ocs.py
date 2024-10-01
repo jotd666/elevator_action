@@ -90,6 +90,7 @@ hw_sprites_palette.remove(transparent)
 
 hw_sprites_palette = [transparent]+hw_sprites_palette
 
+# pad, we only need 8 colors for all HW sprites, because we gathered sprites with similar palettes
 hw_sprites_palette = hw_sprites_palette + [(0x10,0x20,0x30)]*(16-len(hw_sprites_palette))
 
 
@@ -178,8 +179,8 @@ for tile in game_tiles+full_sprite_set:
         tile.save(os.path.join(new_color_dir,f"img_{idx}.png"))
         idx += 1
 # the HW sprite we recolored slightly
-tile = ImageOps.scale(hw_sprites_set[0x2F],5,resample=Image.Resampling.NEAREST)
-tile.save(os.path.join(new_color_dir,"facing_car.png"))
+#tile = ImageOps.scale(hw_sprites_set[0x2F],5,resample=Image.Resampling.NEAREST)
+#tile.save(os.path.join(new_color_dir,"facing_car.png"))
 
 current_plane_idx = 0
 
@@ -338,6 +339,16 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
         outside_elevator = v[2]  # background => change to black, change background on Y
         f.write(f"\t.word\t0x{inside_elevator:04x},0x{outside_elevator:04x}\n")
 
+# hardware sprites
+hw_sprites_array = []
+for hw_sprite in hw_sprites_set:
+    if hw_sprite:
+        sp1,sp2 = bitplanelib.palette_image2attached_sprites(hw_sprite,None,hw_sprites_palette)
+        hw_sprites_array.append([sp1,sp2])
+    else:
+        hw_sprites_array.append(None)
+
+#FUCK hw_sprites_palette
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\tcharacter_tables\n")
     f.write("\t.global\tbob_table\n")   # BOBs only present in game
@@ -370,6 +381,16 @@ character_tables:
                         else:
                             f.write(f"tile_plane_{t}")
                         f.write("\n")
+
+    f.write("\nhw_sprite_table:\n")
+    # dump sprites, we're blessed that we only display one sprite once, no need to dump them 4 times
+    for i,hw in enumerate(hw_sprites_array):
+        f.write("\t.long\t")
+        if hw:
+            f.write(f"hw_sprite_{i}_1,hw_sprite_{i}_2")
+        else:
+            f.write('0,0')
+        f.write("\n")
 
     f.write("\nbob_table:\n")
     for i,tile in enumerate(bob_list):
@@ -411,6 +432,16 @@ character_tables:
     for k,v in bob_bitplane_cache.items():
         f.write(f"bob_plane_{v}:")
         bitplanelib.dump_asm_bytes(k,f,mit_format=True)
+
+
+    # HW sprite data
+    for i,hw in enumerate(hw_sprites_array):
+        if hw:
+            sp1,sp2 = hw
+            f.write(f"hw_sprite_{i}_1:")
+            bitplanelib.dump_asm_bytes(sp1,f,True)
+            f.write(f"hw_sprite_{i}_2:")
+            bitplanelib.dump_asm_bytes(sp2,f,True)
 
 
 
