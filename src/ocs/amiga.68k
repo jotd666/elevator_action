@@ -879,7 +879,7 @@ osd_wait:
 osd_update_sprites:
 	movem.l	a0-a6/d0-d7,-(a7)
 	lea		sprite_ram_d100,a0
-	bsr		update_bobs
+	bsr		update_bobs_and_hw_sprites
 
 	movem.l	(a7)+,a0-a6/d0-d7
 	rts
@@ -888,7 +888,7 @@ osd_update_sprites:
 
 really_update_sprites:
 	lea		sprite_ram_d100,a0
-	bsr		update_bobs
+	bsr		update_bobs_and_hw_sprites
 
 	rts
 	
@@ -987,11 +987,128 @@ blit_16x_background:
 	movem.l	(a7)+,d2-d6/a0-a5
 	rts
 	
+* < A6: hw sprite flag table
+* < A4: hw sprite table
+* < A2: copperlist (hw sprite part)
+* < A1: sprite pos table (Y) for 16-high sprites
+* < A0: target sprite pointer
 
+update_one_hw_sprite:
+	* code = 0 and clut = 0 => disabled ?? to check
+	moveq	#0,d2
+	move.b	(TARGET_SPRITE_CODE,a0),d2
+	jeq	2f
+	cmp.b	#0x4E,d2
+	jne		0f
+	move.b	(TARGET_SPRITE_X,a0),d0
+	cmp.b	#0xE8,D0
+	jcs	0f
+	* check if basement
+	move.l	a6,-(a7)
+	GET_RAM_START_IN_A6
+	tst.b	(player_structure_851A+7,a6)	| player floor: basement
+	movem.l	(a7)+,a6
+	jeq		2f	| skip head sprite wrapping when car is leaving
+
+0:
+	and.w	#0x3F,d2
+	tst.b	(a6,d2.w)
+	jeq		2f		| not a hw sprite: zap
+
+	clr.b	(TARGET_SPRITE_CODE,a0)	| destroy code so it's not seen as BOB
+	
+	* it is a HW sprite all right
+	lsl.w	#4,d2	| 4 pointers for each sprite
+	move.b  (TARGET_SPRITE_ATTRIBUTES,a0),d3
+	btst	#0,d3
+	jeq		10f
+	addq	#8,d2			| mirror sprite couple
+10:
+	move.b	#0,0x200
+	lea		(a4,d2.w),a5	| pointer on first sprite
+
+	moveq	#0,d0
+	moveq	#0,d1
+	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
+	beq.b	2f			| Y set to 0: not shown
+	not.b	d1
+
+	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
+	
+	.ifne	SPRITE_Y_CORRECTION
+	add.b	#SPRITE_Y_CORRECTION,d1
+	.endif
+	.ifne	SPRITE_X_CORRECTION
+	add.b	#SPRITE_X_CORRECTION,d0
+	.endif
+
+	* D0 and D1 are already set
+
+	sub.w	#16,d0	| move each sprite 16 bits to the left
+	bsr		store_sprite_pos
+
+	
+	* first sprite of couple
+	move.l	(a5)+,a3
+	move.l	d0,(a3)
+	move.l	a3,d1
+	* store sprite pointer in copperlist
+	move.w	d1,(4,a2)
+	swap	d1
+	move.w	d1,(a2)
+	* second sprite of couple
+	BSET	#7,d0		| attach bit set
+	move.l	(a5),a3
+	move.l	d0,(a3)
+	move.l	a3,d1
+	* store sprite pointer in copperlist
+	move.w	d1,(4+8,a2)
+	swap	d1
+	move.w	d1,(8,a2)
+	add.w	#0x10,a2	| advance in sprite copperlist part
+2:
+	
+	rts
+
+	
 * drawing order is a bit strange. The last sprite has to be moved at the start of the list.
 * if ((which >= 0x10) && (which <= 0x17)) no sprites!
 
-update_bobs:
+update_bobs_and_hw_sprites:
+	move.l	a0,a5
+    lea hw_sprite_flag_table,A6
+	lea		hw_sprite_table,a4
+	lea	HW_SpriteYTable_16(pc),a1
+	lea	game_sprites+2,a2			| copperlist
+
+	| start by the end (drawing priority), except for last sprite
+	| which has top priority (strange hardware!)
+	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| last sprite
+	move.l	a0,-(a7)
+	moveq	#NB_TARGET_SPRITES-2,d7
+1:
+	subq.w	#4,a0
+	jbsr	update_one_hw_sprite
+	dbf		d7,1b
+	move.l	(a7)+,a0
+	* last sprite
+	jbsr	update_one_hw_sprite
+
+	* pad last sprite entries with blank
+	move.l	#blank_sprite,d0
+1:
+	move.w	d0,(4,a2)
+	swap	d0
+	move.w	d0,(a2)
+	swap	d0
+	addq	#8,a2
+	cmp.l	#game_sprites_end,a2
+	jcs		1b
+	
+
+	move.l	a5,a0
+
+	* erase previous BOBs
 	move.l	bob_previous_drawed_sprites(pc),a4
 	lea		_custom,a5
 	
@@ -1040,6 +1157,7 @@ update_bobs:
 	* last sprite
 	jbsr	update_one_bob
 	rts
+	
 update_one_bob:
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
@@ -1119,10 +1237,6 @@ update_one_bob:
 	.ifne	SPRITE_X_CORRECTION
 	add.b	#SPRITE_X_CORRECTION,d0
 	.endif
-
-	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
-	* yflip support isn't required
-	and.b	#0x0F,d3	| get attributes
 
 	
 	move.l	a0,-(a7)
@@ -1567,9 +1681,9 @@ quit_to_os:
 
 
 
-* set sprite pointers on chipmem zone
+* set sprite pointers on chipmem zone (title)
 
-init_sprite_bank:
+init_title_sprite_bank:
 	move.w	#sprpt,d0
 	move.w	#NB_HOST_SPRITES-1,d2		| 7
 0:
@@ -1583,6 +1697,23 @@ init_sprite_bank:
 	move.w	d1,(a0)+
 	
 	add.w	#SPRITE_STRUCT_SIZE,a1
+	addq	#2,d0
+	dbf		d2,0b
+	rts
+	
+init_game_sprite_bank:
+	move.w	#sprpt,d0
+	move.w	#NB_HOST_SPRITES-1,d2		| 7
+0:
+	move.l	#blank_sprite,d1
+	move.w	d0,(a0)+
+	swap	d1
+	move.w	d1,(a0)+
+	swap	d1
+	addq	#2,d0
+	move.w	d0,(a0)+
+	move.w	d1,(a0)+
+	
 	addq	#2,d0
 	dbf		d2,0b
 	rts
@@ -1635,12 +1766,15 @@ platform_init:
 	dbf		d0,0b
 	
 	* set sprite registers in copperlist
+	
+	* attached sprites for main character & car
 	lea		game_sprites,a0
-	lea		sprite_table,a1
-	bsr		init_sprite_bank
+	bsr		init_game_sprite_bank
+	
+	* ELEVATOR letters sprite columns
 	lea		title_sprites,a0
 	lea		sprite_table,a1
-	bsr		init_sprite_bank
+	bsr		init_title_sprite_bank
 
 
 	* set title sprite colors, 8 times the same 4 colors
@@ -2025,11 +2159,8 @@ really_set_columns_scroll:
 	lea		title_sprites+2,a0
 	tst.b	current_gfx_bank
 	jeq		10f
-	lea		game_sprites+2,a0
-	and.w	#0xFF,d0
-	move.w	#16,d3
-	moveq	#5,d4
-	jra		10f
+	* in-game completely different mechanism: blit column
+	* as elevators are 24-bit wide and can't use sprites in OCS
 100:
 	addq	#1,d5
 	cmp.b	#8,d5
@@ -2556,6 +2687,38 @@ end_update_playfield_tile:
 	rts
 
 
+* < d0.w: x
+* < d1.w: y
+* < a1: sprite pos table (depending on height)
+* > d0.L: control word
+store_sprite_pos:
+	tst.w	d1
+	jmi	0f
+	cmp.w	#Y_MAX,d1
+	jcc	0f
+
+    move.l  a0,-(a7)
+
+    lea	HW_SpriteXTable(pc),a0
+	
+	.ifdef	NO68020
+    add.w	d0,d0
+    add.w	d0,d0
+    move.l	(a0,d0.w),d0
+	move.w	d1,-(a7)
+    add.w	d1,d1
+    add.w	d1,d1
+    or.l	(a1,d1.w),d0
+	move.w	(a7)+,d1
+	.else
+    move.l	(a0,d0.w*4),d0
+    or.l	(a1,d1.w*4),d0	
+	.endc
+    move.l  (a7)+,a0
+    rts
+0:
+	moveq	#0,d0
+	rts
 	
 * < d0.w: x
 * > d0.L: control word
@@ -2603,7 +2766,7 @@ HW_SpriteYTable_\height:
   .endr
 	.endm
 
-
+	DEF_HW_SPRITE_Y_TABLE	16
 
 set_static_bitplanes:
 	movem.l	a0-a1/d0-d2,-(a7)
@@ -3238,6 +3401,9 @@ tile_log_table:
     .endr
 	.endm
 
+blank_sprite:
+	.long	0,0
+	
 blank_sound:
 	ds.l	4
 	
@@ -3303,6 +3469,7 @@ game_sprite_colors:
 	DECL_COLORS	16,16
 game_sprites:
 	DECL_SPRITES
+game_sprites_end:
 
 elevator_bitplanes:
 	DECL_EVEN_BITPLANES	0,3

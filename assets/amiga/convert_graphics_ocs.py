@@ -344,12 +344,16 @@ hw_sprites_array = []
 for hw_sprite in hw_sprites_set:
     if hw_sprite:
         sp1,sp2 = bitplanelib.palette_image2attached_sprites(hw_sprite,None,hw_sprites_palette)
-        hw_sprites_array.append([sp1,sp2])
+
+        sp3,sp4 = bitplanelib.palette_image2attached_sprites(ImageOps.mirror(hw_sprite),None,hw_sprites_palette)
+        hw_sprites_array.append([sp1,sp2,sp3,sp4])
     else:
         hw_sprites_array.append(None)
 
 #FUCK hw_sprites_palette
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
+    f.write("\t.global\thw_sprite_flag_table\n")
+    f.write("\t.global\thw_sprite_table\n")
     f.write("\t.global\tcharacter_tables\n")
     f.write("\t.global\tbob_table\n")   # BOBs only present in game
 
@@ -382,14 +386,18 @@ character_tables:
                             f.write(f"tile_plane_{t}")
                         f.write("\n")
 
+    f.write("\nhw_sprite_flag_table:")
+    hw_status = [bool(hw) for hw in hw_sprites_array]
+    bitplanelib.dump_asm_bytes(hw_status,f,mit_format=True)
+
     f.write("\nhw_sprite_table:\n")
     # dump sprites, we're blessed that we only display one sprite once, no need to dump them 4 times
     for i,hw in enumerate(hw_sprites_array):
         f.write("\t.long\t")
         if hw:
-            f.write(f"hw_sprite_{i}_1,hw_sprite_{i}_2")
+            f.write(",".join(f"hw_sprite_{i}_{j}" for j in range(1,5)))
         else:
-            f.write('0,0')
+            f.write('0,0,0,0')
         f.write("\n")
 
     f.write("\nbob_table:\n")
@@ -437,11 +445,10 @@ character_tables:
     # HW sprite data
     for i,hw in enumerate(hw_sprites_array):
         if hw:
-            sp1,sp2 = hw
-            f.write(f"hw_sprite_{i}_1:")
-            bitplanelib.dump_asm_bytes(sp1,f,True)
-            f.write(f"hw_sprite_{i}_2:")
-            bitplanelib.dump_asm_bytes(sp2,f,True)
+            for j,sp in enumerate(hw,1):
+                f.write(f"hw_sprite_{i}_{j}:")
+                bitplanelib.dump_asm_bytes(sp,f,True)
+
 
 
 

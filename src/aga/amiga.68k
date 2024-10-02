@@ -1082,7 +1082,7 @@ update_one_bob:
 	move.b  (TARGET_SPRITE_ATTRIBUTES,a0),d3
 	btst	#0,d3
 	jeq		0f
-	add.w	#(NB_PLAYFIELD_PLANES+1)*4+6,d4
+	add.w	#(NB_PLAYFIELD_PLANES+1)*4+6,d4		| mirror
 0:
 
 	moveq	#0,d0
@@ -1099,10 +1099,6 @@ update_one_bob:
 	.ifne	SPRITE_X_CORRECTION
 	add.b	#SPRITE_X_CORRECTION,d0
 	.endif
-
-	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
-	* todo yflip
-	and.b	#0x0F,d3	| get attributes
 
 	
 	move.l	a0,-(a7)
