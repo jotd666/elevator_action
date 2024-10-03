@@ -103,17 +103,16 @@ sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range
                                             name_dict=sprite_names,tile_offset=64,dumpdir=dumpdir)
 
 
-other_sprites = {1,8,48,47}
-other_sprites -= {x-192 for x in hardware_sprites}
+other_sprites = {1,8,48,47}  # body of player holding documents & "500" score points: all those are HW sprites too
 
-sprites_palette_0,sprites_set_0 = load_tileset(sprites_0_sheet,True,16,other_sprites,"bobs",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
-
+_,hw_sprites_set_alt = load_tileset(sprites_0_sheet,True,16,other_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
 
 
+hw_sprites_set += ([None]*128) +hw_sprites_set_alt
 
 
 full_sprite_set = sprites_set + sprites_set_2
-full_sprite_set += [None]*(192-len(full_sprite_set)) + sprites_set_0
+full_sprite_set += [None]*(256-len(full_sprite_set))
 
 # playfield+status+sprites
 game_status_palette = tuple(sorted(set(game_layer[0][0])))
@@ -340,7 +339,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
         f.write(f"\t.word\t0x{inside_elevator:04x},0x{outside_elevator:04x}\n")
 
 # hardware sprites
-hw_sprites_array = []
+hw_sprites_array = [None]*0x40
 for hw_sprite in hw_sprites_set:
     if hw_sprite:
         sp1,sp2 = bitplanelib.palette_image2attached_sprites(hw_sprite,None,hw_sprites_palette)
@@ -350,7 +349,8 @@ for hw_sprite in hw_sprites_set:
     else:
         hw_sprites_array.append(None)
 
-#FUCK hw_sprites_palette
+hw_sprites_array = hw_sprites_array + [None]*(256-len(hw_sprites_array))
+
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
     f.write("\t.global\thw_sprite_flag_table\n")
     f.write("\t.global\thw_sprite_table\n")

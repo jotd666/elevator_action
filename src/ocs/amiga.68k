@@ -29,7 +29,7 @@ HW_SPRITE_Y_CORRECTION = 0
 PANEL_Y_GAP = 208
 Y_MAX = 260
 
-BASE_BPLCON2_VALUE = 0x0046
+BASE_BPLCON2_VALUE = 0x0022		| sprites above all playfields
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
 
@@ -1011,11 +1011,8 @@ update_one_hw_sprite:
 	jeq		2f	| skip head sprite wrapping when car is leaving
 
 0:
-	and.w	#0x3F,d2
 	tst.b	(a6,d2.w)
 	jeq		2f		| not a hw sprite: zap
-
-	clr.b	(TARGET_SPRITE_CODE,a0)	| destroy code so it's not seen as BOB
 	
 	* it is a HW sprite all right
 	lsl.w	#4,d2	| 4 pointers for each sprite
@@ -1024,7 +1021,6 @@ update_one_hw_sprite:
 	jeq		10f
 	addq	#8,d2			| mirror sprite couple
 10:
-	move.b	#0,0x200
 	lea		(a4,d2.w),a5	| pointer on first sprite
 
 	moveq	#0,d0
@@ -1075,7 +1071,7 @@ update_one_hw_sprite:
 * if ((which >= 0x10) && (which <= 0x17)) no sprites!
 
 update_bobs_and_hw_sprites:
-	move.l	a0,a5
+	move.l	a0,-(a7)
     lea hw_sprite_flag_table,A6
 	lea		hw_sprite_table,a4
 	lea	HW_SpriteYTable_16(pc),a1
@@ -1106,7 +1102,7 @@ update_bobs_and_hw_sprites:
 	jcs		1b
 	
 
-	move.l	a5,a0
+	move.l	(a7)+,a0
 
 	* erase previous BOBs
 	move.l	bob_previous_drawed_sprites(pc),a4
@@ -1133,7 +1129,6 @@ update_bobs_and_hw_sprites:
 0:
 	move.w	(2,a4),d4		| height
 	clr.l	(a4)+			| ack deletion
-	move.b	#0,0x200
 	bsr		blit_16x_background
 	dbf		d7,1b	
 	bra.b	12f
@@ -1163,18 +1158,10 @@ update_one_bob:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
-	cmp.b	#0x4E,d2
-	jne		0f
-	move.b	(TARGET_SPRITE_X,a0),d0
-	cmp.b	#0xE8,D0
-	jcs	0f
-	* check if basement
-	move.l	a6,-(a7)
-	GET_RAM_START_IN_A6
-	tst.b	(player_structure_851A+7,a6)	| player floor: basement
-	movem.l	(a7)+,a6
-	jeq		2f	| skip head sprite wrapping when car is leaving
-0:
+	move.b	#0x1,0x200
+	lea		hw_sprite_flag_table,a3
+	tst.b	(a3,d2.w)
+	jne	2f				| HW sprite: skip
 	cmp.b	#0x2,D2
 	jeq		2f			| fake BOB at start
 	BCLR	#6,d2
@@ -1265,11 +1252,9 @@ update_one_bob:
 	moveq	#NB_PLAYFIELD_PLANES,d3		| 4 planes
 	bsr		blit_planes_any_internal_cookie_cut
 	move.l	(a7)+,a0
-	bra.b	3f
+	rts
 2:
 	addq.w	#8,a6
-3:
-	
 	rts
 
 
