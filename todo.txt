@@ -4,12 +4,15 @@ ECS dual playfield:
 
 TODO/ISSUES:
 
+- draw elevators
 - ECS: 16 colors, if doesn't cut it with chipset exact on ECS, use 25FPS!!
 - black color not registered on upper playfield, even if it's color #1
-- flashing BOBs 1/2 0xFF code???
 - red door 0x20->0x27 should be HW sprite as well as 0x68->0x6A
 - scenery refresh bugs
-- draw elevators
+- bogus sprite at start when character arrives
+- ELEVATOR title screen lower half not working
+- elevator column wrong; display elevator column values (debug) plus colors
+  all wrong and data shifted + limit height, 256 is too much
 
 minor:
 

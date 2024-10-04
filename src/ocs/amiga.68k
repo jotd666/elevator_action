@@ -29,7 +29,7 @@ HW_SPRITE_Y_CORRECTION = 0
 PANEL_Y_GAP = 208
 Y_MAX = 260
 
-BASE_BPLCON2_VALUE = 0x0022		| sprites above all playfields
+BASE_BPLCON2_VALUE = 0x0062		| sprites above all playfields
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
 
@@ -94,6 +94,8 @@ SPRITE_STRUCT_SIZE = 32
 
 BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
+FG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
+FG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 
 
 NB_HOST_SPRITES = 8
@@ -1258,107 +1260,7 @@ update_one_bob:
 	rts
 
 
-* < A5: custom
-* < D0,D1: x,y
-* < A1: plane pointer
-* < D2: width in bytes (inc. 2 extra for shifting)
-* < D4: blit height
-* trashes D0-D6
-* > A1: even address where blit was done
-clear_fg_plane_any_blitter_internal:
-	moveq	#1,d3
-* < A5: custom
-* < D0,D1: x,y
-* < A1: foreground plane pointer (often first plane!)
-* < D2: width in bytes (inc. 2 extra for shifting)
-* < D3: number of planes to clear
-* < D4: blit height
-* < D7: mask (disabled, -1 set at start)
-* trashes D0-D6
-clear_fg_planes_any_blitter_internal:
-    * pre-compute the maximum of shit here
-	move.w	d1,d6
-    beq.b   1f    | optim
-	* check if y start + height > Y_MAX
-	* (ignores case where y = 0, no risk)
-	add.w	d4,d6
-	sub.w	#Y_MAX,d6
-	bmi.b	0f
-	* y start + height > Y_MAX: clip height
-	sub.w	d6,d4
-	beq.b	10f
-	bpl.b	0f
-10:
-	* null or negative height after clipping: out
-	rts
-0:
-    lea mulNB_BYTES_PER_ROW_table(pc),a2
-    add.w   d1,d1
-    move.w  (a2,d1.w),d1
-1:
-	moveq	#1,d5
-	ror.l	#8,d5     | AKA move.l  #0x01000000,d5   | minterm useD & rect clear (0xA) 
-    and.w   #0x1F0,d0
-    beq.b   2f				| zero X optimization
-    lsr.w   #3,d0
-    add.w   d0,d1
-	bclr	#0,d1
-2:   
-    add.w   d1,a1       | plane position (always even)
 
-	move.w #NB_BYTES_PER_ROW,d0
-	bclr	#0,d2		| make sure D2 is even (else strange things occur!)
-    sub.w   d2,d0       | blit width
-
-    lsl.w   #6,d4
-    lsr.w   #1,d2
-    add.w   d2,d4       | blit height
-
-    * now just wait for blitter ready to write all registers
-	WAIT_BLIT
-    
-    * blitter registers set
-	.ifdef	VARIABLE_BLITTER_MASKS_AND_MODS
-    move.l  d7,bltafwm(a5)
-	.endif
-	
-	move.l d5,bltcon0(a5)	
-    move.w  d0,bltdmod(a5)	|D modulo
-	
-	subq	#1,d3
-	beq.b	4f
-	subq	#1,d3
-3:
-	move.l a1,bltdpt(a5)	|destination top left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	lea		(BG_SCREEN_PLANE_SIZE,a1),a1
-	WAIT_BLIT
-	dbf		d3,3b
-4:
-	move.l a1,bltdpt(a5)	|destination top left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	
-    rts
-
-
-
-* what: blits 16x? data on one plane, cookie cut
-* args:
-* < A0: pointers on 16x? data
-* < A1: plane  (40 rows)
-* < A3: source mask for cookie cut (16x16)
-* < D0: X
-* < D1: Y
-* < D2: source y-offset
-* < D3: height of data
-* trashes: D0-D1
-blit_planes_cookie_cut_32x:
-    lea _custom,A5
-	move.w	d2,d5
-	move.w	d3,d4
-	moveq	#NB_PLAYFIELD_PLANES,d3		| 4 planes
-    moveq  #6,d2       | 32 pixels + 2 shift bytes
-	jra		blit_planes_any_internal_cookie_cut
 * what: blits 16x? data on one plane, cookie cut
 * args:
 * < A0: pointers on 16x? data
@@ -2044,7 +1946,7 @@ osd_set_gfx_bank:
     move.l	fg_drawed_screen_ptr(pc),a0
 	move.l	a0,d0
     lea	elevator_bitplanes+2,a0
-	move.l	#BG_SCREEN_PLANE_SIZE,d2
+	move.l	#FG_SCREEN_PLANE_SIZE,d2
 	bsr		20f
 
 	
@@ -2139,8 +2041,6 @@ really_set_columns_scroll:
 	jeq		100f		| no need to do anything: column scroll did not change
 	move.w	d0,(_previous_y_position,a2)  | store for later
 
-	move.w	#48,d3
-	moveq	#4,d4
 	lea		title_sprites+2,a0
 	tst.b	current_gfx_bank
 	jeq		10f
@@ -2191,8 +2091,8 @@ really_set_columns_scroll:
 	
 	* now compute the control word
 	move.w	d2,d0		| X
-	lsl.w	d4,d0		| column times 16 (2 chars per column)
-	add.w	d3,d0		| add X offset
+	lsl.w	#4,d0		| column times 16 (2 chars per column)
+	add.w	#48,d0		| add X offset
 
 
 	bsr		store_column_sprite_pos
@@ -2208,6 +2108,8 @@ really_set_columns_scroll:
 	
 	move.l	a3,d1
 	lsl.w	#3,d2		| nb col * 8 (copperlist entry)
+	jne	100b   | TEMP FUCK
+	
 	move.w	d1,(4,a0,d2.w)
 	swap	d1
 	move.w	d1,(a0,d2.w)
@@ -2274,6 +2176,77 @@ compute_tile_xy:
 
 * < D0: column
 update_elevator_column:
+	lea		elevator_back_screen,a0		| source
+	move.l	fg_drawed_screen_ptr(pc),a1	| destination
+	and.w	#0x7,d0
+	move.w	d0,d2
+	add.w	d0,d0	| times 4
+	add.w	d0,d0	| times 4
+	add.w	#NB_BYTES_PER_ROW*16+4,d0		| X+Y offset
+	
+	lea		_custom,a5
+	* same offset for source and destination
+	add.w	d0,a1
+	add.w	d0,a0
+	
+	move.w	d2,d0
+	jbsr	osd_get_column_scroll
+	tst.b	d0
+	jeq		400f	| scroll=0: 1 full height blit
+	* not zero: we need 2 blits
+	lea		mulNB_BYTES_PER_ROW_table(pc),a2
+	movem.l	a0-a1/d0,-(a7)
+	move.w	d0,d4
+	not.w	d4
+	add.w	#0x100,d4		| height = 256-scroll value
+	add.w	d0,d0
+	* first blit: change source to match offset
+	* blit at start of dest, leave A1 as is
+	add.w	(a2,d0.w),a0
+	jbsr	500f
+	movem.l	(a7)+,a0-a1/d0
+	* second blit: change dest, blit start of source
+	move.w	d0,d4
+	add.w	d0,d0
+	add.w	(a2,d0.w),a1
+	jra		500f
+400:
+	move.w	#NB_LINES-0x20,d4
+500:
+    move.l  #0x09f00000,d3    | A->D copy, ascending mode
+	moveq	#4,d2			| 32 bits blit
+	move.w	#NB_BYTES_PER_ROW,d1		| blit modulo
+
+    sub.w   d2,d1       | blit modulo
+    lsl.w   #6,d4
+    lsr.w   #1,d2		| blit width
+    add.w   d2,d4       | blit height
+	
+    * always the same settings
+
+    * now just wait for blitter ready to write all registers
+	WAIT_BLIT
+    
+    * blitter registers set
+
+	move.l d3,bltcon0(a5)	| sets con0 and con1
+
+    move.w  d1,bltamod(a5)	|A modulo
+    move.w  d1,bltdmod(a5)	|D modulo
+							
+	move.l a0,bltapt(a5)	|source graphic top left corner
+	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	
+	.rept	NB_PLAYFIELD_PLANES-1
+	lea	(FG_SCREEN_PLANE_SIZE,a0),a0
+	lea	(FG_SCREEN_PLANE_SIZE,a1),a1
+	WAIT_BLIT
+	* second bitplane
+	move.l a0,bltapt(a5)	|source graphic top left corner
+	move.l a1,bltdpt(a5)	|destination top (bottom) left corner
+	move.w  d4,bltsize(a5)	|rectangle size, starts blit
+	.endr
 
 	rts
 
@@ -2328,7 +2301,9 @@ update_title_letters:
 1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
-
+	jeq		10000f
+	rts    | TEMP FUCK
+10000:
 
 	.macro	NEXT_OFFSET
 	.set	offset,offset+4	
@@ -2514,6 +2489,7 @@ update_bg_tile_game:
 	jeq	0f
 	move.l		(8,a0),a0		| elevator layer
 	lea	elevator_back_screen,a1
+	move.l	#FG_SCREEN_PLANE_SIZE,d5
 	move.w	(a2,d1.w),d1
 	add.w	d0,d1
 	add.w	d1,a1
@@ -2811,7 +2787,7 @@ set_fg_bitplanes:
 	move.l	a0,d0
     lea	playfield_bitplanes+2,a0
 	moveq	#0,d2
-	move.w	#BG_SCREEN_PLANE_SIZE,d2
+	move.w	#FG_SCREEN_PLANE_SIZE,d2
 1:
     swap d0
     move.w d0,(a0)
@@ -3558,16 +3534,16 @@ panel_screen_buffer:
 
 	
 elevator_back_screen:
-	.skip	BG_SCREEN_SIZE
+	.skip	FG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 	
 fg_screen_buffer_1:
-	.skip	BG_SCREEN_SIZE
+	.skip	FG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 
 	.ifne  OPT_ENABLE_DOUBLE_BUFFERING
 fg_screen_buffer_2:
-	.skip	BG_SCREEN_SIZE
+	.skip	FG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 	.skip	8
 	.endif
