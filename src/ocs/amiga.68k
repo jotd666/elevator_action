@@ -878,19 +878,12 @@ osd_wait:
 	
 osd_update_sprites:
 	movem.l	a0-a6/d0-d7,-(a7)
-	lea		sprite_ram_d100,a0
 	bsr		update_bobs_and_hw_sprites
 
 	movem.l	(a7)+,a0-a6/d0-d7
 	rts
 	
 
-
-really_update_sprites:
-	lea		sprite_ram_d100,a0
-	bsr		update_bobs_and_hw_sprites
-
-	rts
 	
 * 2 conditions I can think of:
 * - gfx set: game tiles
@@ -1070,8 +1063,10 @@ update_one_hw_sprite:
 * drawing order is a bit strange. The last sprite has to be moved at the start of the list.
 * if ((which >= 0x10) && (which <= 0x17)) no sprites!
 
+really_update_sprites:
 update_bobs_and_hw_sprites:
-	move.l	a0,-(a7)
+	lea		sprite_ram_d100,a0	
+
     lea hw_sprite_flag_table,A6
 	lea		hw_sprite_table,a4
 	lea	HW_SpriteYTable_16(pc),a1
@@ -1102,9 +1097,9 @@ update_bobs_and_hw_sprites:
 	jcs		1b
 	
 
-	move.l	(a7)+,a0
 
 	* erase previous BOBs
+	lea		sprite_ram_d100,a0	
 	move.l	bob_previous_drawed_sprites(pc),a4
 	lea		_custom,a5
 	
@@ -1136,6 +1131,7 @@ update_bobs_and_hw_sprites:
 	addq	#8,a4
 	dbf		d7,1b
 12:	
+  	lea		sprite_ram_d100,a0	
     lea _custom,A5
 	move.l	bob_previous_drawed_sprites(pc),a6
 	lea		bob_table,a4
@@ -1194,11 +1190,15 @@ update_one_bob:
 	bne.b	11f
 	.ifndef	RELEASE
 	* not known/registered: we should log that!
+	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	cmp.b	#3,d2		| some fake wall sprite in an obscure sprite sheet
 	jeq		2f
+	move.l	a0,-(a7)
+  	lea		sprite_ram_d100,a0	
 	move.b	(TARGET_SPRITE_ATTRIBUTES,a0),d3
 	move.w	#0xF00,0xDFF180
+	move.l	(a7)+,a0
 	.endif
 	bra.b	2f
 11:
@@ -3403,7 +3403,7 @@ debug_color:
 title_copperlist:
 title_bitplanes:
 	DECL_BITPLANES	0,4
-	.word	bplcon2,BASE_BPLCON2_VALUE
+	.word	bplcon2,0		| sprites don't have any priority
 	
 	* default color bank
 	* all sprites have the same palette no need to specify odd or even
