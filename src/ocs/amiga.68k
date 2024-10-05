@@ -3257,9 +3257,8 @@ bg_screen_data_2:
 	.long	0
 	.endif
 	
-	* macro to define a color0 change, synced with elevator shafts
 	.macro	 DYN_COLOR_ROW	hpos
-    .word    0x35+(\hpos<<8),0xFFFE
+    .word    0x45+(\hpos<<8),0xFFFE
     .word    color,0xB8F		| purple
     .word    0xB5+(\hpos<<8),0xFFFE
     .word    color,0	| black
@@ -3474,7 +3473,8 @@ playfield_bitplanes:
 playfield_tiles_colors:
 	DECL_COLORS	8,TOTAL_NB_COLORS
 
-
+	* behind the doors, color is purple, but don't show it outside
+	* (here the color is more faithful than AGA)
 dynamic_row_00:
 	.set	dynrow,0x3D
 	.rept	NB_UPPER_DYN_ROWS
@@ -3490,6 +3490,7 @@ intreq_block_game:
 	* non-black: we can set color 0 to light blue now
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
+	* purple 
 dynamic_row_43:
 	.rept	NB_LOWER_DYN_ROWS
 	* elevator layer dynamic color

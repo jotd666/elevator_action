@@ -174,8 +174,8 @@ for tile in game_tiles+full_sprite_set:
     if tile:
         bitplanelib.replace_color_from_dict(tile,color_replacement_dict)
         tile = ImageOps.scale(tile,5,resample=Image.Resampling.NEAREST)
-        tile.save(os.path.join(new_color_dir,f"img_{idx}.png"))
-        idx += 1
+        tile.save(os.path.join(new_color_dir,f"img_{idx:02x}.png"))
+    idx += 1
 # the HW sprite we recolored slightly
 #tile = ImageOps.scale(hw_sprites_set[0x2F],5,resample=Image.Resampling.NEAREST)
 #tile.save(os.path.join(new_color_dir,"facing_car.png"))
@@ -212,7 +212,10 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
         for tidx,tile in enumerate(ts):  # for each tile
             if tile:
                 try:
-                    planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=the_nb_planes)
+                    # depending on the tile, the black color is transparent or black. Transparent is a rare exception
+                    # for elevator platforms and upper door background
+                    mask_color = (0,0,0) if tidx in {0X4D,0x4E,0x9D} or lidx==0 else game_playfield_palette[0]
+                    planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=the_nb_planes,mask_color=mask_color)
                 except bitplanelib.BitplaneException as e:
                     print(tn,lidx,tidx,e)
                     print(palette)
