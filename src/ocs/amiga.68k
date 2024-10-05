@@ -1213,17 +1213,21 @@ update_one_bob:
 	moveq	#0,d1
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
 	beq.b	2f			| Y set to 0: not shown
-	not.b	d1
+	
+	
+	not.b	d1		| negate coords for sprites
 	* add scroll value at the time of the draw
-	add.b	main_scroll_value,d1
+	move.b	main_scroll_value,d0
+	add.w	d0,d1		| word add, we can go past 256 with doubling
 	
-	
+
 	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
 	.ifne	SPRITE_Y_CORRECTION
-	add.b	#SPRITE_Y_CORRECTION,d1
+	* D1 can be > 0xFF with scolling offset! add must be WORD
+	add.w	#SPRITE_Y_CORRECTION,d1
 	.endif
 	.ifne	SPRITE_X_CORRECTION
-	add.b	#SPRITE_X_CORRECTION,d0
+	add.w	#SPRITE_X_CORRECTION,d0
 	.endif
 
 	
@@ -3119,7 +3123,7 @@ beamdelay:
 	rts
 
 	
-	MUL_TABLE	NB_BYTES_PER_ROW,NB_LINES
+	MUL_TABLE	NB_BYTES_PER_ROW,NB_LINES*2
 
 	.align	4		| leave this long word alignment
 program_args:	ds.l	64,0
