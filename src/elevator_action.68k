@@ -3991,7 +3991,7 @@ elevator_irq_1199:
 											| [$11a6: push iy]
 
 
-	**bsr		display_column_scroll_values
+	jbsr		display_column_scroll_values
 
 	lea	timer_8bit_80AA(a6),a0             	| [$11a8: ld   hl,timer_8bit_80AA]
 	subq.b	#1,(a0)                         	| [$11ab: dec  (hl)]

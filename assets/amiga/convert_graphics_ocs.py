@@ -33,7 +33,7 @@ game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name
 
 # insert black color to elevator layer
 elevators_palette = [(0,0,0)]+game_layer[2][0]
-elevators_palette = elevators_palette + [[0xF,0xF,0xF]]*(8-len(elevators_palette))
+elevators_palette = elevators_palette + [(0xF,0xF,0xF)]*(8-len(elevators_palette))
 
 # make a color correspondence dictionary
 color_translation_dict = {}
@@ -121,8 +121,7 @@ game_playfield_palette = tuple(sorted(set(x for tl in game_layer[1:2] for x in t
 sprites_palette = sorted(set(sprites_palette) |
   set(sprites_palette_2))
 
-# elevators
-game_background_palette = tuple(sorted(game_layer[2][0]))
+
 
 nb_game_colors = len(game_playfield_palette)
 print(f"nb tiles colors in-game: {nb_game_colors}")
@@ -205,7 +204,7 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
             palette = game_status_palette
             the_nb_planes = 3
         else:
-            palette = game_background_palette
+            palette = elevators_palette
             the_nb_planes = 3
 
         tile_list = layer_bitmaps[tn][lidx]
