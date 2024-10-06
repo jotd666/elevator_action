@@ -1201,7 +1201,7 @@ update_one_bob:
 	move.w	#0xF00,0xDFF180
 	move.l	(a7)+,a0
 	.endif
-	bra.b	2f
+	jra	2f
 11:
 	move.b  (TARGET_SPRITE_ATTRIBUTES,a0),d3
 	btst	#0,d3
@@ -1209,17 +1209,16 @@ update_one_bob:
 	add.w	#(NB_PLAYFIELD_PLANES+1)*4+6,d4
 0:
 
+	
 	moveq	#0,d0
 	moveq	#0,d1
 	move.b	(TARGET_SPRITE_Y,a0),d1  | sprite Y
 	beq.b	2f			| Y set to 0: not shown
 	
-	
 	not.b	d1		| negate coords for sprites
 	* add scroll value at the time of the draw
 	move.b	main_scroll_value,d0
 	add.w	d0,d1		| word add, we can go past 256 with doubling
-	
 
 	move.b	(TARGET_SPRITE_X,a0),d0  | sprite X
 	.ifne	SPRITE_Y_CORRECTION
@@ -1239,6 +1238,7 @@ update_one_bob:
 	* A0 points on the first bitplane of the bob
 
 	move.l		bg_drawed_screen_ptr(pc),a1
+	
 	* D0 and D1 are already set
 	move.l	(NB_PLAYFIELD_PLANES*4,a0),d2
 	beq.b	2f		| mask is zero: blank tile => skip
@@ -1975,7 +1975,7 @@ set_playfield_bitplanes:
 	moveq	#0,d0
 	move.b	main_scroll_value(pc),d0
 	add.w	#32,d0			| offset
-	and.w	#0xFF,d0		| wrap just in case
+	and.w	#0x1FF,d0		| wrap but up to 512 (double screen!)
 	lea		mulNB_BYTES_PER_ROW_table(pc),a0
 	add.w	d0,d0
 	move.w	(a0,d0.w),d0
@@ -2226,7 +2226,6 @@ update_elevator_column:
 *	jcs		0f
 *	move.w	#MAX_ELEVATOR_LINES,d4
 *0:
-	
 	jra		500f
 400:
 	move.w	#MAX_ELEVATOR_LINES,d4

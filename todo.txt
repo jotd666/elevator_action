@@ -13,6 +13,9 @@ TODO/ISSUES:
 - bogus sprite at start when character arrives: log when there are HW sprites, should be the first to display
 - ELEVATOR title screen lower half not working: mark start of sprite??
 - elevator mid-gray color should be adapted to the floor mid gray
+- elevator start sound should play and chain to elevator loop
+- palette when lights are shot
+- check "bonus" overlay
 
 minor:
 
