@@ -108,7 +108,7 @@ other_sprites = {1,8,48,47}  # body of player holding documents & "500" score po
 _,hw_sprites_set_alt = load_tileset(sprites_0_sheet,True,16,other_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
 
 
-hw_sprites_set += ([None]*128) +hw_sprites_set_alt
+hw_sprites_set += ([None]*64) +hw_sprites_set_alt
 
 
 full_sprite_set = sprites_set + sprites_set_2

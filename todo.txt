@@ -5,7 +5,6 @@ ECS dual playfield:
 TODO/ISSUES:
 
 - draw elevators: ok but gaps, and trash when reaching bottom floors
-- floor 26: bobs not displayed
 - "document taken" sprite not working (red color!!)
 - red door 0x20->0x27 should be HW sprite as well as 0x68->0x6A (floor/stair cover up)
 - scenery refresh bugs: not all planes are refreshed, or sometimes completely trashed, but then restored
