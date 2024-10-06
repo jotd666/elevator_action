@@ -1001,7 +1001,7 @@ update_bobs_and_hw_sprites:
 	
 	lea		sprite_ram_d100,a0	
 
-    lea hw_sprite_flag_table,A6
+    lea sprite_translation_table,A6
 	lea		hw_sprite_table,a4
 	lea	HW_SpriteYTable_16(pc),a1
 	lea	game_sprites+2,a2			| copperlist
@@ -1088,29 +1088,35 @@ update_bobs_and_hw_sprites:
 	jbsr	update_one_bob
 	rts
 	
+	
 update_one_bob:
 	* code = 0 and clut = 0 => disabled ?? to check
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
-	lea		hw_sprite_flag_table,a3
-	tst.b	(a3,d2.w)
-	jne	2f				| HW sprite: skip
-	cmp.b	#0x2,D2
-	jeq		2f			| fake BOB at start
-	BCLR	#6,d2
-	jne	20f
-	* sprite sheet 1, not a lot of used sprites there
-	add.b	#0xC0,d2
-	jra		22f
-20:
-	btst	#2,(TARGET_SPRITE_ATTRIBUTES,a0)
-	jeq	22f
+	lea		sprite_translation_table,a3
+	add.w	d2,d2
+	cmp.b	#1,(a3,d2.w)
+	jeq	2f				| HW sprite: skip
+	.ifndef	RELEASE
+	cmp.b	#2,(a3,d2.w)
+	jeq	0f				| BOB sprite: OK
+	lsr.w	#1,d2
+	move.w	#0xFF0,0xDFF180
+	jra		2f
+0:
+	.endif
+	* get the actual sprite index for our engine
+	move.b	(1,a3,d2.w),d2
+	and.w	#0xFF,d2
+	
+*	btst	#2,(TARGET_SPRITE_ATTRIBUTES,a0)
+*	jeq	22f
 	* select alternate color, I simplified the whole
 	* clut/palette thing because there are really only
 	* 1 or 2 possible colors, maybe 3 but only for enemies
 	* when lights are shot!
-	add.w	#0x40,d2
+*	add.w	#0x40,d2
 22:
 *int color = 2 * ((m_colorbank[1] >> 4) & 0x03) + ((m_spriteram[offs + 2] >> 2) & 0x01);
 *int flip_x = m_spriteram[offs + 2] & 0x01;
@@ -1128,6 +1134,7 @@ update_one_bob:
 	bne.b	11f
 	.ifndef	RELEASE
 	* not known/registered: we should log that!
+	move.w	#0xF00,0xDFF180
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	cmp.b	#3,d2		| some fake wall sprite in an obscure sprite sheet
@@ -1218,18 +1225,12 @@ update_one_hw_sprite:
 	jeq		2f	| skip head sprite wrapping when car is leaving
 
 0:
-	btst	#6,d2
-	jne	20f
-	* optim bset #7,d2
-	bclr	#6,d2
-	* sprite sheet 1, not a lot of used sprites there
-	add.b	#0xC0,d2
-20:	
-	move.b	#0,0x200
-	tst.b	(a6,d2.w)
-	jeq		2f		| not a hw sprite: zap
-	
-
+	add.w	d2,d2
+	cmp.b	#1,(a6,d2.w)
+	jne		2f		| not a hw sprite: zap
+	* get the actual sprite index for our engine
+	move.b	(1,a6,d2.w),d2
+	and.w	#0xFF,d2
 	* it is a HW sprite all right
 	lsl.w	#4,d2	| 4 pointers for each sprite
 	move.b  (TARGET_SPRITE_ATTRIBUTES,a0),d3

@@ -197,6 +197,6 @@ add_sprite(48+192,"player_carrying_file")
 
 
 sprites_path = os.path.join(this_dir,os.path.pardir,"elevator","game")
-sprites_1_sheet = Image.open(os.path.join(sprites_path,"sprites_4.png"))
-sprites_2_sheet = Image.open(os.path.join(sprites_path,"sprites_5.png"))
-sprites_0_sheet = Image.open(os.path.join(sprites_path,"sprites_6.png"))
+sprites_1_sheet = Image.open(os.path.join(sprites_path,"sprites_1.png"))
+sprites_2_sheet = Image.open(os.path.join(sprites_path,"sprites_2.png"))
+sprites_0_sheet = Image.open(os.path.join(sprites_path,"sprites_0.png"))

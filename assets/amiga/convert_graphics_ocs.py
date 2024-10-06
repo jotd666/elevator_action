@@ -78,7 +78,7 @@ for x in range(sprites_2_sheet.size[0]):
 all_sprites = set(range(64)) - {0x3E,0x2A,0x29,0x28}
 
 # make main character a hardware sprite
-hardware_sprites = {k for k,v in sprite_names.items() if "player" in v or "car" in v}
+hardware_sprites = {k for k,v in sprite_names.items() if any(x in v for x in ["player","car","red_door","wall"])}
 
 all_sprites -= hardware_sprites
 
@@ -90,25 +90,106 @@ hw_sprites_palette.remove(transparent)
 
 hw_sprites_palette = [transparent]+hw_sprites_palette
 
-# pad, we only need 8 colors for all HW sprites, because we gathered sprites with similar palettes
-hw_sprites_palette = hw_sprites_palette + [(0x10,0x20,0x30)]*(16-len(hw_sprites_palette))
 
+hw_sprite_mapping = {
+0x40: 0,
+0x41: 1,
+0x42: 2,
+0x43: 3,
+0x44: 4,
+0x45: 5,
+0x46: 6,
+0x47: 7,
+0x48: 8,
+0x49: 9,
+0x4A: 0xA,
+0x4B: 0xB,
+0x4C: 0xC,
+0x4D: 0xD,
+0x4E: 0xE,
+0x4F: 0xF,
+1:0xC1,
+8:0xC8,
+47:0xEF,
+48:0xF0,
+0x70:0x30,
+0x71:0x31,
+0x7A:0x3A,
+0x7B:0x3B,
+0x7C:0x3C,
+0x6A:0x6A,
+0x68:0x68,
+0x69:0x69,
+0x6B:0x2B,
+0x6C:0x2C,
+0x6D:0x2D,
+#0x20:0x20,  # wrong
+#0x21:0x21,
+#0x22:0x22,
+#0x23:0x23,
+#0x24:0x24,
+#0x25:0x25,
+#0x26:0x26
+}
+
+bob_sprite_mapping = {
+0x50:0x10,
+0x51:0x11,
+0x52:0x12,
+0x53:0x13,
+0x54:0x14,
+0x55:0x15,
+0x56:0x16,
+0x57:0x17,
+0x58:0x18,
+0x59:0x19,
+0x5A:0x1A,
+0x5B:0x1B,
+0x5C:0x1C,
+0x5d:0x1D,
+0x5e:0x1e,
+0x5f:0x1f,
+0x78:0x38,
+0x79:0x39,
+0x7F:0x3F,
+0x7E:0x7E,  # lamp falling
+0x7D:0x3D,
+0x72:0x32,
+0x73:0x33,
+0x74:0x34,
+0x75:0x35,
+0x76:0x36,
+0x77:0x37,
+0X60:0x60,  # blue door
+0x61:0x61,
+0x62:0x62,
+0x63:0x63,
+0x64:0x64,
+0x65:0x65,
+0x66:0x66,
+0x67:0x67
+}
 
 # in right facing car sprite (personal opinion) the windshield background should be
 # transparent instead of this brown color that turns player hair into Jackson's five hair.
 # bitplanelib.replace_color(hw_sprites_set[0x2F],{(255,218,138)},transparent)
 
 # dark floor enemies + blue door
-sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,43,)) | set(range(50,56)) | {0x3E},"bobs",dump=dump_it,
+sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,40)) | set(range(50,56)) | {0x3E},"bobs",dump=dump_it,
                                             name_dict=sprite_names,tile_offset=64,dumpdir=dumpdir)
 
 
 other_sprites = {1,8,48,47}  # body of player holding documents & "500" score points: all those are HW sprites too
 
 _,hw_sprites_set_alt = load_tileset(sprites_0_sheet,True,16,other_sprites,"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=192)
+hw_sprites_palette_2,hw_sprites_set_alt_2 = load_tileset(sprites_2_sheet,True,16,{40,41,42},"sprites",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names,tile_offset=64)
+
+# pad, we only need 8 colors for all HW sprites, because we gathered sprites with similar palettes
+hw_sprites_palette += hw_sprites_palette_2
+hw_sprites_palette = hw_sprites_palette + [(0x10,0x20,0x30)]*(16-len(hw_sprites_palette))
 
 
-hw_sprites_set += ([None]*64) +hw_sprites_set_alt
+hw_sprites_set += hw_sprites_set_alt_2 + [None]*64 + hw_sprites_set_alt
 
 
 full_sprite_set = sprites_set + sprites_set_2
@@ -341,7 +422,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
         f.write(f"\t.word\t0x{inside_elevator:04x},0x{outside_elevator:04x}\n")
 
 # hardware sprites
-hw_sprites_array = [None]*0x40
+hw_sprites_array = []
 for hw_sprite in hw_sprites_set:
     if hw_sprite:
         sp1,sp2 = bitplanelib.palette_image2attached_sprites(hw_sprite,None,hw_sprites_palette)
@@ -354,7 +435,7 @@ for hw_sprite in hw_sprites_set:
 hw_sprites_array = hw_sprites_array + [None]*(256-len(hw_sprites_array))
 
 with open(os.path.join(src_dir,"graphics.68k"),"w") as f:
-    f.write("\t.global\thw_sprite_flag_table\n")
+    f.write("\t.global\tsprite_translation_table\n")
     f.write("\t.global\thw_sprite_table\n")
     f.write("\t.global\tcharacter_tables\n")
     f.write("\t.global\tbob_table\n")   # BOBs only present in game
@@ -388,8 +469,17 @@ character_tables:
                             f.write(f"tile_plane_{t}")
                         f.write("\n")
 
-    f.write("\nhw_sprite_flag_table:")
-    hw_status = [bool(hw) for hw in hw_sprites_array]
+    f.write("\nsprite_translation_table:")
+
+    hw_status = [0]*0x200
+
+    for k,v in hw_sprite_mapping.items():
+        hw_status[k*2] = 1
+        hw_status[k*2+1] = v
+    for k,v in bob_sprite_mapping.items():
+        hw_status[k*2] = 2
+        hw_status[k*2+1] = v
+
     bitplanelib.dump_asm_bytes(hw_status,f,mit_format=True)
 
     f.write("\nhw_sprite_table:\n")
