@@ -1056,7 +1056,7 @@ update_bobs_and_hw_sprites:
 	lea	background_restore_buffer,a0
 	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+			| ack deletion
-	move.w	(2,a4),d4		| height
+	move.w	(a4),d4			| height
 	clr.l	(a4)+			| ack deletion
 	bsr		blit_16x_background
 	dbf		d7,1b	
@@ -1199,9 +1199,8 @@ update_one_bob:
 	* note down that this bob will have to be erased
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
-	move.b	main_scroll_value,(a6)+			| store current scroll value
-	addq	#1,a6
 	move.w	d4,(a6)+			| store height
+	addq	#2,a6
 	
 	move.w	d5,d2			| width in bytes, 4 for 16 pixels+shift
 	moveq	#0,d5			| Y-offset
