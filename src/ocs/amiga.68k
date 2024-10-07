@@ -18,7 +18,7 @@ AFB_68020 = 1
 
 NO68020 = 1
 
-PREVIOUS_SPRITE_SIZE = 8
+PREVIOUS_SPRITE_SIZE = 6
 BORDERBLANK = 1
 
 SPRITE_X_CORRECTION = -2+16
@@ -96,7 +96,8 @@ BG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES*2
 BG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 FG_SCREEN_PLANE_SIZE = NB_BYTES_PER_ROW*NB_PLAYFIELD_LINES
 FG_SCREEN_SIZE =  BG_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
-
+RESTORE_SCREEN_PLANE_SIZE = BG_SCREEN_PLANE_SIZE/2+(16*NB_BYTES_PER_ROW)
+RESTORE_SCREEN_SIZE = RESTORE_SCREEN_PLANE_SIZE*NB_PLAYFIELD_PLANES
 
 NB_HOST_SPRITES = 8
 
@@ -974,7 +975,7 @@ blit_16x_background:
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
 	
 	.rept	NB_PLAYFIELD_PLANES-1
-	lea	(BG_SCREEN_PLANE_SIZE/2,a0),a0
+	lea	(RESTORE_SCREEN_PLANE_SIZE,a0),a0
 	lea	(BG_SCREEN_PLANE_SIZE,a1),a1
 	WAIT_BLIT
 	* second bitplane
@@ -1057,12 +1058,12 @@ update_bobs_and_hw_sprites:
 	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+			| ack deletion
 	move.w	(a4),d4			| height
-	clr.l	(a4)+			| ack deletion
+	clr.w	(a4)+			| ack deletion
 	bsr		blit_16x_background
 	dbf		d7,1b	
 	bra.b	12f
 11:
-	addq	#8,a4
+	addq	#PREVIOUS_SPRITE_SIZE,a4
 	dbf		d7,1b
 12:	
 	*********************
@@ -1200,7 +1201,6 @@ update_one_bob:
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
 	move.w	d4,(a6)+			| store height
-	addq	#2,a6
 	
 	move.w	d5,d2			| width in bytes, 4 for 16 pixels+shift
 	moveq	#0,d5			| Y-offset
@@ -1209,7 +1209,7 @@ update_one_bob:
 	move.l	(a7)+,a0
 	rts
 2:
-	addq.w	#8,a6
+	addq.w	#PREVIOUS_SPRITE_SIZE,a6
 	rts
 
 
@@ -2626,7 +2626,7 @@ end_update_bg_tile:
 	.macro	ADVANCE_TILE_POINTERS
 	add.w	d6,a1
 	add.w	d6,a3
-	add.w	d5,a4	
+	add.w	d3,a4	
 	.endm
 * almost the same but we need to write at 3 locations
 * (barrel scroll plus pristine background)
@@ -2635,6 +2635,7 @@ end_update_bg_tile:
 
 end_update_playfield_tile:
 	move.l	#BG_SCREEN_PLANE_SIZE/2,d5
+	move.l	#RESTORE_SCREEN_PLANE_SIZE,d3
 	move.l	d5,d6
 	add.l	d6,d6
 	move.l	(4,a0),a0	
@@ -3574,7 +3575,7 @@ sprite_buffer:
 	.skip	8
 	
 background_restore_buffer:
-	.skip	BG_SCREEN_SIZE/2
+	.skip	RESTORE_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 		
 bg_screen_buffer_1:
