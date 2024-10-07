@@ -8,6 +8,7 @@ TODO/ISSUES:
 - red door 0x20->0x27 should be HW sprite (special case because there's also blue door)
 - scenery refresh bugs: not all planes are refreshed, or sometimes completely trashed, but then restored
   depending on scrolling value???
+  => floor 28 enemy appears at floor 29: trashed refresh
 - bogus sprite at start when character arrives: log when there are HW sprites, should be the first to display
 - ELEVATOR title screen lower half not working: mark start of sprite??
 - floor 15: elevator step tile not transparent but black!

@@ -970,7 +970,7 @@ blit_16x_background:
 	move.w  d4,bltsize(a5)	|rectangle size, starts blit
 	
 	.rept	NB_PLAYFIELD_PLANES-1
-	lea	(BG_SCREEN_PLANE_SIZE/2,a0),a0
+	lea	(BG_SCREEN_PLANE_SIZE,a0),a0
 	lea	(BG_SCREEN_PLANE_SIZE,a1),a1
 	WAIT_BLIT
 	* second bitplane
@@ -1053,10 +1053,10 @@ update_bobs_and_hw_sprites:
 	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+			| ack deletion
 	move.b	(a4),d2			| previous scroll value
-	cmp.b	#0x80,d2
-	jcs		0f
-	sub.w	#BG_SCREEN_PLANE_SIZE/2,a0	| make up for high scroll
-0:
+*	cmp.b	#0x80,d2
+*	jcs		0f
+*	sub.w	#BG_SCREEN_PLANE_SIZE/2,a0	| make up for high scroll
+*0:
 	move.w	(2,a4),d4		| height
 	clr.l	(a4)+			| ack deletion
 	bsr		blit_16x_background
@@ -2615,6 +2615,16 @@ end_update_bg_tile:
 2:
 	rts
 	
+	.macro	CLEAR_TILE_MIRRORS
+	.set	offset,0
+	.rept	8
+	clr.b	(offset,a1)
+	clr.b	(offset,a3)
+	clr.b	(offset,a4)
+	clr.b	(offset,a5)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr	
+	.endm
 * almost the same but we need to write at 3 locations
 * (barrel scroll plus pristine background)
 * in double buffering mode this is even worse as 5 locations
@@ -2629,13 +2639,17 @@ end_update_playfield_tile:
 	add.w	d1,a1
 	lea		background_restore_buffer,a4
 	add.w	d1,a2
-	cmp.w	d1,d5
-	jcc		0f
-	sub.w	d5,d1
-0:
+	
+*	cmp.w	d1,d5
+*	jcc		0f
+*	sub.w	d5,d1
+*0:
+
 	add.w 	d1,a4
+
 	
 	lea		(a1,d5.l),a3		| mirror
+	lea		(a4,d5.l),a5		| mirror
 	add.w	d2,d2
 	add.w	d2,d2
 	move.l	(a0,d2.w),d0
@@ -2654,23 +2668,19 @@ end_update_playfield_tile:
 	move.b	d0,(offset,a1)
 	move.b	d0,(offset,a3)
 	move.b	d0,(offset,a4)
+	move.b	d0,(offset,a5)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr
 41:
 	add.l	d6,a1
 	add.l	d6,a3
-	add.l	d5,a4
+	add.l	d6,a4
+	add.l	d6,a5
 	dbf		d4,4b
 0:
 	rts
 5:
-	.set	offset,0
-	.rept	8
-	clr.b	(offset,a1)
-	clr.b	(offset,a3)
-	clr.b	(offset,a4)
-	.set	offset,offset+NB_BYTES_PER_ROW
-	.endr
+	CLEAR_TILE_MIRRORS
 	jra		41b
 	
 	* clear tile
@@ -2678,16 +2688,11 @@ end_update_playfield_tile:
 11:
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 111:
-	.set	offset,0
-	.rept	8
-	clr.b	(offset,a1)
-	clr.b	(offset,a3)
-	clr.b	(offset,a4)
-	.set	offset,offset+NB_BYTES_PER_ROW
-	.endr
+	CLEAR_TILE_MIRRORS
 	add.w	d6,a1
 	add.w	d6,a3
-	add.w	d5,a4
+	add.w	d6,a4
+	add.w	d6,a5
 	dbf		d4,111b
 2:
 	rts
@@ -3571,7 +3576,7 @@ sprite_buffer:
 	.skip	8
 	
 background_restore_buffer:
-	.skip	BG_SCREEN_SIZE/2
+	.skip	BG_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
 		
 bg_screen_buffer_1:
