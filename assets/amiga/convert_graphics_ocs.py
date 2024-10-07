@@ -33,6 +33,8 @@ game_layer = [load_tileset(f"tiles_{i}.png",True,side,used_game_tiles[layer_name
 
 # insert black color to elevator layer
 elevators_palette = [(0,0,0)]+game_layer[2][0]
+
+
 elevators_palette = elevators_palette + [(0xF,0xF,0xF)]*(8-len(elevators_palette))
 
 # make a color correspondence dictionary
@@ -170,6 +172,30 @@ bob_sprite_mapping = {
 0x67:0x67
 }
 
+blue = (0,0,200)
+brown = (255,218,138)
+
+
+# we have to severely reduce palette from 17 colors to 7!!
+color_replacement_dict = {
+(218,218,218):(255,255,255),  # bright gray => white
+(255,218,176):brown,  # brown => skin brown
+(218,176,138):brown,  # brown => skin brown
+(0, 0, 176):blue,
+(37, 37, 218):blue,
+(0, 0, 255):blue,
+(79, 79, 79):(0,0,0),   # dark gray => black
+(16, 32, 48):(0,0,0),
+(254, 0, 254):(0,0,0),  # magenta is mask
+#(37, 176, 176):(0,200,0),   # gun flame, alternate palette also walls...
+(176, 117, 0):brown,    # red door edge
+(255,218,138):brown
+}
+
+other_layers_color_replacement_dict = {
+(218,218,218):(255,255,255),  # bright gray => white
+}
+
 # in right facing car sprite (personal opinion) the windshield background should be
 # transparent instead of this brown color that turns player hair into Jackson's five hair.
 # bitplanelib.replace_color(hw_sprites_set[0x2F],{(255,218,138)},transparent)
@@ -212,25 +238,7 @@ print(f"nb bob colors in-game: {nb_sprites_colors}")
 total_colors = sorted(set(game_playfield_palette) | set(sprites_palette))
 print(f"original nb total colors in game playfield: {len(total_colors)}")
 
-blue = (0,0,200)
-brown = (255,218,138)
 
-
-# we have to severely reduce palette from 17 colors to 7!!
-color_replacement_dict = {
-(218,218,218):(255,255,255),  # bright gray => white
-(255,218,176):brown,  # brown => skin brown
-(218,176,138):brown,  # brown => skin brown
-(0, 0, 176):blue,
-(37, 37, 218):blue,
-(0, 0, 255):blue,
-(79, 79, 79):(0,0,0),   # dark gray => black
-(16, 32, 48):(0,0,0),
-(254, 0, 254):(0,0,0),  # magenta is mask
-#(37, 176, 176):(0,200,0),   # gun flame, alternate palette also walls...
-(176, 117, 0):brown,    # red door edge
-(255,218,138):brown
-}
 
 game_playfield_palette = sorted({color_replacement_dict.get(x,x) for x in total_colors})
 
@@ -268,6 +276,17 @@ layer_bitmaps = {}
 nb_planes = 3
 
 elev_tiles = game_layer[2][1]
+
+for tile in elev_tiles+hw_sprites_set:
+    if tile:
+        bitplanelib.replace_color_from_dict(tile,other_layers_color_replacement_dict)
+        tile = ImageOps.scale(tile,5,resample=Image.Resampling.NEAREST)
+        tile.save(os.path.join(new_color_dir,f"img_{idx:02x}.png"))
+    idx += 1
+
+elevators_palette = [other_layers_color_replacement_dict.get(x,x) for x in elevators_palette]
+hw_sprites_palette = [other_layers_color_replacement_dict.get(x,x) for x in hw_sprites_palette]
+
 
 
 
@@ -479,7 +498,7 @@ character_tables:
     for k,v in bob_sprite_mapping.items():
         hw_status[k*2] = 2
         hw_status[k*2+1] = v
-
+    hw_status[2] = 3    #0xFF,   # square sprite to cover player X wrap at start
     bitplanelib.dump_asm_bytes(hw_status,f,mit_format=True)
 
     f.write("\nhw_sprite_table:\n")

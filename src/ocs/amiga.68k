@@ -1008,16 +1008,16 @@ update_bobs_and_hw_sprites:
 
 	| start by the end (drawing priority), except for last sprite
 	| which has top priority (strange hardware!)
-	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| last sprite
 	move.l	a0,-(a7)
-	moveq	#NB_TARGET_SPRITES-2,d7
-1:
-	subq.w	#4,a0
-	jbsr	update_one_hw_sprite
-	dbf		d7,1b
-	move.l	(a7)+,a0
+	add.w	#(NB_TARGET_SPRITES-1)*4,a0		| last sprite
 	* last sprite
 	jbsr	update_one_hw_sprite
+	move.l	(a7)+,a0
+	moveq	#NB_TARGET_SPRITES-2,d7
+1:
+	jbsr	update_one_hw_sprite
+	addq.w	#4,a0
+	dbf		d7,1b
 
 	* pad last sprite entries with blank
 	move.l	#blank_sprite,d0
@@ -1096,10 +1096,13 @@ update_one_bob:
 	jeq	2f
 	lea		sprite_translation_table,a3
 	add.w	d2,d2
-	cmp.b	#1,(a3,d2.w)
+	move.b	(a3,d2.w),d4
+	cmp.b	#1,d4
 	jeq	2f				| HW sprite: skip
+	cmp.b	#3,d4
+	jeq	2f				| ignore
 	.ifndef	RELEASE
-	cmp.b	#2,(a3,d2.w)
+	cmp.b	#2,d4
 	jeq	0f				| BOB sprite: OK
 	lsr.w	#1,d2
 	move.w	#0xFF0,0xDFF180
@@ -1228,6 +1231,7 @@ update_one_hw_sprite:
 	add.w	d2,d2
 	cmp.b	#1,(a6,d2.w)
 	jne		2f		| not a hw sprite: zap
+	move.b 	#0,0x200
 	* get the actual sprite index for our engine
 	move.b	(1,a6,d2.w),d2
 	and.w	#0xFF,d2

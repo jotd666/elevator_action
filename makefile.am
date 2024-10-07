@@ -81,7 +81,7 @@ $(PROGNAME)_ocs.o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc data_offsets.inc $
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME)_ocs.o
 sound_engine.o: $(AMIGA_SHARED_SRC)/sound_engine.68k
 	$(ASM) -Iamiga $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o
-ocs.o: $(AMIGA_OCS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_OCS_SRC)/tiles_palette.68k $(AMIGA_OCS_SRC)/bobs_palette.68k
+$(OCS_MAIN_OBJ): $(AMIGA_OCS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_OCS_SRC)/palettes.68k
 	$(ASM) -Iamiga -Iocs $(AMIGA_OCS_SRC)/amiga.68k -o ocs.o
 $(AGA_MAIN_OBJ): $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k data_offsets.inc $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/palettes.68k
 	$(ASM_020) -Iamiga -Iaga $(AMIGA_AGA_SRC)/amiga.68k -o aga.o

@@ -5,17 +5,17 @@ ECS dual playfield:
 TODO/ISSUES:
 
 - draw elevators: ok but gaps, and trash when reaching bottom floors
-- "document taken" sprite working but still red color
-- red door 0x20->0x27 should be HW sprite as well as 0x68->0x6A (floor/stair cover up)
+- red door 0x20->0x27 should be HW sprite (special case because there's also blue door)
 - scenery refresh bugs: not all planes are refreshed, or sometimes completely trashed, but then restored
   depending on scrolling value???
 - bogus sprite at start when character arrives: log when there are HW sprites, should be the first to display
 - ELEVATOR title screen lower half not working: mark start of sprite??
 - elevator mid-gray color should be adapted to the floor mid gray / same for sprite
-- sprite priority inverted? (character/floor)
 - elevator start sound should play and chain to elevator loop
 - palette when lights are shot
 - check "bonus" overlay
+- check red door open + character + car in the basement: must implement a fallback solution
+  to blit the red door (disregarding sprite priority)
 
 minor:
 
