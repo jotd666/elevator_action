@@ -186,7 +186,7 @@ add_sprite(63,"lamp_exploding")
 # add 2 special enemy "cluts" and blue opening door
 add_sprite_range(16+64,32+64,"enemy_dark_floor")
 add_sprite_range(50+64,56+64,"enemy_dark_floor_shoots")
-add_sprite_range(32+62,40+64,"blue_door")
+add_sprite_range(32+64,40+64,"blue_door")
 add_sprite(64+0x3E,"lamp")  # falling lamp
 add_sprite_range(0x28+64,0x2B+64,"wall")  # to be draw above characters on stairs
 

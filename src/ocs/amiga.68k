@@ -1096,6 +1096,11 @@ update_one_bob:
 	jeq	2f
 	lea		sprite_translation_table,a3
 	add.w	d2,d2
+	add.w	d2,d2
+	btst    #2,(TARGET_SPRITE_ATTRIBUTES,a0)
+	jeq		0f
+	addq	#2,d2
+0:
 	move.b	(a3,d2.w),d4
 	cmp.b	#1,d4
 	jeq	2f				| HW sprite: skip
@@ -1104,7 +1109,7 @@ update_one_bob:
 	.ifndef	RELEASE
 	cmp.b	#2,d4
 	jeq	0f				| BOB sprite: OK
-	lsr.w	#1,d2
+	lsr.w	#2,d2
 	move.w	#0xFF0,0xDFF180
 	jra		2f
 0:
@@ -1215,6 +1220,7 @@ update_one_hw_sprite:
 	moveq	#0,d2
 	move.b	(TARGET_SPRITE_CODE,a0),d2
 	jeq	2f
+
 	cmp.b	#0x4E,d2
 	jne		0f
 	move.b	(TARGET_SPRITE_X,a0),d0
@@ -1229,9 +1235,13 @@ update_one_hw_sprite:
 
 0:
 	add.w	d2,d2
+	add.w	d2,d2
+	btst    #2,(TARGET_SPRITE_ATTRIBUTES,a0)
+	jeq		0f
+	addq	#2,d2
+0:
 	cmp.b	#1,(a6,d2.w)
 	jne		2f		| not a hw sprite: zap
-	move.b 	#0,0x200
 	* get the actual sprite index for our engine
 	move.b	(1,a6,d2.w),d2
 	and.w	#0xFF,d2

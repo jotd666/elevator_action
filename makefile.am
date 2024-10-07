@@ -61,9 +61,11 @@ shell.o: $(AMIGA_SHARED_SRC)/shell.68k
 
 $(AMIGA_OCS_SRC)/graphics.68k: $(ASSETS)/convert_graphics_ocs.py $(ASSETS)/graphics_shared.py
 	cmd /c $(ASSETS)\convert_graphics_ocs.py
-
+	del $(OCS_MAIN_OBJ)
+	
 $(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py $(ASSETS)/graphics_shared.py
 	cmd /c $(ASSETS)\convert_graphics_aga.py
+	del $(AGA_MAIN_OBJ)
 
 $(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_action_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
@@ -81,9 +83,9 @@ $(PROGNAME)_ocs.o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc data_offsets.inc $
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME)_ocs.o
 sound_engine.o: $(AMIGA_SHARED_SRC)/sound_engine.68k
 	$(ASM) -Iamiga $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o
-$(OCS_MAIN_OBJ): $(AMIGA_OCS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_OCS_SRC)/palettes.68k
+$(OCS_MAIN_OBJ): $(AMIGA_OCS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_OCS_SRC)/palettes.68k $(AMIGA_OCS_SRC)/graphics.68k
 	$(ASM) -Iamiga -Iocs $(AMIGA_OCS_SRC)/amiga.68k -o ocs.o
-$(AGA_MAIN_OBJ): $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k data_offsets.inc $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/palettes.68k
+$(AGA_MAIN_OBJ): $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k data_offsets.inc $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/palettes.68k $(AMIGA_AGA_SRC)/graphics.68k
 	$(ASM_020) -Iamiga -Iaga $(AMIGA_AGA_SRC)/amiga.68k -o aga.o
 vbr.o: $(AMIGA_SHARED_SRC)/vbr.68k
 	$(ASM_020) -Iamiga $(AMIGA_SHARED_SRC)/vbr.68k -o vbr.o
