@@ -1871,6 +1871,7 @@ osd_set_color_bank:
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
 
+* wall/brick/sprites TODO
 *	lea		sprite_wall_colors,a0
 *	move.w	#0x1FE,(a1)
 *	
@@ -2618,7 +2619,6 @@ end_update_bg_tile:
 	clr.b	(offset,a1)
 	clr.b	(offset,a3)
 	clr.b	(offset,a4)
-	clr.b	(offset,a5)
 	.set	offset,offset+NB_BYTES_PER_ROW
 	.endr	
 	.endm
@@ -2627,8 +2627,30 @@ end_update_bg_tile:
 	add.w	d6,a3
 	add.w	d3,a4	
 	.endm
+	
+	.macro	CLEAR_TILE_MIRRORS_2
+	.set	offset,0
+	.rept	8
+	clr.b	(offset,a1)
+	clr.b	(offset,a3)
+	clr.b	(offset,a4)
+	clr.b	(offset,a5)
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr	
+	.endm
+	.macro	ADVANCE_TILE_POINTERS_2
+	ADVANCE_TILE_POINTERS	
+	add.w	d3,a5	
+	.endm
+	
 * almost the same but we need to write at 3 locations
-* (barrel scroll plus pristine background)
+* (barrel scroll plus pristine background), or sometimes 4 locations
+* (above plus 16 pixels extra for pristine background for 2 first tiles,
+* in case a sprite restore operation is on the half screen limit.
+* This is a problem that didn't occur when using
+* full double pristine background draw, so it's more complex BUT it saves cpu chip copy time
+* (most of the time, if Y > 16) AND memory (3*screen size) so it works
+*
 * in double buffering mode this is even worse as 5 locations
 * need to be updated, we'll see that later
 
@@ -2640,8 +2662,11 @@ end_update_playfield_tile:
 	move.l	(4,a0),a0	
 	move.l	bg_drawed_screen_ptr,a1
 	add.w	d1,a1
+	* should we mirror the data?
+	cmp.w	#16*NB_BYTES_PER_ROW,d1
+	scs		d7		| d7 set if 2 first tiles
+	
 	lea		background_restore_buffer,a4
-	add.w	d1,a2
 	
 	cmp.w	d1,d5
 	jcc		0f
@@ -2652,7 +2677,7 @@ end_update_playfield_tile:
 	add.w 	d1,a4
 
 	
-	lea		(a1,d5.l),a3		| mirror
+	lea		(a1,d5.w),a3		| mirror
 	add.w	d2,d2
 	add.w	d2,d2
 	move.l	(a0,d2.w),d0
@@ -2661,6 +2686,9 @@ end_update_playfield_tile:
 	* just copy
 	move.l	d0,a2
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
+	
+	tst.b	d7
+	jne		40f
 4:
 	move.l	(a2)+,d0
 	jeq		5f
@@ -2678,6 +2706,8 @@ end_update_playfield_tile:
 	dbf		d4,4b
 0:
 	rts
+	
+
 5:
 	CLEAR_TILE_MIRRORS
 	ADVANCE_TILE_POINTERS
@@ -2691,6 +2721,50 @@ end_update_playfield_tile:
 111:
 	CLEAR_TILE_MIRRORS
 	ADVANCE_TILE_POINTERS
+	dbf		d4,111b
+2:
+	rts
+
+12:
+	* clut/tile combo not declared as used
+	**blitz
+	rts
+
+	* version with extra mirroring
+40:
+	lea		(a4,d5.w),a5
+41:
+	move.l	(a2)+,d0
+	jeq		50f
+	move.l	d0,a0
+	.set	offset,0
+	.rept	8
+	move.b	(a0)+,d0
+	move.b	d0,(offset,a1)
+	move.b	d0,(offset,a3)
+	move.b	d0,(offset,a4)
+	move.b	d0,(offset,a5)	| extra mirror for background buffer to be able to restore all sprites
+	.set	offset,offset+NB_BYTES_PER_ROW
+	.endr
+
+	ADVANCE_TILE_POINTERS_2
+	dbf		d4,41b
+0:
+	rts
+
+50:
+	CLEAR_TILE_MIRRORS_2
+	ADVANCE_TILE_POINTERS_2
+	dbf		d4,41b
+	rts
+	
+	* clear tile
+
+11:
+	move.w	#NB_PLAYFIELD_PLANES-1,d4
+111:
+	CLEAR_TILE_MIRRORS_2
+	ADVANCE_TILE_POINTERS_2
 	dbf		d4,111b
 2:
 	rts
