@@ -1865,17 +1865,16 @@ osd_set_color_bank:
 	rts
 1:
 	* dark mode
-*	lea		dark_sprites_palette,a0
-*	move.w	#TOTAL_NB_COLORS,d0
-*	lea		bob_colors,a1
-*	bsr		load_palette
+	
+	lea		dark_palette,a0
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		playfield_tiles_colors,a1
+	bsr		load_palette
+
 *	lea		sprite_wall_colors,a0
 *	move.w	#0x1FE,(a1)
 *	
-*	lea	dark_palette,a0
-*	move.w	#TOTAL_NB_COLORS,d0
-*	lea		playfield_tiles_colors,a1
-*	bsr		load_palette
+
 	jra		0b
 	
 osd_set_gfx_bank:

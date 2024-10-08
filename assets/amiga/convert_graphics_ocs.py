@@ -196,12 +196,17 @@ color_replacement_dict = {
 (254, 0, 254):(0,0,0),  # magenta is mask
 #(37, 176, 176):(0,200,0),   # gun flame, alternate palette also walls...
 (176, 117, 0):brown,    # red door edge
-(255,218,138):brown
 }
 
 other_layers_color_replacement_dict = {
 (218,218,218):(255,255,255),  # bright gray => white
 }
+
+dark_color_rep = { blue:(0,0,176), # enemy skin and blue doors are dark/darker,
+ (176, 176, 176):(0,111,167),
+ (37,176,176):(0,0,0),
+ (255,255,255):(111,111,111)}  # fake building front sprites follow tiles rules
+
 
 # in right facing car sprite (personal opinion) the windshield background should be
 # transparent instead of this brown color that turns player hair into Jackson's five hair.
@@ -394,12 +399,8 @@ src_dir = os.path.join(this_dir,os.pardir,os.pardir,"src","ocs")
 #dark_color_rep = {(255,0,0):(255,0,0), (255,255,255):(111,111,111), (176, 176, 176):(0,111,167)}
 
 
-dark_color_rep = {(79,79,79):(0,0,0), (0,0,255):(0,0,176), # enemy skin and blue doors are dark/darker,
- (176, 176, 176):(0,111,167),
- (37,176,176):(0,0,0),
- (255,255,255):(111,111,111)}  # fake building front sprites follow tiles rules
 
-dark_palette = [dark_color_rep.get(c,(0,0,0)) for c in game_playfield_palette]
+dark_palette = [dark_color_rep.get(c,c) for c in game_playfield_palette]
 
 # dump palettes
 with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
