@@ -1,15 +1,10 @@
 
-
-ECS dual playfield:
-
 TODO/ISSUES:
 
-- draw elevators: ok but gaps, and trash when reaching bottom floors
-- scenery refresh bugs: still a few: half pristine buffer should be longer by 16*40 bytes
-  and special case if Y tile is 0 or 1: mirror in that case
+- draw elevators: ok but missing parts at times
+- graphics trashed on elevator playfield when entering red door (floor 15)
 - bogus sprite at start when character arrives: log when there are HW sprites, should be the first to display
 - ELEVATOR title screen lower half not working: mark start of sprite??
-- floor 15: elevator step tile not transparent but black!
 - elevator start sound should play and chain to elevator loop
 - palette change on lights shot: ok except for bricks and HW sprites (walls)
 - check "bonus" overlay

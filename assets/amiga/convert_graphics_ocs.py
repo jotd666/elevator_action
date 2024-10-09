@@ -326,7 +326,7 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
                 try:
                     # depending on the tile, the black color is transparent or black. Transparent is a rare exception
                     # for elevator platforms and upper door background
-                    mask_color = (0,0,0) if tidx in {0X4D,0x4E,0x9D} or lidx==0 else game_playfield_palette[0]
+                    mask_color = (0,0,0) if tidx in {0X4D,0x4E,0x9D,0x7E,0x7F} or lidx==0 else game_playfield_palette[0]
                     planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=the_nb_planes,mask_color=mask_color)
                 except bitplanelib.BitplaneException as e:
                     print(tn,lidx,tidx,e)

@@ -2227,9 +2227,13 @@ update_elevator_column:
 	jbsr	osd_get_column_scroll
 	
 
-	
 	tst.b	d0
 	jeq		400f	| scroll=0: 1 full height blit
+
+	cmp.b	#3,d2
+	jne	3465f
+	move.b	#0,0x200
+3465:
 	* not zero: we need 2 blits
 	lea		mulNB_BYTES_PER_ROW_table(pc),a2
 	move.w	d0,d4	| column scroll
@@ -2247,6 +2251,7 @@ update_elevator_column:
 *	jcs		0f
 *	move.w	#MAX_ELEVATOR_LINES,d4
 *0:
+
 	jbsr	500f
 	movem.l	(a7)+,a0-a1/d4
 	* second blit: change dest, blit start of source
@@ -2256,7 +2261,12 @@ update_elevator_column:
 *	cmp.w	#MAX_ELEVATOR_LINES,d4
 *	jcs		0f
 *	move.w	#MAX_ELEVATOR_LINES,d4
-*0:
+*0:	
+	* sub 16 rows else the second strip misses 16 rows
+	move.w	#NB_BYTES_PER_ROW*16,d0
+	sub.w	d0,a0		| X+Y offset
+	sub.w	d0,a1		| X+Y offset
+
 	jra		500f
 400:
 	move.w	#MAX_ELEVATOR_LINES,d4
@@ -2533,7 +2543,7 @@ update_bg_tile_game:
 	move.l	#BG_SCREEN_PLANE_SIZE,d5
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 
-	btst	#11,d7		| third layer? sprites
+	btst	#11,d7		| third layer? elevator tiles
 	jeq	0f
 	move.l		(8,a0),a0		| elevator layer
 	lea	elevator_back_screen,a1
