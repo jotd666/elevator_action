@@ -204,6 +204,7 @@ ok\@:
 	.endm
 	.endif
 	
+	.ifne	OPT_DEBUG_SCROLLING
 display_column_scroll_values:
 	movem.l	d0-d1/d7/a0-a1,-(a7)
 	move.w	#0xC740,d7
@@ -223,7 +224,7 @@ display_column_scroll_values:
 	
 	movem.l	(a7)+,d0-d1/d7/a0-a1
 	rts
-	
+	.endif
 
 * < D0: hex value to display
 * < D7: screen address
@@ -3990,9 +3991,10 @@ elevator_irq_1199:
 											| [$11a4: push ix]
 											| [$11a6: push iy]
 
-
+	.ifne	OPT_DEBUG_SCROLLING
 	jbsr		display_column_scroll_values
-
+	.endif
+	
 	lea	timer_8bit_80AA(a6),a0             	| [$11a8: ld   hl,timer_8bit_80AA]
 	subq.b	#1,(a0)                         	| [$11ab: dec  (hl)]
 	jpl	l_1249                             	| [$11ac: jp   p,$1249]

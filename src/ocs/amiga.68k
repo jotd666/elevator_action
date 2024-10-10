@@ -29,7 +29,7 @@ HW_SPRITE_Y_CORRECTION = 0
 PANEL_Y_GAP = 208
 Y_MAX = 260
 
-BASE_BPLCON2_VALUE = 0x0062		| sprites above all playfields
+BASE_BPLCON2_VALUE = 0x007F		| sprites above all playfields
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
 
@@ -2144,7 +2144,6 @@ really_set_columns_scroll:
 	
 	move.l	a3,d1
 	lsl.w	#3,d2		| nb col * 8 (copperlist entry)
-	jne	100b   | TEMP FUCK
 	
 	move.w	d1,(4,a0,d2.w)
 	swap	d1
