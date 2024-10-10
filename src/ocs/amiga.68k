@@ -1022,6 +1022,8 @@ update_bobs_and_hw_sprites:
 1:
 	jbsr	update_one_hw_sprite
 	addq.w	#4,a0
+	cmp.l	#game_sprites_end,a2
+	bcc		2f	
 	dbf		d7,1b
 
 	* pad last sprite entries with blank
@@ -1033,8 +1035,8 @@ update_bobs_and_hw_sprites:
 	swap	d0
 	addq	#8,a2
 	cmp.l	#game_sprites_end,a2
-	jcs		1b
-	
+	bcs		1b
+2:
 	***********************
 	* erase previous BOBs *
 	***********************
@@ -2209,7 +2211,7 @@ compute_tile_xy:
 
 MAX_ELEVATOR_LINES = NB_LINES
 * < D0: column
-update_elevator_column:
+update_elevator_column:	
 	lea		elevator_back_screen,a0		| source
 	move.l	fg_drawed_screen_ptr(pc),a1	| destination
 	and.w	#0x7,d0
@@ -2727,6 +2729,9 @@ end_update_playfield_tile:
 	* clear tile
 
 11:
+	tst.b	d7
+	jne		11f		| clear with extra mirror
+
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 111:
 	CLEAR_TILE_MIRRORS
@@ -2771,6 +2776,8 @@ end_update_playfield_tile:
 	* clear tile
 
 11:
+	* version with extra mirroring
+	lea		(a4,d5.w),a5
 	move.w	#NB_PLAYFIELD_PLANES-1,d4
 111:
 	CLEAR_TILE_MIRRORS_2

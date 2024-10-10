@@ -2,14 +2,14 @@
 TODO/ISSUES:
 
 - draw elevators: ok but missing parts at times
-- graphics trashed on elevator playfield when entering red door (floor 15)
 - bogus sprite at start when character arrives: log when there are HW sprites, should be the first to display
 - ELEVATOR title screen lower half not working: mark start of sprite??
 - elevator start sound should play and chain to elevator loop
 - palette change on lights shot: ok except for bricks and HW sprites (walls)
-- check "bonus" overlay
+- check "bonus" overlay*
+- basement: 4 sprites for main character plus 4 sprites for car is just too much??? WTF debug this
 - check red door open + character + car in the basement: must implement a fallback solution
-  to blit the red door (disregarding sprite priority)
+  to blit the red door (disregarding sprite priority)??? or just see what happens in that case
 
 minor:
 
