@@ -82,6 +82,7 @@ all_sprites = set(range(64)) - {0x3E,0x2A,0x29,0x28}
 # make main character a hardware sprite
 hardware_sprites = {k for k,v in sprite_names.items() if any(x in v for x in ["player","car","red_door","wall"])}
 
+
 all_sprites -= hardware_sprites
 
 sprites_palette,sprites_set = load_tileset(sprites_1_sheet,True,16,all_sprites,"bobs",dumpdir=dumpdir,dump=dump_it,name_dict=sprite_names)
@@ -327,6 +328,15 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
                     # depending on the tile, the black color is transparent or black. Transparent is a rare exception
                     # for elevator platforms and upper door background
                     mask_color = (0,0,0) if tidx in {0X4D,0x4E,0x9D,0x7E,0x7F} or lidx==0 else game_playfield_palette[0]
+                    if tidx == 0x9f:
+                        # this tile is special, it should be half black, half transparent but because of color
+                        # reduction, it ends up fully black so we have to change it manually:
+                        # paint the bottom half with mask color so the bottom half (hidden by door) is transparent
+                        # and upper half is not
+                        for i in range(8):
+                            for j in range(4,8):
+                                tile.putpixel((i,j),mask_color)
+
                     planes = bitplanelib.palette_image2raw(tile,None,palette,forced_nb_planes=the_nb_planes,mask_color=mask_color)
                 except bitplanelib.BitplaneException as e:
                     print(tn,lidx,tidx,e)
