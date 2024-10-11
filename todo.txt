@@ -1,12 +1,12 @@
 
 TODO/ISSUES:
 
-- draw elevators: ok but missing parts at times
 - bogus sprite at start when character arrives: log when there are HW sprites, should be the first to display
 - ELEVATOR title screen lower half not working: mark start of sprite?? also only one letter old debug code limit not fixed
 - elevator start sound should play and chain to elevator loop
 - palette change on lights shot: ok except for bricks and HW sprites (walls)
-- check "bonus" overlay*
+- check "bonus" overlay: NW!!!
+- car not correct + missing sprite (yellow flash)
 - check red door open + character + car in the basement: must implement a fallback solution
   to blit the red door (disregarding sprite priority)??? or just see what happens in that case
 

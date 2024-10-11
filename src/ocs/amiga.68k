@@ -2231,10 +2231,6 @@ update_elevator_column:
 	tst.b	d0
 	jeq		400f	| scroll=0: 1 full height blit
 
-	cmp.b	#3,d2
-	jne	3465f
-	move.b	#0,0x200
-3465:
 	* not zero: we need 2 blits
 	lea		mulNB_BYTES_PER_ROW_table(pc),a2
 	move.w	d0,d4	| column scroll
@@ -2535,7 +2531,6 @@ blank_row:
 update_bg_tile_game:
 	moveq	#0,d2	| mask up to 255
 	move.b	d0,d2	| tile value
-	move.b	d1,d3	| previous tile value (for elevators)
 	bsr		compute_tile_xy
 	
 	move.l		character_tables+4,a0
@@ -2547,9 +2542,33 @@ update_bg_tile_game:
 	btst	#11,d7		| third layer? elevator tiles
 	jeq	0f
 	move.l		(8,a0),a0		| elevator layer
+	
+	* force column blit update for that elevator
+	* even if elevator tiles are not directly visible when written,
+	* in some cases, the game doesn't change elevator column scroll when
+	* making it up with main scroll, and the main scroll reveals the not
+	* updated elevator tiles. To avoid blitting all columns all the time
+	* just mark the column "dirty" when a tile is written in a column
+	* of the elevator (any column will do)
+	
+	moveq	#0,d3
+	move.b	d0,d3
+	and.b	#3,d3	| only one tile column triggers the refresh force
+	cmp.b	#3,d3	| No need to refresh on all tile columns
+	jne		100f
+	move.b	d0,d3
+	lsr.b	#2,d3	| any column, divide by 4 => proper elevator index
+	add.b	d3,d3	
+	lea		column_scroll_values,a1
+	add.w	d3,a1
+	move.b	(a1),d5
+	add.b	#0x80,d5	| make sure to desync old and current column scroll to force update
+	move.b	d5,(1,a1)
+100:
 	lea	elevator_back_screen,a1
 	move.l	#FG_SCREEN_PLANE_SIZE,d5
 	move.w	(a2,d1.w),d1
+	
 	add.w	d0,d1
 	add.w	d1,a1
 	jra		end_update_bg_tile
