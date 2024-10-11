@@ -9,7 +9,7 @@ TODO/ISSUES:
 - background restore: add width info
 - blue doors: optimize: special case 32 height, cancel door half bottom part
 - name fg_ bg_ prefixes properly
-- double buffering for elevators
+- double buffering for elevators: duplicate column_scroll_values 1/2 set scroll on both but toggle buffers
 - next level: color index not correct
 - car not correct + missing sprite (yellow flash): sprite 3!!
 - check red door open + character + car in the basement: must implement a fallback solution
