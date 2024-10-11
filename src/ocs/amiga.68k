@@ -23,8 +23,7 @@ BORDERBLANK = 1
 
 SPRITE_X_CORRECTION = -2+16
 SPRITE_Y_CORRECTION = -15
-HW_SPRITE_X_CORRECTION = 0
-HW_SPRITE_Y_CORRECTION = 0
+
 
 PANEL_Y_GAP = 208
 Y_MAX = 260
@@ -32,6 +31,8 @@ Y_MAX = 260
 BASE_BPLCON2_VALUE = 0x007F		| sprites above all playfields
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
+
+BONUS_LETTERS_TARGET_OFFSET = (0xA0+0xB0)*NB_BYTES_PER_ROW+10
 
 NB_UPPER_DYN_ROWS = 0x43
 NB_LOWER_DYN_ROWS = NB_UPPER_DYN_ROWS+41
@@ -66,6 +67,7 @@ ONE_TICK = 1
 	
 
 OPT_ENABLE_DOUBLE_BUFFERING = 0
+OPT_ENABLE_ELEVATOR_DOUBLE_BUFFERING = 1
 
 _custom = 0xDFF000
 
@@ -717,9 +719,6 @@ _vblank:
 	* double buffering only in-game
 	tst.b	current_gfx_bank
 	jeq		23f
-	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
-	bsr		switch_screen_buffers
-	.endif
 	
 	* update elevator copper colors only if needed
 	* means: if floor tile is written in the column or
@@ -744,20 +743,23 @@ _vblank:
 	jne		0b
 	
 
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
+	bsr		switch_screen_buffers
+	.endif
 	
 23:
-	* don't blit, but update hw sprites as it doesn't cost a lot
 
 
 3:
     movem.l (a7)+,d0-d7/a0-a6
     rte
 	
+
 erase_bonus_overlay:
 	* bitplane offset for "BONUS" image.
-	move.w	#0xB0*NB_BYTES_PER_ROW+12,d5
+	move.w	#BONUS_LETTERS_TARGET_OFFSET,d5
 	move.l	panel_screen_ptr,a0		| first bitplane contains the data
-	move.l	fg_drawed_screen_ptr,A1
+	move.l	bg_drawed_screen_ptr,A1
 	add.w	d5,a1
 	lea		_custom,a5
 	move.w	#NB_BYTES_PER_ROW,d0
@@ -781,9 +783,9 @@ draw_bonus_overlay:
 	* bitplane offset for "BONUS" image. We're going
 	* to blit it from tiles bitplanes to sprites bitplanes
 	move.w	#0xB0*NB_BYTES_PER_ROW+10,d6
-	move.w	#0xB0*NB_BYTES_PER_ROW+12,d5
+	move.w	#BONUS_LETTERS_TARGET_OFFSET,d5
 	move.l	panel_screen_ptr,a0		| first bitplane contains the data
-	move.l	fg_drawed_screen_ptr,A1
+	move.l	bg_drawed_screen_ptr,A1
 	add.w	d6,a0			| source
 	add.w	d5,a1
 	move.l	a0,a3			| mask is the same
@@ -1272,6 +1274,7 @@ update_one_hw_sprite:
 	* D0 and D1 are already set
 
 	sub.w	#16,d0	| move each sprite 16 bits to the left
+	bmi.b	2f			| X < 0 after correction: can't show
 	bsr		store_sprite_pos
 
 	

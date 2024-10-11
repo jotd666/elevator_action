@@ -129,6 +129,8 @@ hw_sprite_mapping = {
 0x6B:0x2B,
 0x6C:0x2C,
 0x6D:0x2D,
+0x6E:0x2E,
+0x6F:0x2F,
 1:0xC1,    # 500 points
 47:0xEF,
 0X60:0x20,  # red door
@@ -525,7 +527,8 @@ character_tables:
 
 
 
-    hw_status[8+2] = 3    #0xFF,   # square sprite to cover player X wrap at start
+    hw_status[2*4+2] = 3       # square sprite to cover player X wrap at start
+    hw_status[3*4+2] = 3      # sprite to cover player head when car leaves
     bitplanelib.dump_asm_bytes(hw_status,f,mit_format=True)
 
     f.write("\nhw_sprite_table:\n")
