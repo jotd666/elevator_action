@@ -18,7 +18,7 @@ AFB_68020 = 1
 
 NO68020 = 1
 
-PREVIOUS_SPRITE_SIZE = 6
+PREVIOUS_SPRITE_SIZE = 8
 BORDERBLANK = 1
 
 SPRITE_X_CORRECTION = -2+16
@@ -727,7 +727,7 @@ _vblank:
 	* means: if floor tile is written in the column or
 	* if scroll value changes
 	moveq	#0,d0
-	lea		column_scroll_values,a0
+	move.l		current_column_scroll_values,a0
 0:
 	move.b	(a0)+,d1
 	cmp.b	(a0)+,d1
@@ -929,16 +929,17 @@ set_hurry_up:
 	rts
 	
 	
-* what: blits 32x16 data on bg plane, no horizontal shifting (erase)
+* what: blits data on bg plane, no horizontal shifting (erase)
 * args:
 * < A0: pristine background
 * < D0: X (rounded to smaller 8-multiple)
 * < D1: Y
+* < D2: width in bytes
 * < D4: height
 
 * trashes: D0-D1
 
-blit_16x_background:
+blit_background:
 	movem.l	d2-d6/a0-a5,-(a7)
 	lea		_custom,a5
 	move.l	playfield_drawed_screen_ptr(pc),a1
@@ -957,8 +958,7 @@ blit_16x_background:
 0:
 	
 
-    move.l  #0x09f00000,d3    | A->D copy, ascending mode
-	moveq	#4,d2			| 32 bits blit
+    move.l  #0x09f00000,d3    | A->D copy, ascending mode	
 	move.w	#NB_BYTES_PER_ROW,d1		| blit modulo
 
     sub.w   d2,d1       | blit modulo
@@ -1068,8 +1068,9 @@ update_bobs_and_hw_sprites:
 	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+			| ack deletion
 	move.w	(a4),d4			| height
-	clr.w	(a4)+			| ack deletion
-	bsr		blit_16x_background
+	move.w	(2,a4),d2		| width
+	clr.l	(a4)+			| ack deletion
+	bsr		blit_background
 	dbf		d7,1b	
 	bra.b	12f
 11:
@@ -1211,7 +1212,7 @@ update_one_bob:
 	move.w	d0,(a6)+			| store current sprite attributes to previous ones
 	move.w	d1,(a6)+			| store current sprite attributes to previous ones
 	move.w	d4,(a6)+			| store height
-	
+	move.w	d5,(a6)+			| store width in bytes
 	move.w	d5,d2			| width in bytes, 4 for 16 pixels+shift
 	moveq	#0,d5			| Y-offset
 	moveq	#NB_PLAYFIELD_PLANES,d3		| 4 planes
@@ -1483,17 +1484,22 @@ switch_elevator_planes_buffers:
 	* toggle fg planes (double buffering)
 	* also toggle previous sprite positions
 	lea		elev_drawed_screen_ptr(pc),a0
-	move.l	elev_screen_data_1,a1
-	move.l	elev_screen_data_2,a5
+	move.l	elev_screen_data_1(pc),a1
+	lea 	column_scroll_values_1(pc),a2
+	lea		column_scroll_values_2(pc),a4
+	move.l	elev_screen_data_2(pc),a5
 	* also switch previous state memory
 	cmp.l	(a0),a1
 	bne.b	2f
 	* screen data 1 is displayed screen
 	* set it to drawn screen
 	exg		a1,a5
+	exg		a2,a4
 2:
 	move.l	a1,(a0)
+	move.l	a2,current_column_scroll_values
 	move.l	a5,elev_displayed_screen_ptr
+	move.l	a4,previous_column_scroll_values
 
 	jbra		set_elev_bitplanes
 	.endif
@@ -2064,7 +2070,7 @@ set_playfield_bitplanes:
 * > D0: scroll value 	
 osd_get_column_scroll:
 	move.l	a0,-(a7)
-	lea		column_scroll_values,a0
+	move.l		current_column_scroll_values(pc),a0
 	and.w	#0xFF,d0
 	add.w	d0,d0
 	move.b	(a0,d0.w),d0
@@ -2083,7 +2089,9 @@ osd_set_column_scroll:
 	movem.l	d0-d1/a0,-(a7)
 	and.w	#0x7,d1
 	add.w	d1,d1
-	lea		column_scroll_values,a0
+	move.l	current_column_scroll_values(pc),a0
+	move.b	d0,(a0,d1.w)
+	move.l	previous_column_scroll_values(pc),a0
 	move.b	d0,(a0,d1.w)
 	movem.l	(a7)+,d0-d1/a0
 	rts
@@ -2091,7 +2099,7 @@ osd_set_column_scroll:
 	* really sets scroll during copper interrupt
 really_set_columns_scroll:
 	moveq	#0,d5
-	lea		column_scroll_values,a5
+	move.l		current_column_scroll_values,a5
 255:
 	moveq	#0,d0
 	move.b	(a5),d0
@@ -2588,7 +2596,12 @@ update_bg_tile_game:
 	move.b	d0,d3
 	lsr.b	#2,d3	| any column, divide by 4 => proper elevator index
 	add.b	d3,d3	
-	lea		column_scroll_values,a1
+	move.l		current_column_scroll_values(pc),a1
+	add.w	d3,a1
+	move.b	(a1),d5
+	add.b	#0x80,d5	| make sure to desync old and current column scroll to force update
+	move.b	d5,(1,a1)
+	move.l		previous_column_scroll_values(pc),a1
 	add.w	d3,a1
 	move.b	(a1),d5
 	add.b	#0x80,d5	| make sure to desync old and current column scroll to force update
@@ -3428,8 +3441,15 @@ elev_displayed_screen_ptr:
 
 	.include	"sound_entries.68k"
 
+current_column_scroll_values:
+	.long	column_scroll_values_1
+previous_column_scroll_values:
+	.long	column_scroll_values_2
+	
 * first current scroll value then previous one
-column_scroll_values:
+column_scroll_values_1:
+	.skip	16
+column_scroll_values_2:
 	.skip	16
 	
 update_tile_function:

@@ -14,6 +14,7 @@ TODO/ISSUES:
 - car not correct + missing sprite (yellow flash): sprite 3!!
 - check red door open + character + car in the basement: must implement a fallback solution
   to blit the red door (disregarding sprite priority)??? or just see what happens in that case
+- AGA: let the demo run twice, character not found (debug mode)
 
 minor:
 
