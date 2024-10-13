@@ -75,6 +75,19 @@ for x in range(sprites_2_sheet.size[0]):
         elif p==dummy:
             sprites_1_sheet.putpixel((x,y),(0,0,0))
 
+canceled_sprites = [
+        2,  # square sprite to cover player X wrap at start
+        3,  # sprite to cover player head when car leaves
+]
+
+# special for this sheet: group blue door 16x16 => 16x32
+door_bottom = [        0x60,
+        0x62,
+        0x64,
+        0x66]
+
+canceled_sprites += door_bottom
+
 
 # take all from main sheet except some tiles that are never present on that CLUT
 all_sprites = set(range(64)) - {0x3E,0x2A,0x29,0x28}
@@ -98,6 +111,7 @@ hw_sprites_palette = [transparent]+hw_sprites_palette
 # proper sprite sheet. Here, it's more complex as the sprites are displayed with bobs and hw sprites
 # this was a nightmare so I created a hardcoded mapping
 # if value is simple value, then only colotset 1 is filled. Else it considers 2 values (None skips)
+
 
 hw_sprite_mapping = {
 0x40: 0,
@@ -182,6 +196,9 @@ bob_sprite_mapping = {
 0x67:[None,0x67]
 }
 
+
+
+
 blue = (0,0,200)
 brown = (255,218,138)
 
@@ -216,8 +233,22 @@ dark_color_rep = { blue:(0,0,176), # enemy skin and blue doors are dark/darker,
 # bitplanelib.replace_color(hw_sprites_set[0x2F],{(255,218,138)},transparent)
 
 # dark floor enemies + blue door
+
+tile_offset=64
 sprites_palette_2,sprites_set_2 = load_tileset(sprites_2_sheet,True,16,set(range(16,40)) | set(range(50,56)) | {0x3E},"bobs",dump=dump_it,
-                                            name_dict=sprite_names,tile_offset=64,dumpdir=dumpdir)
+                                            name_dict=sprite_names,tile_offset=tile_offset,dumpdir=dumpdir)
+
+# time to regroup blue door parts, if there's a door top, there has to be the relevant
+# door bottom, no combinations
+for bottom in door_bottom:
+    bottom -= tile_offset
+    top = bottom+1
+    img = Image.new("RGB",(16,32))
+    img.paste(sprites_set_2[top],(0,0))
+    img.paste(sprites_set_2[bottom],(0,16))
+    # now top => full door (saves 3 blits, few longer blits are faster)
+    sprites_set_2[top] = img
+    sprites_set_2[bottom] = None
 
 
 other_sprites = {1,8,48,47}  # body of player holding documents & "500" score points: all those are HW sprites too
@@ -524,11 +555,9 @@ character_tables:
     update_hw_status(hw_sprite_mapping,1)
     update_hw_status(bob_sprite_mapping,2)
 
+    for c in canceled_sprites:
+        hw_status[c*4+2] = 3
 
-
-
-    hw_status[2*4+2] = 3       # square sprite to cover player X wrap at start
-    hw_status[3*4+2] = 3      # sprite to cover player head when car leaves
     bitplanelib.dump_asm_bytes(hw_status,f,mit_format=True)
 
     f.write("\nhw_sprite_table:\n")
