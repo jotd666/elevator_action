@@ -1680,7 +1680,7 @@ platform_init:
 	bne		0f
 	* disable extra mid-screen interrupt, as it would be too fast (NTSC)
 	move.w	#0x1FE,intreq_block_game
-*	move.w	#0x1FE,intreq_block_intro
+	move.w	#0x1FE,intreq_block_intro
 0:
 
  	*         VVHH
@@ -1724,9 +1724,9 @@ platform_init:
 	bsr		init_title_sprite_bank
 
 
-	* set title sprite colors, 8 times the same 4 colors
+	* set title sprite colors, 4 times the same 4 colors
 	lea		title_sprite_colors+2,a1
-	moveq	#7,d0
+	moveq	#3,d0
 0:
 	lea		title_palette,a0
 	moveq	#3,d1
@@ -2138,16 +2138,16 @@ really_set_columns_scroll:
 	* depending on scroll value
 	move.l	(_chip_data,a2),a3
 
-
+	
 	add.w 	d0,d0
-	add.w 	d0,d0	| times 16
+	add.w 	d0,d0	| times 4: 1 row is 4 bytes
 	add.w	d0,a3
 	move.l	a3,(_saved_control_word_address,a2)
 	* now save the rows
 	lea		(_control_word_row_save,a2),a4
 	COPY_SPRITE_ROW
 	move.l	(_saved_control_word_address,a2),a3
-	add.w	#(SPRITE_DISPLAYED_HEIGHT+1)*(_end_word_row_save-_control_word_row_save),a3
+	add.w	#(SPRITE_DISPLAYED_HEIGHT+1)*4,a3
 	move.l	a3,(_saved_end_word_address,a2)
 	lea		(_end_word_row_save,a2),a4
 	COPY_SPRITE_ROW
@@ -2889,8 +2889,9 @@ store_column_sprite_pos:
     move.l	(a0,d0.w*4),d0
 	.endif 
 	
-    or.l	y_pos(pc),d0
-
+    *or.l	#0x1C000C02,d0
+	or.l	y_pos(pc),d0
+	
     move.l  (a7)+,a0
     rts
 
@@ -3571,7 +3572,7 @@ intreq_block_intro:
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 	* pal limit
-    .word  0xFFCF,0xFFFE       | PAL wait
+    .word  0xFFDF,0xFFFE       | PAL wait
 
 	* black color sprites
 	DECL_COLORS	16,16

@@ -3,13 +3,11 @@ TODO/ISSUES:
 
 
 - next level: color index not correct
-- ELEVATOR title screen lower half not working: mark start of sprite
+- ELEVATOR title screen letters trashed: CLEAR_TILE_ROW not properly called / clear_all 16 => trash
 - elevator start sound should play and chain to elevator loop
 - palette change on lights shot: ok except for bricks and HW sprites (walls)
 - check red door open + character + car in the basement: must implement a fallback solution
   to blit the red door (disregarding sprite priority)??? or just see what happens in that case
-- AGA/OCS: let the demo run twice, tile not found (debug mode)
-  even in demo #1, seems that building is drawn while still in tileset 0 (title)!!
 
 minor:
 
