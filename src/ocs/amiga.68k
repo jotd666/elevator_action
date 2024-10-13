@@ -32,7 +32,10 @@ BASE_BPLCON2_VALUE = 0x007F		| sprites above all playfields
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
 
-BONUS_LETTERS_TARGET_OFFSET = (0xA0+0xB0)*NB_BYTES_PER_ROW+10
+BONUS_LETTERS_Y = 0xA0+0xB0
+BONUS_LETTERS_X = 80
+
+BONUS_LETTERS_TARGET_OFFSET = BONUS_LETTERS_Y*NB_BYTES_PER_ROW+10
 
 NB_UPPER_DYN_ROWS = 0x43
 NB_LOWER_DYN_ROWS = NB_UPPER_DYN_ROWS+41
@@ -196,6 +199,7 @@ start:
 		.global osd_read_dsw3
 		.global osd_read_inputs_1
 		.global osd_read_inputs_2
+		.global	osd_get_gfx_bank
 		.global	osd_set_gfx_bank
 		.global	osd_set_color_bank
 		.global	osd_set_column_scroll
@@ -698,11 +702,7 @@ _vblank:
 		
 	jbsr		elevator_irq
 
-	tst.b	force_erase_overlay
-	jeq		0f
-	subq.b	#1,force_erase_overlay
-	jra		1f
-0:
+
 	GET_RAM_START_IN_A6
 	tst.b	(player_structure_851A+7,a6)	| player floor: basement
 	jne		0f
@@ -762,29 +762,18 @@ _vblank:
 	
 
 erase_bonus_overlay:
-	* bitplane offset for "BONUS" image.
-	move.w	#BONUS_LETTERS_TARGET_OFFSET,d5
-	move.l	panel_screen_ptr,a0		| first bitplane contains the data
-	move.l	playfield_drawed_screen_ptr,A1
-	add.w	d5,a1
-	lea		_custom,a5
-	move.w	#NB_BYTES_PER_ROW,d0
-	move.w	#96/8,d2	| 80 pixels wide
-	move.w	#16<<6,D4		| 16 pixels high
-    sub.w   d2,d0       | blit width
-    lsr.w   #1,d2
-    add.w   d2,d4       | blit height
-	move.l	#0x01000000,d7	| erase
-	moveq	#3,d3			| blit on 4 planes to remove color 15
-0:
-	WAIT_BLIT
-    move.w  d0,bltdmod(a5)	|D modulo
-	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
-	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
-	move.w  d4,bltsize(a5)	|rectangle size, starts blit
-	lea		(BG_SCREEN_PLANE_SIZE,a1),a1
-	dbf		D3,0b
+	move.l	bob_previous_drawed_sprites(pc),a4
+	* fill the last erase slot, benefit from "update background"
+	* bob routine to restore the background in the basement
+	add.w	#NB_TARGET_SPRITES*(PREVIOUS_SPRITE_SIZE-1),a4
+
+	move.w	#BONUS_LETTERS_X,(a4)+
+	move.w	#BONUS_LETTERS_Y,(a4)+
+	move.w	#16,(a4)+			| height
+	move.w	#96/8,(a4)		| width
 	rts
+	
+
 draw_bonus_overlay:
 	* bitplane offset for "BONUS" image. We're going
 	* to blit it from tiles bitplanes to sprites bitplanes
@@ -904,7 +893,7 @@ is_game_playing:
 	movem.l	d0/a6,-(a7)
 	GET_RAM_START_IN_A6
 	tst.b	this_is_a_demo_game_823B(a6)
-	bne		0f
+	jne		0f
 	tst.b	current_gfx_bank
 	jne		1f
 0:
@@ -1822,7 +1811,6 @@ load_palette:
 
 
 osd_set_level_palette:
-	move.b	#2,force_erase_overlay		| will erase "BONUS 1000" twice
 	add.b	level_color+3,d0
 	and.b	#3,d0
 	
@@ -1914,6 +1902,10 @@ osd_set_color_bank:
 *	
 
 	jra		0b
+	
+osd_get_gfx_bank:
+	move.b	current_gfx_bank,d0
+	rts
 	
 osd_set_gfx_bank:
 	movem.l	d0-a6,-(a7)
@@ -2393,9 +2385,6 @@ update_title_letters:
 1:
 	* d0: 2*sprite number
 	lsr.w	#1,d0
-	jeq		10000f
-	rts    | TEMP FUCK
-10000:
 
 	.macro	NEXT_OFFSET
 	.set	offset,offset+4	
@@ -3355,8 +3344,6 @@ dip_switches_1:
 dip_switches_2:
 		.byte	0
 dip_switches_3:
-		.byte	0
-force_erase_overlay:
 		.byte	0
 current_gfx_bank:
 	.byte	-1

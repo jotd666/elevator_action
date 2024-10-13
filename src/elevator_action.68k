@@ -2477,6 +2477,12 @@ l_08b4:
 	move.b	(current_floor_07,a2),d0                    	| [$08b4: ld   a,(ix+$07)]
 	                             	| [$08b7: or   a]
 	jeq	enemies_shot_collision_08D2        	| [$08b8: jp   z,enemies_shot_collision_08D2]
+
+	* don't test collision if "NO HIT" is set, but keep dying during
+	* the demo game as pre-recorded moves derail (JOTD addition)
+	tst.b	this_is_a_demo_game_823B(a6)
+	jne		0f
+	
 	move.b	copy_of_dip_switches_3_8250(a6),d0	| [$08bb: ld   a,(copy_of_dip_switches_3_8250)]
 	btst.b	#6,d0                           	| [$08be: bit  6,a]
 	beq.b	0f                               	| [...]
@@ -6614,11 +6620,19 @@ l_28e9:
 	LOAD_WORD	scroll_tile_pointer_8006(a6),d5	| [$28f2: ld   hl,(scroll_tile_pointer_8006)]
 	sub.w	#0x8000,d5
 	add.l	a6,d5								| add ram base
-
 	exg	a1,d5                              	| [$28f5: ex   de,hl]
+
+	* JOTD: sometimes this update happens when graphics bank is set
+	* to "title" tiles, which triggers strange graphics glitches and
+	* triggers "tile not found" in debug mode. We don't write to screen
+	* unless game tiles are selected (and it has no negative effect!)
+	jbsr	osd_get_gfx_bank
+	tst.b	d0
+	jeq		0f
 	lea	scroll_row_8008(a6),a0             	| [$28f6: ld   hl,scroll_row_8008]
-	move.w	#0x0020,d1                      	| [$28f9: ld   bc,$0020] 32
+	move.w	#0x0020,d1                      | [$28f9: ld   bc,$0020] 32
 	jbsr	ldir_video                          	| [$28fc: ldir]
+0:
 	move.w	(sp)+,d1                    	| [$28fe: pop  bc]
 	LOAD_WORD	bottom_floor_fine_horizon_8002(a6),d5             	| [$28ff: ld   hl,($8002)]
 	addq.b	#0x1,d5                           	| [$2902: inc  l]

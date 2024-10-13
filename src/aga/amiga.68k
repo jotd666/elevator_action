@@ -211,6 +211,7 @@ start:
 		.global	osd_set_gfx_bank
 		.global	osd_set_color_bank
 		.global	osd_set_column_scroll
+		.global	osd_get_gfx_bank
 		.global	osd_get_column_scroll
 		.global	osd_set_level_palette
 	
@@ -1814,6 +1815,11 @@ osd_set_color_bank:
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
 	jra		0b
+	
+
+osd_get_gfx_bank:
+	move.b	current_gfx_bank,d0
+	rts
 	
 osd_set_gfx_bank:
 	movem.l	d0-a6,-(a7)

@@ -2,22 +2,21 @@
 TODO/ISSUES:
 
 
-- ELEVATOR title screen lower half not working: mark start of sprite?? also only one letter old debug code limit not fixed
+- next level: color index not correct
+- ELEVATOR title screen lower half not working: mark start of sprite
 - elevator start sound should play and chain to elevator loop
 - palette change on lights shot: ok except for bricks and HW sprites (walls)
-- check "bonus" overlay: poke in the previous bob to benefit from background restore
-- background restore: add width info
-- blue doors: optimize: special case 32 height, cancel door half bottom part
-- next level: color index not correct
 - check red door open + character + car in the basement: must implement a fallback solution
   to blit the red door (disregarding sprite priority)??? or just see what happens in that case
-- AGA: let the demo run twice, tile not found (debug mode)
+- AGA/OCS: let the demo run twice, tile not found (debug mode)
+  even in demo #1, seems that building is drawn while still in tileset 0 (title)!!
 
 minor:
 
 - AGA: discontinuous elevator cables (control word mixup)
 - AGA: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
+- AGA: blue & red doors: optimize like OCS: special case 32 height, cancel door half bottom part
 - AGA: exhaust fumes in the end are only white (limitation of 
   monochrome overlay implementation, barely noticeable)
 - sound: when does the "ping" sound play?
