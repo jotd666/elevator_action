@@ -361,7 +361,7 @@ for tn,tc in (["title",title_layer],["game",game_layer]):
                     # depending on the tile, the black color is transparent or black. Transparent is a rare exception
                     # for elevator platforms and upper door background
                     mask_color = (0,0,0) if tidx in {0X4D,0x4E,0x9D,0x7E,0x7F} or lidx==0 else game_playfield_palette[0]
-                    if tidx == 0x9f:
+                    if tn=="game" and tidx == 0x9f:
                         # this tile is special, it should be half black, half transparent but because of color
                         # reduction, it ends up fully black so we have to change it manually:
                         # paint the bottom half with mask color so the bottom half (hidden by door) is transparent

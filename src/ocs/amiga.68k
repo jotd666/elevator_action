@@ -91,9 +91,10 @@ NB_LINES = 256
 NB_PLAYFIELD_LINES = NB_LINES
 
 SPRITE_DISPLAYED_HEIGHT = 240
+* height: screen height * 2 (mirror)
 SPRITE_HEIGHT = NB_LINES*2
 * sprite band: 16 bit * 2 planes * 2*screen size + control words
-SPRITE_SIZE = 4*(SPRITE_HEIGHT+2)
+LETTER_COLUMN_SPRITE_SIZE = 4*(SPRITE_HEIGHT+2)
 
 SPRITE_STRUCT_SIZE = 32
 
@@ -1709,7 +1710,7 @@ platform_init:
 	move.l	a0,(_chip_data,a1)
 	st.b	(_previous_y_position,a1)	| invalidate
 	add.w	#SPRITE_STRUCT_SIZE,a1
-	add.w	#SPRITE_SIZE,a0
+	add.w	#LETTER_COLUMN_SPRITE_SIZE,a0
 	dbf		d0,0b
 	
 	* set sprite registers in copperlist
@@ -1869,15 +1870,12 @@ osd_set_color_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
-	* also change brick color
-	moveq	#0,d0
-	move.b	level_palette,d0
-*	lea		brick_copper_color,a1
-*	lea		brick_colors,a0
-*	move.w	brick_color_index,(a1)+
-*	add.w	d0,d0
-*	move.w	(a0,d0.w),(a1)
-	* also change sprite fake wall color
+
+	* brick color was not affected, as it's in the elevator colors!
+	* no need to change it back like in AGA version
+	
+	* change sprite fake wall color
+	* by changing sprite 16 bit attached palette
 *	moveq	#0,d0
 *	move.b	level_palette,d0
 *	lea		bob_copper_color,a1
@@ -1896,7 +1894,7 @@ osd_set_color_bank:
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
 
-* wall/brick/sprites TODO
+* wall/sprites TODO
 *	lea		sprite_wall_colors,a0
 *	move.w	#0x1FE,(a1)
 *	
@@ -2138,7 +2136,6 @@ really_set_columns_scroll:
 	* depending on scroll value
 	move.l	(_chip_data,a2),a3
 
-	
 	add.w 	d0,d0
 	add.w 	d0,d0	| times 4: 1 row is 4 bytes
 	add.w	d0,a3
@@ -2393,6 +2390,8 @@ update_title_letters:
 	.macro	CLEAR_TILE_ROW
 	clr.b	(offset,a3)
 	clr.b	(offset+(NB_LINES*4),a3)	| mirror
+	clr.b	(offset+2,a3)
+	clr.b	(offset+2+(NB_LINES*4),a3)	| mirror
 	NEXT_OFFSET	
 	.endm
 	
@@ -2442,7 +2441,7 @@ update_title_letters:
 	lsr.w	#1,d3
 	bclr	#0,d3
 	addq	#1,d3	| skip first slot (all rows)
-201:	
+201:
 	lsl.w	#2,d2
 	jeq		5f		| code 0: clear sprite area
 	* copy character data into sprite
@@ -2512,11 +2511,6 @@ clear_but_\index:
 	CLEAR_BUT_X	7
 	
 
-	
-
-
-
-	
 5:
 	lea		clear_tile_table(pc),a4
 	add.w	d3,d3
@@ -2526,7 +2520,7 @@ clear_but_\index:
 
 clear_all:
 	.set	offset,0
-	.rept	16
+	.rept	8
 	CLEAR_TILE_ROW
 	.endr
 	jra		0b
@@ -2537,13 +2531,13 @@ clear_all:
 clear_tile_table:
 	.long	clear_all
 	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
+	.long	clear_but_1
+	.long	clear_but_2
+	.long	clear_but_3
+	.long	clear_but_4
+	.long	clear_but_5
+	.long	clear_but_6
+	.long	clear_but_7
 
 
 
@@ -3688,7 +3682,7 @@ panel_end_tiles_colors:
 		
 	
 sprite_buffer:
-	.skip	(SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+2)))*8		| 8 more bytes for control word and end zeroes
+	.skip	(LETTER_COLUMN_SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+2)))*8		| 8 more bytes for control word and end zeroes
 	.skip	8
 	.skip	8
 	

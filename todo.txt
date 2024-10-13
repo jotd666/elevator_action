@@ -3,7 +3,6 @@ TODO/ISSUES:
 
 
 - next level: color index not correct
-- ELEVATOR title screen letters trashed: CLEAR_TILE_ROW not properly called / clear_all 16 => trash
 - elevator start sound should play and chain to elevator loop
 - palette change on lights shot: ok except for bricks and HW sprites (walls)
 - check red door open + character + car in the basement: must implement a fallback solution
@@ -11,7 +10,7 @@ TODO/ISSUES:
 
 minor:
 
-- AGA: discontinuous elevator cables (control word mixup)
+- AGA: discontinuous elevator cables (control word mixup). CLEAR_TILE_ROW and others seem suspicious
 - AGA: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
 - AGA: blue & red doors: optimize like OCS: special case 32 height, cancel door half bottom part

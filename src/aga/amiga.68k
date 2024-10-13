@@ -1780,7 +1780,7 @@ osd_set_color_bank:
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
 	
-	* also change brick color
+	* also change back brick color
 	moveq	#0,d0
 	move.b	level_palette,d0
 	lea		brick_copper_color,a1
@@ -2525,13 +2525,13 @@ clear_all:
 clear_tile_table:
 	.long	clear_all
 	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
-	.long	clear_but_0
+	.long	clear_but_1
+	.long	clear_but_2
+	.long	clear_but_3
+	.long	clear_but_4
+	.long	clear_but_5
+	.long	clear_but_6
+	.long	clear_but_7
 
 
 
