@@ -450,8 +450,8 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("level_palettes:\n")
     for i in range(4):
         f.write(f"\t.long\tlevel_palette_{i}\n")
-    wall_color_index = 6 #game_playfield_palette.index(varying_palettes[0][1]) TEMP
-    brick_color_index = 6  #game_playfield_palette.index(varying_palettes[0][3])
+    wall_color_index = 3   # hardcoded (sorry!)
+    brick_color_index = 4  # hardcoded (sorry!)
     for i in range(4):
         f.write(f"level_palette_{i}:\n")
         p = list(game_playfield_palette)
@@ -459,7 +459,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
             # must change palette for walls & brick (bottom panel)
             p[wall_color_index] = varying_palettes[i][1]
         bitplanelib.palette_dump(p,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
-    f.write(f"brick_color_index:\n\t.word\tcolor+{brick_color_index*2+32}\n")
+    f.write(f"brick_color_index:\n\t.word\tcolor+{brick_color_index*2+16}\n")
     f.write("brick_colors:\n")
     for vp in varying_palettes:
         f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(vp[3])))

@@ -1871,8 +1871,16 @@ osd_set_color_bank:
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
 
-	* brick color was not affected, as it's in the elevator colors!
-	* no need to change it back like in AGA version
+	* also change back brick color
+	moveq	#0,d0
+	move.b	level_palette,d0
+	lea		brick_copper_color,a1
+	
+	lea		brick_colors,a0
+	move.w	brick_color_index,(a1)+
+	add.w	d0,d0
+	move.w	(a0,d0.w),(a1)
+
 	
 	* change sprite fake wall color
 	* by changing sprite 16 bit attached palette
@@ -3656,7 +3664,8 @@ panel_end_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
 panel_end_tiles_colors:
 	DECL_COLORS	8,TOTAL_NB_COLORS
-	
+brick_copper_color:
+	.word	0x1FE,0	
 	* pal limit
     .word  0xFFCF,0xFFFE       | PAL wait
 

@@ -2,14 +2,17 @@
 TODO/ISSUES:
 
 
-- next level: color index not correct
-- elevator start sound should play and chain to elevator loop
-- palette change on lights shot: ok except for bricks and HW sprites (walls)
-- check red door open + character + car in the basement: must implement a fallback solution
-  to blit the red door (disregarding sprite priority)??? or just see what happens in that case
+- next level: color index not correct for
+  - sprite walls
+  - elevator inside
+- OCS & AGA: elevator start sound should play and chain to elevator loop
+- palette change on lights shot: ok except for HW sprites (walls)
 
 minor:
 
+- OCS: elevator letter wires discontinuous: remove clear tile and check?
+- OCS: check red door open + character + car in the basement: must implement a fallback solution
+  to blit the red door (disregarding sprite priority)??? or just see what happens in that case
 - AGA: discontinuous elevator cables (control word mixup). CLEAR_TILE_ROW and others seem suspicious
 - AGA: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
