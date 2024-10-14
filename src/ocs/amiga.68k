@@ -3715,37 +3715,39 @@ brick_copper_color:
 		.section .bsschip
 		
 	
-sprite_buffer:
-	.skip	(LETTER_COLUMN_SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+2)))*8		| 8 more bytes for control word and end zeroes
-	.skip	8
-	.skip	8
 	
 background_restore_buffer:
 	.skip	RESTORE_SCREEN_SIZE
-	.skip	NB_BYTES_PER_ROW*12*3
+	*.skip	NB_BYTES_PER_ROW*12*3
 		
 bg_screen_buffer_1:
 	.skip	PLAYFIELD_SCREEN_SIZE
-	.skip	NB_BYTES_PER_ROW*12*3
+	*.skip	NB_BYTES_PER_ROW*12*3
+	.ifne	OPT_ENABLE_DOUBLE_BUFFERING
 bg_screen_buffer_2:
 	.skip	PLAYFIELD_SCREEN_SIZE
 	.skip	NB_BYTES_PER_ROW*12*3
+	.endif
 panel_screen_buffer:
 	.skip	PLAYFIELD_SCREEN_SIZE
 
-	
+
+* use same memory block for sprite buffer (ELEVATOR letters in title)
+* and back screen
+
+sprite_buffer:  | (LETTER_COLUMN_SPRITE_SIZE+(1<<(SPRITE_POWER_OF_2+2)))*8	
 elevator_back_screen:
 	.skip	ELEV_SCREEN_SIZE
-	.skip	NB_BYTES_PER_ROW*12*3
+	*.skip	NB_BYTES_PER_ROW*12*3
 	
 elev_screen_buffer_1:
 	.skip	ELEV_SCREEN_SIZE
-	.skip	NB_BYTES_PER_ROW*12*3
+	*.skip	NB_BYTES_PER_ROW*12*3
 
 	.ifne  OPT_ENABLE_ELEVATOR_DOUBLE_BUFFERING
 elev_screen_buffer_2:
 	.skip	ELEV_SCREEN_SIZE
-	.skip	NB_BYTES_PER_ROW*12*3
+	*.skip	NB_BYTES_PER_ROW*12*3
 	.skip	8
 	.endif
 

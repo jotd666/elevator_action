@@ -1,18 +1,19 @@
 
 TODO/ISSUES:
 
-
-- OCS & AGA: elevator start sound should play and chain to elevator loop
+- OCS => ECS, try to fit in 1MB: reduce panel_screen_buffer
+- game over: sprites should be disabled (on gfx bank 1)
 
 minor:
 
-- OCS: elevator letter wires discontinuous: remove clear tile and check?
-- OCS: check red door open + character + car in the basement: must implement a fallback solution
+- ECS & AGA: elevator start sound should play and chain to elevator loop
+- ECS: elevator letter wires discontinuous: remove clear tile and check?
+- ECS: check red door open + character + car in the basement: must implement a fallback solution
   to blit the red door (disregarding sprite priority)??? or just see what happens in that case
 - AGA: discontinuous elevator cables (control word mixup). CLEAR_TILE_ROW and others seem suspicious
 - AGA: when opening door, instead of clearing background, use a special tile
   to have purple background instead of elevator back
-- AGA: blue & red doors: optimize like OCS: special case 32 height, cancel door half bottom part
+- AGA: blue & red doors: optimize like ECS: special case 32 height, cancel door half bottom part
 - AGA: exhaust fumes in the end are only white (limitation of 
   monochrome overlay implementation, barely noticeable)
 - sound: when does the "ping" sound play?

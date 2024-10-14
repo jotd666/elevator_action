@@ -26,7 +26,7 @@ for file in ["readme.md","game_specs.txt",f"{gamename}_aga.slave"]:  #f"{gamenam
 #shutil.copy(os.path.join(progdir,"assets","amiga","MoonPatrolGlowIcon.info"),outdir)
 
 
-for suffix in ["aga"]:
+for suffix in ["ocs","aga"]:
     # pack the file for floppy
     exename = f"{gamename}_{suffix}"
     shutil.copy(os.path.join(progdir,exename),outdir)

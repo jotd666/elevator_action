@@ -20,7 +20,7 @@ def convert(aga_mode):
     outfile = os.path.join(src_dir,"sounds.68k")
     sndfile = os.path.join(src_dir,"sound_entries.68k")
 
-    hq_sample_rate = 18004 if aga_mode else 14000
+    hq_sample_rate = 18004 if aga_mode else 12000
     lq_sample_rate = hq_sample_rate//2 if aga_mode else 8000
 
 
