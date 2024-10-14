@@ -498,6 +498,19 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("hw_sprites_palette:\n")
     bitplanelib.palette_dump(hw_sprites_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
+    hw_sprites_palette_dark = [dark_color_rep.get(c,c) for c in hw_sprites_palette]
+    f.write("hw_sprites_palette_dark:\n")
+    bitplanelib.palette_dump(hw_sprites_palette_dark,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+
+    hw_wall_color_index = 8   # hardcoded (sorry!)
+
+    f.write("hw_wall_color_index:\n")
+    f.write(f"\t.word\t{hw_wall_color_index}\n")
+
+    f.write("hw_wall_colors:\n")
+    for i in range(4):
+        f.write("\t.word\t0x{:04x}\n".format(bitplanelib.to_rgb4_color(varying_palettes[i][1])))
+
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 

@@ -2,9 +2,7 @@
 TODO/ISSUES:
 
 
-- next level: color index not correct for sprite walls
 - OCS & AGA: elevator start sound should play and chain to elevator loop
-- palette change on lights shot: ok except for HW sprites (walls)
 
 minor:
 

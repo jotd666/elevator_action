@@ -1881,6 +1881,25 @@ osd_set_color_bank:
 	lea		playfield_tiles_colors,a1
 	bsr		load_palette
 
+
+	
+	
+	moveq	#0,d0
+	move.b	level_palette,d0
+	add.w	d0,d0
+	lea		hw_wall_colors,a0
+	move.w	(a0,d0.w),d1
+	
+	lea		hw_sprites_palette(pc),a0
+	lea		game_sprite_colors,a1
+	move.w	hw_wall_color_index(pc),d0
+	add.w	d0,d0
+	move.w	d1,(a0,d0.w)		| set wall color index in sprite palette for fake walls
+	
+	move.w	#16,d0
+	bsr		load_palette
+
+
 	* also change back brick color
 	moveq	#0,d0
 	move.b	level_palette,d0
@@ -1907,6 +1926,11 @@ osd_set_color_bank:
 1:
 	* dark mode
 	
+	lea		hw_sprites_palette_dark(pc),a0
+	move.w	#16,d0
+	lea		game_sprite_colors,a1
+	bsr		load_palette
+
 	lea		dark_palette,a0
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		playfield_tiles_colors,a1
@@ -1946,10 +1970,6 @@ osd_set_gfx_bank:
 	
 
 		
-	lea		hw_sprites_palette(pc),a0
-	move.w	#16,d0
-	lea		game_sprite_colors,a1
-	bsr		load_palette
 		
 	* set copperlist
 	move.l	#title_copperlist,cop1lc(a5)
