@@ -450,6 +450,24 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
     f.write("level_palettes:\n")
     for i in range(4):
         f.write(f"\t.long\tlevel_palette_{i}\n")
+    f.write("elevator_palettes:\n")
+    for i in range(4):
+        f.write(f"\t.long\televator_palette_{i}\n")
+
+    outside_color_index = 2    # hardcoded (sorry!)
+    inside_color_index = 5  # hardcoded (sorry!)
+    for i in range(4):
+        f.write(f"elevator_palette_{i}:\n")
+        p = list(elevators_palette)
+        if i:
+            # must change palette for walls & brick (bottom panel)
+            p[inside_color_index] = varying_palettes[i][0]
+            p[outside_color_index] = varying_palettes[i][2]
+        bitplanelib.palette_dump(p,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
+
+
+
+
     wall_color_index = 3   # hardcoded (sorry!)
     brick_color_index = 4  # hardcoded (sorry!)
     for i in range(4):
@@ -482,14 +500,7 @@ with open(os.path.join(src_dir,"palettes.68k"),"w") as f:
 
     f.write("title_palette:\n")
     bitplanelib.palette_dump(title_playfield_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
-    f.write("elevators_palette:\n")
-    bitplanelib.palette_dump(elevators_palette,f,pformat=bitplanelib.PALETTE_FORMAT_ASMGNU)
 
-    f.write("elevators_dyn_colors:\n")
-    for v in varying_palettes_rgb4:
-        inside_elevator = v[0]   # dynamic => change to existing gray, change on Y
-        outside_elevator = v[2]  # background => change to black, change background on Y
-        f.write(f"\t.word\t0x{inside_elevator:04x},0x{outside_elevator:04x}\n")
 
 # hardware sprites
 hw_sprites_array = []

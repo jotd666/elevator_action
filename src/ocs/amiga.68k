@@ -1858,13 +1858,23 @@ osd_set_color_bank:
 	movem.l	d0-d1/a0-a1,-(a7)
 	tst.b	d0
 	jne		1f
-	
 
-	lea		level_palettes,a0
 	moveq	#0,d0
 	move.b	level_palette,d0
 	add.w	d0,d0
 	add.w	d0,d0
+	
+	move.w	d0,-(a7)
+	lea		elevator_palettes(pc),a0
+	move.l	(a0,d0.w),a0
+	
+	move.w	#TOTAL_NB_COLORS,d0
+	lea		elevator_colors,a1
+	bsr		load_palette
+	
+	move.w	(a7)+,d0
+	
+	lea		level_palettes,a0
 	move.l	(a0,d0.w),a0
 
 	move.w	#TOTAL_NB_COLORS,d0
@@ -1881,7 +1891,7 @@ osd_set_color_bank:
 	add.w	d0,d0
 	move.w	(a0,d0.w),(a1)
 
-	
+
 	* change sprite fake wall color
 	* by changing sprite 16 bit attached palette
 *	moveq	#0,d0
@@ -1933,10 +1943,8 @@ osd_set_gfx_bank:
 	move.w	#TOTAL_NB_COLORS,d0
 	lea		panel_tiles_colors,a1
 	bsr		load_palette
-	lea		elevators_palette(pc),a0
-	move.w	#TOTAL_NB_COLORS,d0
-	lea		elevator_colors,a1
-	bsr		load_palette
+	
+
 		
 	lea		hw_sprites_palette(pc),a0
 	move.w	#16,d0
@@ -3313,10 +3321,7 @@ old_actiview:
 	.long	0
 old_stack:
 	.long	0
-inside_elevator_color:
-	.word	0
-outside_elevator_color:	| MUST FOLLOW inside_elevator_color
-	.word	0
+
 	
 _tag:
 		.long	WHDLTAG_MONITOR_GET
