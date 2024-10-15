@@ -28,7 +28,7 @@ SPRITE_Y_CORRECTION = -15
 PANEL_Y_GAP = 208
 Y_MAX = 260
 
-BASE_BPLCON2_VALUE = 0x007F		| sprites above all playfields
+BASE_BPLCON2_VALUE = 0x005b		| sprites above all playfields
 HIDDEN_BOBS_BPLCON2_VALUE = 0x0046
 SCREEN_ADDRESS = 0xC400
 
