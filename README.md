@@ -5,7 +5,7 @@ Requires a 2-button joystick, or the keyboard
 
 Features:
 
-- 60Hz/50 FPS for AGA amigas
+- 60Hz/50 FPS for AGA and ECS amigas
 - PAL/NTSC screens
 
 Credits:

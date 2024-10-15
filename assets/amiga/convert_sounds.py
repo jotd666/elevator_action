@@ -16,7 +16,7 @@ def convert(aga_mode):
     sound_dir = os.path.join(this_dir,"..","sounds")
 
     this_dir = os.path.dirname(__file__)
-    src_dir = os.path.join(this_dir,"../../src","aga" if aga_mode else "ocs")
+    src_dir = os.path.join(this_dir,"../../src","aga" if aga_mode else "ecs")
     outfile = os.path.join(src_dir,"sounds.68k")
     sndfile = os.path.join(src_dir,"sound_entries.68k")
 
@@ -59,6 +59,7 @@ def convert(aga_mode):
     "MAIN_THEME_SND"                :{"index":26,"pattern":3,"volume":13,'loops':True},
     "HURRY_UP_THEME_SND"                :{"index":27,"pattern":9,"volume":13,'loops':True},
     "GAME_OVER_SND"                :{"index":28,"pattern":10,"volume":25,'loops':False, "ticks":150},
+    "ELEVATOR_STARTS_SND"               :{"index":29,"channel":loop_channel,"sample_rate":hq_sample_rate,"priority":10},
     #"PING_SND"                :{"index":9,"channel":2,"sample_rate":hq_sample_rate,"priority":20},  not sure when or why it's played...
 
 

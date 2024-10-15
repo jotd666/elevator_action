@@ -1,19 +1,20 @@
-; Elevator Action OCS slave
+; Elevator Action ECS slave
 	INCDIR	Include:
 	INCLUDE	whdload.i
 	INCLUDE	whdmacros.i
 
 ;CHIP_ONLY
 
-EXPMEM = $120000
+EXPMEM = $C0000
+CHIPSIZE = $B0000
 
 _base	SLAVE_HEADER					; ws_security + ws_id
 	dc.w	17					; ws_version (was 10)
 	dc.w	WHDLF_NoError
     IFD CHIP_ONLY
-	dc.l	$80000+EXPMEM					; ws_basememsize
+	dc.l	CHIPSIZE+EXPMEM					; ws_basememsize
 	ELSE
-	dc.l	$80000
+	dc.l	CHIPSIZE
 	ENDC
 	dc.l	0					; ws_execinstall
 	dc.w	start-_base		; ws_gameloader
@@ -133,5 +134,5 @@ _resload:
 progstart
     dc.l    0
 exe
-	dc.b	"elevator_action_ocs",0
+	dc.b	"elevator_action_ecs",0
 	

@@ -546,7 +546,7 @@ sound_table:
 	.byte	-1   | 0x61
 	.byte	UP_THE_STAIRS_SND   | 0x62
 	.byte	DOWN_THE_STAIRS_SND   | 0x63
-	.byte	ELEVATOR_LOOP_SND    | 0x64 elevator start+move sound 
+	.byte	ELEVATOR_STARTS_SND    | 0x64 elevator start sound 
 	.byte	ELEVATOR_STOPS_SND   | 0x65 elevator sound stop
 	.byte	WALK_SND   | 0x66
 	.byte	-1   | 0x67

@@ -687,6 +687,7 @@ _vblank:
 	addq.b	#1,d0
 	cmp.b	#5,d0
 	bne.b	1f
+	jbsr	update_elevator_sound
 	jbsr		elevator_irq
 	clr.b	interrupt_mode	
 	clr.b	d0
@@ -701,6 +702,7 @@ _vblank:
 	
 	subq.w	#1,delay_timer
 		
+	jbsr	update_elevator_sound
 	jbsr		elevator_irq
 
 
@@ -1649,6 +1651,23 @@ init_title_sprite_bank:
 	dbf		d2,0b
 	rts
 	
+init_title_blank_sprite_bank:
+	move.w	#sprpt,d0
+	move.w	#NB_HOST_SPRITES-1,d2		| 7
+	move.l	#blank_sprite,d1
+0:
+	move.w	d0,(a0)+
+	swap	d1
+	move.w	d1,(a0)+
+	swap	d1
+	addq	#2,d0
+	move.w	d0,(a0)+
+	move.w	d1,(a0)+
+	
+	addq	#2,d0
+	dbf		d2,0b
+	rts
+	
 init_game_sprite_bank:
 	move.w	#sprpt,d0
 	move.w	#NB_HOST_SPRITES-1,d2		| 7
@@ -2002,6 +2021,11 @@ osd_set_gfx_bank:
 	*****************
 	* game gfx bank *
 	*****************
+	
+	* blank title sprites first, just in case
+	* (memory is shared with elevators)
+	bsr		init_title_blank_sprite_bank
+	
     move.w #0x6600+BORDERBLANK,bplcon0(a5) | 6 bitplanes, dual playfield, borderblank
 
 	* set copperlist
@@ -2010,6 +2034,10 @@ osd_set_gfx_bank:
 	lea		update_bg_tile_game(pc),a0
 	move.l	a0,update_tile_function
 
+	* no sprites
+	move.l	#blank_sprite,d0
+	lea		title_sprites+2,a0
+	
 
 	* set panel palette (top & bottom)
 	lea		game_status_palette,a0
@@ -2506,11 +2534,11 @@ update_title_letters:
 	.endr
 	* restore control word just in case it was clobbered by
 	* a tile write
-	* (avoids elevator sprite blinking)
+	* (avoids elevator sprite blinking, not of great help in ELEVATOR
+	* letters)
 	move.w 	d4,(a5)
-	clr.w	(2,a5)
-	move.w 	d5,(4,a5)
-	clr.w	(6,a5)
+	move.w 	d5,(2,a5)
+
 	
 0:
 
@@ -3599,12 +3627,11 @@ intreq_block_intro:
 	.word	 intreq,0x8014  | call copper interrupt in the middle of a frame, also flag so copper interrupt knows that we're going to call copper int
 
 	* pal limit
-    .word  0xFFDF,0xFFFE       | PAL wait
+    .word  0xFFCF,0xFFFE       | PAL wait
 
 	* black color sprites
 	DECL_COLORS	16,16
 
-	.word	0x1001,0xFFFE
 	
 	.word	 intreq,0x8010	| no bobs from now on, get more drawing time
 

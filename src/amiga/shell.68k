@@ -68,7 +68,7 @@ _user:
 *	lea		exe_ecs(pc),a0
 *	bra.b	run_it
 *0:
-	lea		exe_ocs(pc),a0
+	lea		exe_ecs(pc),a0
 run_it:
 	move.l	a0,d1
 	move.l	_dosbase(pc),a6
@@ -274,6 +274,6 @@ graphicsname:
 	
 exe_aga:
 	.asciz	"elevator_action_aga"
-exe_ocs:
-	.asciz	"elevator_action_ocs"
+exe_ecs:
+	.asciz	"elevator_action_ecs"
 	

@@ -5,6 +5,8 @@
 		.global osd_write_high_scores
 		.global	load_highscores
 		.global	save_highscores
+		.global update_elevator_sound
+		
 * sound engine and also highscore management, common to all versions
 	
 .include "dos_lvos.i"
@@ -12,6 +14,7 @@
 
 SCORE_FILE_SIZE = 3
 
+ELEVATOR_COUNTDOWN_VALUE = 30
 	
 osd_read_high_scores:
 	movem.l	d0-d7/a0-a6,-(a7)
@@ -68,7 +71,16 @@ osd_write_high_scores:
 	movem.l	(a7)+,d0-d7/a0-a6
 	rts
 
-
+update_elevator_sound:
+	tst.w	elevator_start_sound_countdown
+	jeq	0f
+	subq	#1,elevator_start_sound_countdown
+	jne	0f
+	move.w	#ELEVATOR_LOOP_SND,d0
+	jbsr	osd_sound_start
+0:
+	rts
+	
 get_hiscore_name:
     lea normal_hiscorename,a0
 	rts
@@ -123,6 +135,8 @@ osd_sound_stop:
 *	jbsr	_mt_stopfx
 *	movem.l	(a7)+,d0/a0/a6
 
+	clr.w	elevator_start_sound_countdown
+	
 	tst.b	music_playing
 	jne		force_sound_stop
 rts
@@ -144,6 +158,10 @@ osd_sound_start:
 	lea		_custom,a6
 	and.w	#0xFF,d0
 	jeq	7f		| should stop the sound
+	cmp.b	#ELEVATOR_STARTS_SND,d0
+	jne		1f
+	move.w	#ELEVATOR_COUNTDOWN_VALUE,elevator_start_sound_countdown
+1:
 	cmp.b	#PLAYER_KILLED_SND,d0
 	jeq		10f
 	cmp.b	#ELEVATOR_STOPS_SND,d0
@@ -249,6 +267,8 @@ music_track_start_number:
 music_pattern:
 	.word	0
 music_tick:
+	.word	0
+elevator_start_sound_countdown:
 	.word	0
 music_duration:
 	.word	0
