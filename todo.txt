@@ -2,7 +2,7 @@
 TODO/ISSUES:
 
 - shoehorn OCS version without sound/music?
-- WTF is the BPLCON2 value for DPF / sprites ok with ECS?
+
 
 minor:
 
