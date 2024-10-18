@@ -2024,6 +2024,7 @@ osd_set_gfx_bank:
 	
 	* blank title sprites first, just in case
 	* (memory is shared with elevators)
+	lea		title_sprites,a0
 	bsr		init_title_blank_sprite_bank
 	
     move.w #0x6600+BORDERBLANK,bplcon0(a5) | 6 bitplanes, dual playfield, borderblank
