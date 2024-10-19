@@ -58,16 +58,17 @@ _user:
 	lea		exe_aga(pc),a0
 	bra.b	run_it
 0:
-*	move.w	0xdff07c,d0
-*	cmp.b	#0xFC,d0
-*	bne.b	0f
-*	move.w	0xdff07c,d0
-*	cmp.b	#0xFC,d0
-*	bne.b	0f
+	* ECS or OCS?
+	move.w	0xdff07c,d0
+	cmp.b	#0xFC,d0
+	bne.b	0f
+	move.w	0xdff07c,d0
+	cmp.b	#0xFC,d0
+	bne.b	0f
 
-*	lea		exe_ecs(pc),a0
-*	bra.b	run_it
-*0:
+	lea		exe_ocs(pc),a0
+	bra.b	run_it
+0:
 	lea		exe_ecs(pc),a0
 run_it:
 	move.l	a0,d1
@@ -276,4 +277,6 @@ exe_aga:
 	.asciz	"elevator_action_aga"
 exe_ecs:
 	.asciz	"elevator_action_ecs"
+exe_ocs:
+	.asciz	"elevator_action_ocs"
 	

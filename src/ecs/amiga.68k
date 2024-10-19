@@ -1561,9 +1561,11 @@ store_system:
 
 restore_system:
 	move.l	system_vbr(pc),a0
+	.ifeq	OPT_NO_SOUND
 	lea	_custom,a6
 	jsr		_mt_remove_cia
-
+	.endif
+	
 	move.w	#0x4000,intena(a6)	| ints off
 	lea		old_sysvectors,a0
 	move.l	system_vbr(pc),a1
@@ -1798,10 +1800,12 @@ platform_init:
 	move.l	a0,(0xB0,a6)
 	move.l	a0,(0xC0,a6)
 	move.l	a0,(0xD0,a6)
+	.ifeq	OPT_NO_SOUND
 	move.l	system_vbr(pc),a0
 	moveq	#1,d0	| PAL
 	jsr		_mt_install_cia
-
+	.endif
+	
 	.ifne	OPT_ENABLE_PROFILING
 	* init profiling if enabled
 	lea		0x180000,a0
@@ -3482,9 +3486,10 @@ elev_displayed_screen_ptr:
 	.long	0
 
 
-
+	.ifeq	OPT_NO_SOUND
 	.include	"sound_entries.68k"
-
+	.endif
+	
 current_column_scroll_values:
 	.long	column_scroll_values_1
 previous_column_scroll_values:

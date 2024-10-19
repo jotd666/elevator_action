@@ -1,12 +1,14 @@
-		.global osd_sound_start
-		.global osd_sound_stop
-		.global music_tick
 		.global osd_read_high_scores
 		.global osd_write_high_scores
 		.global	load_highscores
 		.global	save_highscores
 		.global update_elevator_sound
+		.global osd_sound_start
+		.global osd_sound_stop
+		.global music_tick
 		
+
+
 * sound engine and also highscore management, common to all versions
 	
 .include "dos_lvos.i"
@@ -127,7 +129,7 @@ save_highscores:
 1:	
     rts
     
-	
+	.ifeq	OPT_NO_SOUND
 osd_sound_stop:
 *	movem.l	d0/a0/a6,-(a7)
 *	lea		_custom,a6
@@ -253,7 +255,14 @@ osd_sound_start:
 	jra	1b
 	bsr		osd_sound_stop
 	jra	1b
-
+	.else
+	
+osd_sound_stop:
+osd_sound_start:
+	rts
+	
+	.endif
+	
 music_playing:
 	.byte	0
 looped_sound_enabled:

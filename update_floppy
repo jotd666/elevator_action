@@ -1,17 +1,24 @@
 .key nope
 
-set game elevator_action_aga
+set radix elevator_action
+
+set game ${radix}_aga
 copy $game.RNC DF0:$game
 protect DF0:$game RWED
 copy readme.md df0:
 
-set game elevator_action_ecs
+set game ${radix}_ecs
+copy $game.RNC DF0:$game
+protect DF0:$game RWED
+copy readme.md df0:
+
+set game ${radix}_ocs
 copy $game.RNC DF0:$game
 protect DF0:$game RWED
 copy readme.md df0:
 
 ; copy startup exe
-set game elevator_action
+set game ${radix}
 copy $game DF0:$game
 protect DF0:$game RWED
 
