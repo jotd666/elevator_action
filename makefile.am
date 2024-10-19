@@ -20,7 +20,8 @@ GCC_BIN =
 ASM_BASE = $(GCC_BIN)m68k-amigaos-as -c --defsym __amiga__=1 
 ASM = $(ASM_BASE) -m68000 $(OPT_RELEASE) 
 ASM_020 = $(ASM_BASE) --defsym M68020=1 -m68020 $(OPT_RELEASE) 
-WHDLOADER = ..\$(PROGNAME)_ECS.slave
+WHDLOADER_OCS = ..\$(PROGNAME)_OCS.slave
+WHDLOADER_ECS = ..\$(PROGNAME)_ECS.slave
 WHDLOADER_CHIP = ..\$(PROGNAME)_chip.slave
 WHDLOADER_AGA = ..\$(PROGNAME)_AGA.slave
 WHDLOADER_AGA_CHIP = ..\$(PROGNAME)_AGA_chip.slave
@@ -32,7 +33,8 @@ OCS_MAIN_OBJ = $(AMIGA_OCS_SRC).o
 ECS_MAIN_OBJ = $(AMIGA_ECS_SRC).o
 AGA_MAIN_OBJ = $(AMIGA_AGA_SRC).o
 AMIGA_SHARED_SRC = amiga
-SOURCE = $(AMIGA_ECS_SRC)/$(PROGNAME)HD.s
+SOURCE_OCS = $(AMIGA_OCS_SRC)/$(PROGNAME)HD.s
+SOURCE_ECS = $(AMIGA_ECS_SRC)/$(PROGNAME)HD.s
 SOURCE_AGA = $(AMIGA_AGA_SRC)/$(PROGNAME)HD.s
 
 
@@ -45,11 +47,11 @@ WHDASM = vasmm68k_mot -DDATETIME -I$(HDBASE)/amiga39_JFF_OS/include -I$(WHDBASE)
 
 
 # leave MAIN_OBJ first
-OBJS_OCS = $(OCS_MAIN_OBJ) gfxrom.o sound_engine_ocs.o $(PROGNAME)_ecs.o vbr.o graphics_ecs.o ReadJoyPad.o
+OBJS_OCS = $(OCS_MAIN_OBJ) gfxrom.o sound_engine_ocs.o sounds_ocs.o $(PROGNAME)_ecs.o vbr.o ptplayer.o graphics_ecs.o ReadJoyPad.o
 OBJS_ECS = $(ECS_MAIN_OBJ) gfxrom.o sound_engine.o sounds_ecs.o $(PROGNAME)_ecs.o vbr.o graphics_ecs.o ReadJoyPad.o ptplayer.o 
 OBJS_AGA = $(AGA_MAIN_OBJ) gfxrom.o sound_engine.o sounds_aga.o $(PROGNAME)_aga.o vbr.o graphics_aga.o ReadJoyPad.o ptplayer.o 
 
-all: $(MAIN_AGA) $(MAIN_ECS) $(MAIN_OCS) $(AMIGA_SHELL) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) $(WHDLOADER) $(WHDLOADER_CHIP) 
+all: $(MAIN_AGA) $(MAIN_ECS) $(MAIN_OCS) $(AMIGA_SHELL) $(WHDLOADER_OCS) $(WHDLOADER_AGA) $(WHDLOADER_AGA_CHIP) $(WHDLOADER_ECS) $(WHDLOADER_CHIP) 
 
 $(AMIGA_SHELL): shell.o
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o
@@ -70,6 +72,8 @@ $(AMIGA_AGA_SRC)/graphics.68k: $(ASSETS)/convert_graphics_aga.py $(ASSETS)/graph
 	cmd /c $(ASSETS)\convert_graphics_aga.py
 	del $(AGA_MAIN_OBJ)
 
+$(AMIGA_OCS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_action_conv.mod
+	cmd /c $(ASSETS)\convert_sounds.py
 $(AMIGA_ECS_SRC)/sounds_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_action_conv.mod
 	cmd /c $(ASSETS)\convert_sounds.py
 $(AMIGA_AGA_SRC)/sound_entries.68k: $(ASSETS)/convert_sounds.py $(ASSETS)/../sounds/elevator_action_conv.mod
@@ -87,19 +91,21 @@ $(PROGNAME)_aga.o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc data_offsets.inc $
 $(PROGNAME)_ecs.o: $(PROGNAME).68k $(PROGNAME).inc sounds.inc data_offsets.inc $(PROGNAME)_ram.68k
 	$(ASM) $(PROGNAME).68k -o $(PROGNAME)_ecs.o
 sound_engine.o: $(AMIGA_SHARED_SRC)/sound_engine.68k $(PROGNAME).inc
-	$(ASM) -Iamiga --defsym OPT_NO_SOUND=0 $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o
+	$(ASM) -Iamiga --defsym OPT_MINIMAL_SOUND=0 $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine.o
 sound_engine_ocs.o: $(AMIGA_SHARED_SRC)/sound_engine.68k $(PROGNAME).inc
-	$(ASM) -Iamiga --defsym OPT_NO_SOUND=1 $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine_ocs.o
-$(OCS_MAIN_OBJ): $(AMIGA_ECS_SRC)/amiga.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_ECS_SRC)/palettes.68k $(AMIGA_ECS_SRC)/graphics.68k
-	$(ASM) --defsym OPT_NO_SOUND=1 -Iamiga -Iecs $(AMIGA_ECS_SRC)/amiga.68k -o $(OCS_MAIN_OBJ)
+	$(ASM) -Iamiga --defsym OPT_MINIMAL_SOUND=1 $(AMIGA_SHARED_SRC)/sound_engine.68k -o sound_engine_ocs.o
+$(OCS_MAIN_OBJ): $(AMIGA_ECS_SRC)/amiga.68k $(AMIGA_OCS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_ECS_SRC)/palettes.68k $(AMIGA_ECS_SRC)/graphics.68k
+	$(ASM) --defsym OPT_MINIMAL_SOUND=1 -Iamiga -Iocs -Iecs $(AMIGA_ECS_SRC)/amiga.68k -o $(OCS_MAIN_OBJ)
 $(ECS_MAIN_OBJ): $(AMIGA_ECS_SRC)/amiga.68k $(AMIGA_ECS_SRC)/sound_entries.68k $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_ECS_SRC)/palettes.68k $(AMIGA_ECS_SRC)/graphics.68k
-	$(ASM) --defsym OPT_NO_SOUND=0 -Iamiga -Iecs $(AMIGA_ECS_SRC)/amiga.68k -o $(ECS_MAIN_OBJ)
+	$(ASM) --defsym OPT_MINIMAL_SOUND=0 -Iamiga -Iecs $(AMIGA_ECS_SRC)/amiga.68k -o $(ECS_MAIN_OBJ)
 $(AGA_MAIN_OBJ): $(AMIGA_AGA_SRC)/amiga.68k $(AMIGA_AGA_SRC)/sound_entries.68k data_offsets.inc $(PROGNAME).inc $(AMIGA_SHARED_SRC)/ReadJoyPad.i $(AMIGA_AGA_SRC)/palettes.68k $(AMIGA_AGA_SRC)/graphics.68k
-	$(ASM_020) --defsym OPT_NO_SOUND=0 -Iamiga -Iaga $(AMIGA_AGA_SRC)/amiga.68k -o $(AGA_MAIN_OBJ)
+	$(ASM_020) --defsym OPT_MINIMAL_SOUND=0 -Iamiga -Iaga $(AMIGA_AGA_SRC)/amiga.68k -o $(AGA_MAIN_OBJ)
 vbr.o: $(AMIGA_SHARED_SRC)/vbr.68k
 	$(ASM_020) -Iamiga $(AMIGA_SHARED_SRC)/vbr.68k -o vbr.o
 ptplayer.o: $(AMIGA_SHARED_SRC)/ptplayer.68k
 	$(ASM) -I$(AMIGA_SHARED_SRC) $(AMIGA_SHARED_SRC)/ptplayer.68k -o ptplayer.o
+sounds_ocs.o: $(AMIGA_OCS_SRC)/sounds.68k
+	$(ASM) -I$(AMIGA_OCS_SRC) $(AMIGA_OCS_SRC)/sounds.68k -o sounds_ocs.o
 sounds_ecs.o: $(AMIGA_ECS_SRC)/sounds.68k
 	$(ASM) -I$(AMIGA_ECS_SRC) $(AMIGA_ECS_SRC)/sounds.68k -o sounds_ecs.o
 sounds_aga.o: $(AMIGA_AGA_SRC)/sounds.68k
@@ -115,13 +121,18 @@ graphics_ecs.o: $(AMIGA_ECS_SRC)/graphics.68k $(PROGNAME).inc
 
 
 
-$(WHDLOADER) : $(SOURCE)
+$(WHDLOADER_OCS) : $(SOURCE_OCS)
 	wdate.py> datetime
-	$(WHDASM) -o $(WHDLOADER) $(SOURCE)
+	$(WHDASM) -o $(WHDLOADER_OCS) $(SOURCE_OCS)
 	
-$(WHDLOADER_CHIP) : $(SOURCE)
+
+$(WHDLOADER_ECS) : $(SOURCE_ECS)
 	wdate.py> datetime
-	$(WHDASM) -DCHIP_ONLY -o $(WHDLOADER_CHIP) $(SOURCE)
+	$(WHDASM) -o $(WHDLOADER_ECS) $(SOURCE_ECS)
+	
+$(WHDLOADER_CHIP) : $(SOURCE_AGA)
+	wdate.py> datetime
+	$(WHDASM) -DCHIP_ONLY -o $(WHDLOADER_CHIP) $(SOURCE_AGA)
 
 $(WHDLOADER_AGA) : $(SOURCE_AGA)
 	wdate.py> datetime

@@ -20,7 +20,7 @@ if os.path.exists(outdir):
         os.remove(x)
 else:
     os.mkdir(outdir)
-for file in ["readme.md","game_specs.txt",f"{gamename}_aga.slave",f"{gamename}_ecs.slave"]:  #f"{gamename}.slave",
+for file in ["readme.md","game_specs.txt",f"{gamename}_aga.slave",f"{gamename}_ocs.slave",f"{gamename}_ecs.slave"]:  #f"{gamename}.slave",
     shutil.copy(os.path.join(progdir,file),outdir)
 
 #shutil.copy(os.path.join(progdir,"assets","amiga","MoonPatrolGlowIcon.info"),outdir)

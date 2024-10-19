@@ -235,6 +235,13 @@ _user:
 	
     bra		.no_forbid
 .standard:
+	* zero chip
+	lea		chip_start,a0
+	lea		chip_end,a1
+0:
+	clr.w	(a0)+
+	cmp.l		a0,a1
+	jne	0b
 	
     * open dos library, graphics library
     move.l  0x4.W,a6
@@ -1561,10 +1568,8 @@ store_system:
 
 restore_system:
 	move.l	system_vbr(pc),a0
-	.ifeq	OPT_NO_SOUND
 	lea	_custom,a6
 	jsr		_mt_remove_cia
-	.endif
 	
 	move.w	#0x4000,intena(a6)	| ints off
 	lea		old_sysvectors,a0
@@ -1800,11 +1805,9 @@ platform_init:
 	move.l	a0,(0xB0,a6)
 	move.l	a0,(0xC0,a6)
 	move.l	a0,(0xD0,a6)
-	.ifeq	OPT_NO_SOUND
 	move.l	system_vbr(pc),a0
 	moveq	#1,d0	| PAL
 	jsr		_mt_install_cia
-	.endif
 	
 	.ifne	OPT_ENABLE_PROFILING
 	* init profiling if enabled
@@ -3486,9 +3489,7 @@ elev_displayed_screen_ptr:
 	.long	0
 
 
-	.ifeq	OPT_NO_SOUND
 	.include	"sound_entries.68k"
-	.endif
 	
 current_column_scroll_values:
 	.long	column_scroll_values_1
@@ -3748,7 +3749,8 @@ brick_copper_color:
 		.section .bsschip
 		
 	
-	
+chip_start:
+
 background_restore_buffer:
 	.skip	RESTORE_SCREEN_SIZE
 	*.skip	NB_BYTES_PER_ROW*12*3
@@ -3783,6 +3785,9 @@ elev_screen_buffer_2:
 	*.skip	NB_BYTES_PER_ROW*12*3
 	.skip	8
 	.endif
+
+chip_end:
+
 
 
 		

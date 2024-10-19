@@ -66,16 +66,26 @@ _user:
 	cmp.b	#0xFC,d0
 	bne.b	0f
 
-	lea		exe_ocs(pc),a0
-	bra.b	run_it
-0:
+	
 	lea		exe_ecs(pc),a0
+	move.l	a0,d1
+	move.l	_dosbase(pc),a6
+	jsr		(_LVOLoadSeg,a6)
+	move.l	d1,segments
+	jne		cont		| could be loaded => run it
+	* else, fallback to OCS
+0:
+	*movem.l	d0-a6,-(a7)
+	*bsr		add36k   | not sure if it works...
+	*movem.l	(a7)+,d0-a6
+	lea		exe_ocs(pc),a0
 run_it:
 	move.l	a0,d1
 	move.l	_dosbase(pc),a6
 	jsr		(_LVOLoadSeg,a6)
 	move.l	d1,segments
 	beq.b	out
+cont:
 	add.l	d1,d1
 	add.l	d1,d1
 	move.l	d1,a1
@@ -111,7 +121,26 @@ bcpl_arg_string_copy:
     movem.l (a7)+,D0-D2/A0-A1
     rts
 
-
+add36k:
+	lea		add36k_program,a0
+	move.l	a0,d1
+	move.l	_dosbase(pc),a6
+	jsr		(_LVOLoadSeg,a6)
+	move.l	d1,segments
+	beq.b	0f
+	add.l	d1,d1
+	add.l	d1,d1
+	move.l	d1,a1
+	move.l	a5,a0
+	move.l	d5,d0	| restore arguments, pass them as-is
+	jsr		(4,a1)
+0:
+	move.l	segments,d1
+	beq.b	0f
+	move.l	_dosbase,a6
+	jsr		(_LVOUnLoadSeg,a6)
+0:
+	rts
 bcpl_string_to_int:
     movem.l A0/A1,-(a7)
     lea temp_filename_buffer(pc),a1
@@ -280,3 +309,5 @@ exe_ecs:
 exe_ocs:
 	.asciz	"elevator_action_ocs"
 	
+add36k_program:
+	.asciz	"add36k"

@@ -5,7 +5,7 @@ import config
 gamename = config.gamename
 sox = "sox"
 
-def convert(aga_mode):
+def convert(mode):
     if not shutil.which("sox"):
         raise Exception("sox command not in path, please install it")
     # BTW convert wav to mp3: ffmpeg -i input.wav -codec:a libmp3lame -b:a 330k output.mp3
@@ -16,11 +16,13 @@ def convert(aga_mode):
     sound_dir = os.path.join(this_dir,"..","sounds")
 
     this_dir = os.path.dirname(__file__)
-    src_dir = os.path.join(this_dir,"../../src","aga" if aga_mode else "ecs")
+    src_dir = os.path.join(this_dir,"../../src",mode)
     outfile = os.path.join(src_dir,"sounds.68k")
     sndfile = os.path.join(src_dir,"sound_entries.68k")
 
-    hq_sample_rate = 18004 if aga_mode else 12000
+    aga_mode = mode=="aga"
+
+    hq_sample_rate = {"aga":18004,"ecs":12000,"ocs":11025}[mode]
     lq_sample_rate = hq_sample_rate//2 if aga_mode else 8000
 
 
@@ -64,6 +66,28 @@ def convert(aga_mode):
 
 
     }
+
+    blanked_sounds = {}
+
+    if mode=="ocs":
+        blanked_sounds = {
+        "HURRY_UP_THEME_SND",
+        "PLAYER_FALLS_SND",
+        "CAR_EXIT_SND",
+        "MAIN_THEME_SND",
+        "HURRY_UP_SND",
+        "GAME_OVER_SND",
+        "LAMP_FALLS_SND",
+        "PLAYER_CRUSHED_2_SND",
+        "PLAYER_CRUSHED_SND",
+        "HOOK_SHOT_SND",
+        "EXTRA_LIFE_SND",
+        "DOWN_THE_STAIRS_SND",
+        "UP_THE_STAIRS_SND",
+        "CREDIT_SND"
+        }
+        for x in blanked_sounds:
+            sound_dict.pop(x)
 
     if aga_mode:
         with open(os.path.join(src_dir,"..","sounds.inc"),"w") as f:
@@ -190,11 +214,12 @@ def convert(aga_mode):
                     raise Exception(f"Sound {wav_entry} is too long")
                 write_asm(contents,fw)
 
-        # make sure next section will be aligned
-        with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
-            contents = f.read()
-        fw.write("{}:".format(music_module_label))
-        write_asm(contents,fw)
+        if mode != "ocs":
+            # make sure next section will be aligned
+            with open(os.path.join(sound_dir,f"{gamename}_conv.mod"),"rb") as f:
+                contents = f.read()
+            fw.write("{}:".format(music_module_label))
+            write_asm(contents,fw)
         fw.write("\t.align\t8\n")
 
 
@@ -205,7 +230,7 @@ def convert(aga_mode):
             fst.write(" | {}\n\n".format(i))
 
 
-convert(True)
-convert(False)
+for m in ("aga","ecs","ocs"):
+    convert(m)
 
 

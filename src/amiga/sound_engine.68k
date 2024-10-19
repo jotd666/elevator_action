@@ -129,7 +129,7 @@ save_highscores:
 1:	
     rts
     
-	.ifeq	OPT_NO_SOUND
+
 osd_sound_stop:
 *	movem.l	d0/a0/a6,-(a7)
 *	lea		_custom,a6
@@ -208,12 +208,16 @@ osd_sound_start:
 	* (music_tick value is not important for looped tunes
 	* as long as it's not zero)
 
+	.ifne	OPT_MINIMAL_SOUND
+	jra		1b
+	.else
 	tst.w	music_tick
 	bne.b	1b
 	* play the proper module pattern
 	* load up the countdown if loop
 	move.w	(2,a0,d0.w),d1	| pattern number in .mod file
 	* since it's not zero, next vbl tick will play the music
+	
 	cmp.b	music_track_start_number(pc),d1
 	beq.b	1b		| same track, skip
 
@@ -247,7 +251,8 @@ osd_sound_start:
 	
 6:
 	jra	1b
-
+	.endif
+	
 7:
 	move.w	#3,d0			| channel where loops play
 	clr.b	looped_sound_enabled
@@ -255,13 +260,7 @@ osd_sound_start:
 	jra	1b
 	bsr		osd_sound_stop
 	jra	1b
-	.else
-	
-osd_sound_stop:
-osd_sound_start:
-	rts
-	
-	.endif
+
 	
 music_playing:
 	.byte	0
