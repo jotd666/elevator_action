@@ -1,9 +1,4 @@
 
-TODO/ISSUES:
-
-- shoehorn OCS version without sound/music?
-
-
 minor:
 
 - ECS: check red door open + character + car in the basement: must implement a fallback solution

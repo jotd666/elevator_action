@@ -1064,7 +1064,6 @@ update_bobs_and_hw_sprites:
 	and.w	#0x1F0,d0		| align on 16 lower bound
 	* clear area where the sprite was
 	lea	background_restore_buffer,a0
-	moveq	#NB_PLAYFIELD_PLANES,d3
 	clr.l	(a4)+			| ack deletion
 	move.w	(a4),d4			| height
 	move.w	(2,a4),d2		| width
@@ -1398,7 +1397,6 @@ blit_planes_any_internal_cookie_cut:
 
 	move.w d2,bltamod(a5)		|A modulo=bytes to skip between lines
 	move.w d2,bltbmod(a5)		|B modulo=bytes to skip between lines
-	move.l d7,bltcon0(a5)	| sets con0 and con1: full cookie cut 2 sources & 1 mask
 	
     move.w  d0,bltcmod(a5)	|C modulo
     move.w  d0,bltdmod(a5)	|D modulo

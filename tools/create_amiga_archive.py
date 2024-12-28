@@ -8,13 +8,16 @@ os.environ["PATH"] += os.pathsep+r"K:\progs\cli"
 
 cmd_prefix = ["make","-f",os.path.join(progdir,"makefile.am")]
 
-subprocess.check_call(cmd_prefix+["clean"],cwd=os.path.join(progdir,"src"))
+def make_clean():
+    subprocess.check_call(cmd_prefix+["clean"],cwd=os.path.join(progdir,"src"))
+
+make_clean()
 
 subprocess.check_call(cmd_prefix+["RELEASE_BUILD=1"],cwd=os.path.join(progdir,"src"))
 # create archive
 
 outdir = os.path.join(progdir,f"{gamename}_HD")
-print(outdir)
+
 if os.path.exists(outdir):
     for x in glob.glob(os.path.join(outdir,"*")):
         os.remove(x)
@@ -31,3 +34,5 @@ for suffix in ["ocs","ecs","aga"]:
     exename = f"{gamename}_{suffix}"
     shutil.copy(os.path.join(progdir,exename),outdir)
     subprocess.check_output(["cranker_windows.exe","-f",os.path.join(progdir,exename),"-o",os.path.join(progdir,f"{exename}.rnc")])
+
+make_clean()
