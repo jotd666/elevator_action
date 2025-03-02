@@ -1445,13 +1445,22 @@ start_process_1_plane:
 \name\()_table:
 	.set	shift,0
 	.rept	16
-	.long	(shift<<28)+(shift<<12)+\value
+	.long	(shift<<28)+(shift<<12)+(\value<<16)
 	.set	shift,shift+1
 	.endr
 	.endm
 	
-	GEN_MINTERM_TABLE	cookie_cut_blit,0x0FCA0000
-	GEN_MINTERM_TABLE	cookie_cut_mask_blit,0x0BCA0000
+	.macro	GEN_MINTERM_TABLE_2	name,value
+\name\()_table:
+	.set	shift,0
+	.rept	16
+	.long	(shift<<28)+(\value<<16)
+	.set	shift,shift+1
+	.endr
+	.endm
+	
+	GEN_MINTERM_TABLE	cookie_cut_blit,0x0FCA
+	GEN_MINTERM_TABLE_2	cookie_cut_mask_blit,0x0BCA
 
 * 2 words: first shift (as bplcon value), then
 * offset in bytes
