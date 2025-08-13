@@ -205,7 +205,6 @@ start:
 		.global osd_set_main_scroll
 		.global osd_read_dsw1
 		.global osd_read_dsw2
-		.global osd_read_dsw3
 		.global osd_read_inputs_1
 		.global osd_read_inputs_2
 		.global	osd_set_gfx_bank
