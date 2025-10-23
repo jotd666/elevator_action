@@ -10,10 +10,9 @@ Features:
 
 Note:
 
-For ECS version you'll need 1.5MB of total memory. I could not make
-it run with 1MB only. AGA version runs on vanilla A1200.
-OCS version can run on 1MB only ECS, you'll need only 512k fast memory, but no
-music and reduced sfx.
+OCS version runs on any OCS amiga with 512k expansion: less sfx, no music
+ECS version runs on any 1MB chip amiga: full sfx & music
+AGA version runs on vanilla A1200: full sfx & music, arcade exact colors
 
 Credits:
 
