@@ -803,15 +803,18 @@ draw_bonus_overlay:
     add.w   d2,d4       | blit height
 	move.l	#0xFCA0000,d7	| cookie cut, no shifting
 	moveq	#3,d3			| blit on 4 planes to activate color 15
-0:
+	moveq	#-1,d2
 	WAIT_BLIT
+	move.w	d2,bltalwm(a5)
 	move.w d0,bltamod(a5)		|A modulo=bytes to skip between lines
 	move.w d0,bltbmod(a5)		|B modulo=bytes to skip between lines
     move.w  d0,bltcmod(a5)	|C modulo
     move.w  d0,bltdmod(a5)	|D modulo
+	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
+0:
+	WAIT_BLIT
 	move.l a3,bltapt(a5)	|source graphic top left corner (mask)
 	* non-zero: set data source & bltcon
-	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
 	move.l	a0,bltbpt(a5)	|source graphic top left corner
 	move.l	a1,bltcpt(a5)	|pristine background top (bottom) left corner
 	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
@@ -964,14 +967,14 @@ blit_background:
     lsl.w   #6,d4
     lsr.w   #1,d2		| blit width
     add.w   d2,d4       | blit height
-	
+	moveq	#-1,d2
     * always the same settings
 
     * now just wait for blitter ready to write all registers
 	WAIT_BLIT
     
     * blitter registers set
-
+	move.w	d2,bltalwm(a5)
 	move.l d3,bltcon0(a5)	| sets con0 and con1
 
     move.w  d1,bltamod(a5)	|A modulo
@@ -1387,9 +1390,9 @@ blit_planes_any_internal_cookie_cut:
     lsr.w   #1,d2
     add.w   d2,d4       | blit height
     * always the same settings (ATM)
-	moveq	#0,d2
 	add.w	d5,a3			| apply y offset to mask too (y offset looks wrong)
 	
+ 	moveq	#-2,d2
     * now just wait for blitter ready to write all registers
 	WAIT_BLIT
     
@@ -1397,6 +1400,8 @@ blit_planes_any_internal_cookie_cut:
 
 	move.w d2,bltamod(a5)		|A modulo=bytes to skip between lines
 	move.w d2,bltbmod(a5)		|B modulo=bytes to skip between lines
+	moveq	#0,d2
+    move.w  d2,bltalwm(a5)
 	
     move.w  d0,bltcmod(a5)	|C modulo
     move.w  d0,bltdmod(a5)	|D modulo
@@ -2381,14 +2386,14 @@ update_elevator_column:
     lsl.w   #6,d4
     lsr.w   #1,d2		| blit width
     add.w   d2,d4       | blit height
-	
+	moveq	#-1,d2
     * always the same settings
 
     * now just wait for blitter ready to write all registers
 	WAIT_BLIT
     
     * blitter registers set
-
+	move.w	d2,bltalwm(a5)
 	move.l d3,bltcon0(a5)	| sets con0 and con1
 
     move.w  d1,bltamod(a5)	|A modulo
@@ -3542,7 +3547,7 @@ _end_of_ng_code:
 sprite_table:
 	.skip	SPRITE_STRUCT_SIZE*8
 	
-	.include "palettes.68k"
+	.include "../ocs/palettes.68k"
 
 	
 	* on amiga, this file is included in mpatrol.68k file

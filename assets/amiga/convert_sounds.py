@@ -22,7 +22,7 @@ def convert(mode):
 
     aga_mode = mode=="aga"
 
-    hq_sample_rate = {"aga":18004,"ecs":12000,"ocs":11025}[mode]
+    hq_sample_rate = {"aga":18004,"ecs":12000,"ocs":8000}[mode]
     lq_sample_rate = hq_sample_rate//2 if aga_mode else 8000
 
 
@@ -71,16 +71,16 @@ def convert(mode):
 
     if mode=="ocs":
         blanked_sounds = {
-        "HURRY_UP_THEME_SND",
-        "PLAYER_FALLS_SND",
+        "HURRY_UP_THEME_SND",     # module
+        #"PLAYER_FALLS_SND",
         "CAR_EXIT_SND",
-        "MAIN_THEME_SND",
+        "MAIN_THEME_SND",   # module
         "HURRY_UP_SND",
-        "GAME_OVER_SND",
-        "LAMP_FALLS_SND",
+        "GAME_OVER_SND",   # module
+        #"LAMP_FALLS_SND",
         "PLAYER_CRUSHED_2_SND",
         "PLAYER_CRUSHED_SND",
-        "HOOK_SHOT_SND",
+        "HOOK_SHOT_SND",   # module
         "EXTRA_LIFE_SND",
         "DOWN_THE_STAIRS_SND",
         "UP_THE_STAIRS_SND",

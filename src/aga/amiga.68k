@@ -805,8 +805,8 @@ erase_bonus_overlay:
 	moveq	#-1,d2
 	WAIT_BLIT
 	move.l	d2,bltafwm(a5)
-    move.w  d0,bltdmod(a5)	|D modulo
-	move.l	d7,bltcon0(a5)	| sets con0 and con1: C-A+B->D cookie cut full
+    move.w  d0,bltdmod(a5)	| D modulo
+	move.l	d7,bltcon0(a5)	| sets con0 and con1
 0:
 	WAIT_BLIT
 	move.l	a1,bltdpt(a5)	|destination top (bottom) left corner
@@ -840,7 +840,7 @@ draw_bonus_overlay:
 	moveq	#3,d3			| blit on 4 planes to activate color 15
 	moveq	#-1,d2
 	WAIT_BLIT
-	move.l	d2,bltafwm(a5)
+	move.w	d2,bltalwm(a5)
 	move.w d0,bltamod(a5)		|A modulo=bytes to skip between lines
 	move.w d0,bltbmod(a5)		|B modulo=bytes to skip between lines
     move.w  d0,bltcmod(a5)	|C modulo
