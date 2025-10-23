@@ -208,7 +208,7 @@ for tile in full_sprite_set:
             height = ctile.size[1]
 
             planes = bitplanelib.palette_image2raw(ctile,None,sprites_palette,forced_nb_planes=nb_planes,
-            generate_mask=True,blit_pad=True,
+            generate_mask=True,blit_pad=False,
             mask_color=transparent)
             planesize = len(planes)//(nb_planes+1)
             for sl in range(0,len(planes),planesize):
