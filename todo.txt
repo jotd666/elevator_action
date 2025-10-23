@@ -1,38 +1,6 @@
-- I get a guru after 2 loops of the title screen, after the insert coin screen. Running the WHDLoad version gives me the error "Exception "Illegal Instruction" ($10) at $FF occurred." at the same point
-AGA:
-update_sprite_bitmap:
-	* save extra registers
-	move.l	a4,-(a7)
-	move.l	a5,-(a7)
-	lsl.w	#SPRITE_POWER_OF_2+3,d0	| times SPRITE_STRUCT_SIZE
-	lea		sprite_table,a2
-	add.w	d0,a2		| select proper sprite structure
-	move.l	(_chip_data,a2),a3		| sprite data
-	move.l	(_saved_control_word_address,a2),a5
-	move.w	(a5),d4		| store control word #1   <== access fault A5 is wrong
-	move.w	(4,a5),d5		| store control word #2
-  also after 2 loops, the "ELEVATOR" letters have a red line on some of them
-  then it crashes
-
-ECS:
-	* restore control word just in case it was clobbered by
-	* a tile write
-	* (avoids elevator sprite blinking, not of great help in ELEVATOR
-	* letters)
-	move.w 	d4,(a5)
-	move.w 	d5,(2,a5)	
-0:
-	move.l	(a7)+,a5
-	move.l	(a7)+,a4
-	rts  <==== address error
-	
-
-- optimize tile address/offset calculation
-- fix blitter modulos, maybe in that case 512k becomes possible again!
-
 minor:
 
-
+- AGA: red horizontal bar in "elevator" title if attract mode left running
 - ECS: check red door open + character + car in the basement: must implement a fallback solution
   to blit the red door (disregarding sprite priority)??? or just see what happens in that case
 - AGA: discontinuous elevator cables (control word mixup). CLEAR_TILE_ROW and others seem suspicious

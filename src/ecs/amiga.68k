@@ -2453,9 +2453,9 @@ update_bg_tile_title:
 update_title_letters:
 	* updating sprite data
 	sub.w	#0x8,d0		| min X letter
-	jcs		0f
+	jcs		1000f
 	cmp.w	#0x18,d0	| max X letter
-	jcc		0f
+	jcc		1000f
 	* compute sprite Y offset: x bytes per row, starting at x
 	addq	#1,d1		| skip control words row
 	lsl.w	#2,d1
@@ -2492,6 +2492,8 @@ update_title_letters:
 	
 * < D0: sprite number
 * < D1: X/Y offset to apply to data
+	cmp.w	#8,d0
+	jcc	1000f
 
 	* save extra registers
 	move.l	a4,-(a7)
@@ -2561,9 +2563,9 @@ update_title_letters:
 
 	
 0:
-
 	move.l	(a7)+,a5
 	move.l	(a7)+,a4
+1000:
 	rts
 	
 
