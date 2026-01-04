@@ -443,8 +443,6 @@ _user:
 0:
 	
 	jsr	 _detect_controller_types 
-	clr.b	controller_joypad_0
-	clr.b	controller_joypad_1
 
 	jra		demo_game
 
@@ -3214,6 +3212,23 @@ osd_read_dsw3:
 	rts
 
 	
+skip_level:
+	jbsr	is_game_playing
+	beq		0f
+	move.l	a6,-(a7)
+	GET_RAM_START_IN_A6
+	* from mamecheats.co.uk
+	move.b	#0,(l_8521,a6)
+	move.b	#1,(moving_car_counter_8033,a6)
+	lea		(red_door_position_array_8210,a6),a6
+	* cancel all red doors
+	move.w	#0x1D,d0
+1:
+	move.b	#8,(a6)+
+	dbf		d0,1b
+	move.l	(a7)+,a6
+0:
+	rts
 
 
 	
@@ -3265,7 +3280,7 @@ handle_keyboard:
 	bne.b	0f
 	st.b	cheat_used
 	move.w	#0x0FF,_custom+color
-	
+	jbsr	skip_level
 0:
 	cmp.b	#0x52,d0	| F3 key
 	bne.b	0f
@@ -3624,6 +3639,7 @@ debug_color:
 	
 
 title_copperlist:
+	.word	0x0801,0xFFFE		| better wait to avoid artifacts
 title_bitplanes:
 	DECL_BITPLANES	0,4
 	.word	bplcon2,0		| sprites don't have any priority
@@ -3670,19 +3686,21 @@ game_copperlist:
 	
 	* black color background plane
 
-	* enable sprite colors now
-
-game_sprite_colors:
+	* black sprite colors
 	DECL_COLORS	16,16
 game_sprites:
 	DECL_SPRITES
 game_sprites_end:
 
+	.word	0x0801,0xFFFE		| better wait to avoid artifacts
 elevator_bitplanes:
 	DECL_EVEN_BITPLANES	0,3
 panel_bitplanes:
 	DECL_EVEN_BITPLANES	4,3
 	DECL_COLORS	0,TOTAL_NB_COLORS*2	| all black
+	* sprite colors now
+game_sprite_colors:
+	DECL_COLORS	16,16
 
 elevator_colors:
 	DECL_COLORS	0,TOTAL_NB_COLORS

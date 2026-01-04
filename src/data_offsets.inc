@@ -204,6 +204,7 @@ player_structure_851A = 0x051a
 l_851E = 0x051e
 l_851F = 0x051f
 l_8520 = 0x0520
+l_8521 = 0x0521
 l_8525 = 0x0525
 player_move_direction_8527 = 0x0527
 l_8528 = 0x0528

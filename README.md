@@ -30,3 +30,7 @@ arrows/joystick: move
 red/ctrl: fire
 blue/alt: jump
 M: music on/off
+
+cheat:
+
+F1: skip level

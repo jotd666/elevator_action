@@ -13,6 +13,21 @@ minor:
 - sound: "forgot documents" out-of-tune jump sound doesn't play, should play
   then proceed to "return to door" loop
 
+<cheat desc="Finish this Level Now">
+        <script state="on">
+            <action>maincpu.pb@8033 = 01</action>
+            <action>maincpu.pq@8210 = 0808080808080808</action>
+            <action>maincpu.pq@8218 = 0808080808080808</action>
+            <action>maincpu.pq@8220 = 0808080808080808</action>
+            <action>maincpu.pd@8228 = 08080808</action>
+            <action>maincpu.pw@822C = 0808</action>
+            <action>maincpu.pb@822E = 08</action>
+            <action>maincpu.pb@8521 = 00</action>
+        </script>
+    </cheat>
+
+
+
 to debug a value in game, use the following:
 	.ifndef	RELEASE
 	move.w	#0xC740,d7
