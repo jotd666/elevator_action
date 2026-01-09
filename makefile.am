@@ -57,9 +57,9 @@ $(AMIGA_SHELL): shell.o
 	$(GCC_BIN)m68k-amigaos-ld $(OPT_RELEASE_LINK) -o $(AMIGA_SHELL) shell.o
 
   
-
+# don't delete $(AMIGA_SHELL) 
 clean:
-	del $(OBJS_AGA) $(OBJS_OCS) $(OBJS_ECS) "$(MAIN_ECS)" "$(MAIN_AGA)" $(AMIGA_SHELL) shell.o
+	del $(OBJS_AGA) $(OBJS_OCS) $(OBJS_ECS) "$(MAIN_ECS)" "$(MAIN_AGA)" shell.o
 
 shell.o: $(AMIGA_SHARED_SRC)/shell.68k
 	$(ASM) -Iamiga $(AMIGA_SHARED_SRC)/shell.68k -o shell.o
