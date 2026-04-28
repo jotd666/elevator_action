@@ -4,6 +4,7 @@
 *
 * Version 6.4
 * Written by Frank Wille in 2013, 2016-2024.
+* MIT format code conversion by JOTD
 *
 * I, the copyright holder of this work, hereby release it into the
 * public domain. This applies worldwide.
@@ -365,10 +366,10 @@ _mt_install:
 	* open audio.device and allocate all four audio channels
 	move.l	4.w,a6
 	moveq	#-1,d0
-	jsr	_LVOAllocSignal(a6)
+	jbsr	_LVOAllocSignal(a6)
 	lea	mt_ioport+20(pc),a0
 	move.b	d0,-5(a0)		| MP_SIGBIT
-	bmi	.fail
+	jmi	.fail
 	move.l	a0,8(a0)		| NewList MP_MSGLIST
 	addq.l	#4,a0
 	clr.l	(a0)
@@ -378,16 +379,16 @@ _mt_install:
 	lea	mt_ioaudio(pc),a1
 	moveq	#0,d0
 	moveq	#0,d1
-	jsr	_LVOOpenDevice(a6)
+	jbsr	_LVOOpenDevice(a6)
 	tst.b	d0
-	bne	.no_device
+	jne	.no_device
 
 	.ifeq	NO_TIMERS
 	* attempt to allocate CIA-B timers A and B
 	lea	mt_ciab_name(pc),a1
-	jsr	_LVOOpenResource(a6)
+	jbsr	_LVOOpenResource(a6)
 	tst.l	d0
-	beq	.no_rsrc
+	jeq	.no_rsrc
 
 	move.l	d0,a6
 
@@ -398,16 +399,16 @@ _mt_install:
 	.ifeq	VBLANK_MUSIC
 	moveq	#CIAICRB_TA,d0
 	lea	mt_extern_timer_a_is(pc),a1
-	jsr	_LVOAddICRVector(a6)
+	jbsr	_LVOAddICRVector(a6)
 	tst.l	d0
-	bne	.no_timer_a
+	jne	.no_timer_a
 	.endif	| !VBLANK_MUSIC
 
 	moveq	#CIAICRB_TB,d0
 	lea	mt_extern_timer_b_is(pc),a1
-	jsr	_LVOAddICRVector(a6)
+	jbsr	_LVOAddICRVector(a6)
 	tst.l	d0
-	bne	.no_timer_b
+	jne	.no_timer_b
 
 	* TimerA and TimerB interrupt disable
 	.ifne	VBLANK_MUSIC
@@ -415,7 +416,7 @@ _mt_install:
 	.else
 	moveq	#0x3,d0
 	.endif
-	jsr	_LVOAbleICR(a6)
+	jbsr	_LVOAbleICR(a6)
 
 	lea	CIAB,a0
 
@@ -430,9 +431,9 @@ _mt_install:
 	* determine if 02 clock for timers is based on PAL or NTSC
 	move.l	4.w,a1
 	cmp.b	#50,531(a1)		| PowerSupplyFrequency
-	beq	.1
+	jeq	.1
 	move.l	#1789773,d0             | NTSC
-	bra	.2
+	jra	.2
 1:	move.l	#1773447,d0             | PAL
 2:	move.l	d0,mt_timerval(a4)
 
@@ -454,7 +455,7 @@ _mt_install:
 	.else
 	move.w	#0x83,d0
 	.endif
-	jsr	_LVOAbleICR(a6)
+	jbsr	_LVOAbleICR(a6)
 
 	.endif	| !NO_TIMERS
 
@@ -464,14 +465,14 @@ _mt_install:
 	move.l	a4,-(sp)
 	.endif
 	lea	_custom,a6
-	bra	mt_reset
+	jra	mt_reset
 
 	.ifeq	NO_TIMERS
 3:
 	.ifeq	VBLANK_MUSIC
 	moveq	#CIAICRB_TA,d0
 	lea	mt_extern_timer_a_is(pc),a1
-	jsr	_LVORemICRVector(a6)
+	jbsr	_LVORemICRVector(a6)
 4:
 	.endif	| !VBLANK_MUSIC
 	.endif	| !NO_TIMERS
@@ -479,14 +480,14 @@ _mt_install:
 	move.l	4.w,a6
 5:
 	lea	mt_ioaudio(pc),a1
-	jsr	_LVOCloseDevice(a6)
+	jbsr	_LVOCloseDevice(a6)
 6:
 	moveq	#0,d0
 	move.b	mt_ioport+15(pc),d0
-	jsr	_LVOFreeSignal(a6)
+	jbsr	_LVOFreeSignal(a6)
 7:
 	moveq	#0,d0			| Indicate failure
-	bra	.out
+	jra	.out
 8:
 	moveq	#1,d0			| Indicate success
 9:
@@ -564,9 +565,9 @@ _mt_remove:
 	.ifeq	NO_TIMERS
 	move.l	4.w,a6
 	lea	mt_ciab_name(pc),a1
-	jsr	_LVOOpenResource(a6)
+	jbsr	_LVOOpenResource(a6)
 	tst.l	d0
-	beq	.nociares
+	jeq	.nociares
 
 	move.l	d0,a6
 
@@ -576,16 +577,16 @@ _mt_remove:
 	.else
 	moveq	#0x03,d0
 	.endif
-	jsr	_LVOAbleICR(a6)
+	jbsr	_LVOAbleICR(a6)
 
 	moveq	#CIAICRB_TB,d0
 	lea	mt_extern_timer_b_is(pc),a1
-	jsr	_LVORemICRVector(a6)
+	jbsr	_LVORemICRVector(a6)
 
 	.ifeq	VBLANK_MUSIC
 	moveq	#CIAICRB_TA,d0
 	lea	mt_extern_timer_a_is(pc),a1
-	jsr	_LVORemICRVector(a6)
+	jbsr	_LVORemICRVector(a6)
 	.endif	| !VBLANK_MUSIC
 1:
 	.endif	| !NO_TIMERS
@@ -593,10 +594,10 @@ _mt_remove:
 	* close audio.device, free channels
 	move.l	4.w,a6
 	lea	mt_ioaudio(pc),a1
-	jsr	_LVOCloseDevice(a6)
+	jbsr	_LVOCloseDevice(a6)
 	moveq	#0,d0
 	move.b	mt_ioport+15(pc),d0
-	jsr	_LVOFreeSignal(a6)
+	jbsr	_LVOFreeSignal(a6)
 
 	move.l	(sp)+,a6
 	rts
@@ -620,17 +621,17 @@ mt_cia_timer_a_code:
 	* do music when enabled
 	tst.b	mt_Enable(a4)
 	.ifeq	MINIMAL
-	beq	2f
+	jeq	2f
 	.else
-	beq	1f
+	jeq	1f
 	.endif
 
-	bsr	mt_music		| music with sfx inserted
+	jbsr	mt_music		| music with sfx inserted
 1:	movem.l (sp)+,d2-d7/a2-a6
 	rts
 
 	.ifeq	MINIMAL
-2:	bsr	mt_sfxonly		| no music, only sfx
+2:	jbsr	mt_sfxonly		| no music, only sfx
 	movem.l	(sp)+,d2-d7/a2-a6
 	rts
 	.endif
@@ -645,7 +646,7 @@ mt_cia_timer_b_code:
 	lea	TB_toggle(pc),a0
 	not.b	(a0)
 	lea	_custom+INTREQ,a0
-	beq	mt_TimerBsetrep
+	jeq	mt_TimerBsetrep
 
 	* restart timer for repeat, enable audio DMA after DMADELAY ticks
 	move.b	#0x19,CIAB+CIACRB
@@ -687,19 +688,19 @@ mt_TimerBsetrep:
 
 	.else	| !MINIMAL
 	tst.b	mt_chan1+n_enable(a4)
-	beq	1f
+	jeq	1f
 	move.l	mt_chan1+n_loopstart(a4),AUD0LC-INTREQ(a0)
 	move.w	mt_chan1+n_replen(a4),AUD0LEN-INTREQ(a0)
 1:	tst.b	mt_chan2+n_enable(a4)
-	beq	2f
+	jeq	2f
 	move.l	mt_chan2+n_loopstart(a4),AUD1LC-INTREQ(a0)
 	move.w	mt_chan2+n_replen(a4),AUD1LEN-INTREQ(a0)
 2:	tst.b	mt_chan3+n_enable(a4)
-	beq	3f
+	jeq	3f
 	move.l	mt_chan3+n_loopstart(a4),AUD2LC-INTREQ(a0)
 	move.w	mt_chan3+n_replen(a4),AUD2LEN-INTREQ(a0)
 3:	tst.b	mt_chan4+n_enable(a4)
-	beq	4f
+	jeq	4f
 	move.l	mt_chan4+n_loopstart(a4),AUD3LC-INTREQ(a0)
 	move.w	mt_chan4+n_replen(a4),AUD3LEN-INTREQ(a0)
 4:
@@ -762,9 +763,9 @@ _mt_install_cia:
 	.ifeq	VBLANK_MUSIC
 	* determine if 02 clock for timers is based on PAL or NTSC
 	tst.b	d0
-	bne	1f
+	jne	1f
 	move.l	#1789773,d0		| NTSC
-	bra	2f
+	jra	2f
 1:	move.l	#1773447,d0		| PAL
 2:	move.l	d0,mt_timerval(a4)
 
@@ -793,7 +794,7 @@ _mt_install_cia:
 	move.w	#0xa000,INTENA(a6)
 	.endif	| !NO_TIMERS
 
-	bra	mt_reset
+	jra	mt_reset
 
 
 *---------------------------------------------------------------------------
@@ -852,7 +853,7 @@ mt_TimerAInt:
 
 	* check for TB interrupt and clear CIAB interrupt flags
 	btst	#1,CIAB+CIAICR
-	bne	mt_TimerBInt
+	jne	mt_TimerBInt
 
 	.ifne	VBLANK_MUSIC
 	move.w	#0x2000,_custom+INTREQ	| ack interrupt and leave
@@ -876,18 +877,18 @@ mt_TimerAInt:
 	* do music when enabled
 	tst.b	mt_Enable(a4)
 	.ifeq	MINIMAL
-	beq	2f
+	jeq	2f
 	.else
-	beq	1f
+	jeq	1f
 	.endif
 
-	bsr	mt_music		| music with sfx inserted
+	jbsr	mt_music		| music with sfx inserted
 1:	movem.l	(sp)+,d0-d7/a0-a6
 	nop
 	rte
 
 	.ifeq	MINIMAL
-2:	bsr	mt_sfxonly		| no music, only sfx
+2:	jbsr	mt_sfxonly		| no music, only sfx
 	movem.l	(sp)+,d0-d7/a0-a6
 	nop
 	rte
@@ -904,7 +905,7 @@ mt_TimerBInt:
 	lea	TB_toggle(pc),a0
 	not.b	(a0)
 	lea	_custom+INTREQ,a0
-	beq	mt_TimerBsetrep
+	jeq	mt_TimerBsetrep
 
 	* restart timer for repeat, enable audio DMA after DMADELAY ticks
 	move.w	#0x2000,(a0)		| clear EXTER interrupt flag
@@ -947,19 +948,19 @@ mt_TimerBsetrep:
 
 	.else	| !MINIMAL
 	tst.b	mt_chan1+n_enable(a4)
-	beq	1f
+	jeq	1f
 	move.l	mt_chan1+n_loopstart(a4),AUD0LC-INTREQ(a0)
 	move.w	mt_chan1+n_replen(a4),AUD0LEN-INTREQ(a0)
 1:	tst.b	mt_chan2+n_enable(a4)
-	beq	2f
+	jeq	2f
 	move.l	mt_chan2+n_loopstart(a4),AUD1LC-INTREQ(a0)
 	move.w	mt_chan2+n_replen(a4),AUD1LEN-INTREQ(a0)
 2:	tst.b	mt_chan3+n_enable(a4)
-	beq	3f
+	jeq	3f
 	move.l	mt_chan3+n_loopstart(a4),AUD2LC-INTREQ(a0)
 	move.w	mt_chan3+n_replen(a4),AUD2LEN-INTREQ(a0)
 3:	tst.b	mt_chan4+n_enable(a4)
-	beq	4f
+	jeq	4f
 	move.l	mt_chan4+n_loopstart(a4),AUD3LC-INTREQ(a0)
 	move.w	mt_chan4+n_replen(a4),AUD3LEN-INTREQ(a0)
 4:
@@ -1022,19 +1023,19 @@ _mt_setrep:
 
 	.else	| !MINIMAL
 	tst.b	mt_chan1+n_enable(a4)
-	beq	1f
+	jeq	1f
 	move.l	mt_chan1+n_loopstart(a4),AUD0LC-INTREQ(a0)
 	move.w	mt_chan1+n_replen(a4),AUD0LEN-INTREQ(a0)
 1:	tst.b	mt_chan2+n_enable(a4)
-	beq	2f
+	jeq	2f
 	move.l	mt_chan2+n_loopstart(a4),AUD1LC-INTREQ(a0)
 	move.w	mt_chan2+n_replen(a4),AUD1LEN-INTREQ(a0)
 2:	tst.b	mt_chan3+n_enable(a4)
-	beq	3f
+	jeq	3f
 	move.l	mt_chan3+n_loopstart(a4),AUD2LC-INTREQ(a0)
 	move.w	mt_chan3+n_replen(a4),AUD2LEN-INTREQ(a0)
 3:	tst.b	mt_chan4+n_enable(a4)
-	beq	4f
+	jeq	4f
 	move.l	mt_chan4+n_loopstart(a4),AUD3LC-INTREQ(a0)
 	move.w	mt_chan4+n_replen(a4),AUD3LEN-INTREQ(a0)
 4:
@@ -1071,12 +1072,12 @@ _mt_init:
 
 	* set initial song position
 	cmp.b	950(a0),d0
-	blo	1f
+	jcs	1f
 	moveq	#0,d0
 1:	move.b	d0,mt_SongPos(a4)
 
 	move.l	a1,d0		| sample data location is given?
-	bne	4f
+	jne	4f
 
 	* get number of highest pattern
 	lea	952(a0),a1	| song arrangement list
@@ -1084,7 +1085,7 @@ _mt_init:
 	moveq	#0,d2
 2:	move.b	(a1)+,d1
 	cmp.b	d2,d1
-	bls	3f
+	jls	3f
 	move.b	d1,d2
 3:	dbf	d0,2b
 	addq.b	#1,d2		| number of patterns
@@ -1103,10 +1104,10 @@ _mt_init:
 	moveq	#0,d1
 	move.w	42(a0),d1
 	cmp.w	d2,d1		| length 0 and 1 define unused samples
-	bls	6f
+	jls	6f
 	add.l	d1,d1
 	add.l	d1,a1
-	bra	7f
+	jra	7f
 6:	clr.w	42(a0)		| length 1 means zero -> no sample
 7:	lea	30(a0),a0
 	dbf	d0,5b
@@ -1181,24 +1182,24 @@ _mt_end:
 	.ifdef	SDATA
 	clr.b	mt_Enable(a4)
 	lea	mt_chan1(a4),a0
-	bsr	resetch
+	jbsr	resetch
 	lea	mt_chan2(a4),a0
-	bsr	resetch
+	jbsr	resetch
 	lea	mt_chan3(a4),a0
-	bsr	resetch
+	jbsr	resetch
 	lea	mt_chan4(a4),a0
-	bsr	resetch
+	jbsr	resetch
 	.else
 	lea	mt_data(pc),a1
 	clr.b	mt_Enable(a1)
 	lea	mt_chan1(a1),a0
-	bsr	resetch
+	jbsr	resetch
 	lea	mt_chan2(a1),a0
-	bsr	resetch
+	jbsr	resetch
 	lea	mt_chan3(a1),a0
-	bsr	resetch
+	jbsr	resetch
 	lea	mt_chan4(a1),a0
-	bsr	resetch
+	jbsr	resetch
 	.endif
 	moveq	#0,d0
 	move.w	d0,AUD0VOL(a6)
@@ -1259,7 +1260,7 @@ _mt_soundfx:
 	movem.w	d0-d2,sfx_len(sp)
 	move.w	#0xff01,sfx_cha(sp)	| any channel, priority=1
 	move.l	sp,a0
-	bsr	_mt_playfx
+	jbsr	_mt_playfx
 	lea	sfx_sizeof(sp),sp
 	rts
 
@@ -1287,11 +1288,11 @@ _mt_playfx:
 	DISABLE
 	moveq	#0,d0
 	move.b	sfx_cha(a0),d0
-	bpl	channelsfx		| use fixed channel for effect
+	jpl	channelsfx		| use fixed channel for effect
 
 	* Did we already calculate the n_freecnt values for all channels?
 	tst.b	mt_SilCntValid(a4)
-	bne	freecnt_valid
+	jne	freecnt_valid
 
 	* Look at the next 8 pattern steps to find the longest sequence
 	* of silence (no new note or instrument).
@@ -1353,23 +1354,23 @@ _mt_playfx:
 	add.b	d7,d0
 
 	* break the loop when no channel has any more free pattern steps
-	beq	3f
+	jeq	3f
 
 	* otherwise break after 8 pattern steps
 	subq.w	#1,d2
-	beq	3f
+	jeq	3f
 
 	* End of pattern reached? Then load next pattern pointer.
 	cmp.l	a2,a1
-	blo	2b
+	jcs	2b
 	moveq	#0,d1
 	moveq	#1,d0
 	add.b	mt_SongPos(a4),d0
 	and.w	#0x007f,d0
 	cmp.b	950(a3),d0		| end of song reached?
-	blo	1b
+	jcs	1b
 	moveq	#0,d0
-	bra	1b
+	jra	1b
 
 3:	st	mt_SilCntValid(a4)
 
@@ -1398,7 +1399,7 @@ freecnt_valid:
 	or.b	mt_chan4+n_musiconly(a4),d7
 	sne	d1
 	add.b	d1,d0
-	bmi	10f		| all channels reserved/playing effects
+	jmi	10f		| all channels reserved/playing effects
 
 	* We will prefer a music channel which had an audio interrupt,
 	* because that means the last instrument sample has been played
@@ -1407,24 +1408,24 @@ freecnt_valid:
 	* Try not to break them!
 	moveq	#0,d3
 	tst.b	mt_chan1+n_looped(a4)
-	bne	1f
+	jne	1f
 	or.w	#0x0080,d3
 1:	tst.b	mt_chan2+n_looped(a4)
-	bne	2f
+	jne	2f
 	or.w	#0x0100,d3
 2:	tst.b	mt_chan3+n_looped(a4)
-	bne	3f
+	jne	3f
 	or.w	#0x0200,d3
 3:	tst.b	mt_chan4+n_looped(a4)
-	bne	4f
+	jne	4f
 	or.w	#0x0400,d3
 4:	move.w	INTREQR(a6),d1
 	and.w	d3,d1
-	bne	5f
+	jne	5f
 
 	* All channels are busy. Then break the non-looped ones first...
 	move.w	d3,d1
-	bne	5f
+	jne	5f
 
 	* ..except there are none. Then it doesn't matter. :|
 	move.w	#0x0780,d1
@@ -1434,85 +1435,85 @@ freecnt_valid:
 	btst	#7,d1
 	seq	d0
 	or.b	d4,d0
-	bne	6f
+	jne	6f
 	lea	mt_chan1+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	6f
+	jhi	6f
 	move.l	a1,a2
 	move.b	(a1),d3
 6:	btst	#8,d1
 	seq	d0
 	or.b	d5,d0
-	bne	7f
+	jne	7f
 	lea	mt_chan2+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	7f
+	jhi	7f
 	move.l	a1,a2
 	move.b	(a1),d3
 7:	btst	#9,d1
 	seq	d0
 	or.b	d6,d0
-	bne	8f
+	jne	8f
 	lea	mt_chan3+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	8f
+	jhi	8f
 	move.l	a1,a2
 	move.b	(a1),d3
 8:	btst	#10,d1
 	seq	d0
 	or.b	d7,d0
-	bne	9f
+	jne	9f
 	lea	mt_chan4+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	9f
+	jhi	9f
 	move.l	a1,a2
-	bra	found_sfx_ch
+	jra	found_sfx_ch
 
 9:	move.l	a2,d3
-	bne	found_sfx_ch
+	jne	found_sfx_ch
 
 10:
 	* finally try to overwrite a sound effect with lower/equal priority
 	moveq	#0,d3
 	tst.b	d4
-	beq	11f
+	jeq	11f
 	cmp.b	d4,d2
-	blo	11f
+	jcs	11f
 	lea	mt_chan1+n_freecnt(a4),a2
 	move.b	(a2),d3
 11:	tst.b	d5
-	beq	12f
+	jeq	12f
 	cmp.b	d5,d2
-	blo	12f
+	jcs	12f
 	lea	mt_chan2+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	12f
+	jhi	12f
 	move.l	a1,a2
 	move.b	(a1),d3
 12:	tst.b	d6
-	beq	13f
+	jeq	13f
 	cmp.b	d6,d2
-	blo	13f
+	jcs	13f
 	lea	mt_chan3+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	13f
+	jhi	13f
 	move.l	a1,a2
 	move.b	(a1),d3
 13:	tst.b	d7
-	beq	14f
+	jeq	14f
 	cmp.b	d7,d2
-	blo	14f
+	jcs	14f
 	lea	mt_chan4+n_freecnt(a4),a1
 	cmp.b	(a1),d3
-	bhi	14f
+	jhi	14f
 	move.l	a1,a2
 
 14:	move.l	a2,d3
-	beq	exit_playfx		| ignore new sfx due to low priority
+	jeq	exit_playfx		| ignore new sfx due to low priority
 
 found_sfx_ch:
 	lea	-n_freecnt(a2),a2
-	bra	set_sfx
+	jra	set_sfx
 
 channelsfx:
 * a0 = sfx structure
@@ -1524,9 +1525,9 @@ channelsfx:
 	* priority high enough to replace a present effect on this channel?
 	move.b	sfx_pri(a0),d2
 	cmp.b	n_sfxpri(a2),d2
-	bhs	set_sfx
+	jcc	set_sfx
 	sub.l	a2,a2
-	bra	exit_playfx
+	jra	exit_playfx
 
 set_sfx:
 * activate the sound effect on this channel
@@ -1610,7 +1611,7 @@ _mt_stopfx:
 
 	DISABLE
 	tst.b	n_sfxpri(a0)
-	beq	1f			| no sfx playing anyway
+	jeq	1f			| no sfx playing anyway
 	moveq	#1,d0
 	move.b	d0,n_sfxpri(a0)
 	move.w	d0,n_sfxlen(a0)		| idle loop
@@ -1621,7 +1622,7 @@ _mt_stopfx:
 	clr.l	n_sfxptr(a0)		| use 0x0 for idle-looping
 	.else
 	tst.b	n_looped(a0)
-	beq	1f
+	jeq	1f
 	clr.b	n_looped(a0)
 	subq.l	#2,n_sfxptr(a0)		| idle loop at sample-start - 2
 	.endif
@@ -1687,7 +1688,7 @@ _mt_mastervol:
 	* set new table and adapt all channel volumes immediately
 	DISABLE
 	move.l	a0,mt_MasterVolTab(a4)
-	bsr	set_all_volumes
+	jbsr	set_all_volumes
 	ENABLE
 
 	.ifndef	SDATA
@@ -1719,7 +1720,7 @@ _mt_channelmask:
 	add.b	d0,d0
 	scs	mt_chan1+n_enable(a4)
 	move.l	mt_MasterVolTab(a4),a0
-	bsr	set_all_volumes
+	jbsr	set_all_volumes
 
 	ENABLE
 
@@ -1734,43 +1735,43 @@ set_all_volumes:
 * a0 = Master volume table
 
 	tst.b	mt_chan1+n_sfxpri(a4)
-	bne	1f
+	jne	1f
 	move.w	mt_chan1+n_volume(a4),d0
 	move.b	(a0,d0.w),d0
 	and.b	mt_chan1+n_enable(a4),d0
 	move.w	d0,AUD0VOL(a6)
 	.ifdef	VOL0_UNLOOPS
-	bne	1f
+	jne	1f
 	clr.b	mt_chan1+n_looped(a4)
 	.endif
 1:	tst.b	mt_chan2+n_sfxpri(a4)
-	bne	2f
+	jne	2f
 	move.w	mt_chan2+n_volume(a4),d0
 	move.b	(a0,d0.w),d0
 	and.b	mt_chan2+n_enable(a4),d0
 	move.w	d0,AUD1VOL(a6)
 	.ifdef	VOL0_UNLOOPS
-	bne	2f
+	jne	2f
 	clr.b	mt_chan2+n_looped(a4)
 	.endif
 2:	tst.b	mt_chan3+n_sfxpri(a4)
-	bne	3f
+	jne	3f
 	move.w	mt_chan3+n_volume(a4),d0
 	move.b	(a0,d0.w),d0
 	and.b	mt_chan3+n_enable(a4),d0
 	move.w	d0,AUD2VOL(a6)
 	.ifdef	VOL0_UNLOOPS
-	bne	3f
+	jne	3f
 	clr.b	mt_chan3+n_looped(a4)
 	.endif
 3:	tst.b	mt_chan4+n_sfxpri(a4)
-	bne	4f
+	jne	4f
 	move.w	mt_chan4+n_volume(a4),d0
 	move.b	(a0,d0.w),d0
 	and.b	mt_chan4+n_enable(a4),d0
 	move.w	d0,AUD3VOL(a6)
 	.ifdef	VOL0_UNLOOPS
-	bne	4f
+	jne	4f
 	clr.b	mt_chan4+n_looped(a4)
 	.endif
 4:	rts
@@ -1812,12 +1813,12 @@ _mt_music:
 
 	.ifdef	SDATA
 	movem.l	d2-d7/a2-a3/a5,-(sp)
-	bsr	mt_music
+	jbsr	mt_music
 	movem.l	(sp)+,d2-d7/a2-a3/a5
 	.else	| !SDATA
 	movem.l	d2-d7/a2-a5,-(sp)
 	lea	mt_data(pc),a4
-	bsr	mt_music
+	jbsr	mt_music
 	movem.l	(sp)+,d2-d7/a2-a5
 	.endif
 	rts
@@ -1837,50 +1838,50 @@ mt_music:
 
 	move.b	mt_Counter(a4),d0
 	cmp.b	mt_Speed(a4),d0
-	blo	no_new_note
+	jcs	no_new_note
 
 	* handle a new note
 	move.b	d7,mt_Counter(a4)
 	tst.b	mt_PattDelTime2(a4)
-	beq	get_new_note
+	jeq	get_new_note
 
 	* we have a pattern delay, check effects then step
 	lea	AUD0LC(a6),a5
 	lea	mt_chan1(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 	lea	AUD1LC(a6),a5
 	lea	mt_chan2(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 	lea	AUD2LC(a6),a5
 	lea	mt_chan3(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 	lea	AUD3LC(a6),a5
 	lea	mt_chan4(a4),a2
-	bsr	mt_checkfx
-	bra	settb_step
+	jbsr	mt_checkfx
+	jra	settb_step
 
 no_new_note:
 	* no new note, just check effects, don't step to next position
 	lea	AUD0LC(a6),a5
 	lea	mt_chan1(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 	lea	AUD1LC(a6),a5
 	lea	mt_chan2(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 	lea	AUD2LC(a6),a5
 	lea	mt_chan3(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 	lea	AUD3LC(a6),a5
 	lea	mt_chan4(a4),a2
-	bsr	mt_checkfx
+	jbsr	mt_checkfx
 
 	.ifeq	NO_TIMERS
 	* set one-shot TimerB interrupt for enabling DMA, when needed
 	move.b	mt_dmaon+1(pc),d0
-	beq	same_pattern
+	jeq	same_pattern
 	move.b	#0x19,CIAB+CIACRB	| load/start timer B, one-shot
 	.endif
-	bra	same_pattern
+	jra	same_pattern
 
 get_new_note:
 	* determine pointer to current pattern line
@@ -1899,22 +1900,22 @@ get_new_note:
 	* play new note for each channel, apply some effects
 	lea	AUD0LC(a6),a5
 	lea	mt_chan1(a4),a2
-	bsr	mt_playvoice
+	jbsr	mt_playvoice
 	lea	AUD1LC(a6),a5
 	lea	mt_chan2(a4),a2
-	bsr	mt_playvoice
+	jbsr	mt_playvoice
 	lea	AUD2LC(a6),a5
 	lea	mt_chan3(a4),a2
-	bsr	mt_playvoice
+	jbsr	mt_playvoice
 	lea	AUD3LC(a6),a5
 	lea	mt_chan4(a4),a2
-	bsr	mt_playvoice
+	jbsr	mt_playvoice
 
 settb_step:
 	.ifeq	NO_TIMERS
 	* set one-shot TimerB interrupt for enabling DMA, when needed
 	move.b	mt_dmaon+1(pc),d0
-	beq	pattern_step
+	jeq	pattern_step
 	move.b	#0x19,CIAB+CIACRB	| load/start timer B, one-shot
 	.endif
 
@@ -1927,13 +1928,13 @@ pattern_step:
 
 	move.b	mt_PattDelTime2(a4),d1
 	move.b	mt_PattDelTime(a4),d0
-	beq	1f
+	jeq	1f
 	move.b	d0,d1
 	move.b	d7,mt_PattDelTime(a4)
 1:	tst.b	d1
-	beq	3f
+	jeq	3f
 	subq.b	#1,d1
-	beq	2f
+	jeq	2f
 	moveq	#0,d2			| do not advance to next line
 2:	move.b	d1,mt_PattDelTime2(a4)
 
@@ -1941,14 +1942,14 @@ pattern_step:
 
 	* check for break
 	bclr	d7,mt_PBreakFlag(a4)
-	beq	4f
+	jeq	4f
 	move.w	mt_PBreakPos(a4),d2
 	move.w	d7,mt_PBreakPos(a4)
 
 	* check whether end of pattern is reached
 4:	move.w	d2,mt_PatternPos(a4)
 	cmp.w	#1024,d2
-	blo	same_pattern
+	jcs	same_pattern
 
 song_step:
 	move.w	mt_PBreakPos(a4),mt_PatternPos(a4)
@@ -1961,11 +1962,11 @@ song_step:
 	and.w	#0x007f,d0
 	move.l	mt_mod(a4),a0
 	cmp.b	950(a0),d0		| end of song reached?
-	blo	2f
+	jcs	2f
 	moveq	#0,d0			| restart the song from the beginning
 	.ifeq	MINIMAL
 	addq.b	#1,mt_SongEnd(a4)
-	bne	1f
+	jne	1f
 	clr.b	mt_Enable(a4)		| stop the song when mt_SongEnd was -1
 1:	and.b	#0x7f,mt_SongEnd(a4)
 	.endif
@@ -1973,7 +1974,7 @@ song_step:
 
 same_pattern:
 	tst.b	mt_PosJumpFlag(a4)
-	bne	song_step
+	jne	song_step
 
 	rts
 
@@ -1992,20 +1993,20 @@ mt_sfxonly:
 
 	lea	AUD0LC(a6),a5
 	lea	mt_chan1(a4),a2
-	bsr	chan_sfx_only
+	jbsr	chan_sfx_only
 	lea	AUD1LC(a6),a5
 	lea	mt_chan2(a4),a2
-	bsr	chan_sfx_only
+	jbsr	chan_sfx_only
 	lea	AUD2LC(a6),a5
 	lea	mt_chan3(a4),a2
-	bsr	chan_sfx_only
+	jbsr	chan_sfx_only
 	lea	AUD3LC(a6),a5
 	lea	mt_chan4(a4),a2
-	bsr	chan_sfx_only
+	jbsr	chan_sfx_only
 
 	.ifeq	NO_TIMERS
 	move.b	mt_dmaon+1(pc),d0
-	beq	1f
+	jeq	1f
 	move.b	#0x19,CIAB+CIACRB	| load/start timer B, one-shot
 	.endif
 
@@ -2018,19 +2019,19 @@ chan_sfx_only:
 * a5 = audio registers
 
 	tst.b	n_sfxpri(a2)
-	beq	1f
+	jeq	1f
 
 	move.w	n_sfxlen(a2),d0
-	bne	start_sfx
+	jne	start_sfx
 	tst.b	n_looped(a2)
-	bne	1f
+	jne	1f
 
 	move.w	n_intbit(a2),d0
 	and.w	INTREQR(a6),d0
-	beq	1f
+	jeq	1f
 	move.w	n_dmabit(a2),d0
 	and.w	mt_dmaon(pc),d0
-	bne	1f
+	jne	1f
 
 	* last sound effect sample has played, so unblock this channel again
 	move.b	d7,n_sfxpri(a2)
@@ -2050,7 +2051,7 @@ start_sfx:
 
 	move.l	n_sfxptr(a2),a0
 	tst.b	n_sfxpri(a2)
-	bpl	1f
+	jpl	1f
 
 	* looped sound effect
 	st	n_looped(a2)
@@ -2058,7 +2059,7 @@ start_sfx:
 	subq.w	#1,d0
 	move.l	a0,AUDLC(a5)
 	move.w	d0,AUDLEN(a5)
-	bra	2f
+	jra	2f
 
 	* normal sound effect
 1:	move.b	d7,n_looped(a2)
@@ -2092,11 +2093,11 @@ mt_checkfx:
 
 	.ifeq	MINIMAL
 	tst.b	n_sfxpri(a2)
-	beq	3f
+	jeq	3f
 
 	move.w	n_sfxlen(a2),d0
-	beq	2f
-	bsr	start_sfx
+	jeq	2f
+	jbsr	start_sfx
 
 	* channel is blocked, only check some E-commands
 1:	move.w	#0x0fff,d4
@@ -2104,18 +2105,18 @@ mt_checkfx:
 	move.w	d4,d0
 	clr.b	d0
 	cmp.w	#0x0e00,d0
-	bne	mt_nop
+	jne	mt_nop
 	and.w	#0x00ff,d4
-	bra	blocked_e_cmds
+	jra	blocked_e_cmds
 
 2:	tst.b	n_looped(a2)
-	bne	1b
+	jne	1b
 	move.w	n_intbit(a2),d0
 	and.w	INTREQR(a6),d0
-	beq	1b
+	jeq	1b
 	move.w	n_dmabit(a2),d0
 	and.w	mt_dmaon(pc),d0
-	bne	1b
+	jne	1b
 
 	* sound effect sample has played, so unblock this channel again
 	move.b	d7,n_sfxpri(a2)
@@ -2123,12 +2124,12 @@ mt_checkfx:
 
 	* do channel effects between notes
 3:	move.w	n_funk(a2),d0
-	beq	4f
-	bsr	mt_updatefunk
+	jeq	4f
+	jbsr	mt_updatefunk
 
 4:	move.w	#0x0fff,d4
 	and.w	n_cmd(a2),d4
-	beq	mt_pernop
+	jeq	mt_pernop
 	and.w	#0x00ff,d4
 
 	moveq	#0x0f,d0
@@ -2176,29 +2177,29 @@ mt_playvoice:
 	.ifeq	MINIMAL
 	* channel blocked by external sound effect?
 	tst.b	n_sfxpri(a2)
-	beq	2f
+	jeq	2f
 
 	move.w	n_sfxlen(a2),d0
-	beq	1f
-	bsr	start_sfx
-	bra	moreblockedfx
+	jeq	1f
+	jbsr	start_sfx
+	jra	moreblockedfx
 
 	* do only some limited commands, while sound effect is in progress
 1:	tst.b	n_looped(a2)
-	bne	moreblockedfx
+	jne	moreblockedfx
 	move.w	n_intbit(a2),d0
 	and.w	INTREQR(a6),d0
-	beq	moreblockedfx
+	jeq	moreblockedfx
 	move.w	n_dmabit(a2),d0
 	and.w	mt_dmaon(pc),d0
-	bne	moreblockedfx
+	jne	moreblockedfx
 
 	* sound effect sample has played, so unblock this channel again
 	move.b	d7,n_sfxpri(a2)
 	.endif	| !MINIMAL
 
 2:	tst.l	(a2)			| n_note/cmd: any note or cmd set?
-	bne	3f
+	jne	3f
 	move.w	n_period(a2),AUDPER(a5)
 3:	move.l	d6,(a2)
 
@@ -2222,7 +2223,7 @@ mt_playvoice:
 
 	* get sample start address
 	add.w	d0,d0			| sample number * 2
-	beq	set_regs
+	jeq	set_regs
 	move.w	mult30tab(pc,d0.w),d1	| d1 sample info table offset
 	lea	mt_SampleStarts(a4),a0
 	add.w	d0,d0
@@ -2231,7 +2232,7 @@ mt_playvoice:
 	* read length, volume and repeat from sample info table
 	lea	(a3,d1.w),a0
 	move.w	(a0)+,d0		| length
-	bne	4f
+	jne	4f
 
 	.ifne	NULL_IS_CLEARED
 	moveq	#0,d2			| use 0x0 for empty samples
@@ -2260,7 +2261,7 @@ mt_playvoice:
 	move.b	(a0)+,d1		| volume
 	move.w	d1,n_volume(a2)
 	move.w	(a0)+,d3		| repeat offset
-	beq	no_offset
+	jeq	no_offset
 
 	* set repeat
 	add.l	d3,d2
@@ -2269,7 +2270,7 @@ mt_playvoice:
 	move.w	d0,n_replen(a2)
 	exg	d0,d3			| n_replen to d3
 	add.w	d3,d0
-	bra	set_len_start
+	jra	set_len_start
 
 mult30tab:
 	.short	0*30,1*30,2*30,3*30,4*30,5*30,6*30,7*30
@@ -2281,10 +2282,10 @@ no_offset:
 	move.w	(a0),d3
 	.ifne	NULL_IS_CLEARED
 	cmp.w	#1,d3
-	beq	1f
-	bhi	set_replen
+	jeq	1f
+	jhi	set_replen
 	.else
-	bne	set_replen
+	jne	set_replen
 	.endif
 	* repeat length zero means idle-looping
 	addq.w	#1,d3
@@ -2317,10 +2318,10 @@ set_regs:
 	swap	d4			| d4 cmd argument into LSW
 
 	tst.w	d6
-	beq	checkmorefx		| no new note
+	jeq	checkmorefx		| no new note
 
 	cmp.w	#0x0e50,d3
-	beq	set_finetune
+	jeq	set_finetune
 
 	move.w	prefx_tab(pc,d5.w),d0
 	jmp	prefx_tab(pc,d0.w)
@@ -2342,14 +2343,14 @@ mt_sampleoffset:
 
 	moveq	#0,d0
 	move.b	d4,d0
-	bne	1f
+	jne	1f
 	move.b	n_sampleoffset(a2),d0
-	bra	2f
+	jra	2f
 1:	move.b	d0,n_sampleoffset(a2)
 
 2:	lsl.w	#7,d0
 	cmp.w	n_length(a2),d0
-	bhs	3f
+	jcc	3f
 	sub.w	d0,n_length(a2)
 	add.w	d0,d0
 	add.l	d0,n_start(a2)
@@ -2360,8 +2361,8 @@ mt_sampleoffset:
 
 
 set_sampleoffset:
-	bsr	mt_sampleoffset
-	bra	set_period
+	jbsr	mt_sampleoffset
+	jra	set_period
 
 set_finetune:
 	lea	mt_PerFineTune(pc),a0
@@ -2395,18 +2396,18 @@ set_period:
 
 	* check for notedelay
 	cmp.w	#0x0ed0,d3		| notedelay
-	beq	checkmorefx
+	jeq	checkmorefx
 
 	* disable DMA
 	move.w	n_dmabit(a2),d0
 	move.w	d0,DMACON(a6)
 
 	btst	#2,n_vibratoctrl(a2)
-	bne	2f
+	jne	2f
 	move.b	d7,n_vibratopos(a2)
 
 2:	btst	#2,n_tremoloctrl(a2)
-	bne	3f
+	jne	3f
 	move.b	d7,n_tremolopos(a2)
 
 3:	move.l	n_start(a2),AUDLC(a5)
@@ -2421,8 +2422,8 @@ checkmorefx:
 * d6 = note.w
 
 	move.w	n_funk(a2),d0
-	beq	1f
-	bsr	mt_updatefunk
+	jeq	1f
+	jbsr	mt_updatefunk
 
 1:	move.w	morefx_tab(pc,d5.w),d0
 	jmp	morefx_tab(pc,d0.w)
@@ -2466,8 +2467,8 @@ set_toneporta:
 3:	move.w	d1,n_wantedperiod(a2)
 
 	move.w	n_funk(a2),d0
-	beq	4f
-	bsr	mt_updatefunk
+	jeq	4f
+	jbsr	mt_updatefunk
 
 4:	move.w	d2,AUDPER(a5)
 	rts
@@ -2506,12 +2507,12 @@ mt_arpeggio:
 	moveq	#0,d0
 	move.b	mt_Counter(a4),d0
 	move.b	arptab(pc,d0.w),d0
-	beq	mt_pernop		| step 0, just use normal period
-	bmi	1f
+	jeq	mt_pernop		| step 0, just use normal period
+	jmi	1f
 
 	* step 1, arpeggio by left nibble
 	lsr.b	#4,d4
-	bra	2f
+	jra	2f
 
 	* step 2, arpeggio by right nibble
 1:	and.w	#0x000f,d4
@@ -2520,7 +2521,7 @@ mt_arpeggio:
 2:	add.w	d4,d4
 	add.w	n_noteoff(a2),d4
 	cmp.w	#2*36,d4
-	bhs	3f
+	jcc	3f
 
 	* set period with arpeggio offset from note table
 	move.l	n_pertab(a2),a0
@@ -2537,7 +2538,7 @@ mt_fineportaup:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	beq	do_porta_up
+	jeq	do_porta_up
 	rts
 
 
@@ -2551,7 +2552,7 @@ do_porta_up:
 	move.w	n_period(a2),d1
 	sub.w	d0,d1
 	cmp.w	#113,d1
-	bge	1f
+	jge	1f
 	moveq	#113,d1
 1:	move.w	d1,n_period(a2)
 	move.w	d1,AUDPER(a5)
@@ -2563,7 +2564,7 @@ mt_fineportadn:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	beq	do_porta_down
+	jeq	do_porta_down
 	rts
 
 
@@ -2577,7 +2578,7 @@ do_porta_down:
 	move.w	n_period(a2),d1
 	add.w	d0,d1
 	cmp.w	#856,d1
-	bls	1f
+	jls	1f
 	move.w	#856,d1
 1:	move.w	d1,n_period(a2)
 	move.w	d1,AUDPER(a5)
@@ -2589,38 +2590,38 @@ mt_toneporta:
 * d4 = xy
 
 	tst.b	d4
-	beq	mt_toneporta_nc
+	jeq	mt_toneporta_nc
 	move.w	d4,n_toneportspeed(a2)
 	move.b	d7,n_cmdlo(a2)
 
 mt_toneporta_nc:
 	move.w	n_wantedperiod(a2),d1
-	beq	6f
+	jeq	6f
 
 	move.w	n_toneportspeed(a2),d0
 	move.w	n_period(a2),d2
 	cmp.w	d1,d2
-	blo	1f
+	jcs	1f
 
 	* tone porta up
 	sub.w	d0,d2
 	cmp.w	d1,d2
-	bgt	2f
+	jgt	2f
 	move.w	d1,d2
 	move.w	d7,n_wantedperiod(a2)
-	bra	2f
+	jra	2f
 
 	* tone porta down
 1:	add.w	d0,d2
 	cmp.w	d1,d2
-	blt	2f
+	jlt	2f
 	move.w	d1,d2
 	move.w	d7,n_wantedperiod(a2)
 
 2:	move.w	d2,n_period(a2)
 
 	tst.b	n_gliss(a2)
-	beq	4f
+	jeq	4f
 
 	* glissando: find nearest note for new period
 	move.l	n_pertab(a2),a0
@@ -2643,15 +2644,15 @@ mt_vibrato:
 
 	moveq	#0x0f,d2
 	and.b	d4,d2
-	beq	1f
+	jeq	1f
 	move.b	d2,n_vibratoamp(a2)
-	bra	2f
+	jra	2f
 1:	move.b	n_vibratoamp(a2),d2
 
 2:	lsr.b	#4,d4
-	beq	3f
+	jeq	3f
 	move.b	d4,n_vibratospd(a2)
-	bra	mt_vibrato_nc
+	jra	mt_vibrato_nc
 3:	move.b	n_vibratospd(a2),d4
 
 mt_vibrato_nc:
@@ -2665,17 +2666,17 @@ mt_vibrato_nc:
 	* select vibrato waveform
 	moveq	#3,d1
 	and.b	n_vibratoctrl(a2),d1
-	beq	2f
+	jeq	2f
 	subq.b	#1,d1
-	beq	1f
+	jeq	1f
 
 	* ctrl 2 & 3 select a rectangle vibrato
 	lea	mt_VibratoRectTable(pc),a0
-	bra	3f
+	jra	3f
 
 	* ctrl 1 selects a sawtooth vibrato
 1:	lea	mt_VibratoSawTable(pc),a0
-	bra	3f
+	jra	3f
 	.endif	| ENABLE_SAWRECT
 
 	* ctrl 0 selects a sine vibrato
@@ -2697,7 +2698,7 @@ mt_tonevolslide:
 * d4 = xy
 
 	pea	mt_volumeslide(pc)
-	bra	mt_toneporta_nc
+	jra	mt_toneporta_nc
 
 
 mt_vibrvolslide:
@@ -2707,10 +2708,10 @@ mt_vibrvolslide:
 	move.w	d4,d3
 	move.b	n_vibratoamp(a2),d2
 	move.b	n_vibratospd(a2),d4
-	bsr	mt_vibrato_nc
+	jbsr	mt_vibrato_nc
 
 	move.w	d3,d4
-	bra	mt_volumeslide_noperiod
+	jra	mt_volumeslide
 
 
 mt_tremolo:
@@ -2719,15 +2720,15 @@ mt_tremolo:
 
 	moveq	#0x0f,d2
 	and.b	d4,d2
-	beq	1f
+	jeq	1f
 	move.b	d2,n_tremoloamp(a2)
-	bra	2f
+	jra	2f
 1:	move.b	n_tremoloamp(a2),d2
 
 2:	lsr.b	#4,d4
-	beq	3f
+	jeq	3f
 	move.b	d4,n_tremolospd(a2)
-	bra	4f
+	jra	4f
 3:	move.b	n_tremolospd(a2),d4
 
 	* calculate tremolo table offset: 64 * amplitude + (pos & 63)
@@ -2740,17 +2741,17 @@ mt_tremolo:
 	* select tremolo waveform
 	moveq	#3,d1
 	and.b	n_tremoloctrl(a2),d1
-	beq	6f
+	jeq	6f
 	subq.b	#1,d1
-	beq	5f
+	jeq	5f
 
 	* ctrl 2 & 3 select a rectangle tremolo
 	lea	mt_VibratoRectTable(pc),a0
-	bra	7f
+	jra	7f
 
 	* ctrl 1 selects a sawtooth tremolo
 5:	lea	mt_VibratoSawTable(pc),a0
-	bra	7f
+	jra	7f
 	.endif	| ENABLE_SAWRECT
 
 	* ctrl 0 selects a sine tremolo
@@ -2759,10 +2760,10 @@ mt_tremolo:
 	* add tremolo-offset to volume
 7:	move.w	n_volume(a2),d0
 	add.b	(a0,d2.w),d0
-	bpl	8f
+	jpl	8f
 	moveq	#0,d0
 8:	cmp.w	#64,d0
-	bls	9f
+	jls	9f
 	moveq	#64,d0
 9:	move.w	n_period(a2),AUDPER(a5)
 	.ifeq	MINIMAL
@@ -2772,7 +2773,7 @@ mt_tremolo:
 	.endif
 	move.w	d0,AUDVOL(a5)
 	.ifdef	VOL0_UNLOOPS
-	bne	10f
+	jne	10f
 	move.b	d7,n_looped(a2)
 	.endif
 
@@ -2789,20 +2790,20 @@ mt_volumeslide:
 	moveq	#0x0f,d1
 	and.b	d4,d1
 	lsr.b	#4,d4
-	beq	vol_slide_down
+	jeq	vol_slide_down
 
 	* slide up, until 64
 	add.b	d4,d0
 vol_slide_up:
 	cmp.b	#64,d0
-	bls	set_pervol
+	jls	set_pervol
 	moveq	#64,d0
-	bra	set_pervol
+	jra	set_pervol
 
 	* slide down, until 0
 vol_slide_down:
 	sub.b	d1,d0
-	bpl	set_pervol
+	jpl	set_pervol
 	moveq	#0,d0
 
 set_pervol:
@@ -2816,46 +2817,7 @@ set_vol:
 	.endif
 	move.w	d0,AUDVOL(a5)
 	.ifdef	VOL0_UNLOOPS
-	bne	1f
-	move.b	d7,n_looped(a2)
-	.endif
-1:	rts
-
-
-mt_volumeslide_noperiod:
-* cmd A x y (x = volume-up, y = volume-down)
-* d4 = xy
-
-	move.w	n_volume(a2),d0
-	moveq	#0x0f,d1
-	and.b	d4,d1
-	lsr.b	#4,d4
-	beq	1f
-
-	* slide up, until 64
-	add.b	d4,d0
-
-	cmp.b	#64,d0
-	bls	0f
-	moveq	#64,d0
-	bra	0f
-
-	* slide down, until 0
-1:
-	sub.b	d1,d0
-	bpl	0f
-	moveq	#0,d0
-
-0:
-	move.w	d0,n_volume(a2)
-	.ifeq	MINIMAL
-	move.l	mt_MasterVolTab(a4),a0
-	move.b	(a0,d0.w),d0
-	and.b	n_enable(a2),d0
-	.endif
-	move.w	d0,AUDVOL(a5)
-	.ifdef	VOL0_UNLOOPS
-	bne	1f
+	jne	1f
 	move.b	d7,n_looped(a2)
 	.endif
 1:	rts
@@ -2881,9 +2843,9 @@ mt_volchange:
 
 	move.w	d4,d0
 	cmp.w	#64,d0
-	bls	set_vol
+	jls	set_vol
 	moveq	#64,d0
-	bra	set_vol
+	jra	set_vol
 
 
 mt_patternbrk:
@@ -2896,7 +2858,7 @@ mt_patternbrk:
 	lsr.w	#4,d1
 	add.b	mult10tab(pc,d1.w),d0
 	cmp.b	#63,d0
-	bhi	jump_pos0
+	jhi	jump_pos0
 
 	lsl.w	#4,d0
 	move.w	d0,mt_PBreakPos(a4)
@@ -2913,11 +2875,11 @@ mt_setspeed:
 
 	.ifeq	VBLANK_MUSIC
 	cmp.b	#0x20,d4
-	bhs	1f
+	jcc	1f
 	.endif
 
 	move.b	d4,mt_Speed(a4)
-	beq	_mt_end
+	jeq	_mt_end
 	rts
 
 	.ifeq	VBLANK_MUSIC
@@ -3001,7 +2963,7 @@ mt_filter:
 * d0 = x
 
 	lsr.b	#1,d0
-	bcs	1f
+	jcs	1f
 	bclr	#1,CIAA+CIAPRA
 	rts
 1:	bset	#1,CIAA+CIAPRA
@@ -3043,15 +3005,15 @@ mt_jumploop:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	bne	4f
+	jne	4f
 
 1:	tst.b	d0
-	beq	3f			| set start
+	jeq	3f			| set start
 
 	* otherwise we are at the end of the loop
 	subq.b	#1,n_loopcount(a2)
-	beq	4f			| loop finished
-	bpl	2f
+	jeq	4f			| loop finished
+	jpl	2f
 
 	* initialize loop counter
 	move.b	d0,n_loopcount(a2)
@@ -3087,22 +3049,22 @@ mt_retrignote:
 * d0 = x
 
 	tst.b	d0
-	beq	1f
+	jeq	1f
 
 	* set new retrigger count when Counter=0
 	tst.b	mt_Counter(a4)
-	bne	2f
+	jne	2f
 	move.b	d0,n_retrigcount(a2)
 
 	* avoid double retrigger, when Counter=0 and a note was set
 	move.w	#0x0fff,d2
 	and.w	(a2),d2
-	beq	do_retrigger
+	jeq	do_retrigger
 1:	rts
 
 	* check if retrigger count is reached
 2:	subq.b	#1,n_retrigcount(a2)
-	bne	1b
+	jne	1b
 	move.b	d0,n_retrigcount(a2)	| reset
 
 do_retrigger:
@@ -3121,11 +3083,11 @@ mt_volfineup:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	beq	1f
+	jeq	1f
 	rts
 
 1:	add.w	n_volume(a2),d0
-	bra	vol_slide_up
+	jra	vol_slide_up
 
 
 mt_volfinedn:
@@ -3133,12 +3095,12 @@ mt_volfinedn:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	beq	1f
+	jeq	1f
 	rts
 
 1:	move.b	d0,d1
 	move.w	n_volume(a2),d0
-	bra	vol_slide_down
+	jra	vol_slide_down
 
 
 mt_notecut:
@@ -3146,7 +3108,7 @@ mt_notecut:
 * d0 = x
 
 	cmp.b	mt_Counter(a4),d0
-	bne	1f
+	jne	1f
 	move.w	d7,n_volume(a2)
 	move.w	d7,AUDVOL(a5)
 	.ifdef	VOL0_UNLOOPS
@@ -3160,12 +3122,12 @@ mt_notedelay:
 * d0 = x
 
 	cmp.b	mt_Counter(a4),d0
-	bne	1f
+	jne	1f
 	tst.w	(a2)			| trigger note when given
-	bne	2f
+	jne	2f
 1:	rts
 2:	move.w	n_period(a2),AUDPER(a5)
-	bra	do_retrigger
+	jra	do_retrigger
 
 
 mt_patterndelay:
@@ -3173,9 +3135,9 @@ mt_patterndelay:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	bne	1f
+	jne	1f
 	tst.b	mt_PattDelTime2(a4)
-	bne	1f
+	jne	1f
 	addq.b	#1,d0
 	move.b	d0,mt_PattDelTime(a4)
 1:	rts
@@ -3186,9 +3148,9 @@ mt_funk:
 * d0 = x
 
 	tst.b	mt_Counter(a4)
-	bne	1f
+	jne	1f
 	move.w	d0,n_funk(a2)
-	bne	mt_updatefunk
+	jne	mt_updatefunk
 1:	rts
 
 mt_updatefunk:
@@ -3196,7 +3158,7 @@ mt_updatefunk:
 
 	move.b	mt_FunkTable(pc,d0.w),d0
 	add.b	d0,n_funkoffset(a2)
-	bpl	2f
+	jpl	2f
 	move.b	d7,n_funkoffset(a2)
 
 	move.l	n_loopstart(a2),d0
@@ -3207,7 +3169,7 @@ mt_updatefunk:
 	move.l	n_wavestart(a2),a0
 	addq.l	#1,a0
 	cmp.l	d1,a0
-	blo	1f
+	jcs	1f
 	move.l	d0,a0
 1:	move.l	a0,n_wavestart(a2)
 	not.b	(a0)
@@ -3998,7 +3960,6 @@ mt_E8Trigger = n_sizeof+n_sizeof+n_sizeof+n_sizeof+124+4+4+4+4+4+2+2+2+1+1+1+1+1
 mt_MusicChannels = n_sizeof+n_sizeof+n_sizeof+n_sizeof+124+4+4+4+4+4+2+2+2+1+1+1+1+1+1+1+1+4+1+1		| exported as _mt_MusicChannels
 mt_SongEnd = n_sizeof+n_sizeof+n_sizeof+n_sizeof+124+4+4+4+4+4+2+2+2+1+1+1+1+1+1+1+1+4+1+1+1		| exported as _mt_SongEnd
 
-	.align	2
 mt_data:
 	ds.b	mt_Enable
 	.global	_mt_Enable
